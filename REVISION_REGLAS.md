@@ -220,7 +220,7 @@ Los más delicados:
 **P-44 · Trabajo abierto de un admin desactivado** (RN-23, RN-63, RN-07) · surgida en la revisión de HU-012 (29-sep-2026)
 
 - Qué pasa: la bandeja muestra a cada admin sus reembolsos y reportes de inasistencia. Si se desactiva a un admin con casos abiertos, nadie más los ve. Solo los pagos tienen escalamiento ([HU-034](backlog/HU-034.md)). Un reporte `en_revision` abandonado bloquea para siempre el desembolso de esa monitoría (RN-83).
-- Recomendación: al desactivar un admin, sus reembolsos y reportes abiertos pasan al siguiente admin activo según `ordenRevision`, igual que el escalamiento de pagos.
+- Recomendación: al desactivar un admin, sus reembolsos y reportes abiertos pasan al siguiente admin activo según `ordenRevision`, igual que el escalamiento de pagos. **Aceptada el 29-sep-2026.**
 - HUs: [HU-012](backlog/HU-012.md), [HU-026](backlog/HU-026.md), [HU-030](backlog/HU-030.md), [HU-034](backlog/HU-034.md), [HU-054](backlog/HU-054.md)
 
 ### Pendientes del documento original y las HUs que tocan
@@ -307,6 +307,7 @@ La persona respondió la hoja de decisiones del corte 1. Donde dice "como se rec
 | P-36 | El monto del pago es el precio que publica el monitor en su franja; el pagador no lo escribe. | [HU-018](backlog/HU-018.md) |
 | P-37 | Como se recomendaba: el monitor ve nombre y diagnóstico, no el contacto. | [HU-021](backlog/HU-021.md) |
 | R-1 | El responsable del tratamiento de datos es Calibra. | [HU-008](backlog/HU-008.md) |
+| P-44 | Como se recomendaba: al desactivar un admin, sus reembolsos y reportes abiertos pasan al siguiente admin activo según `ordenRevision`. | [HU-054](backlog/HU-054.md), [HU-026](backlog/HU-026.md), [HU-030](backlog/HU-030.md) |
 
 Surgidas de la revisión de HU-003 y HU-007, todas aceptadas y llevadas a [HU-063](backlog/HU-063.md) salvo N-4 y N-5:
 

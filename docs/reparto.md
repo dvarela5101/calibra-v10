@@ -4,8 +4,7 @@
 
 ## Estado de partida
 
-- **Hecha:** HU-001, HU-002, HU-003, HU-004 y HU-007.
-- **En revisión:** HU-006 (correo) y HU-012 (bandeja del admin). Las revisa dvarela5101 antes de pasarlas a `Hecha`.
+- **Hecha:** HU-001, HU-002, HU-003, HU-004, HU-006, HU-007 y HU-012.
 - **HU-005 (banco por habilidades):** la hacen las dos personas juntas, en persona. Ninguna sesión la toma sola. Es el cuello de botella del diagnóstico: de ella dependen HU-060, HU-061, HU-009 y, detrás, casi todo el flujo del estudiante.
 - Las decisiones de negocio del corte 1 están en [REVISION_REGLAS.md](../REVISION_REGLAS.md) §4, "Decisiones del 29-sep-2026", y cada HU las trae en su contexto.
 
@@ -27,7 +26,7 @@ Cada persona hace las suyas en este orden. Cuando la siguiente depende de la ant
 |---|---|---|---|
 | 1 | [HU-063](../backlog/HU-063.md) Ajustes de la revisión de HU-003 y HU-007 | S | Ya |
 | 2 | [HU-059](../backlog/HU-059.md) Endurecer los comprobantes | S | Ya (después de HU-063, porque las dos tocan el bucket) |
-| 3 | [HU-062](../backlog/HU-062.md) Solicitud de certificación del aspirante a monitor | M | HU-008 y HU-012 estén `Hecha` y dvarela5101 la pase a `Lista` |
+| 3 | [HU-062](../backlog/HU-062.md) Solicitud de certificación del aspirante a monitor | M | HU-008 esté `Hecha` |
 
 Por qué así:
 - HU-013 y HU-015 forman una cadena, y conviene que la tenga la misma cabeza.
@@ -57,8 +56,7 @@ Si la siguiente HU depende de una que aún no está `Hecha`, la sesión se detie
 
 ## Después de estas 6
 
-- **Juzou04, sobre su propio código:** [HU-064](../backlog/HU-064.md) (ajustes de la revisión de HU-006 y HU-012) y [HU-065](../backlog/HU-065.md) (reintentar correos que fallaron). Las dos están en `Backlog` hasta que dvarela5101 las pase a `Lista`.
-- **Decisión pendiente de dvarela5101:** P-44 (qué pasa con el trabajo abierto de un admin desactivado), en `REVISION_REGLAS.md`.
+- **Juzou04, sobre su propio código:** [HU-064](../backlog/HU-064.md) (ajustes de la revisión de HU-006 y HU-012) y [HU-065](../backlog/HU-065.md) (reintentar correos que fallaron). Ya están en `Lista` y no dependen de nada pendiente: si Juzou04 queda esperando a HU-008 para empezar HU-062, puede adelantar HU-064.
 - **Juntos, en persona:** HU-005, y después HU-060 (motor adaptativo) y HU-061 (reprocesar el banco con IA; su piloto corre en el PC de Juzou04).
 - **Cuando HU-005 y HU-013 estén `Hecha`:** HU-014 (certificados).
 - **Cuando HU-014 y HU-015 estén `Hecha`:** HU-016 (ver monitores y fechas libres), y a partir de ahí la cadena de agendar, pagar y reembolsar.

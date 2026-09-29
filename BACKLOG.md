@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-09-29 17:10. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-09-29 17:26. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -30,9 +30,6 @@ _Generado automaticamente: 2026-09-29 17:10. No editar a mano; usa `scripts/back
 | [HU-046](backlog/HU-046.md) | [Monitor] Finalizar una grupal y entregar el enlace de reseña | Backlog | P1 | S | HU-023, HU-036 |
 | [HU-047](backlog/HU-047.md) | [Integrante] Reseñar la sesión grupal eligiendo mi nombre | Backlog | P1 | M | HU-046, HU-038, HU-035 |
 | [HU-048](backlog/HU-048.md) | [Técnica] Pruebas de punta a punta de los flujos principales | Backlog | P1 | M | HU-030 |
-| [HU-062](backlog/HU-062.md) | [Aspirante a monitor] Pedir la certificación de una materia dejando mis datos | Backlog | P1 | M | HU-008, HU-012 |
-| [HU-064](backlog/HU-064.md) | [Técnica] Ajustes de la revisión de HU-006 y HU-012 | Backlog | P1 | S | HU-006, HU-012 |
-| [HU-065](backlog/HU-065.md) | [Sistema] Reintentar los correos que fallaron | Backlog | P1 | S | HU-006 |
 | [HU-049](backlog/HU-049.md) | [Monitor] Administrar mi perfil | Backlog | P2 | M | HU-013 |
 | [HU-050](backlog/HU-050.md) | [Monitor] Ver mis desembolsos | Backlog | P2 | S | HU-028 |
 | [HU-051](backlog/HU-051.md) | [Monitor] Recibir avisos de nuevas monitorías y cancelaciones | Backlog | P2 | S | HU-021, HU-006 |
@@ -60,12 +57,15 @@ _Generado automaticamente: 2026-09-29 17:10. No editar a mano; usa `scripts/back
 | [HU-027](backlog/HU-027.md) | [Sistema] Expirar reservas sin comprobante a los 10 minutos | Lista | P0 | S | HU-017 |
 | [HU-028](backlog/HU-028.md) | [Admin] Ejecutar desembolsos a monitores | Lista | P0 | M | HU-023, HU-020 |
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | Lista | P0 | M | HU-019 |
+| [HU-062](backlog/HU-062.md) | [Aspirante a monitor] Pedir la certificación de una materia dejando mis datos | Lista | P1 | M | HU-008, HU-012 |
 | [HU-063](backlog/HU-063.md) | [Técnica] Ajustes de la revisión de HU-003 y HU-007 | Lista | P1 | S | HU-003, HU-007 |
+| [HU-064](backlog/HU-064.md) | [Técnica] Ajustes de la revisión de HU-006 y HU-012 | Lista | P1 | S | HU-006, HU-012 |
+| [HU-065](backlog/HU-065.md) | [Sistema] Reintentar los correos que fallaron | Lista | P1 | S | HU-006 |
 | [HU-059](backlog/HU-059.md) | [Técnica] Endurecer los comprobantes: contenido real, huérfanos y cuota por sesión | Lista | P2 | S | HU-007 |
-| [HU-006](backlog/HU-006.md) | [Técnica] Correo transaccional con plantillas | En revision | P0 | M | HU-001 |
-| [HU-012](backlog/HU-012.md) | [Admin] Iniciar sesión y ver mi bandeja de trabajo | En revision | P0 | M | HU-004 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
 | [HU-004](backlog/HU-004.md) | [Técnica] Autenticación: sesión anónima persistente, cuentas y roles | Hecha | P0 | L | HU-002 |
+| [HU-006](backlog/HU-006.md) | [Técnica] Correo transaccional con plantillas | Hecha | P0 | M | HU-001 |
 | [HU-007](backlog/HU-007.md) | [Técnica] Almacenamiento privado de comprobantes de pago | Hecha | P0 | S | HU-002, HU-004 |
+| [HU-012](backlog/HU-012.md) | [Admin] Iniciar sesión y ver mi bandeja de trabajo | Hecha | P0 | M | HU-004 |
