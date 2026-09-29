@@ -49,6 +49,19 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"correo_envio": {
+                  Row: {
+                    "actualizado_en": string,"clave": string,"creado_en": string,"destinatario": string,"enviado_en": string | null,"estado": Database["public"]['Enums']["estado_correo"],"id": string,"id_proveedor": string | null,"intentos": number,"plantilla": string,"ultimo_error": string | null
+                  }
+                  Insert: {
+                    "actualizado_en"?: string,"clave": string,"creado_en"?: string,"destinatario": string,"enviado_en"?: string | null,"estado"?: Database["public"]['Enums']["estado_correo"],"id"?: string,"id_proveedor"?: string | null,"intentos"?: number,"plantilla": string,"ultimo_error"?: string | null
+                  }
+                  Update: {
+                    "actualizado_en"?: string,"clave"?: string,"creado_en"?: string,"destinatario"?: string,"enviado_en"?: string | null,"estado"?: Database["public"]['Enums']["estado_correo"],"id"?: string,"id_proveedor"?: string | null,"intentos"?: number,"plantilla"?: string,"ultimo_error"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"desembolso": {
                   Row: {
                     "comision": number,"estado": Database["public"]['Enums']["estado_desembolso"],"fecha_desembolso": string | null,"fecha_generacion": string,"id": string,"id_admin": string | null,"id_monitoria": string,"llave_destino": string,"monto_bruto": number,"monto_neto": number,"referencia_transferencia": string | null
@@ -494,7 +507,7 @@ isOneToOne: true
                            }
           }
           Enums: {
-            "estado_desembolso": "pendiente"|"desembolsado"|"anulado","estado_lead": "nuevo"|"contactado"|"descartado","estado_monitoria": "pendiente_pago"|"confirmada"|"realizada"|"cancelada","estado_pago": "en_revision"|"aprobado"|"rechazado","estado_reembolso": "esperando_llave"|"pendiente"|"reembolsado","estado_reporte": "en_revision"|"aceptado"|"rechazado","modalidad_pago": "unico"|"dividido","motivo_cancelacion": "reserva_expirada"|"pago_rechazado"|"estudiante"|"monitor_no_asistio"|"diferencia_no_cubierta"
+            "estado_correo": "pendiente"|"enviado"|"fallido","estado_desembolso": "pendiente"|"desembolsado"|"anulado","estado_lead": "nuevo"|"contactado"|"descartado","estado_monitoria": "pendiente_pago"|"confirmada"|"realizada"|"cancelada","estado_pago": "en_revision"|"aprobado"|"rechazado","estado_reembolso": "esperando_llave"|"pendiente"|"reembolsado","estado_reporte": "en_revision"|"aceptado"|"rechazado","modalidad_pago": "unico"|"dividido","motivo_cancelacion": "reserva_expirada"|"pago_rechazado"|"estudiante"|"monitor_no_asistio"|"diferencia_no_cubierta"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -610,7 +623,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "estado_desembolso": ["pendiente", "desembolsado", "anulado"],"estado_lead": ["nuevo", "contactado", "descartado"],"estado_monitoria": ["pendiente_pago", "confirmada", "realizada", "cancelada"],"estado_pago": ["en_revision", "aprobado", "rechazado"],"estado_reembolso": ["esperando_llave", "pendiente", "reembolsado"],"estado_reporte": ["en_revision", "aceptado", "rechazado"],"modalidad_pago": ["unico", "dividido"],"motivo_cancelacion": ["reserva_expirada", "pago_rechazado", "estudiante", "monitor_no_asistio", "diferencia_no_cubierta"]
+            "estado_correo": ["pendiente", "enviado", "fallido"],"estado_desembolso": ["pendiente", "desembolsado", "anulado"],"estado_lead": ["nuevo", "contactado", "descartado"],"estado_monitoria": ["pendiente_pago", "confirmada", "realizada", "cancelada"],"estado_pago": ["en_revision", "aprobado", "rechazado"],"estado_reembolso": ["esperando_llave", "pendiente", "reembolsado"],"estado_reporte": ["en_revision", "aceptado", "rechazado"],"modalidad_pago": ["unico", "dividido"],"motivo_cancelacion": ["reserva_expirada", "pago_rechazado", "estudiante", "monitor_no_asistio", "diferencia_no_cubierta"]
           }
         }
 } as const
