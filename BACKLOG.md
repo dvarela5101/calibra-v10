@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-09-28 23:56. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-09-29 00:44. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -55,10 +55,10 @@ _Generado automaticamente: 2026-09-28 23:56. No editar a mano; usa `scripts/back
 | [HU-055](backlog/HU-055.md) | [Admin] Gestionar materias y evaluaciones | Backlog | P2 | M | HU-005, HU-012 |
 | [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | Backlog | P2 | S | HU-004 |
 | [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | Backlog | P3 | S | HU-010 |
-| [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Lista | P0 | M | HU-002 |
 | [HU-006](backlog/HU-006.md) | [Técnica] Correo transaccional con plantillas | Lista | P0 | M | HU-001 |
 | [HU-007](backlog/HU-007.md) | [Técnica] Almacenamiento privado de comprobantes de pago | Lista | P0 | S | HU-002, HU-004 |
 | [HU-012](backlog/HU-012.md) | [Admin] Iniciar sesión y ver mi bandeja de trabajo | Lista | P0 | M | HU-004 |
+| [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | En progreso | P0 | M | HU-002 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-004](backlog/HU-004.md) | [Técnica] Autenticación: sesión anónima persistente, cuentas y roles | Hecha | P0 | L | HU-002 |
