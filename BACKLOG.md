@@ -1,12 +1,12 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-09-29 02:35. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-09-29 02:40. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
-| [HU-005](backlog/HU-005.md) | [Técnica] Migrar el banco de preguntas y el motor de diagnóstico al esquema nuevo | Backlog | P0 | L | HU-002 |
+| [HU-005](backlog/HU-005.md) | [Técnica] Banco de preguntas por habilidades: formato, migración, validación y carga | Backlog | P0 | L | HU-002 |
 | [HU-008](backlog/HU-008.md) | [Visitante] Leer el aviso de privacidad y autorizar el tratamiento de mis datos | Backlog | P0 | S | HU-001 |
-| [HU-009](backlog/HU-009.md) | [Visitante] Tomar el diagnóstico sin iniciar sesión | Backlog | P0 | L | HU-004, HU-005 |
+| [HU-009](backlog/HU-009.md) | [Visitante] Tomar el diagnóstico sin iniciar sesión | Backlog | P0 | L | HU-004, HU-005, HU-060 |
 | [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | Backlog | P0 | M | HU-009, HU-008 |
 | [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | Backlog | P0 | S | HU-009 |
 | [HU-013](backlog/HU-013.md) | [Monitor] Crear mi cuenta de monitor e iniciar sesión | Backlog | P0 | M | HU-004 |
@@ -28,6 +28,8 @@ _Generado automaticamente: 2026-09-29 02:35. No editar a mano; usa `scripts/back
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | Backlog | P0 | M | HU-019 |
 | [HU-030](backlog/HU-030.md) | [Admin] Resolver reportes de inasistencia | Backlog | P0 | M | HU-029, HU-026, HU-028 |
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | Backlog | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-040, HU-043, HU-044, HU-045, HU-047, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056 |
+| [HU-060](backlog/HU-060.md) | [Técnica] Motor del diagnóstico adaptativo con nivel por habilidad | Backlog | P0 | L | HU-005 |
+| [HU-061](backlog/HU-061.md) | [Técnica] Instructivo y skill para reprocesar el banco de una materia con IA | Backlog | P0 | M | HU-005 |
 | [HU-031](backlog/HU-031.md) | [Lead] Recuperar mis resultados desde otro dispositivo con un enlace | Backlog | P1 | M | HU-010, HU-006 |
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | Backlog | P1 | M | HU-010, HU-004 |
 | [HU-033](backlog/HU-033.md) | [Estudiante] Gestionar mis citas y diagnósticos desde mi cuenta | Backlog | P1 | M | HU-032, HU-019, HU-024 |

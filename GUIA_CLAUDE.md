@@ -17,7 +17,7 @@ scripts/backlog.py     CLI: única forma de crear HUs y cambiar su estado
 
 Cada HU tiene un frontmatter con `id`, `titulo`, `estado`, `prioridad` (P0 = más urgente ... P3), `talla` (XS–XL), `depende_de`, `creada` y `actualizada`. El cuerpo tiene la historia, contexto, criterios de aceptación, fuera de alcance, notas técnicas, definición de terminado y un registro.
 
-**Regla de oro:** nunca edites a mano el frontmatter ni `BACKLOG.md`. Todo cambio de estado se hace con `python scripts/backlog.py ...` para que el registro y el índice queden consistentes. Lo que sí puedes editar a mano en el archivo de la HU es el cuerpo: marcar criterios (`- [x]`) y agregar notas técnicas.
+**Regla de oro:** nunca edites a mano el frontmatter ni `BACKLOG.md`. Todo cambio de estado se hace con `python scripts/backlog.py ...` para que el registro y el índice queden consistentes. Título, prioridad, talla y dependencias se cambian con `python scripts/backlog.py edit HU-XXX`. Lo que sí puedes editar a mano en el archivo de la HU es el cuerpo: marcar criterios (`- [x]`) y agregar notas técnicas.
 
 ## 2. Estados y qué significan
 

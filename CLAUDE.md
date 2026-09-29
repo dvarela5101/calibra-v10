@@ -42,6 +42,11 @@ El estado de las HUs vive en `backlog/` en la rama `main`. Git es el candado.
 5. Trabaja en una rama `hu-XXX-<tema>` creada desde `main`.
 
 **Reglas**
+- **Antes de cada commit, trae lo último de `main`.** Corre `git fetch` y, si `origin/main` avanzó, intégralo antes de commitear:
+  - en `main`: `git pull --rebase --autostash`;
+  - en tu rama: `git merge --autostash origin/main`.
+
+  Si entraron cambios, vuelve a correr las verificaciones que apliquen antes del commit.
 - Nunca tomes, continúes ni edites una HU `En progreso` de la otra persona. Una HU solo se toma si sus dependencias están `Hecha` en `main`.
 - Terminar: `review` en tu rama, verifica todo, `git merge origin/main`, vuelve a verificar y abre un PR hacia `main`. Con CI en verde, la misma sesión lo fusiona con squash (un commit por HU) y la HU queda `En revision`. La persona revisa después y aprueba con `done` en `main`; lo que no le guste se corrige en un PR nuevo.
 - Archivos generados que chocan: no los resuelvas a mano, regenéralos. `BACKLOG.md` con `python scripts/backlog.py index`, `src/lib/supabase/tipos.ts` con `npm run db:tipos` y `package-lock.json` con `npm install`.
@@ -52,7 +57,7 @@ El estado de las HUs vive en `backlog/` en la rama `main`. Git es el candado.
 
 Este repo tiene un backlog de historias de usuario (HU) en `backlog/HU-XXX.md`. Cada HU tiene frontmatter con `estado`, `prioridad`, `talla` y `depende_de`. El indice legible esta en `BACKLOG.md` (generado, no editar a mano). La guia completa esta en `GUIA_CLAUDE.md`.
 
-Toda la gestion se hace con `python scripts/backlog.py`. No cambies el frontmatter a mano: usa el script para que el estado, el registro y el indice queden consistentes.
+Toda la gestion se hace con `python scripts/backlog.py`. No cambies el frontmatter a mano: usa el script para que el estado, el registro y el indice queden consistentes. Para cambiar titulo, prioridad, talla o dependencias: `backlog.py edit HU-XXX [-t ...] [-p ...] [-e ...] [-d ...]`.
 
 ## Estados
 
