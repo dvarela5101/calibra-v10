@@ -55,7 +55,7 @@ npx playwright install --no-shell chromium
 | `npm run test:e2e` | Pruebas de punta a punta (Playwright). Levanta `npm run dev`, o `npm run start` si `CI` está definido. Necesita el Supabase local |
 | `npm run build` | Build de producción |
 | `npm run verificar` | Todo lo anterior en el orden del pipeline |
-| `npm run db:iniciar` | Levanta Supabase local (Postgres, Auth, REST y Mailpit) con las migraciones |
+| `npm run db:iniciar` | Levanta Supabase local (Postgres, Auth, REST, Storage y Mailpit) con las migraciones |
 | `npm run db:env` | Escribe `.env.local` con las llaves del Supabase local |
 | `npm run db:tipos` | Regenera `src/lib/supabase/tipos.ts` desde el esquema local |
 | `npm run db:reiniciar` | Borra la base local y aplica las migraciones desde cero |
@@ -92,6 +92,15 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 - **Olvidé mi contraseña:** `/restablecer` envía un correo (plantilla `supabase/templates/recuperar.html`); el enlace pasa por `/auth/confirmar` y lleva a `/restablecer/nueva`. En local los correos llegan a Mailpit: http://127.0.0.1:54324.
 - **Desactivar una cuenta (RN-23):** `desactivarCuenta()` (`src/lib/auth/cuentas.ts`) la banea en Auth. No puede volver a entrar, deja de ser admin al instante aunque su token siga vigente, y sus filas y certificados se conservan.
 - Crear monitores y admins llega con HU-013 y HU-012. Mientras tanto, las pruebas los crean con la llave secreta local.
+
+## Comprobantes de pago
+
+Los comprobantes van en el bucket privado `comprobantes` de Supabase Storage (HU-007). La ruta es `<id del usuario>/<uuid>.<jpg|png|pdf>`, con el id del usuario de Auth que sube (la sesión anónima del pagador también lo es), y `pago.comprobante` guarda esa ruta.
+
+- Se suben desde el navegador con la sesión del pagador, directo al Storage: un archivo de hasta 5 MB no cabe en una función de Vercel, que acepta 4,5 MB. `subirComprobante()` (`src/lib/comprobantes/almacenamiento.ts`) valida tipo, tamaño y contenido y devuelve un mensaje en español. El bucket vuelve a hacer cumplir el tamaño y los tipos por su cuenta.
+- Leen el dueño de la carpeta y los admins. Desde la app nadie sobrescribe ni borra. Un admin abre un comprobante con `enlaceDeComprobanteDePago()`, que pide un enlace firmado de 60 segundos cada vez que se abre el pago.
+- Quien cree un pago desde el servidor con la llave secreta debe comprobar con `rutaEsDelUsuario()` que la ruta sea de la carpeta del pagador antes de guardarla en `pago.comprobante`. Si no, alguien podría apuntar su pago al comprobante de otra persona.
+- Los límites están en la migración `*_comprobantes_privados.sql` y se repiten en `src/lib/comprobantes/reglas.ts` para dar mensajes claros antes de subir. `integracion/comprobantes.test.ts` comprueba que coincidan.
 
 ## CI y despliegue
 

@@ -54,7 +54,7 @@ jobs:
       - name: Pruebas unitarias (Vitest)
         run: npm test
 
-      # Supabase local (Postgres, Auth, REST y Mailpit) con las migraciones aplicadas.
+      # Supabase local (Postgres, Auth, REST, Storage y Mailpit) con las migraciones aplicadas.
       - name: Levantar Supabase local
         run: npm run db:iniciar
 
