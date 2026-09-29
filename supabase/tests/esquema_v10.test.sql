@@ -81,8 +81,9 @@ insert into public.evaluacion (id, id_materia, semana, nombre) values
   ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 3, 'Parcial uno'),
   ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', 3, 'Parcial dos');
 
+-- orden_revision es único y la semilla (supabase/seed.sql) usa 1 y 2: aquí, números altos.
 insert into public.admin (id, nombre, correo, orden_revision) values
-  ('a0000000-0000-0000-0000-000000000001', 'Admin Prueba', 'admin@example.com', 1);
+  ('a0000000-0000-0000-0000-000000000001', 'Admin Prueba', 'admin@example.com', 9000001);
 
 insert into public.monitor (id, nombre) values
   ('b0000000-0000-0000-0000-000000000001', 'Monitor Uno'),

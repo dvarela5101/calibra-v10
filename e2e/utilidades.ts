@@ -5,7 +5,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 /**
  * Utilidades de las pruebas de punta a punta que tocan Auth. Todo corre contra el
  * Supabase LOCAL (llaves en .env.local, que playwright.config.ts carga). Las cuentas
- * las crea y las borra cada prueba; ninguna contraseña queda escrita en el repo.
+ * las crea y las borra cada prueba; cada una lleva una contraseña aleatoria. La única contraseña fija del repo es la de los admins de prueba de la semilla local (supabase/seed.sql).
  */
 
 // ---------------------------------------------------------------------------

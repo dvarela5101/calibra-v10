@@ -16,9 +16,10 @@ insert into auth.users (id, is_anonymous, banned_until) values
   ('c0000000-0000-0000-0000-00000000000a', true, null),
   ('d0000000-0000-0000-0000-000000000001', false, null);
 
+-- orden_revision es único y la semilla (supabase/seed.sql) usa 1 y 2: aquí, números altos.
 insert into public.admin (id, nombre, correo, orden_revision) values
-  ('a0000000-0000-0000-0000-000000000001', 'Admin activo', 'activo@calibra.test', 1),
-  ('a0000000-0000-0000-0000-000000000002', 'Admin retirado', 'retirado@calibra.test', 2);
+  ('a0000000-0000-0000-0000-000000000001', 'Admin activo', 'activo@calibra.test', 9000001),
+  ('a0000000-0000-0000-0000-000000000002', 'Admin retirado', 'retirado@calibra.test', 9000002);
 
 insert into public.monitor (id, nombre) values ('b0000000-0000-0000-0000-000000000001', 'Monitor uno');
 insert into public.materia (id, nombre, codigo) values ('10000000-0000-0000-0000-000000000001', 'Materia', 'PRB-1');

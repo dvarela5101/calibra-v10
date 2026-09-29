@@ -58,7 +58,7 @@ npx playwright install --no-shell chromium
 | `npm run db:iniciar` | Levanta Supabase local (Postgres, Auth, REST, Storage y Mailpit) con las migraciones |
 | `npm run db:env` | Escribe `.env.local` con las llaves del Supabase local |
 | `npm run db:tipos` | Regenera `src/lib/supabase/tipos.ts` desde el esquema local |
-| `npm run db:reiniciar` | Borra la base local y aplica las migraciones desde cero |
+| `npm run db:reiniciar` | Borra la base local y aplica las migraciones y la semilla desde cero |
 | `npm run db:verificar` | Reaplica las migraciones (idempotencia) y corre las pruebas pgTAP |
 | `npm run db:detener` | Detiene los contenedores locales de Supabase |
 
@@ -91,7 +91,17 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 - **Monitores y admins:** entran por `/ingresar` con correo y contraseña. `/monitor` y `/admin` exigen su rol con `exigirRol()` (`src/lib/auth/sesion.ts`), que lee el rol de `public.mi_rol()` en la base. El proxy (`src/proxy.ts`) solo refresca la sesión: no autoriza.
 - **Olvidé mi contraseña:** `/restablecer` envía un correo (plantilla `supabase/templates/recuperar.html`); el enlace pasa por `/auth/confirmar` y lleva a `/restablecer/nueva`. En local los correos llegan a Mailpit: http://127.0.0.1:54324.
 - **Desactivar una cuenta (RN-23):** `desactivarCuenta()` (`src/lib/auth/cuentas.ts`) la banea en Auth. No puede volver a entrar, deja de ser admin al instante aunque su token siga vigente, y sus filas y certificados se conservan.
-- Crear monitores y admins llega con HU-013 y HU-012. Mientras tanto, las pruebas los crean con la llave secreta local.
+- **Admins de prueba en local.** La semilla (`supabase/seed.sql`) crea `admin1@calibra.test` y `admin2@calibra.test`, los dos con la contraseña `calibra-admin-local` y con su orden de revisión (1 y 2). La corren `npm run db:reiniciar` y el primer `npm run db:iniciar` de una base nueva; nunca corre contra el proyecto real. La lista real de admins y su orden la define el equipo antes del corte a producción (HU-057).
+- Crear monitores llega con HU-013. Mientras tanto, las pruebas los crean con la llave secreta local.
+
+## Bandeja del admin
+
+`/admin` (HU-012) muestra lo que tiene asignado el admin que entró: pagos en revisión ordenados por vencimiento (con el tiempo que les queda o cuánto llevan vencidos), reembolsos activos por estado, reportes de inasistencia en revisión y desembolsos ejecutables. Arriba hay un contador por sección.
+
+- `cargarBandeja()` (`src/lib/admin/bandeja.ts`) siempre se llama con el id de la sesión. Las políticas dejan leer a todo admin, así que el filtro por admin lo pone quien llama.
+- Los desembolsos no tienen admin hasta que se ejecutan (RN-80): los ejecutables son los mismos para todos. La regla de RN-83 (pasaron 24 horas del fin y no hay un reporte en revisión ni aceptado) vive en la vista `desembolsos_ejecutables`, que HU-028 también usará. La vista no expone bruto, comisión ni la llave del monitor.
+- El tiempo restante de un pago sale del motor de plazos (HU-003) y respeta el borde inclusivo de P-40.
+- Cada sección se vuelve accionable cuando llegan HU-020 (pagos), HU-026 (reembolsos), HU-030 (reportes) y HU-028 (desembolsos).
 
 ## Comprobantes de pago
 

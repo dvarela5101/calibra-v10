@@ -23,9 +23,10 @@ insert into auth.users (id, is_anonymous, banned_until) values
   ('c0000000-0000-0000-0000-00000000000a', true, null),
   ('c0000000-0000-0000-0000-00000000000b', true, null);
 
+-- orden_revision es único y la semilla (supabase/seed.sql) usa 1 y 2: aquí, números altos.
 insert into public.admin (id, nombre, correo, orden_revision) values
-  ('a0000000-0000-0000-0000-000000000001', 'Admin activo', 'activo@example.com', 1),
-  ('a0000000-0000-0000-0000-000000000002', 'Admin retirado', 'retirado@example.com', 2);
+  ('a0000000-0000-0000-0000-000000000001', 'Admin activo', 'activo@example.com', 9000001),
+  ('a0000000-0000-0000-0000-000000000002', 'Admin retirado', 'retirado@example.com', 9000002);
 insert into public.monitor (id, nombre) values ('b0000000-0000-0000-0000-000000000001', 'Monitor Uno');
 
 insert into storage.buckets (id, name, public) values ('otro-bucket', 'otro-bucket', false);
