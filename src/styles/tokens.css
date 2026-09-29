@@ -1,0 +1,89 @@
+/*
+ * Tokens de diseño portados del prototipo (Calibra/index.html, bloques :root).
+ *
+ * Regla de color: --alert, --warn y --success son SOLO relleno (barras, fondos,
+ * bordes); como texto no pasan WCAG AA. Para texto se usan sus variantes
+ * --alert-text y --success-text, y --muted para el texto secundario.
+ * src/styles/tokens.test.ts comprueba esos contrastes.
+ */
+:root {
+  /* Color */
+  --bg: #fffdf5;
+  --surface: #ffffff;
+  --primary: #005eff;
+  --alert: #e5484d; /* solo relleno */
+  --warn: #c98a00; /* solo relleno */
+  --success: #0f9d58; /* solo relleno */
+  --alert-text: #c62a2f; /* rojo para texto, 5,46:1 sobre --bg */
+  --success-text: #0b7a44; /* verde para texto, 5,31:1 sobre --bg */
+  --text: #0b1b33;
+  --muted: #636f81; /* texto secundario; el #6B7789 del brief no pasaba AA */
+  --muted-disabled: #55606f; /* texto del botón inactivo, sobre --border */
+  --border: #dde3ec;
+  --marca: #0057ed; /* relleno del logo y del favicon */
+
+  /* Radios */
+  --r: 14px;
+  --r-chico: 10px;
+
+  /* Espaciado */
+  --e1: 4px; /* etiqueta y su dato */
+  --e2: 8px; /* dentro de un componente */
+  --e3: 12px; /* entre hermanos de una lista */
+  --e4: 20px; /* entre bloques de una pantalla */
+  --e5: 28px; /* entre secciones, o antes de un remate */
+
+  /* Sombra de tarjeta, tintada con --text en vez de negro puro */
+  --sombra-carta: 0 1px 1px rgba(11, 27, 51, 0.04), 0 2px 6px rgba(11, 27, 51, 0.05);
+
+  /* Layout: columna de contenido y márgenes laterales */
+  --col: 430px;
+  --pad-x: 20px;
+  --marca-h: 60px;
+
+  /* Accesibilidad: mínimos que no se negocian */
+  --texto-min: 14px;
+  --toque-min: 44px;
+
+  /* Transiciones */
+  --transicion: 150ms ease;
+}
+
+@media (max-width: 370px) {
+  :root {
+    --pad-x: 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --col: 540px;
+    --pad-x: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --col: 600px;
+    --pad-x: 40px;
+  }
+}
+
+@media (min-width: 1200px) {
+  :root {
+    --col: 780px;
+    --pad-x: 48px;
+  }
+}
+
+@media (min-width: 1600px) {
+  :root {
+    --col: 1040px;
+  }
+}
+
+@media (max-height: 560px) {
+  :root {
+    --marca-h: 52px;
+  }
+}

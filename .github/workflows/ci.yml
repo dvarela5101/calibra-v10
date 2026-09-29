@@ -1,0 +1,212 @@
+name: CI/CD
+
+# Push a main: verifica y despliega a produccion.
+# Pull request hacia main: verifica y publica un preview.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Una sola ejecucion por rama/PR. En un PR, un push nuevo cancela la anterior;
+# en main se encolan, para no cortar un despliegue a produccion a la mitad.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Permisos minimos; el job que comenta en el PR pide su propio permiso extra.
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  verificar:
+    name: Verificar (lint, tipos, base de datos, pruebas, e2e)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Zona horaria del negocio; evita depender de la del runner.
+      TZ: America/Bogota
+      # GitHub ya lo define; Playwright lo usa para levantar `npm run start`.
+      CI: "true"
+    steps:
+      - name: Descargar el codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Pruebas unitarias (Vitest)
+        run: npm test
+
+      # Supabase local (Postgres, Auth, REST y Mailpit) con las migraciones aplicadas.
+      - name: Levantar Supabase local
+        run: npm run db:iniciar
+
+      # .env.local con las llaves del Supabase local, para build, integracion y e2e.
+      - name: Variables del Supabase local
+        run: npm run db:env
+
+      # Reaplica las migraciones (idempotencia) y corre supabase/tests con pgTAP.
+      - name: Base de datos (migraciones y pgTAP)
+        run: npm run db:verificar
+
+      - name: Pruebas de integracion (Vitest contra Supabase local)
+        run: npm run test:integracion
+
+      - name: Instalar Chromium para Playwright
+        # --no-shell: las pruebas usan el headless nuevo (channel "chromium"), no el headless shell.
+        run: npx playwright install --with-deps --no-shell chromium
+
+      # El build debe correr antes de e2e: el webServer de Playwright usa `npm run start`.
+      - name: Build
+        run: npm run build
+
+      - name: Pruebas e2e (Playwright)
+        run: npm run test:e2e
+
+      - name: Subir reporte de Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  desplegar:
+    name: Desplegar en Vercel
+    needs: verificar
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Este job reemplaza los permisos del workflow, por eso repite contents.
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      # Asi los lee la CLI de Vercel.
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # main (push o ejecucion manual) -> production; PR y otras ramas -> preview.
+      ENTORNO: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+    steps:
+      # `secrets` no se puede usar en el `if:` de un job; se detecta aqui y se salta el resto.
+      # Sin secretos (repo nuevo, PR desde fork o Dependabot) el job termina en verde.
+      - name: Comprobar secretos de Vercel
+        id: vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          faltan=""
+          for nombre in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+            if [ -z "${!nombre}" ]; then
+              faltan="$faltan $nombre"
+            fi
+          done
+          if [ -n "$faltan" ]; then
+            echo "habilitado=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Despliegue en Vercel omitido::Faltan los secretos de Actions:${faltan}. Crealos en Settings > Secrets and variables > Actions. En PR desde forks es normal: GitHub no entrega secretos."
+          else
+            echo "habilitado=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Descargar el codigo
+        if: steps.vercel.outputs.habilitado == 'true'
+        uses: actions/checkout@v4
+
+      - name: Configurar Node 22
+        if: steps.vercel.outputs.habilitado == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar la CLI de Vercel
+        if: steps.vercel.outputs.habilitado == 'true'
+        run: npm install --global vercel@latest
+
+      # Descarga la configuracion del proyecto y las variables del entorno (.vercel/).
+      - name: Vercel pull
+        if: steps.vercel.outputs.habilitado == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment="$ENTORNO" --token="$VERCEL_TOKEN"
+
+      - name: Vercel build
+        if: steps.vercel.outputs.habilitado == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          prod=""
+          if [ "$ENTORNO" = "production" ]; then prod="--prod"; fi
+          vercel build $prod --token="$VERCEL_TOKEN"
+
+      - name: Vercel deploy
+        id: deploy
+        if: steps.vercel.outputs.habilitado == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          prod=""
+          if [ "$ENTORNO" = "production" ]; then prod="--prod"; fi
+          url=$(vercel deploy --prebuilt $prod --token="$VERCEL_TOKEN")
+          if [ -z "$url" ]; then
+            echo "::error::La CLI de Vercel no devolvio la URL del despliegue."
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Despliegue en Vercel ($ENTORNO)"
+            echo ""
+            echo "$url"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Un solo comentario por PR, identificado por el marcador oculto; se actualiza en cada ejecucion.
+      - name: Comentar el preview en el PR
+        if: github.event_name == 'pull_request' && steps.vercel.outputs.habilitado == 'true'
+        uses: actions/github-script@v7
+        env:
+          URL_PREVIEW: ${{ steps.deploy.outputs.url }}
+        with:
+          script: |
+            const marcador = '<!-- calibra-preview -->';
+            const commit = context.payload.pull_request.head.sha.slice(0, 7);
+            const body = [
+              marcador,
+              '### Preview de Vercel',
+              '',
+              `URL: ${process.env.URL_PREVIEW}`,
+              '',
+              `Commit: \`${commit}\``,
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+
+            const comentarios = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number, per_page: 100,
+            });
+            const previo = comentarios.find(
+              (c) => c.user?.type === 'Bot' && c.body?.includes(marcador),
+            );
+
+            if (previo) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: previo.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }

@@ -1,0 +1,89 @@
+/* Formularios: campos y botones portados del prototipo (.btn, .campo-form). */
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  margin-block-start: var(--e3);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.etiqueta {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.entrada {
+  min-block-size: 52px;
+  padding: 12px 14px;
+  font-size: 16px; /* 16 px evita el zoom automático de iOS */
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+.entrada:focus-visible {
+  border-color: var(--primary);
+}
+
+.boton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  min-block-size: 56px;
+  padding: 10px 16px;
+  background: var(--primary);
+  color: #fff;
+  border: 1px solid var(--primary);
+  border-radius: var(--r);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: filter var(--transicion);
+}
+
+.boton:disabled {
+  background: var(--border);
+  border-color: var(--border);
+  color: var(--muted-disabled);
+  cursor: not-allowed;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .boton:not(:disabled):hover {
+    filter: brightness(0.93);
+  }
+}
+
+.botonSecundario {
+  composes: boton;
+  min-block-size: 52px;
+  background: transparent;
+  color: var(--primary);
+  font-size: 16px;
+}
+
+.enlace {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--toque-min);
+  font-size: 15px;
+  color: var(--primary);
+}
+
+.error {
+  font-size: 15px;
+  color: var(--alert-text);
+}
+
+.exito {
+  font-size: 15px;
+  color: var(--success-text);
+}

@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Tipos generados por `npm run db:tipos`
+    "src/lib/supabase/tipos.ts",
+    // Reportes de Playwright
+    "playwright-report/**",
+    "test-results/**",
   ]),
 ]);
 

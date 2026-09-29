@@ -1,0 +1,16 @@
+.aviso {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  margin-block-start: var(--e4);
+  padding: var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+.avisoTitulo {
+  font-size: 18px;
+  font-weight: 600;
+}
