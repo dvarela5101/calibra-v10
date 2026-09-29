@@ -102,6 +102,10 @@ export class Fixtures {
   private readonly materias: string[] = [];
   private readonly evaluaciones: string[] = [];
   private readonly leads: string[] = [];
+  private readonly franjas: string[] = [];
+  private readonly monitorias: string[] = [];
+  private readonly pagos: string[] = [];
+  private readonly archivos: string[] = [];
 
   constructor() {
     exigirEntorno();
@@ -236,6 +240,65 @@ export class Fixtures {
     );
   }
 
+  /** Anota un archivo del bucket de comprobantes para que `limpiar()` lo borre con la API de Storage. */
+  registrarComprobante(ruta: string): void {
+    this.archivos.push(ruta);
+  }
+
+  /**
+   * Un pago de una individual, con la cadena mínima que exige el modelo: materia, monitor
+   * certificado, franja del lunes, lead y monitoría. `comprobante` es la ruta que guarda el pago.
+   */
+  async crearPago(datos: { idAdmin: string; comprobante: string }) {
+    const { materia } = await this.crearEvaluacion();
+    const monitor = await this.crearMonitor();
+    await this.crearCertificado({ idMonitor: monitor.id, idMateria: materia.id, idAdmin: datos.idAdmin });
+    const franja = exito(
+      await this.admin
+        .from("franja")
+        .insert({ id_monitor: monitor.id, dia: 1, hora: "10:00", presencial: true, precio: 25_000, duracion_min: 60 })
+        .select()
+        .single(),
+      "insertar franja",
+    );
+    this.franjas.push(franja.id);
+    const lead = await this.crearLead();
+    // 2030-01-07 cae en lunes, el día de la franja.
+    const monitoria = exito(
+      await this.admin
+        .from("monitoria")
+        .insert({
+          id_franja: franja.id,
+          id_monitor: monitor.id,
+          id_materia: materia.id,
+          id_lead: lead.id,
+          fecha: "2030-01-07",
+          valor_total: 25_000,
+        })
+        .select()
+        .single(),
+      "insertar monitoria",
+    );
+    this.monitorias.push(monitoria.id);
+    const pago = exito(
+      await this.admin
+        .from("pago")
+        .insert({
+          id_monitoria: monitoria.id,
+          monto: 25_000,
+          nombre_pagador: "Pagador de prueba",
+          contacto: "pagador@calibra.test",
+          id_admin: datos.idAdmin,
+          comprobante: datos.comprobante,
+        })
+        .select()
+        .single(),
+      "insertar pago",
+    );
+    this.pagos.push(pago.id);
+    return { pago, monitor, materia };
+  }
+
   /**
    * Borra todo lo creado, de las filas dependientes hacia los usuarios. Los diagnósticos
    * van antes que el usuario anónimo: ver el informe (diagnostico_tiene_dueno impide
@@ -247,7 +310,23 @@ export class Fixtures {
       const { error } = await accion;
       if (error && !sinBorrar(error.message)) errores.push(`${contexto}: ${error.message}`);
     };
-    const { usuarios, materias, evaluaciones, leads } = this;
+    const { usuarios, materias, evaluaciones, leads, franjas, monitorias, pagos, archivos } = this;
+
+    // Storage no deja borrar por SQL: los comprobantes se quitan con su API y la llave secreta.
+    // Además de los anotados, se barre la carpeta de cada usuario creado: así una subida que una regresión
+    // deje pasar, o una prueba que falle antes de anotarla, no deja huérfanos en la base local.
+    const porBorrar = new Set(archivos);
+    for (const id of usuarios) {
+      const { data } = await this.admin.storage.from("comprobantes").list(id, { limit: 1000 });
+      for (const archivo of data ?? []) porBorrar.add(`${id}/${archivo.name}`);
+    }
+    if (porBorrar.size) {
+      const { error } = await this.admin.storage.from("comprobantes").remove([...porBorrar]);
+      if (error && !sinBorrar(error.message)) errores.push(`borrar comprobantes: ${error.message}`);
+    }
+    if (pagos.length) await intentar("borrar pago", this.admin.from("pago").delete().in("id", pagos));
+    if (monitorias.length) await intentar("borrar monitoria", this.admin.from("monitoria").delete().in("id", monitorias));
+    if (franjas.length) await intentar("borrar franja", this.admin.from("franja").delete().in("id", franjas));
 
     if (usuarios.length || materias.length) {
       const filtros = [
@@ -276,6 +355,7 @@ export class Fixtures {
     }
 
     usuarios.length = materias.length = evaluaciones.length = leads.length = 0;
+    franjas.length = monitorias.length = pagos.length = archivos.length = 0;
     if (errores.length) throw new Error(`La limpieza dejó datos de prueba en la base local:\n- ${errores.join("\n- ")}`);
   }
 }
