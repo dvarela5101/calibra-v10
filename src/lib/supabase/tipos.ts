@@ -72,6 +72,12 @@ isOneToOne: false
 isOneToOne: true
       referencedRelation: "monitoria"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "desembolso_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "monitoria_plazos"
+      referencedColumns: ["id_monitoria"]
     }
                   ]
                 },"diagnostico": {
@@ -268,6 +274,12 @@ isOneToOne: false
 isOneToOne: true
       referencedRelation: "monitoria"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "monitoria_grupal_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "monitoria_plazos"
+      referencedColumns: ["id_monitoria"]
     }
                   ]
                 },"pago": {
@@ -293,6 +305,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "monitoria"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pago_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: false
+      referencedRelation: "monitoria_plazos"
+      referencedColumns: ["id_monitoria"]
     }
                   ]
                 },"perfil_monitor": {
@@ -362,6 +380,12 @@ isOneToOne: false
 isOneToOne: true
       referencedRelation: "monitoria"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reporte_inasistencia_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "monitoria_plazos"
+      referencedColumns: ["id_monitoria"]
     }
                   ]
                 },"resena": {
@@ -386,11 +410,68 @@ isOneToOne: true
                 }
           }
           Views: {
-            [_ in never]: never
+            "monitoria_plazos": {
+                  Row: {
+                    "cancelable_hasta": string | null,"desembolsable_desde": string | null,"es_grupal": boolean | null,"fecha_limite_diferencia": string | null,"fecha_limite_pago": string | null,"fin_programado": string | null,"id_monitoria": string | null,"inicio": string | null,"reporte_inasistencia_hasta": string | null,"reserva_hasta": string | null,"ventana_resena_hasta": string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                }
           }
           Functions: {
-            "mi_rol":
+            "cancelable_hasta":
+{ Args: { "p_es_grupal": boolean,"p_inicio": string }; Returns: string
+                           },
+"comision":
+{ Args: { "p_monto_bruto": number }; Returns: number
+                           },
+"cumple_antelacion":
+{ Args: { "p_ahora": string,"p_es_grupal": boolean,"p_inicio": string }; Returns: boolean
+                           },
+"dentro_de_plazo":
+{ Args: { "p_ahora": string,"p_limite": string }; Returns: boolean
+                           },
+"desembolsable_desde":
+{ Args: { "p_fin_programado": string }; Returns: string
+                           },
+"fecha_limite_diferencia":
+{ Args: { "p_inicio": string }; Returns: string
+                           },
+"fecha_limite_pago":
+{ Args: { "p_inicio": string }; Returns: string
+                           },
+"fin_programado":
+{ Args: { "p_duracion_min": number,"p_inicio": string }; Returns: string
+                           },
+"inicio_sesion":
+{ Args: { "p_fecha": string,"p_hora": string }; Returns: string
+                           },
+"mi_rol":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"monto_neto":
+{ Args: { "p_monto_bruto": number }; Returns: number
+                           },
+"parametros_negocio":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "antelacion_grupal_min": number,"antelacion_individual_min": number,"cancelacion_grupal_min": number,"cancelacion_individual_min": number,"comision_porcentaje": number,"comision_tope": number,"desembolso_min": number,"diferencia_min": number,"pago_integrantes_min": number,"reporte_inasistencia_min": number,"resena_grupal_min": number,"reserva_min": number,"revision_min": number
+            }[]
+                           },
+"plazo_alcanzado":
+{ Args: { "p_ahora": string,"p_desde": string }; Returns: boolean
+                           },
+"reporte_inasistencia_hasta":
+{ Args: { "p_fin_programado": string }; Returns: string
+                           },
+"reserva_hasta":
+{ Args: { "p_fecha_creacion": string }; Returns: string
+                           },
+"revision_hasta":
+{ Args: { "p_fecha_asignacion": string }; Returns: string
+                           },
+"ventana_resena_hasta":
+{ Args: { "p_fecha_finalizacion": string }; Returns: string
                            }
           }
           Enums: {
