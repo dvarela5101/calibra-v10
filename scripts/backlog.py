@@ -16,6 +16,7 @@ Uso:
   python scripts/backlog.py block HU-003 -m "motivo"
   python scripts/backlog.py ready HU-003    # Backlog -> Lista
   python scripts/backlog.py log HU-003 "mensaje"
+  python scripts/backlog.py edit HU-003 [-t "Titulo"] [-p P1] [-e L] [-d HU-001,HU-002]
   python scripts/backlog.py index           # regenera BACKLOG.md
 """
 import argparse
@@ -173,6 +174,37 @@ def cmd_new(a):
     print(f"Edita backlog/{nuevo}.md para completar historia y criterios, luego: backlog.py ready {nuevo}")
 
 
+def cmd_edit(a):
+    """Cambia titulo, prioridad, talla o dependencias y lo deja en el registro."""
+    p, meta, body = cargar(a.id)
+    cambios = []
+    if a.titulo is not None and a.titulo != meta.get("titulo"):
+        cambios.append(f'titulo: "{meta.get("titulo")}" → "{a.titulo}"')
+        meta["titulo"] = a.titulo
+    for campo, valor in (("prioridad", a.prioridad), ("talla", a.talla)):
+        if valor is not None and valor != meta.get(campo):
+            cambios.append(f"{campo}: {meta.get(campo)} → {valor}")
+            meta[campo] = valor
+    if a.depende is not None:
+        deps = [d.strip().upper() for d in a.depende.split(",") if d.strip()]
+        for d in deps:
+            if d == meta["id"]:
+                sys.exit(f"{d} no puede depender de si misma")
+            if not (HU_DIR / f"{d}.md").exists():
+                sys.exit(f"La dependencia {d} no existe")
+        anteriores = meta.get("depende_de") or []
+        if deps != anteriores:
+            cambios.append(f"depende de: [{', '.join(anteriores)}] → [{', '.join(deps)}]")
+            meta["depende_de"] = deps
+    if not cambios:
+        sys.exit("Sin cambios")
+    meta["actualizada"] = ahora()
+    body = agregar_log(body, "Editada: " + "; ".join(cambios))
+    dump(p, meta, body)
+    reindexar()
+    print(f"{meta['id']}: " + "; ".join(cambios))
+
+
 def cmd_list(a):
     hus = todas()
     filas = []
@@ -280,7 +312,18 @@ def main():
     s.add_argument("mensaje")
     s.set_defaults(fn=cmd_log)
 
+    s = sp.add_parser("edit")
+    s.add_argument("id")
+    s.add_argument("-t", "--titulo")
+    s.add_argument("-p", "--prioridad", choices=PRIORIDADES)
+    s.add_argument("-e", "--talla", choices=TALLAS)
+    s.add_argument("-d", "--depende", help="lista completa, separada por comas; vacia para quitar todas")
+    s.set_defaults(fn=cmd_edit)
+
     a = ap.parse_args()
+    # En consolas de Windows (cp1252) "→" y otros caracteres no se pueden imprimir.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="replace")
     a.fn(a)
 
 

@@ -34,6 +34,7 @@ scripts/backlog.py     CLI para crear, listar y mover HUs
 | `take` | Toma la siguiente elegible y la pasa a `En progreso` |
 | `ready / start / review / done / block HU-001 [-m msg]` | Cambia el estado y deja registro |
 | `log HU-001 "mensaje"` | Agrega una linea al registro de la HU |
+| `edit HU-001 [-t titulo] [-p P1] [-e L] [-d HU-002,HU-003]` | Cambia titulo, prioridad, talla o dependencias y deja registro |
 | `index` | Regenera `BACKLOG.md` |
 
 ## Regla de "siguiente"

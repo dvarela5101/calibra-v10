@@ -257,7 +257,7 @@ Estas preguntas aparecen como pendientes en HUs del corte 1. Sin ellas, esas HUs
 | P-13 | Retención de datos | [HU-008](backlog/HU-008.md) | Definir los plazos en la política de datos (Ley 1581). |
 | P-14 | Base de la comisión y quién la asume | [HU-028](backlog/HU-028.md) | Confirmar que sale del monitor y se calcula sobre el total (RN-82). |
 | P-17 | Stack | [HU-001](backlog/HU-001.md) | Next.js con TypeScript en Vercel, y Supabase para Postgres, Auth, Storage, Realtime y tareas programadas. |
-| P-18 | Evaluación, temas y preguntas | [HU-002](backlog/HU-002.md), [HU-005](backlog/HU-005.md), [HU-009](backlog/HU-009.md) | Incorporar el banco del prototipo: Tema (hoy subtema) con sus preguntas, y una relación Evaluación–Tema de muchos a muchos. Una evaluación acumulativa incluye los temas de las anteriores de la misma materia. |
+| P-18 | Evaluación, temas y preguntas | [HU-002](backlog/HU-002.md), [HU-005](backlog/HU-005.md), [HU-009](backlog/HU-009.md) | **Resuelta el 29-sep-2026** como se recomendaba, dentro del banco por habilidades ([diseño](docs/diseno/2026-09-29-banco-por-habilidades.md)): Tema (hoy subtema) con sus habilidades y preguntas, y una relación Evaluación–Tema de muchos a muchos. Una evaluación acumulativa incluye los temas de las anteriores de la misma materia. |
 | P-19 | Evaluación presencial y prueba de certificación | [HU-013](backlog/HU-013.md), [HU-014](backlog/HU-014.md) | Mantener la evaluación presencial como requisito y dejar constancia en el certificado. La prueba en la app puede quedar como filtro previo opcional. |
 | P-20 | Alta de cuentas de monitor | [HU-013](backlog/HU-013.md) | Invitación del admin con un enlace de registro de un solo uso, enviada después de la evaluación presencial. |
 | P-21 | Nombre del Lead | [HU-010](backlog/HU-010.md) | Pedir el nombre en el mismo formulario del contacto. |
@@ -276,6 +276,8 @@ Estas preguntas aparecen como pendientes en HUs del corte 1. Sin ellas, esas HUs
 | P-40 | Bordes de los plazos | [HU-003](backlog/HU-003.md) | Inclusivos: con 12 h exactas todavía se puede cancelar y con 3 h exactas se puede agendar. |
 
 Si el equipo acepta en bloque las recomendaciones de las tablas anteriores, casi todo el corte 1 se puede dar por refinado en una sola reunión.
+
+**Cambio de alcance del 29-sep-2026.** El diagnóstico pasa a medir por habilidad (knowledge components, al estilo de Khan Academy) con una prueba adaptativa. Cambian RN-14, porque `resultadoPorTema` pasa a ser por habilidad, y RN-17, porque el hub muestra niveles por habilidad en lugar del promedio por tema. La IA escribe preguntas antes del examen y una persona las revisa; el diagnóstico con IA en vivo sigue fuera (P-16). Detalle en el [diseño](docs/diseno/2026-09-29-banco-por-habilidades.md) y en [HU-005](backlog/HU-005.md), [HU-060](backlog/HU-060.md) y [HU-061](backlog/HU-061.md).
 
 ## 5. Cortes propuestos
 
