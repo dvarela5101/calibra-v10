@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-09-29 01:50. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-09-29 01:58. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -57,7 +57,7 @@ _Generado automaticamente: 2026-09-29 01:50. No editar a mano; usa `scripts/back
 | [HU-059](backlog/HU-059.md) | [Técnica] Endurecer los comprobantes: contenido real, huérfanos y cuota por sesión | Backlog | P2 | S | HU-007 |
 | [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | Backlog | P3 | S | HU-010 |
 | [HU-006](backlog/HU-006.md) | [Técnica] Correo transaccional con plantillas | Lista | P0 | M | HU-001 |
-| [HU-012](backlog/HU-012.md) | [Admin] Iniciar sesión y ver mi bandeja de trabajo | Lista | P0 | M | HU-004 |
+| [HU-012](backlog/HU-012.md) | [Admin] Iniciar sesión y ver mi bandeja de trabajo | En progreso | P0 | M | HU-004 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | En revision | P0 | M | HU-002 |
 | [HU-007](backlog/HU-007.md) | [Técnica] Almacenamiento privado de comprobantes de pago | En revision | P0 | S | HU-002, HU-004 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
