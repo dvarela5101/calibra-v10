@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-09-29 18:19. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-09-29 18:36. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -40,7 +40,6 @@ _Generado automaticamente: 2026-09-29 18:19. No editar a mano; usa `scripts/back
 | [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | Backlog | P2 | S | HU-004 |
 | [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | Backlog | P3 | S | HU-010 |
 | [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | Lista | P0 | M | HU-009, HU-008 |
-| [HU-013](backlog/HU-013.md) | [Monitor] Crear mi cuenta de monitor e iniciar sesión | Lista | P0 | M | HU-004 |
 | [HU-014](backlog/HU-014.md) | [Admin] Emitir certificados de monitor por materia | Lista | P0 | S | HU-012, HU-013, HU-005 |
 | [HU-015](backlog/HU-015.md) | [Monitor] Abrir, editar y cerrar mis franjas semanales | Lista | P0 | M | HU-013, HU-003 |
 | [HU-016](backlog/HU-016.md) | [Lead] Ver los monitores certificados de una materia y sus fechas libres | Lista | P0 | M | HU-014, HU-015 |
@@ -60,6 +59,7 @@ _Generado automaticamente: 2026-09-29 18:19. No editar a mano; usa `scripts/back
 | [HU-064](backlog/HU-064.md) | [Técnica] Ajustes de la revisión de HU-006 y HU-012 | Lista | P1 | S | HU-006, HU-012 |
 | [HU-065](backlog/HU-065.md) | [Sistema] Reintentar los correos que fallaron | Lista | P1 | S | HU-006 |
 | [HU-059](backlog/HU-059.md) | [Técnica] Endurecer los comprobantes: contenido real, huérfanos y cuota por sesión | Lista | P2 | S | HU-007 |
+| [HU-013](backlog/HU-013.md) | [Monitor] Crear mi cuenta de monitor e iniciar sesión | En progreso | P0 | M | HU-004 |
 | [HU-063](backlog/HU-063.md) | [Técnica] Ajustes de la revisión de HU-003 y HU-007 | En progreso | P1 | S | HU-003, HU-007 |
 | [HU-008](backlog/HU-008.md) | [Visitante] Leer el aviso de privacidad y autorizar el tratamiento de mis datos | En revision | P0 | S | HU-001 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
