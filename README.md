@@ -68,6 +68,7 @@ La plantilla es `.env.example`. Cópiala como `.env.local` y completa los valore
 
 - `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: públicas por diseño, llegan al navegador.
 - `SUPABASE_SECRET_KEY`: solo servidor. Nunca con prefijo `NEXT_PUBLIC_`.
+- `RESEND_API_KEY` y `CORREO_REMITENTE`: solo servidor, para el correo transaccional (ver [Correo transaccional](#correo-transaccional)). `SITIO_URL` es la dirección pública para los enlaces de los correos. En local no hacen falta: el correo sale por Mailpit.
 
 ## Base de datos
 
@@ -111,6 +112,31 @@ Los comprobantes van en el bucket privado `comprobantes` de Supabase Storage (HU
 - Leen el dueño de la carpeta y los admins. Desde la app nadie sobrescribe ni borra. Un admin abre un comprobante con `enlaceDeComprobanteDePago()`, que pide un enlace firmado de 60 segundos cada vez que se abre el pago.
 - Quien cree un pago desde el servidor con la llave secreta debe comprobar con `rutaEsDelUsuario()` que la ruta sea de la carpeta del pagador antes de guardarla en `pago.comprobante`. Si no, alguien podría apuntar su pago al comprobante de otra persona.
 - Los límites están en la migración `*_comprobantes_privados.sql` y se repiten en `src/lib/comprobantes/reglas.ts` para dar mensajes claros antes de subir. `integracion/comprobantes.test.ts` comprueba que coincidan.
+
+## Correo transaccional
+
+`enviarCorreoDesdeServidor()` (`src/lib/correo/servidor.ts`, HU-006) manda los correos de la sección 8 de las reglas de negocio, en español, con versión HTML y texto plano. Las plantillas son funciones puras en `src/lib/correo/plantillas.ts`:
+
+| Plantilla | Evento | Destinatario |
+| --- | --- | --- |
+| `recuperacion_diagnostico` | Diagnóstico completado: enlace con token para recuperar los resultados | Lead |
+| `resena_individual` | Monitoría individual realizada: enlace a la reseña, sin límite de tiempo | Lead |
+| `solicitud_llave_reembolso` | Reembolso creado: se pide la llave para devolver el dinero | Pagador |
+| `pago_rechazado_individual` | Pago rechazado en una individual: la cita se cancela | Pagador |
+| `pago_rechazado_grupal` | Pago rechazado en una grupal: se anula ese cupo | Pagador |
+| `escalamiento_pago` | Pago sin revisar tras el plazo: pasa al siguiente admin | Admin |
+
+Cada llamada lleva la plantilla, sus datos, el destinatario y una `entidad`, que es lo que motiva el correo (el id del reembolso o del diagnóstico). Plantilla más entidad forman la clave del correo. La entidad debe cambiar cada vez que el mismo evento tenga que volver a avisar: el escalamiento de un pago vuelve al primer admin al terminar la lista (RN-42), así que ahí la entidad es `pago:admin:n`, con el número de escalamiento, y no `pago:admin`, que la segunda vuelta descartaría como ya enviado. Solo admite ASCII imprimible, porque viaja como `Idempotency-Key`.
+
+- La clave es única en `correo_envio`, el registro de envíos (destinatario, plantilla, fecha, resultado; sin el cuerpo). Si el correo ya salió, otra llamada con la misma clave no lo manda otra vez.
+- Un fallo pasajero (red, 5xx, límite de ritmo) se reintenta hasta tres veces con espera creciente. Uno definitivo (llave inválida, remitente sin verificar) no. Si no sale, queda `fallido` con su error y la siguiente llamada con la misma clave lo reintenta sobre la misma fila. Como el registro no guarda el cuerpo, reintentar es volver a llamar con los mismos datos.
+- La clave también viaja como `Idempotency-Key` a Resend, por si el envío llegó pero la respuesta no. Resend la recuerda 24 horas y rechaza reusarla con otro contenido, así que una plantilla no puede leer el reloj.
+- Un contacto que no es un correo (un teléfono) no se envía: WhatsApp y SMS quedan fuera (P-22).
+- La función no lanza por un fallo del proveedor ni del registro: devuelve `ok: false` con el motivo, para que un correo caído no tumbe el flujo que lo pidió.
+
+En producción el proveedor es Resend (`RESEND_API_KEY` y `CORREO_REMITENTE`, ver `.env.example`). En local, sin esas variables, el correo sale por el Mailpit del Supabase local y se ve en http://127.0.0.1:54324. Los enlaces de los correos se arman con `urlDelSitio()` a partir de `SITIO_URL`. La llave solo la lee código de servidor: `pruebas/correo-sin-llaves.test.ts` y `e2e/correo.spec.ts` comprueban que no llegue al navegador.
+
+Antes de mandar a personas reales hay que verificar un dominio en Resend. Mientras no esté verificado, Resend solo entrega a la cuenta dueña de la llave.
 
 ## CI y despliegue
 
