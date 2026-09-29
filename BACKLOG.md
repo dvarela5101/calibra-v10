@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-09-29 00:44. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-09-29 01:12. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -58,7 +58,7 @@ _Generado automaticamente: 2026-09-29 00:44. No editar a mano; usa `scripts/back
 | [HU-006](backlog/HU-006.md) | [Técnica] Correo transaccional con plantillas | Lista | P0 | M | HU-001 |
 | [HU-007](backlog/HU-007.md) | [Técnica] Almacenamiento privado de comprobantes de pago | Lista | P0 | S | HU-002, HU-004 |
 | [HU-012](backlog/HU-012.md) | [Admin] Iniciar sesión y ver mi bandeja de trabajo | Lista | P0 | M | HU-004 |
-| [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | En progreso | P0 | M | HU-002 |
+| [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | En revision | P0 | M | HU-002 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-004](backlog/HU-004.md) | [Técnica] Autenticación: sesión anónima persistente, cuentas y roles | Hecha | P0 | L | HU-002 |
