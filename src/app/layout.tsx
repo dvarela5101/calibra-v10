@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { PieDePagina } from "@/components/PieDePagina";
 import { IDIOMA } from "@/config/regional";
 import "@/styles/tokens.css";
 import "./globals.css";
@@ -28,7 +29,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang={IDIOMA} className={inter.variable}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <PieDePagina />
+      </body>
     </html>
   );
 }

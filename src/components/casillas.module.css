@@ -1,0 +1,42 @@
+/* Casillas de autorización del formulario de contacto (HU-008). */
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  border: 0;
+}
+
+.leyenda {
+  margin-block-end: var(--e2);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.casilla {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e3);
+  min-block-size: var(--toque-min);
+}
+
+/* El área táctil de la casilla llega a 44 px con la etiqueta, que también la marca. */
+.control {
+  flex: none;
+  inline-size: 24px;
+  block-size: 24px;
+  margin-block-start: 2px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.texto {
+  flex: 1;
+  min-block-size: var(--toque-min);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.enlace {
+  color: var(--primary);
+}

@@ -1,0 +1,18 @@
+/* Pie compartido por todas las páginas. */
+
+.pie {
+  display: flex;
+  justify-content: center;
+  max-inline-size: var(--col);
+  margin-inline: auto;
+  padding: var(--e4) max(var(--pad-x), env(safe-area-inset-left)) max(var(--e4), env(safe-area-inset-bottom));
+  border-block-start: 1px solid var(--border);
+}
+
+.enlace {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--toque-min);
+  font-size: 15px;
+  color: var(--muted);
+}
