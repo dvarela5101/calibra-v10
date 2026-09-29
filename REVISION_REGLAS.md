@@ -279,6 +279,38 @@ Si el equipo acepta en bloque las recomendaciones de las tablas anteriores, casi
 
 **Cambio de alcance del 29-sep-2026.** El diagnóstico pasa a medir por habilidad (knowledge components, al estilo de Khan Academy) con una prueba adaptativa. Cambian RN-14, porque `resultadoPorTema` pasa a ser por habilidad, y RN-17, porque el hub muestra niveles por habilidad en lugar del promedio por tema. La IA escribe preguntas antes del examen y una persona las revisa; el diagnóstico con IA en vivo sigue fuera (P-16). Detalle en el [diseño](docs/diseno/2026-09-29-banco-por-habilidades.md) y en [HU-005](backlog/HU-005.md), [HU-060](backlog/HU-060.md) y [HU-061](backlog/HU-061.md).
 
+### Decisiones del 29-sep-2026
+
+La persona respondió la hoja de decisiones del corte 1. Donde dice "como se recomendaba", vale la recomendación de las tablas anteriores. Las HUs afectadas llevan la decisión en su contexto.
+
+| Pendiente | Decisión | HUs |
+|---|---|---|
+| P-04 | Como se recomendaba: enlace con token en el correo de confirmación. | [HU-019](backlog/HU-019.md), [HU-029](backlog/HU-029.md) |
+| P-05 | Como se recomendaba: la finaliza el monitor; si no, recordatorio y cierre automático (24 h después del fin programado, propuesta a confirmar). | [HU-023](backlog/HU-023.md) |
+| P-07 | Como se recomendaba: el reembolso se crea cuando el pago queda aprobado. | [HU-024](backlog/HU-024.md) |
+| P-10 | 7 días para entregar la llave, recordatorio a los 3; si vence, el caso se cierra y el admin puede reabrirlo. | [HU-025](backlog/HU-025.md) |
+| P-13 | Sesiones anónimas sin contacto: 90 días sin actividad. Leads: hasta que retiren la autorización o 24 meses sin actividad. Diagnósticos: siguen a su dueño. Comprobantes: 5 años. A validar con asesoría. | [HU-008](backlog/HU-008.md), [HU-056](backlog/HU-056.md) |
+| P-14 | La persona paga el total que publica el monitor, el dinero llega a Calibra y al monitor se le desembolsa lo que llegó menos la comisión: 10 % con tope de 15.000 (RN-81 se mantiene). | [HU-028](backlog/HU-028.md) |
+| P-19 | La evaluación presencial es el requisito, con constancia de su fecha en el certificado. No hay prueba en la app para monitores; quien quiere ser monitor deja nombre, teléfono y correo para que lo contacten. | [HU-013](backlog/HU-013.md), [HU-014](backlog/HU-014.md), [HU-062](backlog/HU-062.md) |
+| P-20 | Como se recomendaba: invitación del admin con enlace de un solo uso, después de la evaluación presencial. | [HU-013](backlog/HU-013.md) |
+| P-21, P-22, P-23, P-34 | Como se recomendaba. | [HU-010](backlog/HU-010.md), [HU-019](backlog/HU-019.md), [HU-025](backlog/HU-025.md) |
+| P-24 | Como se recomendaba, y además el monitor ve el estado del pago de cada monitoría (sin pagar, en revisión, aprobado o rechazado). | [HU-020](backlog/HU-020.md), [HU-021](backlog/HU-021.md) |
+| P-29 | Como se recomendaba: bruto, comisión y neto al ejecutar el desembolso. | [HU-028](backlog/HU-028.md) |
+| P-30, P-31 | Como se recomendaba. | [HU-015](backlog/HU-015.md) |
+| P-35 | Como se recomendaba: el diagnóstico más reciente de la misma materia. | [HU-017](backlog/HU-017.md) |
+| P-36 | El monto del pago es el precio que publica el monitor en su franja; el pagador no lo escribe. | [HU-018](backlog/HU-018.md) |
+| P-37 | Como se recomendaba: el monitor ve nombre y diagnóstico, no el contacto. | [HU-021](backlog/HU-021.md) |
+| R-1 | El responsable del tratamiento de datos es Calibra. | [HU-008](backlog/HU-008.md) |
+
+Surgidas de la revisión de HU-003 y HU-007, todas aceptadas y llevadas a [HU-063](backlog/HU-063.md) salvo N-4 y N-5:
+
+- **N-1:** la comisión se redondea al peso más cercano.
+- **N-2:** la comisión solo la calcula el servidor.
+- **N-3:** el límite por comprobante sube a 10 MB y el enlace firmado sigue en 60 s.
+- **N-4:** un comprobante sin pago se borra a las 24 h, con un máximo de 5 subidas por sesión cada 24 h ([HU-059](backlog/HU-059.md)).
+- **N-5:** el CAPTCHA es Cloudflare Turnstile ([HU-058](backlog/HU-058.md)).
+- **N-6:** el desembolso se ejecuta solo después de que vence la ventana de reporte.
+
 ## 5. Cortes propuestos
 
 | Corte | Prioridad | HUs | Tallas | Qué cubre |
