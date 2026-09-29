@@ -1,0 +1,136 @@
+/* Bandeja del admin (HU-012). Colores solo de tokens.css; ningún texto por debajo de 14 px. */
+
+.bandeja {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+  margin-block-start: var(--e3);
+}
+
+/* Contadores: dos por fila y los cuatro en una fila solo cuando el contenido mide 684 px o más (desde 1200 px de
+   pantalla). Con menos, cada tarjeta queda tan angosta que "Desembolsos" se parte a mitad de palabra. */
+.resumen {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--e3);
+  list-style: none;
+}
+
+@media (min-width: 1200px) {
+  .resumen {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.tarjetaResumen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--e1);
+  min-block-size: 76px;
+  padding: var(--e3);
+  color: var(--text);
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+.cifra {
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--primary);
+}
+
+.rotulo {
+  font-size: 15px;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tarjetaResumen:hover {
+    border-color: var(--primary);
+  }
+}
+
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  /* Deja espacio al anclar desde un contador. */
+  scroll-margin-block-start: var(--e4);
+}
+
+.tituloSeccion {
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.subtitulo {
+  margin-block-start: var(--e2);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.cuenta {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.ayuda,
+.vacio {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  list-style: none;
+}
+
+.fila {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  min-block-size: var(--toque-min);
+  padding: var(--e3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+.nombre {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.meta {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* El plazo vencido se distingue por la palabra "Vencido" y por el color: nunca solo por el color. */
+.vencido {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--alert-text);
+}
+
+.error {
+  margin-block-start: var(--e3);
+  padding: var(--e3);
+  font-size: 16px;
+  color: var(--alert-text);
+  background: var(--surface);
+  border: 1px solid var(--alert);
+  border-radius: var(--r);
+}

@@ -105,6 +105,9 @@ export class Fixtures {
   private readonly franjas: string[] = [];
   private readonly monitorias: string[] = [];
   private readonly pagos: string[] = [];
+  private readonly reembolsos: string[] = [];
+  private readonly reportes: string[] = [];
+  private readonly desembolsos: string[] = [];
   private readonly archivos: string[] = [];
 
   constructor() {
@@ -246,13 +249,13 @@ export class Fixtures {
   }
 
   /**
-   * Un pago de una individual, con la cadena mínima que exige el modelo: materia, monitor
-   * certificado, franja del lunes, lead y monitoría. `comprobante` es la ruta que guarda el pago.
+   * Lo que hace falta antes de una monitoría: materia, monitor certificado por `idAdmin`, franja del
+   * lunes a las 10:00 (60 min) y un lead. Una monitoría por fecha; todas las fechas deben ser lunes.
    */
-  async crearPago(datos: { idAdmin: string; comprobante: string }) {
+  async crearContextoDeMonitoria(idAdmin: string) {
     const { materia } = await this.crearEvaluacion();
     const monitor = await this.crearMonitor();
-    await this.crearCertificado({ idMonitor: monitor.id, idMateria: materia.id, idAdmin: datos.idAdmin });
+    await this.crearCertificado({ idMonitor: monitor.id, idMateria: materia.id, idAdmin });
     const franja = exito(
       await this.admin
         .from("franja")
@@ -263,40 +266,147 @@ export class Fixtures {
     );
     this.franjas.push(franja.id);
     const lead = await this.crearLead();
-    // 2030-01-07 cae en lunes, el día de la franja.
+    return { materia, monitor, franja, lead };
+  }
+
+  /** Una monitoría de ese contexto en un lunes. `realizada` exige fecha de finalización. */
+  async crearMonitoria(
+    contexto: Awaited<ReturnType<Fixtures["crearContextoDeMonitoria"]>>,
+    datos: { fecha: string; estado?: "pendiente_pago" | "confirmada" | "realizada"; fechaFinalizacion?: string },
+  ) {
     const monitoria = exito(
       await this.admin
         .from("monitoria")
         .insert({
-          id_franja: franja.id,
-          id_monitor: monitor.id,
-          id_materia: materia.id,
-          id_lead: lead.id,
-          fecha: "2030-01-07",
+          id_franja: contexto.franja.id,
+          id_monitor: contexto.monitor.id,
+          id_materia: contexto.materia.id,
+          id_lead: contexto.lead.id,
+          fecha: datos.fecha,
           valor_total: 25_000,
+          estado: datos.estado ?? "confirmada",
+          fecha_finalizacion: datos.fechaFinalizacion ?? null,
         })
         .select()
         .single(),
       "insertar monitoria",
     );
     this.monitorias.push(monitoria.id);
+    return monitoria;
+  }
+
+  /** Un pago de una monitoría. Si no es `en_revision`, se le pone la fecha de revisión que la base exige. */
+  async crearPagoDe(
+    idMonitoria: string,
+    datos: {
+      idAdmin: string;
+      comprobante?: string;
+      estado?: "en_revision" | "aprobado" | "rechazado";
+      fechaAsignacion?: string;
+      nombrePagador?: string;
+      monto?: number;
+    },
+  ) {
+    const estado = datos.estado ?? "en_revision";
     const pago = exito(
       await this.admin
         .from("pago")
         .insert({
-          id_monitoria: monitoria.id,
-          monto: 25_000,
-          nombre_pagador: "Pagador de prueba",
+          id_monitoria: idMonitoria,
+          monto: datos.monto ?? 25_000,
+          nombre_pagador: datos.nombrePagador ?? "Pagador de prueba",
           contacto: "pagador@calibra.test",
           id_admin: datos.idAdmin,
-          comprobante: datos.comprobante,
+          comprobante: datos.comprobante ?? `${randomUUID()}/${randomUUID()}.png`,
+          estado,
+          fecha_asignacion: datos.fechaAsignacion ?? new Date().toISOString(),
+          fecha_revision: estado === "en_revision" ? null : new Date().toISOString(),
         })
         .select()
         .single(),
       "insertar pago",
     );
     this.pagos.push(pago.id);
-    return { pago, monitor, materia };
+    return pago;
+  }
+
+  /** Un reembolso de un pago, con lo que cada estado exige (llave, referencia y fecha). */
+  async crearReembolso(datos: { idPago: string; idAdmin: string; estado: "esperando_llave" | "pendiente" | "reembolsado" }) {
+    const reembolso = exito(
+      await this.admin
+        .from("reembolso")
+        .insert({
+          id_pago: datos.idPago,
+          id_admin: datos.idAdmin,
+          monto: 25_000,
+          motivo: "Cancelación de prueba",
+          estado: datos.estado,
+          llave_destino: datos.estado === "esperando_llave" ? null : "llave-de-prueba",
+          fecha_reembolso: datos.estado === "reembolsado" ? new Date().toISOString() : null,
+          referencia_transferencia: datos.estado === "reembolsado" ? "REF-PRUEBA" : null,
+        })
+        .select()
+        .single(),
+      "insertar reembolso",
+    );
+    this.reembolsos.push(reembolso.id);
+    return reembolso;
+  }
+
+  /** Un reporte de inasistencia. Decidido (aceptado o rechazado) lleva fecha de decisión. */
+  async crearReporte(datos: { idMonitoria: string; idAdmin: string; estado: "en_revision" | "aceptado" | "rechazado" }) {
+    const reporte = exito(
+      await this.admin
+        .from("reporte_inasistencia")
+        .insert({
+          id_monitoria: datos.idMonitoria,
+          id_admin: datos.idAdmin,
+          estado: datos.estado,
+          fecha_decision: datos.estado === "en_revision" ? null : new Date().toISOString(),
+        })
+        .select()
+        .single(),
+      "insertar reporte",
+    );
+    this.reportes.push(reporte.id);
+    return reporte;
+  }
+
+  /** Un desembolso de una monitoría (bruto 25.000, comisión 2.500, neto 22.500). */
+  async crearDesembolso(datos: { idMonitoria: string; estado?: "pendiente" | "desembolsado" | "anulado"; idAdmin?: string }) {
+    const estado = datos.estado ?? "pendiente";
+    const desembolso = exito(
+      await this.admin
+        .from("desembolso")
+        .insert({
+          id_monitoria: datos.idMonitoria,
+          monto_bruto: 25_000,
+          comision: 2_500,
+          monto_neto: 22_500,
+          llave_destino: "llave-de-prueba",
+          estado,
+          id_admin: estado === "desembolsado" ? (datos.idAdmin ?? null) : null,
+          fecha_desembolso: estado === "desembolsado" ? new Date().toISOString() : null,
+          referencia_transferencia: estado === "desembolsado" ? "REF-PRUEBA" : null,
+        })
+        .select()
+        .single(),
+      "insertar desembolso",
+    );
+    this.desembolsos.push(desembolso.id);
+    return desembolso;
+  }
+
+  /**
+   * Un pago de una individual, con la cadena mínima que exige el modelo. `comprobante` es la ruta
+   * que guarda el pago.
+   */
+  async crearPago(datos: { idAdmin: string; comprobante: string }) {
+    const contexto = await this.crearContextoDeMonitoria(datos.idAdmin);
+    // 2030-01-07 cae en lunes, el día de la franja.
+    const monitoria = await this.crearMonitoria(contexto, { fecha: "2030-01-07" });
+    const pago = await this.crearPagoDe(monitoria.id, { idAdmin: datos.idAdmin, comprobante: datos.comprobante });
+    return { pago, monitor: contexto.monitor, materia: contexto.materia };
   }
 
   /**
@@ -310,7 +420,7 @@ export class Fixtures {
       const { error } = await accion;
       if (error && !sinBorrar(error.message)) errores.push(`${contexto}: ${error.message}`);
     };
-    const { usuarios, materias, evaluaciones, leads, franjas, monitorias, pagos, archivos } = this;
+    const { usuarios, materias, evaluaciones, leads, franjas, monitorias, pagos, archivos, reembolsos, reportes, desembolsos } = this;
 
     // Storage no deja borrar por SQL: los comprobantes se quitan con su API y la llave secreta.
     // Además de los anotados, se barre la carpeta de cada usuario creado: así una subida que una regresión
@@ -324,6 +434,9 @@ export class Fixtures {
       const { error } = await this.admin.storage.from("comprobantes").remove([...porBorrar]);
       if (error && !sinBorrar(error.message)) errores.push(`borrar comprobantes: ${error.message}`);
     }
+    if (reembolsos.length) await intentar("borrar reembolso", this.admin.from("reembolso").delete().in("id", reembolsos));
+    if (reportes.length) await intentar("borrar reporte", this.admin.from("reporte_inasistencia").delete().in("id", reportes));
+    if (desembolsos.length) await intentar("borrar desembolso", this.admin.from("desembolso").delete().in("id", desembolsos));
     if (pagos.length) await intentar("borrar pago", this.admin.from("pago").delete().in("id", pagos));
     if (monitorias.length) await intentar("borrar monitoria", this.admin.from("monitoria").delete().in("id", monitorias));
     if (franjas.length) await intentar("borrar franja", this.admin.from("franja").delete().in("id", franjas));
@@ -356,6 +469,7 @@ export class Fixtures {
 
     usuarios.length = materias.length = evaluaciones.length = leads.length = 0;
     franjas.length = monitorias.length = pagos.length = archivos.length = 0;
+    reembolsos.length = reportes.length = desembolsos.length = 0;
     if (errores.length) throw new Error(`La limpieza dejó datos de prueba en la base local:\n- ${errores.join("\n- ")}`);
   }
 }

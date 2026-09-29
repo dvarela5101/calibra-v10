@@ -410,7 +410,26 @@ isOneToOne: true
                 }
           }
           Views: {
-            "monitoria_plazos": {
+            "desembolsos_ejecutables": {
+                  Row: {
+                    "desembolsable_desde": string | null,"fecha_generacion": string | null,"fecha_sesion": string | null,"id": string | null,"id_monitoria": string | null,"monto_neto": number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "desembolso_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "monitoria"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "desembolso_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "monitoria_plazos"
+      referencedColumns: ["id_monitoria"]
+    }
+                  ]
+                },"monitoria_plazos": {
                   Row: {
                     "cancelable_hasta": string | null,"desembolsable_desde": string | null,"es_grupal": boolean | null,"fecha_limite_diferencia": string | null,"fecha_limite_pago": string | null,"fin_programado": string | null,"id_monitoria": string | null,"inicio": string | null,"reporte_inasistencia_hasta": string | null,"reserva_hasta": string | null,"ventana_resena_hasta": string | null
                   }
