@@ -217,6 +217,12 @@ Los más delicados:
 - Recomendación: Decidir de forma explícita si se descartan o pasan a ideas futuras, junto con las de P-16.
 - HUs: [HU-010](backlog/HU-010.md), [HU-016](backlog/HU-016.md)
 
+**P-44 · Trabajo abierto de un admin desactivado** (RN-23, RN-63, RN-07) · surgida en la revisión de HU-012 (29-sep-2026)
+
+- Qué pasa: la bandeja muestra a cada admin sus reembolsos y reportes de inasistencia. Si se desactiva a un admin con casos abiertos, nadie más los ve. Solo los pagos tienen escalamiento ([HU-034](backlog/HU-034.md)). Un reporte `en_revision` abandonado bloquea para siempre el desembolso de esa monitoría (RN-83).
+- Recomendación: al desactivar un admin, sus reembolsos y reportes abiertos pasan al siguiente admin activo según `ordenRevision`, igual que el escalamiento de pagos.
+- HUs: [HU-012](backlog/HU-012.md), [HU-026](backlog/HU-026.md), [HU-030](backlog/HU-030.md), [HU-034](backlog/HU-034.md), [HU-054](backlog/HU-054.md)
+
 ### Pendientes del documento original y las HUs que tocan
 
 | ID | Tema | Recomendación del documento | HUs donde aparece |

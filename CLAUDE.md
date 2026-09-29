@@ -34,6 +34,8 @@ Reconstrucción de Calibra sobre el modelo v10 (`calibra_reglas_negocio.md`). St
 
 El estado de las HUs vive en `backlog/` en la rama `main`. Git es el candado.
 
+Las personas son `dvarela5101`, dueña del repo y del producto (solo ella aprueba con `done`), y `Juzou04`. **El reparto vigente, con qué HU hace cada una y en qué orden, está en [docs/reparto.md](docs/reparto.md).** Si tienes HUs asignadas, resérvalas con `start HU-XXX` y no con `take`, que podría elegir una de la otra persona. HU-005 se hace en persona, entre las dos: ninguna sesión la toma sola.
+
 **Tomar una HU**
 1. `git switch main` y `git pull`.
 2. `python scripts/backlog.py take` (o `start HU-XXX` si acordaron cuál) y `python scripts/backlog.py log HU-XXX "Tomada por <nombre>"`.
@@ -51,7 +53,18 @@ El estado de las HUs vive en `backlog/` en la rama `main`. Git es el candado.
 - Terminar: `review` en tu rama, verifica todo, `git merge origin/main`, vuelve a verificar y abre un PR hacia `main`. Con CI en verde, la misma sesión lo fusiona con squash (un commit por HU) y la HU queda `En revision`. La persona revisa después y aprueba con `done` en `main`; lo que no le guste se corrige en un PR nuevo.
 - Archivos generados que chocan: no los resuelvas a mano, regenéralos. `BACKLOG.md` con `python scripts/backlog.py index`, `src/lib/supabase/tipos.ts` con `npm run db:tipos` y `package-lock.json` con `npm install`.
 - Migraciones: nunca edites una que ya esté en `main`; crea una nueva. Si tu rama redefine una función SQL (`create or replace`), parte de la versión que está en `main` al momento del merge y corre `npm run db:reiniciar` y `npm run db:verificar` después de fusionar `main`.
-- Cada uno usa su propio Supabase local (Docker). Nadie escribe en el proyecto real (ver "Base de datos").
+- Cada uno usa su propio Supabase local (Docker). Nadie escribe en el proyecto real (ver "Base de datos"). Si el stack local ya corría con una configuración anterior, `npm run db:detener` antes de `npm run db:iniciar`: si no, los servicios nuevos (como Storage) no arrancan.
+
+**Revisar HUs `En revision`** (cuando la persona lo pide)
+1. Corre todo contra tu base local, en secuencia y sin otra sesión usándola: `npm ci`, `npm run db:reiniciar`, `db:env`, `db:verificar`, `npx supabase db advisors --local --level warn`, `lint`, `typecheck`, `test`, `test:integracion`, `build` y `CI=1 npm run test:e2e`.
+2. Revisa criterio por criterio con evidencia `archivo:línea`: seguridad (RLS, grants, secretos), alcance y los supuestos del registro. Puedes delegarlo en un subagente Sonnet de solo lectura por HU; los subagentes no tocan la base ni el repo. Verifica tú los hallazgos importantes antes de reportarlos.
+3. Entrega a la persona un veredicto por HU (aprobar, aprobar con cambios menores o no aprobar), los hallazgos por gravedad y las decisiones que le tocan a ella.
+4. Solo la persona aprueba (`done`). Los ajustes que salgan van en una HU nueva: no se reabre ni se edita el código de una HU aprobada sin HU.
+
+**Decisiones de negocio**
+- No inventes reglas. Una duda de negocio se convierte en una pregunta con recomendación, y decide la persona.
+- Lo decidido se registra en `REVISION_REGLAS.md` §4 ("Decisiones del <fecha>") y en el contexto de cada HU afectada. Luego la HU pasa a `Lista` con `backlog.py ready`.
+- Las tareas bien acotadas (revisiones, pruebas, búsquedas) se pueden delegar en subagentes con modelo `sonnet`.
 
 # Instrucciones para Claude — Sistema de backlog de HUs
 
