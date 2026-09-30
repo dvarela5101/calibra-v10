@@ -9,6 +9,9 @@ test.describe("aviso de privacidad (HU-008)", () => {
     page.on("pageerror", (error) => errores.push(error.message));
 
     await page.goto("/");
+    // Con la máquina cargada, la fuente y la sesión anónima siguen llegando y el pie se mueve: el clic
+    // esperaba un enlace quieto hasta agotar el tiempo. Se espera a que la página termine de cargar.
+    await page.waitForLoadState("networkidle");
     await page.getByRole("link", { name: "Aviso de privacidad" }).click();
 
     await expect(page).toHaveURL(/\/privacidad$/);

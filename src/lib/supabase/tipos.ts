@@ -181,6 +181,31 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"invitacion_monitor": {
+                  Row: {
+                    "correo": string,"creada_en": string,"id": string,"id_admin": string,"id_monitor": string | null,"token_hash": string,"usada_en": string | null,"vence_en": string
+                  }
+                  Insert: {
+                    "correo": string,"creada_en"?: string,"id"?: string,"id_admin": string,"id_monitor"?: string | null,"token_hash": string,"usada_en"?: string | null,"vence_en"?: string
+                  }
+                  Update: {
+                    "correo"?: string,"creada_en"?: string,"id"?: string,"id_admin"?: string,"id_monitor"?: string | null,"token_hash"?: string,"usada_en"?: string | null,"vence_en"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "invitacion_monitor_id_admin_fkey"
+      columns: ["id_admin"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "invitacion_monitor_id_monitor_fkey"
+      columns: ["id_monitor"]
+isOneToOne: false
+      referencedRelation: "monitor"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"lead": {
                   Row: {
                     "acepta_contacto": boolean,"acepta_tratamiento_datos": boolean,"correo": string | null,"estado": Database["public"]['Enums']["estado_lead"],"fecha_consentimiento": string,"fecha_creacion": string,"id": string,"id_sesion_anonima": string | null,"nombre": string,"numero_telefono": string | null,"origen": string | null
@@ -492,6 +517,9 @@ isOneToOne: true
                            },
 "plazo_alcanzado":
 { Args: { "p_ahora": string,"p_desde": string }; Returns: boolean
+                           },
+"registrar_monitor":
+{ Args: { "p_correo": string,"p_id_usuario": string,"p_llave": string,"p_nombre": string,"p_numero_telefono": string,"p_token_hash": string }; Returns: boolean
                            },
 "reporte_inasistencia_hasta":
 { Args: { "p_fin_programado": string }; Returns: string
