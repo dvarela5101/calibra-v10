@@ -3,15 +3,19 @@
  * transferencia por Llave. Se guarda en un bucket privado y `pago.comprobante` guarda la ruta.
  *
  * El Storage de Supabase ya hace cumplir el tamaño y los tipos del bucket (respuestas 413 y 415).
- * Estas reglas las repiten para dar un mensaje claro ANTES de subir; la migración
- * `*_comprobantes_privados.sql` es la fuente y `integracion/comprobantes.test.ts` comprueba que
+ * Estas reglas las repiten para dar un mensaje claro ANTES de subir. La fuente es el bucket tal
+ * como lo dejan las migraciones `*_comprobantes_privados.sql` y `*_ajustes_comprobantes.sql` (la
+ * segunda manda: subió el límite de 5 a 10 MiB), e `integracion/comprobantes.test.ts` comprueba que
  * coincidan. Todo aquí es puro: no toca red ni base.
  */
 
 export const BUCKET_COMPROBANTES = "comprobantes";
 
-/** 5 MiB por archivo. SUPUESTO A VALIDAR (nota técnica de HU-007). */
-export const LIMITE_COMPROBANTE_BYTES = 5 * 1024 * 1024;
+/**
+ * 10 MiB por archivo (N-3, decidido el 29-sep-2026 al revisar HU-007; era 5 MiB). El bucket dice lo
+ * mismo en la migración `*_ajustes_comprobantes.sql`.
+ */
+export const LIMITE_COMPROBANTE_BYTES = 10 * 1024 * 1024;
 
 /** Vida del enlace firmado con el que un admin ve un comprobante. */
 export const VIGENCIA_ENLACE_COMPROBANTE_SEG = 60;

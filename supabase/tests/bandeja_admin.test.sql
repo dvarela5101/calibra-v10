@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(22);
 
 -- ---------------------------------------------------------------------------
 -- 1. Estructura y permisos
@@ -143,6 +143,59 @@ select results_eq(
     where id_monitoria = '50000000-0000-0000-0000-000000000001'$$,
   $$values (22500, '2020-01-06'::date, '2020-01-07 16:00:00+00'::timestamptz)$$,
   'Trae el neto, la fecha de la sesión y desde cuándo es ejecutable (fin 11:00 Bogotá = 16:00 UTC, más 24 h)');
+
+-- ---------------------------------------------------------------------------
+-- 4b. El borde exacto (N-6): la ventana de reporte vence justo ahora
+--     now() no cambia dentro de la transacción, así que se arman tres sesiones de 60 minutos cuyo
+--     límite (fin + 24 h) cae en now() - 1 microsegundo, en now() y en now() + 1 microsegundo. La
+--     hora de la franja acepta microsegundos, y Bogotá no tiene horario de verano.
+-- ---------------------------------------------------------------------------
+create temp table borde on commit drop as
+select n, (now() - interval '25 hours' + n * interval '1 microsecond') at time zone 'America/Bogota' as inicio_local
+from (values (-1), (0), (1)) as t(n);
+
+insert into public.franja (id, id_monitor, dia, hora, presencial, precio, duracion_min)
+select format('30000000-0000-0000-0000-0000000001%s', lpad((n + 2)::text, 2, '0'))::uuid,
+       'b0000000-0000-0000-0000-000000000001',
+       extract(isodow from inicio_local::date)::int, inicio_local::time, true, 25000, 60
+from borde;
+
+insert into public.monitoria (id, id_franja, id_materia, id_lead, fecha, valor_total, estado, fecha_finalizacion)
+select format('51000000-0000-0000-0000-0000000000%s', lpad((n + 2)::text, 2, '0'))::uuid,
+       format('30000000-0000-0000-0000-0000000001%s', lpad((n + 2)::text, 2, '0'))::uuid,
+       '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-00000000000a',
+       inicio_local::date, 25000, 'realizada', now()
+from borde;
+
+insert into public.desembolso (id_monitoria, monto_bruto, comision, monto_neto, llave_destino)
+select format('51000000-0000-0000-0000-0000000000%s', lpad((n + 2)::text, 2, '0'))::uuid, 25000, 2500, 22500, 'llave-m1'
+from borde;
+
+select is(
+  (select array_agg(desembolsable_desde - now() order by id_monitoria)
+   from public.monitoria_plazos where id_monitoria::text like '51000000-%'),
+  array[interval '-1 microsecond', interval '0', interval '1 microsecond'],
+  'Las tres sesiones de prueba tienen su límite de desembolso en now() - 1 µs, now() y now() + 1 µs');
+
+select is(
+  (select count(*)::int from public.desembolsos_ejecutables where id_monitoria = '51000000-0000-0000-0000-000000000002'),
+  0,
+  'En el instante exacto fin + 24 h el reporte sigue abierto: el desembolso todavía no es ejecutable (N-6)');
+
+select is(
+  (select count(*)::int from public.desembolsos_ejecutables where id_monitoria = '51000000-0000-0000-0000-000000000001'),
+  1,
+  'Un microsegundo después del límite, el desembolso ya es ejecutable');
+
+select is(
+  (select count(*)::int from public.desembolsos_ejecutables where id_monitoria = '51000000-0000-0000-0000-000000000003'),
+  0,
+  'Un microsegundo antes del límite, todavía no');
+
+select is(
+  (select count(*)::int from public.desembolsos_ejecutables where id_monitoria::text like '51000000-%'),
+  1,
+  'De las tres sesiones alrededor del borde, solo la que ya pasó el límite es ejecutable');
 
 -- ---------------------------------------------------------------------------
 -- 5. Quién la ve (RLS de desembolso y monitoria)
