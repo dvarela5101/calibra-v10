@@ -106,6 +106,9 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 
 - `cargarBandeja()` (`src/lib/admin/bandeja.ts`) siempre se llama con el id de la sesión. Las políticas dejan leer a todo admin, así que el filtro por admin lo pone quien llama.
 - Los desembolsos no tienen admin hasta que se ejecutan (RN-80): los ejecutables son los mismos para todos. La regla de RN-83 (pasaron 24 horas del fin y no hay un reporte en revisión ni aceptado) vive en la vista `desembolsos_ejecutables`, que HU-028 también usará. La vista no expone bruto, comisión ni la llave del monitor.
+- Un desembolso es ejecutable **después** de `desembolsable_desde`, no desde ese instante: en el instante exacto la ventana de reporte sigue abierta (N-6, HU-063). Así lo dice la bandeja. El encabezado de `20260929070017_bandeja_admin.sql` todavía habla del "borde inclusivo de HU-003"; quedó superado por `*_ajustes_plazos_y_comision.sql` y no se edita porque ya está en `main`.
+- Un admin desactivado (RN-23) no ve nada de la bandeja: ni la vista ni las tablas que lee (`supabase/tests/bandeja_admin.test.sql`, HU-064).
+- Los textos de ayuda no prometen lo que aún no existe: el orden por vencimiento se anuncia solo en los pagos, y el paso al siguiente admin cuando vence un pago se anunciará con el escalamiento (HU-034).
 - El tiempo restante de un pago sale del motor de plazos (HU-003) y respeta el borde inclusivo de P-40.
 - Cada sección se vuelve accionable cuando llegan HU-020 (pagos), HU-026 (reembolsos), HU-030 (reportes) y HU-028 (desembolsos).
 
@@ -155,7 +158,7 @@ El proveedor sale del entorno (`elegirProveedor`, ver `.env.example`), en este o
 2. **Resend**, cuando haya dominio verificado (`RESEND_API_KEY` y `CORREO_REMITENTE`). Sin dominio verificado, Resend solo entrega a la cuenta dueña de la llave.
 3. **Mailpit**, solo en local y sin nada de lo anterior: el correo se ve en http://127.0.0.1:54324.
 
-Los enlaces de los correos se arman con `urlDelSitio()` a partir de `SITIO_URL`. La llave de Resend y la contraseña de SMTP solo las lee código de servidor: `pruebas/correo-sin-llaves.test.ts` y `e2e/correo.spec.ts` comprueban que no lleguen al navegador.
+Los enlaces de los correos se arman con `urlDelSitio()` a partir de `SITIO_URL`. En producción (`NODE_ENV=production`) `SITIO_URL` y todo enlace de un correo tienen que ser https, porque llevan tokens; http solo se acepta en local, es decir, fuera de producción o hacia la propia máquina (`localhost`, `127.0.0.1`), que es como la e2e corre el build (HU-064). La llave de Resend y la contraseña de SMTP solo las lee código de servidor: `proveedor.ts`, `smtp.ts`, `registro.ts` y `servidor.ts` llevan `import "server-only"`, y `pruebas/correo-sin-llaves.test.ts` y `e2e/correo.spec.ts` comprueban que no lleguen al navegador.
 
 ### Reintentos y procesos programados (HU-065)
 

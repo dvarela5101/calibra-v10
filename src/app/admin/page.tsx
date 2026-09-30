@@ -29,7 +29,7 @@ export default async function PanelAdmin() {
     <Pantalla
       eyebrow="Administración"
       titulo={admin ? `Hola, ${admin.nombre}` : "Hola"}
-      subtitulo="Esto es lo que tienes asignado. Lo que vence primero va arriba."
+      subtitulo="Esto es lo que tienes asignado."
     >
       {bandeja ? (
         <BandejaAdmin bandeja={bandeja} />

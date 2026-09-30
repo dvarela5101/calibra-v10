@@ -1,3 +1,5 @@
+import "server-only";
+
 /**
  * Transportes de correo. Tres, con la misma forma:
  *
@@ -7,8 +9,8 @@
  *  - Mailpit, solo en local: su API HTTP `POST /api/v1/send`. Es el buzón que ya levanta el Supabase
  *    local (http://127.0.0.1:54324).
  *
- * Nada de este archivo debe llegar al navegador: lee la llave y la contraseña del proveedor. Solo lo importa
- * `servidor.ts` (que tiene `server-only`) y las pruebas; `pruebas/correo-sin-llaves.test.ts` y la
+ * Nada de este archivo debe llegar al navegador: lee la llave y la contraseña del proveedor. Por eso lleva
+ * `server-only` (HU-064), como `servidor.ts`, que es quien lo usa; `pruebas/correo-sin-llaves.test.ts` y la
  * e2e `e2e/correo.spec.ts` lo vigilan.
  */
 

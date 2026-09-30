@@ -52,9 +52,12 @@ describe("la llave del proveedor de correo no llega al navegador", () => {
     }
   });
 
-  it("el punto de entrada del servidor es solo de servidor (server-only)", () => {
-    const servidor = archivos.find((a) => a.ruta === "src/lib/correo/servidor.ts");
-    expect(servidor?.texto.startsWith('import "server-only";')).toBe(true);
+  it("el punto de entrada del servidor y los módulos que leen llaves o escriben el registro son solo de servidor (server-only)", () => {
+    // proveedor, smtp y registro desde HU-064: aunque solo los importe servidor.ts, cada uno se protege solo.
+    for (const nombre of ["servidor.ts", "proveedor.ts", "smtp.ts", "registro.ts"]) {
+      const modulo = archivos.find((a) => a.ruta === `src/lib/correo/${nombre}`);
+      expect(modulo?.texto.startsWith('import "server-only";'), nombre).toBe(true);
+    }
   });
 
   it("ningún componente de cliente importa el módulo de correo", () => {
