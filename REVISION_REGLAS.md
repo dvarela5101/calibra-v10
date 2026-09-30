@@ -308,6 +308,7 @@ La persona respondió la hoja de decisiones del corte 1. Donde dice "como se rec
 | P-37 | Como se recomendaba: el monitor ve nombre y diagnóstico, no el contacto. | [HU-021](backlog/HU-021.md) |
 | R-1 | El responsable del tratamiento de datos es Calibra. | [HU-008](backlog/HU-008.md) |
 | P-44 | Como se recomendaba: al desactivar un admin, sus reembolsos y reportes abiertos pasan al siguiente admin activo según `ordenRevision`. | [HU-054](backlog/HU-054.md), [HU-026](backlog/HU-026.md), [HU-030](backlog/HU-030.md) |
+| D-1 | Sin presupuesto para un dominio propio: los correos de la app salen por el SMTP de Gmail desde calibra.monitorias@gmail.com, que también recibe las respuestas y las consultas de datos. Resend queda para cuando haya dominio. | [HU-066](backlog/HU-066.md), [HU-008](backlog/HU-008.md) |
 
 Surgidas de la revisión de HU-003 y HU-007, todas aceptadas y llevadas a [HU-063](backlog/HU-063.md) salvo N-4 y N-5:
 

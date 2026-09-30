@@ -19,6 +19,7 @@ Cada persona hace las suyas en este orden. Cuando la siguiente depende de la ant
 | 1 | [HU-008](../backlog/HU-008.md) Aviso de privacidad y autorización de datos | S | Ya |
 | 2 | [HU-013](../backlog/HU-013.md) Cuenta de monitor por invitación | M | Ya |
 | 3 | [HU-015](../backlog/HU-015.md) Franjas semanales del monitor | M | HU-013 esté `Hecha` |
+| 4 | [HU-066](../backlog/HU-066.md) Enviar los correos por SMTP de Gmail (decisión D-1) | S | Ya: se puede adelantar mientras HU-015 espera la aprobación de HU-013 |
 
 **Juzou04: comprobantes, plazos y panel de admin (su propio código)**
 
