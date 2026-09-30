@@ -1,6 +1,6 @@
 # Reparto de trabajo
 
-**Actualizado:** 29 de septiembre de 2026. Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+**Actualizado:** 29 de septiembre de 2026, noche (reasignación de HU-064 y HU-065). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
 
 ## Estado de partida
 
@@ -20,6 +20,9 @@ Cada persona hace las suyas en este orden. Cuando la siguiente depende de la ant
 | 2 | [HU-013](../backlog/HU-013.md) Cuenta de monitor por invitación | M | Ya |
 | 3 | [HU-015](../backlog/HU-015.md) Franjas semanales del monitor | M | HU-013 esté `Hecha` |
 | 4 | [HU-066](../backlog/HU-066.md) Enviar los correos por SMTP de Gmail (decisión D-1) | S | Ya: se puede adelantar mientras HU-015 espera la aprobación de HU-013 |
+| 5 | [HU-065](../backlog/HU-065.md) Reintentar los correos que fallaron | S | Ya (pasó de Juzou04 a dvarela5101 el 29-sep, por la noche) |
+| 6 | [HU-015](../backlog/HU-015.md) Franjas semanales del monitor | M | Ya: HU-013 quedó `Hecha` |
+| 7 | [HU-064](../backlog/HU-064.md) Ajustes de la revisión de HU-006 y HU-012 (incluye el texto del desembolso de N-6) | S | Ya (pasó de Juzou04 a dvarela5101) |
 
 **Juzou04: comprobantes, plazos y panel de admin (su propio código)**
 
@@ -27,7 +30,8 @@ Cada persona hace las suyas en este orden. Cuando la siguiente depende de la ant
 |---|---|---|---|
 | 1 | [HU-063](../backlog/HU-063.md) Ajustes de la revisión de HU-003 y HU-007 | S | Ya |
 | 2 | [HU-059](../backlog/HU-059.md) Endurecer los comprobantes | S | Ya (después de HU-063, porque las dos tocan el bucket) |
-| 3 | [HU-062](../backlog/HU-062.md) Solicitud de certificación del aspirante a monitor | M | HU-008 esté `Hecha` |
+| 3 | [HU-062](../backlog/HU-062.md) Solicitud de certificación del aspirante a monitor | M | Ya: HU-008 quedó `Hecha` |
+| 4 | [HU-067](../backlog/HU-067.md) Impedir que un pagador pise su propio comprobante (P1, subida el 29-sep) | S | Ya. Va bien con HU-059: las dos tocan el bucket |
 
 Por qué así:
 - HU-013 y HU-015 forman una cadena, y conviene que la tenga la misma cabeza.
@@ -57,7 +61,7 @@ Si la siguiente HU depende de una que aún no está `Hecha`, la sesión se detie
 
 ## Después de estas 6
 
-- **Juzou04, sobre su propio código:** [HU-064](../backlog/HU-064.md) (ajustes de la revisión de HU-006 y HU-012) y [HU-065](../backlog/HU-065.md) (reintentar correos que fallaron). Ya están en `Lista` y no dependen de nada pendiente: si Juzou04 queda esperando a HU-008 para empezar HU-062, puede adelantar HU-064.
+- **HU-064 y HU-065 pasaron a dvarela5101** el 29-sep por la noche, mientras Juzou04 no estaba: HU-065 encaja con el correo por Gmail (HU-066) y HU-064 recoge además un ajuste de la revisión de HU-063. Juzou04 sigue con HU-059, HU-062 y HU-067.
 - **Juntos, en persona:** HU-005, y después HU-060 (motor adaptativo) y HU-061 (reprocesar el banco con IA; su piloto corre en el PC de Juzou04).
 - **Cuando HU-005 y HU-013 estén `Hecha`:** HU-014 (certificados).
 - **Cuando HU-014 y HU-015 estén `Hecha`:** HU-016 (ver monitores y fechas libres), y a partir de ahí la cadena de agendar, pagar y reembolsar.

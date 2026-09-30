@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-09-29 20:10. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-09-29 22:34. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -38,7 +38,6 @@ _Generado automaticamente: 2026-09-29 20:10. No editar a mano; usa `scripts/back
 | [HU-054](backlog/HU-054.md) | [Admin] Gestionar el equipo de admins y el turno de revisión | Backlog | P2 | S | HU-012 |
 | [HU-055](backlog/HU-055.md) | [Admin] Gestionar materias y evaluaciones | Backlog | P2 | M | HU-005, HU-012 |
 | [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | Backlog | P2 | S | HU-004 |
-| [HU-067](backlog/HU-067.md) | [Técnica] Impedir que un pagador pise su propio comprobante con una URL de subida firmada | Backlog | P2 | S | HU-007 |
 | [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | Backlog | P3 | S | HU-010 |
 | [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | Lista | P0 | M | HU-009, HU-008 |
 | [HU-014](backlog/HU-014.md) | [Admin] Emitir certificados de monitor por materia | Lista | P0 | S | HU-012, HU-013, HU-005 |
@@ -59,15 +58,16 @@ _Generado automaticamente: 2026-09-29 20:10. No editar a mano; usa `scripts/back
 | [HU-062](backlog/HU-062.md) | [Aspirante a monitor] Pedir la certificación de una materia dejando mis datos | Lista | P1 | M | HU-008, HU-012 |
 | [HU-064](backlog/HU-064.md) | [Técnica] Ajustes de la revisión de HU-006 y HU-012 | Lista | P1 | S | HU-006, HU-012 |
 | [HU-065](backlog/HU-065.md) | [Sistema] Reintentar los correos que fallaron | Lista | P1 | S | HU-006 |
+| [HU-067](backlog/HU-067.md) | [Técnica] Impedir que un pagador pise su propio comprobante con una URL de subida firmada | Lista | P1 | S | HU-007 |
 | [HU-059](backlog/HU-059.md) | [Técnica] Endurecer los comprobantes: contenido real, huérfanos y cuota por sesión | Lista | P2 | S | HU-007 |
 | [HU-066](backlog/HU-066.md) | [Técnica] Enviar los correos desde calibra.monitorias@gmail.com por SMTP de Gmail | En progreso | P0 | S | HU-006 |
-| [HU-008](backlog/HU-008.md) | [Visitante] Leer el aviso de privacidad y autorizar el tratamiento de mis datos | En revision | P0 | S | HU-001 |
-| [HU-013](backlog/HU-013.md) | [Monitor] Crear mi cuenta de monitor e iniciar sesión | En revision | P0 | M | HU-004 |
-| [HU-063](backlog/HU-063.md) | [Técnica] Ajustes de la revisión de HU-003 y HU-007 | En revision | P1 | S | HU-003, HU-007 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
 | [HU-004](backlog/HU-004.md) | [Técnica] Autenticación: sesión anónima persistente, cuentas y roles | Hecha | P0 | L | HU-002 |
 | [HU-006](backlog/HU-006.md) | [Técnica] Correo transaccional con plantillas | Hecha | P0 | M | HU-001 |
 | [HU-007](backlog/HU-007.md) | [Técnica] Almacenamiento privado de comprobantes de pago | Hecha | P0 | S | HU-002, HU-004 |
+| [HU-008](backlog/HU-008.md) | [Visitante] Leer el aviso de privacidad y autorizar el tratamiento de mis datos | Hecha | P0 | S | HU-001 |
 | [HU-012](backlog/HU-012.md) | [Admin] Iniciar sesión y ver mi bandeja de trabajo | Hecha | P0 | M | HU-004 |
+| [HU-013](backlog/HU-013.md) | [Monitor] Crear mi cuenta de monitor e iniciar sesión | Hecha | P0 | M | HU-004 |
+| [HU-063](backlog/HU-063.md) | [Técnica] Ajustes de la revisión de HU-003 y HU-007 | Hecha | P1 | S | HU-003, HU-007 |

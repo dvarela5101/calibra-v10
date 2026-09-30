@@ -1,6 +1,6 @@
 # Pendientes de dvarela5101
 
-**Actualizado:** 29 de septiembre de 2026. Son las tareas que solo tú puedes hacer: tocan cuentas, contraseñas, paneles o decisiones del producto. Van ordenadas por **cuándo hacen falta**. Marca cada una al terminarla, o dile a Claude "ya hice X" y él marca la casilla y sigue.
+**Actualizado:** 29 de septiembre de 2026, noche. Son las tareas que solo tú puedes hacer: tocan cuentas, contraseñas, paneles o decisiones del producto. Van ordenadas por **cuándo hacen falta**. Marca cada una al terminarla, o dile a Claude "ya hice X" y él marca la casilla y sigue.
 
 Nada de lo de aquí se pega en el chat ni se guarda en el repo: las contraseñas y las llaves van directo al panel que corresponda.
 
@@ -14,8 +14,11 @@ Nada de lo de aquí se pega en el chat ni se guarda en el repo: las contraseñas
 
 Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.py done HU-XXX` en `main`). Si algo no te gusta, dilo: se corrige en un PR nuevo. Para probarlas: `npm run db:iniciar`, `npm run db:env`, `npm run dev` y abre http://localhost:3000.
 
-- [ ] **HU-008, aviso de privacidad** ([PR #6](https://github.com/dvarela5101/calibra-v10/pull/6), ya fusionado). Abre `/privacidad` y el pie de cualquier página. **Juzou04 la necesita aprobada para empezar HU-062.**
-- [ ] **HU-013, cuenta de monitor por invitación** ([PR #7](https://github.com/dvarela5101/calibra-v10/pull/7)). Entra como `admin1@calibra.test` (contraseña `calibra-admin-local`, solo local), ve a "Invitar a un monitor", invita a cualquier correo, abre el correo en Mailpit (http://127.0.0.1:54324) y crea la cuenta con el enlace. HU-015 (franjas) espera esta aprobación.
+- [x] **HU-008, aviso de privacidad**: aprobada el 29-sep.
+- [x] **HU-013, cuenta de monitor por invitación**: aprobada el 29-sep.
+- [x] **HU-063 de Juzou04**: aprobada el 29-sep con cambios menores (van en HU-064 y en una nota de HU-028).
+- [ ] **HU-066, correos por Gmail** ([PR #9](https://github.com/dvarela5101/calibra-v10/pull/9)). Se prueba de verdad cuando cargues las variables SMTP (sección B).
+- [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
 ### A2. Decisiones de las HUs recientes
 
