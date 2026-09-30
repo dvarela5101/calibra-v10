@@ -37,6 +37,8 @@ const formatoDiaDelNegocio = new Intl.DateTimeFormat("en-CA", {
 
 /** El día de calendario (`AAAA-MM-DD`) de un instante en la zona del negocio, no en la del servidor. */
 export function diaDelNegocio(instante: Date): string {
-  return formatoDiaDelNegocio.format(instante);
+  // Por partes, sin depender de cómo ordene la fecha el formato de "en-CA".
+  const partes = Object.fromEntries(formatoDiaDelNegocio.formatToParts(instante).map((p) => [p.type, p.value]));
+  return `${partes.year}-${partes.month}-${partes.day}`;
 }
 

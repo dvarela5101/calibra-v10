@@ -5,7 +5,7 @@ import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { exigirRol } from "@/lib/auth/sesion";
 import { diaDelNegocio, formatearDia } from "@/lib/fechas";
-import { horaDeFin, nombreDelDia } from "@/lib/franjas/reglas";
+import { horaCorta, horaDeFin, nombreDelDia } from "@/lib/franjas/reglas";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { FormularioFranja } from "../FormularioFranja";
 import estilos from "../franjas.module.css";
@@ -29,16 +29,24 @@ export default async function EditarFranja({ params }: PageProps<"/monitor/franj
   if (!UUID.test(id)) notFound();
 
   const supabase = await crearClienteServidor();
-  const [{ data: franja }, { data: monitorias }] = await Promise.all([
+  // El lugar y el enlace no se leen de la tabla (P-31): los da acceso_a_mis_franjas(), solo de las propias.
+  const [franjaLeida, accesoLeido, monitoriasLeidas] = await Promise.all([
     supabase!
       .from("franja")
-      .select("id, dia, hora, duracion_min, presencial, precio, lugar, enlace, cerrada_desde")
+      .select("id, dia, hora, duracion_min, presencial, precio, cerrada_desde")
       .eq("id", id)
       .eq("id_monitor", sesion.idUsuario)
       .maybeSingle(),
+    supabase!.rpc("acceso_a_mis_franjas").eq("id_franja", id).maybeSingle(),
     supabase!.from("monitoria").select("fecha").eq("id_franja", id).neq("estado", "cancelada"),
   ]);
+  // Un error de la base no es "no existe": que lo muestre la página de error en vez de un 404.
+  const fallo = franjaLeida.error ?? accesoLeido.error ?? monitoriasLeidas.error;
+  if (fallo) throw new Error(`No se pudo leer la franja: ${fallo.message}`);
+  const franja = franjaLeida.data;
   if (!franja) notFound();
+  const acceso = accesoLeido.data;
+  const monitorias = monitoriasLeidas.data;
 
   const hoy = diaDelNegocio(new Date());
   const fechas = (monitorias ?? []).map((m) => m.fecha).sort();
@@ -46,7 +54,7 @@ export default async function EditarFranja({ params }: PageProps<"/monitor/franj
   const ultimaFutura = futuras.at(-1);
   const desdeMinimo = ultimaFutura ? diaSiguiente(ultimaFutura) : hoy;
   const cerrada = franja.cerrada_desde !== null && franja.cerrada_desde <= hoy;
-  const hora = franja.hora.slice(0, 5);
+  const hora = horaCorta(franja.hora);
 
   return (
     <Pantalla
@@ -79,8 +87,8 @@ export default async function EditarFranja({ params }: PageProps<"/monitor/franj
                 duracion_min: String(franja.duracion_min),
                 precio: String(franja.precio),
                 modalidad: franja.presencial ? "presencial" : "virtual",
-                lugar: franja.lugar ?? "",
-                enlace: franja.enlace ?? "",
+                lugar: acceso?.lugar ?? "",
+                enlace: acceso?.enlace ?? "",
               }}
             />
           </section>

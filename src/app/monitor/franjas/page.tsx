@@ -4,7 +4,7 @@ import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { exigirRol } from "@/lib/auth/sesion";
 import { diaDelNegocio, formatearDia } from "@/lib/fechas";
-import { horaDeFin, minutosDe, nombreDelDia } from "@/lib/franjas/reglas";
+import { horaCorta, horaDeFin, nombreDelDia } from "@/lib/franjas/reglas";
 import { formatearPesos } from "@/lib/moneda";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { FormularioFranja } from "./FormularioFranja";
@@ -17,15 +17,19 @@ export default async function MisFranjas({ searchParams }: PageProps<"/monitor/f
   const sesion = await exigirRol("monitor", "/monitor/franjas");
   const { cerrada } = await searchParams;
   const supabase = await crearClienteServidor();
-  const [{ data: franjas }, { count: certificados }] = await Promise.all([
+  // El lugar y el enlace no se leen de la tabla (P-31): los da acceso_a_mis_franjas(), solo de las propias.
+  const [{ data: franjas, error }, { data: accesos }, { count: certificados }] = await Promise.all([
     supabase!
       .from("franja")
-      .select("id, dia, hora, duracion_min, presencial, precio, lugar, enlace, cerrada_desde")
+      .select("id, dia, hora, duracion_min, presencial, precio, cerrada_desde")
       .eq("id_monitor", sesion.idUsuario)
       .order("dia", { ascending: true })
       .order("hora", { ascending: true }),
+    supabase!.rpc("acceso_a_mis_franjas"),
     supabase!.from("certificado").select("id", { count: "exact", head: true }).eq("id_monitor", sesion.idUsuario),
   ]);
+  if (error) console.error("[franjas] no se pudieron leer las franjas:", error.message);
+  const lugares = new Map((accesos ?? []).map((a) => [a.id_franja, a.lugar]));
   const hoy = diaDelNegocio(new Date());
   const abiertas = (franjas ?? []).filter((f) => !f.cerrada_desde || f.cerrada_desde > hoy);
   const cerradas = (franjas ?? []).filter((f) => f.cerrada_desde && f.cerrada_desde <= hoy);
@@ -36,6 +40,12 @@ export default async function MisFranjas({ searchParams }: PageProps<"/monitor/f
       titulo="Mis franjas"
       subtitulo="Cada franja se repite todas las semanas. El estudiante elige la fecha y una de tus materias certificadas al agendar."
     >
+      {error && (
+        <p role="alert" className={formulario.error}>
+          No pudimos cargar tus franjas. Recarga la página; si sigue igual, avisa al equipo.
+        </p>
+      )}
+
       {cerrada === "1" && (
         <p role="status" className={formulario.exito}>
           Cerraste la franja. Las monitorías que ya tenía se mantienen.
@@ -54,10 +64,10 @@ export default async function MisFranjas({ searchParams }: PageProps<"/monitor/f
               <li key={f.id}>
                 <Link href={`/monitor/franjas/${f.id}`} className={estilos.tarjeta}>
                   <span className={estilos.cabeza}>
-                    {nombreDelDia(f.dia)}, {recortar(f.hora)} a {horaDeFin(f.hora, f.duracion_min)}
+                    {nombreDelDia(f.dia)}, {horaCorta(f.hora)} a {horaDeFin(f.hora, f.duracion_min)}
                   </span>
                   <span className={estilos.detalle}>
-                    {f.presencial ? `Presencial · ${f.lugar ?? "sin lugar"}` : "Virtual"} · {formatearPesos(f.precio)}
+                    {f.presencial ? `Presencial · ${lugares.get(f.id) ?? "sin lugar"}` : "Virtual"} · {formatearPesos(f.precio)}
                   </span>
                   {f.cerrada_desde && (
                     <span className={estilos.cerrada}>Se cierra desde el {formatearDia(f.cerrada_desde)}</span>
@@ -90,7 +100,7 @@ export default async function MisFranjas({ searchParams }: PageProps<"/monitor/f
           <ul className={estilos.lista}>
             {cerradas.map((f) => (
               <li key={f.id} className={estilos.detalle}>
-                {nombreDelDia(f.dia)}, {recortar(f.hora)} a {horaDeFin(f.hora, f.duracion_min)} · cerrada desde el{" "}
+                {nombreDelDia(f.dia)}, {horaCorta(f.hora)} a {horaDeFin(f.hora, f.duracion_min)} · cerrada desde el{" "}
                 {formatearDia(f.cerrada_desde!)}
               </li>
             ))}
@@ -103,10 +113,4 @@ export default async function MisFranjas({ searchParams }: PageProps<"/monitor/f
       </Link>
     </Pantalla>
   );
-}
-
-/** `14:00:00` → `14:00`. */
-function recortar(hora: string): string {
-  const minutos = minutosDe(hora);
-  return minutos === null ? hora : hora.slice(0, 5);
 }

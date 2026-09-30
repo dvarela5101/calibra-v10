@@ -44,11 +44,15 @@ export function horaDe(minutos: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-/** Un entero positivo escrito por una persona: acepta `25.000`, `25 000` y `25000`; no decimales. */
+/**
+ * Un entero positivo escrito por una persona: acepta `25.000`, `25 000` y `25000`; no decimales. El punto y
+ * el espacio solo valen para separar miles de a tres cifras: `25000.00` o `25.5` no se leen como 2.500.000
+ * ni como 255.
+ */
 export function leerEntero(valor: string): number | null {
-  const limpio = valor.trim().replace(/[.\s]/g, "");
-  if (!/^\d{1,9}$/.test(limpio)) return null;
-  return Number(limpio);
+  const limpio = valor.trim();
+  if (!/^(\d{1,9}|\d{1,3}(?:[. ]\d{3}){1,2})$/.test(limpio)) return null;
+  return Number(limpio.replace(/[. ]/g, ""));
 }
 
 export function esEnlaceDeVideollamada(valor: string): boolean {
@@ -97,9 +101,17 @@ export function leerFranja(formulario: FormData): Lectura<DatosDeFranja> {
   return { ok: true, datos: { dia, hora: horaDe(inicio), presencial, precio, duracionMin, lugar: null, enlace } };
 }
 
+/**
+ * `HH:MM` de una hora que viene de la base (`HH:MM:SS`). Recorta los segundos: el monitor no los puede
+ * escribir, pero una escritura de confianza sí, y la pantalla no debe caerse por eso.
+ */
+export function horaCorta(hora: string): string {
+  return hora.slice(0, 5);
+}
+
 /** Fin de la franja en `HH:MM`, para mostrar "de 14:00 a 15:30". */
 export function horaDeFin(hora: string, duracionMin: number): string {
-  const inicio = minutosDe(hora);
+  const inicio = minutosDe(horaCorta(hora));
   if (inicio === null) throw new RangeError(`Hora inválida: ${hora}`);
   return horaDe(inicio + duracionMin);
 }

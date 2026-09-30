@@ -53,7 +53,7 @@ export function FormularioFranja(props: Props) {
           <input type="hidden" name="duracion_min" value={iniciales.duracion_min} />
           <p className={formulario.ayuda}>
             {nombreDelDia(Number(iniciales.dia))}, de {iniciales.hora} a {horaDeFin(iniciales.hora, Number(iniciales.duracion_min))}.
-            Como ya tiene monitorías, el día, la hora y la duración no se cambian: para otro horario, ciérrala y abre otra.
+            Como ya tiene monitorías, el día, la hora y la duración no se cambian: para otro horario, ciérrala y abre otra. Si el horario nuevo se cruza con el de esta franja, podrás abrirlo cuando esta ya esté cerrada.
           </p>
         </>
       ) : (
@@ -86,7 +86,7 @@ export function FormularioFranja(props: Props) {
                 name="duracion_min"
                 type="number"
                 inputMode="numeric"
-                min={1}
+                min={5}
                 step={5}
                 defaultValue={valor("duracion_min")}
                 required

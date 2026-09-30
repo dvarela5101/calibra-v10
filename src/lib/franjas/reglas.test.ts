@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   esEnlaceDeVideollamada,
+  horaCorta,
   horaDe,
   horaDeFin,
   leerCierre,
@@ -46,6 +47,12 @@ describe("días y horas", () => {
     expect(horaDeFin("14:00", 90)).toBe("15:30");
     expect(horaDeFin("23:00:00", 60)).toBe("24:00");
   });
+
+  it("una hora de la base con segundos no rompe la pantalla: se recorta", () => {
+    expect(horaCorta("10:59:59")).toBe("10:59");
+    expect(horaDeFin("10:59:59", 60)).toBe("11:59");
+    expect(horaDeFin("10:00:00.000123", 30)).toBe("10:30");
+  });
 });
 
 describe("leerEntero", () => {
@@ -58,8 +65,22 @@ describe("leerEntero", () => {
     expect(leerEntero(valor)).toBe(esperado);
   });
 
-  it.each(["", "25,5", "-10", "25k", "1e3", "1234567890"])("%j no es un entero válido", (valor) => {
-    expect(leerEntero(valor)).toBeNull();
+  it.each(["", "25,5", "-10", "25k", "1e3", "1234567890", "25000.00", "25.5", "1.5", "2.50", "25.0000", ".500", "25..000", "25 00"])(
+    "%j no es un entero válido",
+    (valor) => {
+      expect(leerEntero(valor)).toBeNull();
+    },
+  );
+
+  it("un precio con decimales no se convierte en otro precio (25000.00 no son 2.500.000)", () => {
+    expect(leerFranja(formulario({ ...PRESENCIAL, precio: "25000.00" }))).toEqual({
+      ok: false,
+      error: "Escribe el precio en pesos, sin decimales, por ejemplo 25000.",
+    });
+  });
+
+  it("acepta millones con dos separadores", () => {
+    expect(leerEntero("1.250.000")).toBe(1_250_000);
   });
 });
 

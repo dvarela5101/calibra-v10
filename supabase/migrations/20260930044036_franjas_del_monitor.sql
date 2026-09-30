@@ -4,11 +4,14 @@
 -- el flujo F2: abre franjas cuando ya tiene al menos un certificado (sin certificado nadie podría
 -- agendarle: la monitoría exige una materia certificada).
 --
--- P-31: una franja presencial lleva el lugar; una virtual, el enlace de la videollamada (https).
+-- P-31: una franja presencial lleva el lugar; una virtual, el enlace de la videollamada (https). Son
+-- para quien ya tiene la cita ("la cita confirmada dice a dónde ir"), no para cualquiera: la franja se
+-- lee en público para agendar, pero el lugar y el enlace no. Los lee su monitor con
+-- `public.acceso_a_mis_franjas()`; la confirmación de la cita (HU-019) los leerá desde el servidor.
 --
 -- P-30:
---   * No hay solapes entre las franjas del mismo monitor mientras estén abiertas a la vez: restricción
---     de exclusión sobre (monitor, día, minutos del día, fechas en que está abierta).
+--   * No hay solapes entre las franjas del mismo monitor mientras estén abiertas a la vez (mismo día y
+--     rangos de minutos que se cruzan). Lo revisa el trigger, en fila por monitor.
 --   * Cerrar es poner `cerrada_desde`: desde esa fecha la franja ya no recibe reservas. Solo se puede
 --     cerrar desde una fecha posterior a su última monitoría activa (no cancelada). Así, "cerrar una
 --     franja con reservas futuras" (cerrarla ya) se impide, y "cerrarla para fechas sin reservas" (desde
@@ -17,6 +20,8 @@
 --     futura: los plazos de cada monitoría (inicio, fin, ventana de reporte, desembolso; vista
 --     `monitoria_plazos`) se calculan con la hora y la duración actuales de la franja (RN-36), así que
 --     cambiarlas movería también las ya dictadas. Para otro horario, se cierra y se abre otra.
+--   * Una franja ya cerrada (llegó su `cerrada_desde`) no se vuelve a tocar: para volver a ofrecer ese
+--     horario se abre otra. Un cierre programado para más adelante sí se puede mover.
 --   * El precio sí se cambia: la monitoría guarda su copia en `valor_total` (RN-32).
 --
 -- Escritura: el monitor inserta y actualiza solo sus franjas. No se borran (las monitorías las
@@ -24,10 +29,10 @@
 -- Idempotente.
 --
 -- Dónde se aplica cada regla: las del monitor (certificado, lugar o enlace, solapes, cambios con
--- reservas, cierre) las aplica un trigger a toda escritura con sesión (rol `authenticated`), que es
--- como escriben los monitores. Las escrituras de confianza (postgres, service_role: pruebas y
--- herramientas del equipo) no pasan por él. El cierre sí se respeta siempre al agendar: una monitoría
--- no se crea en una fecha en que la franja ya está cerrada.
+-- reservas, cierre) las aplica un trigger a toda escritura que no sea de confianza. Las de confianza
+-- (postgres y service_role: pruebas, migraciones y herramientas del equipo) no pasan por él; cualquier
+-- otro rol sí, empezando por `authenticated`, que es como escriben los monitores. El cierre se respeta
+-- siempre al agendar: una monitoría no se crea en una fecha en que la franja ya está cerrada.
 
 alter table public.franja add column if not exists lugar text;
 alter table public.franja add column if not exists enlace text;
@@ -65,10 +70,11 @@ declare
   v_fin int := extract(epoch from new.hora)::int / 60 + new.duracion_min;
   v_cambia_horario boolean;
 begin
-  -- Solo las escrituras con sesión (monitores): PostgREST las hace con `set role authenticated`. postgres
-  -- y service_role son de confianza. Se mira el rol de la base y no el del JWT: los claims pueden seguir
-  -- puestos en una conexión que ya no escribe como la persona.
-  if coalesce(current_setting('role', true), 'none') <> 'authenticated' then
+  -- Las escrituras de confianza no pasan por las reglas del monitor: postgres (sin `set role` el valor es
+  -- 'none') y service_role. Cualquier otro rol sí, así que un rol nuevo con permisos queda cubierto.
+  -- PostgREST escribe como el monitor con `set role authenticated`. Se mira el rol de la base y no el del
+  -- JWT: los claims pueden seguir puestos en una conexión que ya no escribe como la persona.
+  if coalesce(current_setting('role', true), 'none') in ('none', 'postgres', 'service_role', 'supabase_admin') then
     return new;
   end if;
 
@@ -80,6 +86,9 @@ begin
   -- chequeo de solapes antes de ver a la otra.
   perform pg_advisory_xact_lock(hashtextextended('franja:' || new.id_monitor::text, 0));
 
+  if extract(second from new.hora) <> 0 then
+    raise exception 'Escribe la hora en horas y minutos, por ejemplo 14:00.' using errcode = 'P0001';
+  end if;
   if new.duracion_min <= 0 or v_fin > 24 * 60 then
     raise exception 'La franja debe terminar el mismo día: revisa la hora y la duración.' using errcode = 'P0001';
   end if;
@@ -102,12 +111,16 @@ begin
       raise exception 'Esa parte de la franja no se puede cambiar.' using errcode = '42501';
     end if;
 
+    if old.cerrada_desde is not null and old.cerrada_desde <= v_hoy then
+      raise exception 'Esta franja ya está cerrada. Para volver a ofrecer ese horario, abre otra.' using errcode = 'P0001';
+    end if;
+
     v_cambia_horario := new.dia is distinct from old.dia or new.hora is distinct from old.hora
       or new.duracion_min is distinct from old.duracion_min;
     if v_cambia_horario and exists (
       select 1 from public.monitoria m where m.id_franja = old.id and m.estado <> 'cancelada'
     ) then
-      raise exception 'No puedes cambiar el día, la hora ni la duración de una franja que ya tiene monitorías: sus horarios dependen de ella. Ciérrala y abre otra con el horario nuevo.'
+      raise exception 'No puedes cambiar el día, la hora ni la duración de una franja que ya tiene monitorías: sus horarios dependen de ella. Ciérrala y abre otra con el horario nuevo; si se cruza con esta, podrás abrirla cuando esta ya esté cerrada.'
         using errcode = 'P0001';
     end if;
 
@@ -157,17 +170,23 @@ create trigger franja_validar_monitor
   for each row execute function privado.validar_franja_del_monitor();
 
 -- Una franja cerrada no recibe monitorías desde su fecha de cierre (vale para todos).
+-- `for share` pone en fila la reserva y el cambio de la franja: si el monitor la está cerrando (o
+-- cambiando su horario), la reserva espera y lee la franja ya cambiada; si la reserva va primero, el
+-- trigger de la franja la ve al revisar sus monitorías.
 create or replace function privado.monitoria_en_franja_abierta()
 returns trigger
 language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  v_cerrada_desde date;
 begin
-  if exists (
-    select 1 from public.franja f
-    where f.id = new.id_franja and f.cerrada_desde is not null and new.fecha >= f.cerrada_desde
-  ) then
+  select f.cerrada_desde into v_cerrada_desde
+  from public.franja f
+  where f.id = new.id_franja
+  for share;
+  if v_cerrada_desde is not null and new.fecha >= v_cerrada_desde then
     raise exception 'La franja está cerrada desde esa fecha.' using errcode = 'P0001';
   end if;
   return new;
@@ -180,6 +199,49 @@ drop trigger if exists monitoria_franja_abierta on public.monitoria;
 create trigger monitoria_franja_abierta
   before insert or update of id_franja, fecha on public.monitoria
   for each row execute function privado.monitoria_en_franja_abierta();
+
+-- ---------------------------------------------------------------------------
+-- Lectura: la franja es pública para agendar; el lugar y el enlace no (P-31)
+-- ---------------------------------------------------------------------------
+-- La política "lectura publica" de HU-002 deja ver todas las filas; los permisos por columna dejan fuera
+-- el lugar y el enlace. Con el enlace a la vista, cualquiera entraría a una sesión pagada.
+revoke select on table public.franja from anon, authenticated;
+grant select (id, id_monitor, dia, hora, presencial, precio, duracion_min, abierta_desde, cerrada_desde)
+  on table public.franja to anon, authenticated;
+
+-- El monitor lee el lugar y el enlace de sus propias franjas. security definer para saltar el permiso
+-- por columna; filtra por auth.uid(), así que nadie lee los de otro.
+create or replace function privado.acceso_a_mis_franjas()
+returns table (id_franja uuid, lugar text, enlace text)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select f.id, f.lugar, f.enlace
+  from public.franja f
+  where f.id_monitor = (select auth.uid());
+$$;
+
+revoke all on function privado.acceso_a_mis_franjas() from public, anon, authenticated, service_role;
+grant execute on function privado.acceso_a_mis_franjas() to authenticated;
+
+-- La puerta en la Data API: corre con los permisos de quien llama, como public.mi_rol().
+create or replace function public.acceso_a_mis_franjas()
+returns table (id_franja uuid, lugar text, enlace text)
+language sql
+stable
+security invoker
+set search_path = ''
+as $$
+  select a.id_franja, a.lugar, a.enlace from privado.acceso_a_mis_franjas() a;
+$$;
+
+comment on function public.acceso_a_mis_franjas() is
+  'Lugar y enlace de las franjas de quien llama (P-31): la tabla no los deja leer en público. HU-015.';
+
+revoke all on function public.acceso_a_mis_franjas() from public, anon, authenticated, service_role;
+grant execute on function public.acceso_a_mis_franjas() to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Escritura del monitor sobre sus franjas

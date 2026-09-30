@@ -15,6 +15,8 @@ import { crearClienteServidor } from "@/lib/supabase/servidor";
 export type EstadoFranja = { error: string | null; exito: string | null; valores: Record<string, string> };
 
 const CAMPOS = ["dia", "hora", "duracion_min", "precio", "modalidad", "lugar", "enlace", "cerrada_desde"] as const;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const NO_ENCONTRADA = "No encontramos esa franja entre las tuyas.";
 const valoresDe = (datos: FormData) => Object.fromEntries(CAMPOS.map((c) => [c, String(datos.get(c) ?? "")]));
 
 const columnas = (d: DatosDeFranja) => ({
@@ -45,6 +47,7 @@ export async function editarFranja(_anterior: EstadoFranja, datos: FormData): Pr
   const sesion = await exigirRol("monitor", "/monitor/franjas");
   const valores = valoresDe(datos);
   const id = String(datos.get("id") ?? "");
+  if (!UUID.test(id)) return { error: NO_ENCONTRADA, exito: null, valores };
   const lectura = leerFranja(datos);
   if (!lectura.ok) return { error: lectura.error, exito: null, valores };
 
@@ -56,7 +59,7 @@ export async function editarFranja(_anterior: EstadoFranja, datos: FormData): Pr
     .eq("id_monitor", sesion.idUsuario)
     .select("id");
   if (error) return { error: mensajeDeErrorDeFranja(error), exito: null, valores };
-  if (!data?.length) return { error: "No encontramos esa franja entre las tuyas.", exito: null, valores };
+  if (!data?.length) return { error: NO_ENCONTRADA, exito: null, valores };
 
   revalidatePath("/monitor/franjas");
   revalidatePath(`/monitor/franjas/${id}`);
@@ -67,6 +70,7 @@ export async function cerrarFranja(_anterior: EstadoFranja, datos: FormData): Pr
   const sesion = await exigirRol("monitor", "/monitor/franjas");
   const valores = valoresDe(datos);
   const id = String(datos.get("id") ?? "");
+  if (!UUID.test(id)) return { error: NO_ENCONTRADA, exito: null, valores };
   const lectura = leerCierre(datos, diaDelNegocio(new Date()));
   if (!lectura.ok) return { error: lectura.error, exito: null, valores };
 
@@ -78,7 +82,7 @@ export async function cerrarFranja(_anterior: EstadoFranja, datos: FormData): Pr
     .eq("id_monitor", sesion.idUsuario)
     .select("id");
   if (error) return { error: mensajeDeErrorDeFranja(error), exito: null, valores };
-  if (!data?.length) return { error: "No encontramos esa franja entre las tuyas.", exito: null, valores };
+  if (!data?.length) return { error: NO_ENCONTRADA, exito: null, valores };
 
   revalidatePath("/monitor/franjas");
   redirect("/monitor/franjas?cerrada=1");
