@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-09-30 05:12. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-09-30 12:24. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -53,11 +53,11 @@ _Generado automaticamente: 2026-09-30 05:12. No editar a mano; usa `scripts/back
 | [HU-027](backlog/HU-027.md) | [Sistema] Expirar reservas sin comprobante a los 10 minutos | Lista | P0 | S | HU-017 |
 | [HU-028](backlog/HU-028.md) | [Admin] Ejecutar desembolsos a monitores | Lista | P0 | M | HU-023, HU-020 |
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | Lista | P0 | M | HU-019 |
-| [HU-068](backlog/HU-068.md) | [Visitante] Dejar mi contacto al agendar y quedar como Lead | Lista | P0 | M | HU-004, HU-006, HU-008 |
 | [HU-062](backlog/HU-062.md) | [Aspirante a monitor] Pedir la certificación de una materia dejando mis datos | Lista | P1 | M | HU-008, HU-012 |
 | [HU-067](backlog/HU-067.md) | [Técnica] Impedir que un pagador pise su propio comprobante con una URL de subida firmada | Lista | P1 | S | HU-007 |
 | [HU-059](backlog/HU-059.md) | [Técnica] Endurecer los comprobantes: contenido real, huérfanos y cuota por sesión | Lista | P2 | S | HU-007 |
 | [HU-014](backlog/HU-014.md) | [Admin] Emitir certificados de monitor por materia | En progreso | P0 | S | HU-012, HU-013 |
+| [HU-068](backlog/HU-068.md) | [Visitante] Dejar mi contacto al agendar y quedar como Lead | En progreso | P0 | M | HU-004, HU-006, HU-008 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
