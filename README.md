@@ -112,6 +112,14 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 - El tiempo restante de un pago sale del motor de plazos (HU-003) y respeta el borde inclusivo de P-40.
 - Cada sección se vuelve accionable cuando llegan HU-020 (pagos), HU-026 (reembolsos), HU-030 (reportes) y HU-028 (desembolsos).
 
+## Certificados de monitor
+
+`/admin/certificados` (HU-014): después de la evaluación presencial (P-19), el admin certifica al monitor en una materia con la fecha de esa evaluación. El certificado no vence, y es uno por monitor y materia (RN-21). El monitor ve sus materias certificadas en `/monitor`, y con al menos una puede abrir franjas.
+
+- Solo un admin activo inserta, y a su nombre: la política "admin certifica" exige `privado.es_admin()` y que `id_admin` sea él. La fecha de emisión la pone la base. Nadie con sesión cambia ni borra un certificado: revocar está fuera de alcance.
+- Los certificados de un admin desactivado siguen vigentes (RN-23).
+- Las materias reales llegarán con el banco de preguntas (HU-005) o con la gestión de materias (HU-055). Mientras tanto (D-2), la semilla local trae tres de prueba: MATE-1214, MATE-1207 y FISI-1018.
+
 ## Franjas del monitor
 
 `/monitor/franjas` (HU-015): el monitor certificado abre franjas semanales (día, hora, duración, precio y modalidad, con lugar o enlace de videollamada), las edita y las cierra desde una fecha. Las reglas (P-30, P-31) las aplica el trigger `privado.validar_franja_del_monitor` a toda escritura que no sea de confianza, y `src/lib/franjas/reglas.ts` da los mismos mensajes antes de ir a la base.
