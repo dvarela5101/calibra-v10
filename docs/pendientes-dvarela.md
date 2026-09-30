@@ -109,5 +109,5 @@ No bloquean el trabajo actual. Cada una tiene una recomendación en `REVISION_RE
 
 ## E. En persona con Juzou04
 
-- [ ] **HU-005, banco de preguntas por habilidades.** Es el cuello de botella del diagnóstico; ninguna sesión de Claude la toma sola.
+- [ ] **HU-005, banco de preguntas por habilidades.** Queda para después (30-sep): ya no frena agendar (D-2 y D-3), pero sin él no hay diagnóstico. Ninguna sesión de Claude la toma sola.
 - [ ] Después: HU-060 (motor adaptativo) y HU-061 (reprocesar el banco con IA). En HU-061 una persona revisa cada pregunta que genera la IA.

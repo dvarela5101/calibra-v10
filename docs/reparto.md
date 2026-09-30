@@ -1,48 +1,48 @@
 # Reparto de trabajo
 
-**Actualizado:** 29 de septiembre de 2026, noche (reasignación de HU-064 y HU-065). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+**Actualizado:** 30 de septiembre de 2026, madrugada (decisiones D-2 y D-3: el banco de preguntas queda para después). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
 
 ## Estado de partida
 
-- **Hecha:** HU-001, HU-002, HU-003, HU-004, HU-006, HU-007 y HU-012.
-- **HU-005 (banco por habilidades):** la hacen las dos personas juntas, en persona. Ninguna sesión la toma sola. Es el cuello de botella del diagnóstico: de ella dependen HU-060, HU-061, HU-009 y, detrás, casi todo el flujo del estudiante.
-- Las decisiones de negocio del corte 1 están en [REVISION_REGLAS.md](../REVISION_REGLAS.md) §4, "Decisiones del 29-sep-2026", y cada HU las trae en su contexto.
+- **Hecha:** HU-001 a HU-004, HU-006, HU-007, HU-008, HU-012, HU-013, HU-015, HU-063, HU-064, HU-065 y HU-066.
+- **HU-005 (banco por habilidades) queda para después.** La hacen las dos personas juntas, en persona, y ninguna sesión la toma sola. Ya no frena el agendamiento: con D-2, certificar no espera el banco, y con D-3 el diagnóstico es opcional para agendar (el contacto se pide al agendar, [HU-068](../backlog/HU-068.md)). Del banco siguen dependiendo el diagnóstico (HU-060, HU-061, HU-009, HU-010, HU-011) y lo que lo muestra.
+- Las decisiones de negocio están en [REVISION_REGLAS.md](../REVISION_REGLAS.md) §4 ("Decisiones del 29-sep-2026" y "Decisiones del 30-sep-2026"), y cada HU las trae en su contexto.
 
-## Las próximas 6 HUs
+## Las próximas HUs
 
 Cada persona hace las suyas en este orden. Cuando la siguiente depende de la anterior, espera a que dvarela5101 apruebe la anterior (`Hecha`).
 
-**dvarela5101: el camino del monitor**
+**dvarela5101: certificar y agendar**
 
 | Orden | HU | Talla | Puede empezar cuando |
 |---|---|---|---|
-| 1 | [HU-008](../backlog/HU-008.md) Aviso de privacidad y autorización de datos | S | Ya |
-| 2 | [HU-013](../backlog/HU-013.md) Cuenta de monitor por invitación | M | Ya |
-| 3 | [HU-015](../backlog/HU-015.md) Franjas semanales del monitor | M | HU-013 esté `Hecha` |
-| 4 | [HU-066](../backlog/HU-066.md) Enviar los correos por SMTP de Gmail (decisión D-1) | S | Ya: se puede adelantar mientras HU-015 espera la aprobación de HU-013 |
-| 5 | [HU-065](../backlog/HU-065.md) Reintentar los correos que fallaron | S | Ya (pasó de Juzou04 a dvarela5101 el 29-sep, por la noche) |
-| 6 | [HU-015](../backlog/HU-015.md) Franjas semanales del monitor | M | Ya: HU-013 quedó `Hecha` |
-| 7 | [HU-064](../backlog/HU-064.md) Ajustes de la revisión de HU-006 y HU-012 (incluye el texto del desembolso de N-6) | S | Ya (pasó de Juzou04 a dvarela5101) |
+| 1 | [HU-014](../backlog/HU-014.md) Emitir certificados de monitor por materia | S | Ya (D-2) |
+| 2 | [HU-068](../backlog/HU-068.md) Dejar mi contacto al agendar y quedar como Lead | M | Ya (D-3) |
+| 3 | [HU-016](../backlog/HU-016.md) Ver los monitores certificados de una materia y sus fechas libres | M | HU-014 esté `Hecha` |
+| 4 | [HU-017](../backlog/HU-017.md) Agendar una monitoría individual | L | HU-016 y HU-068 estén `Hecha` |
+| 5 | [HU-021](../backlog/HU-021.md) Ver mi agenda de monitorías (monitor) | M | HU-017 esté `Hecha` |
+| 6 | [HU-023](../backlog/HU-023.md) Finalizar una sesión | S | HU-021 esté `Hecha` |
 
-**Juzou04: comprobantes, plazos y panel de admin (su propio código)**
+**Juzou04: comprobantes, pagos y panel de admin (su propio código)**
 
 | Orden | HU | Talla | Puede empezar cuando |
 |---|---|---|---|
-| 1 | [HU-063](../backlog/HU-063.md) Ajustes de la revisión de HU-003 y HU-007 | S | Ya |
-| 2 | [HU-059](../backlog/HU-059.md) Endurecer los comprobantes | S | Ya (después de HU-063, porque las dos tocan el bucket) |
-| 3 | [HU-062](../backlog/HU-062.md) Solicitud de certificación del aspirante a monitor | M | Ya: HU-008 quedó `Hecha` |
-| 4 | [HU-067](../backlog/HU-067.md) Impedir que un pagador pise su propio comprobante (P1, subida el 29-sep) | S | Ya. Va bien con HU-059: las dos tocan el bucket |
+| 1 | [HU-059](../backlog/HU-059.md) Endurecer los comprobantes | S | Ya |
+| 2 | [HU-067](../backlog/HU-067.md) Impedir que un pagador pise su propio comprobante | S | Ya. Va bien con HU-059: las dos tocan el bucket |
+| 3 | [HU-062](../backlog/HU-062.md) Solicitud de certificación del aspirante a monitor | M | Ya |
+| 4 | [HU-018](../backlog/HU-018.md) Pagar por Llave y adjuntar el comprobante | L | HU-017 esté `Hecha`. Propuesta: confirmar con Juzou04 |
+| 5 | [HU-020](../backlog/HU-020.md) Revisar pagos: aprobar o rechazar | L | HU-018 esté `Hecha`. Propuesta: confirmar con Juzou04 |
+| 6 | [HU-027](../backlog/HU-027.md) Expirar reservas sin comprobante a los 10 minutos | S | HU-017 esté `Hecha`. Propuesta: confirmar con Juzou04 |
 
 Por qué así:
-- HU-013 y HU-015 forman una cadena, y conviene que la tenga la misma cabeza.
-- HU-063 y HU-059 tocan el mismo bucket y el código que escribió Juzou04, así que van seguidas y con la misma persona.
-- HU-062 usa el panel de admin (HU-012) y la autorización de datos (HU-008).
-- El único cruce entre personas es HU-062 → HU-008. HU-008 es la primera y la más corta de dvarela5101, para que esté lista a tiempo.
+- HU-014, HU-016 y HU-017 forman la cadena de agendar y siguen a las franjas (HU-015): conviene que la tenga la misma cabeza. HU-068 se puede hacer mientras HU-014 espera aprobación.
+- HU-018 y HU-020 usan los comprobantes (HU-007, HU-059, HU-067) y la bandeja del admin (HU-012), que son código de Juzou04.
+- El cruce entre personas es HU-017 → HU-018 y HU-027. Mientras HU-017 no esté `Hecha`, Juzou04 tiene tres HUs propias.
 
 Posibles choques:
-- **HU-013 y HU-062** agregan pantallas al panel de admin. Cada una va en su propia ruta (`/admin/...`) y no edita la bandeja de HU-012 más allá de un enlace.
-- **HU-013 y HU-062** agregan plantillas de correo en `src/lib/correo/plantillas.ts`. Si chocan, se combinan las dos listas.
-- **HU-063, HU-059, HU-015 y HU-062** crean migraciones nuevas. Nunca se edita una que ya esté en `main`, y `src/lib/supabase/tipos.ts` se regenera con `npm run db:tipos`.
+- **HU-014 y HU-062** agregan pantallas al panel de admin (certificar y ver solicitudes de certificación). Cada una va en su propia ruta (`/admin/...`) y no edita la bandeja de HU-012 más allá de un enlace. Si HU-062 ya lista aspirantes, HU-014 puede certificar desde ahí: se coordina en el PR que llegue segundo.
+- **HU-068 y HU-062** agregan plantillas de correo en `src/lib/correo/plantillas.ts` (y su reconstructor para los reintentos de HU-065). Si chocan, se combinan las listas.
+- **HU-014, HU-068, HU-059, HU-062 y HU-067** pueden crear migraciones nuevas. Nunca se edita una que ya esté en `main`, y `src/lib/supabase/tipos.ts` se regenera con `npm run db:tipos`.
 
 ## Cómo arrancar el chat de cada persona
 

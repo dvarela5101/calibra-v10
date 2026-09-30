@@ -319,6 +319,15 @@ Surgidas de la revisión de HU-003 y HU-007, todas aceptadas y llevadas a [HU-06
 - **N-5:** el CAPTCHA es Cloudflare Turnstile ([HU-058](backlog/HU-058.md)).
 - **N-6:** el desembolso se ejecuta solo después de que vence la ventana de reporte.
 
+### Decisiones del 30-sep-2026
+
+El banco de preguntas ([HU-005](backlog/HU-005.md)) se hace después. Para que el resto del corte 1 no lo espere:
+
+| # | Decisión | HUs |
+|---|---|---|
+| D-2 | Certificar monitores no espera el banco de preguntas: el certificado solo necesita que la materia exista. Mientras el banco no cargue las materias reales, la base local trae materias de prueba en la semilla. | [HU-014](backlog/HU-014.md) |
+| D-3 | El diagnóstico es opcional para agendar. Quien ya sabe qué necesita agenda directo; si hay un diagnóstico de esa materia, se liga a la cita (P-35). Si la sesión no es Lead, el contacto se pide al agendar. | [HU-068](backlog/HU-068.md) (nueva), [HU-017](backlog/HU-017.md), [HU-016](backlog/HU-016.md), [HU-010](backlog/HU-010.md) |
+
 ## 5. Cortes propuestos
 
 | Corte | Prioridad | HUs | Tallas | Qué cubre |
