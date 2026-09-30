@@ -31,7 +31,15 @@ const entrada = (cambios: Partial<EntradaDeEnvio<"solicitud_llave_reembolso">> =
   ...cambios,
 });
 
-type Fila = { plantilla: string; destinatario: string; estado: "pendiente" | "enviado" | "fallido"; intentos: number; error?: string; id?: string | null };
+type Fila = {
+  plantilla: string;
+  destinatario: string;
+  estado: "pendiente" | "enviado" | "fallido";
+  intentos: number;
+  error?: string;
+  id?: string | null;
+  reintentable?: boolean;
+};
 
 /** Un registro en memoria con la misma regla que la tabla: una fila por clave, y solo se manda si se reserva. */
 function registroEnMemoria(inicial: Record<string, Fila> = {}) {
@@ -54,9 +62,9 @@ function registroEnMemoria(inicial: Record<string, Fila> = {}) {
       llamadas.push(`enviado:${clave}`);
       Object.assign(filas.get(clave)!, { estado: "enviado", intentos, id: idProveedor, error: undefined });
     },
-    async marcarFallido(clave, { error, intentos }) {
+    async marcarFallido(clave, { error, intentos, reintentable }) {
       llamadas.push(`fallido:${clave}`);
-      Object.assign(filas.get(clave)!, { estado: "fallido", intentos, error });
+      Object.assign(filas.get(clave)!, { estado: "fallido", intentos, error, reintentable });
     },
   };
   return { registro, filas, llamadas };
@@ -202,6 +210,8 @@ describe("reintentar los fallos pasajeros", () => {
       estado: "fallido",
       intentos: 3,
       error: "Resend 503 service_unavailable: tres",
+      // HU-065: la falla fue temporal, así que el proceso programado la reintenta más tarde.
+      reintentable: true,
     });
   });
 
@@ -212,7 +222,8 @@ describe("reintentar los fallos pasajeros", () => {
     expect(resultado).toMatchObject({ ok: false, motivo: "fallo_del_proveedor", intentos: 1 });
     expect(t.enviados).toHaveLength(1);
     expect(t.esperas).toEqual([]);
-    expect(t.filas.get("solicitud_llave_reembolso:reembolso-1")).toMatchObject({ estado: "fallido", intentos: 1 });
+    // HU-065: definitivo, el proceso programado no lo reintenta.
+    expect(t.filas.get("solicitud_llave_reembolso:reembolso-1")).toMatchObject({ estado: "fallido", intentos: 1, reintentable: false });
   });
 
   it("un fallo pasajero seguido de uno definitivo se detiene en el definitivo", async () => {
@@ -326,7 +337,8 @@ describe("cuando algo del entorno falla", () => {
 
     expect(resultado).toMatchObject({ ok: false, motivo: "sin_proveedor", intentos: 0 });
     expect(t.enviados).toEqual([]);
-    expect(t.filas.get("solicitud_llave_reembolso:reembolso-1")).toMatchObject({ estado: "fallido", intentos: 0 });
+    // HU-065: al configurar el proveedor, el proceso programado lo reintenta.
+    expect(t.filas.get("solicitud_llave_reembolso:reembolso-1")).toMatchObject({ estado: "fallido", intentos: 0, reintentable: true });
     expect(t.filas.get("solicitud_llave_reembolso:reembolso-1")?.error).toContain("No hay proveedor de correo");
   });
 

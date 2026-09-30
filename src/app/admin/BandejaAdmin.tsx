@@ -83,6 +83,7 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
     { id: "reembolsos", rotulo: "Reembolsos", cifra: contadores.reembolsos },
     { id: "reportes", rotulo: "Reportes en revisión", cifra: contadores.reportes },
     { id: "desembolsos", rotulo: "Desembolsos ejecutables", cifra: contadores.desembolsos },
+    { id: "correos", rotulo: "Correos que no salieron", cifra: contadores.correosSinEnviar },
   ];
 
   return (
@@ -181,6 +182,29 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
           ))}
         </ul>
         <AvisoDeCorte mostrados={bandeja.desembolsos.length} total={contadores.desembolsos} />
+      </Seccion>
+
+      <Seccion
+        id="correos"
+        titulo="Correos que no salieron"
+        total={contadores.correosSinEnviar}
+        ayuda="Los que fallaron por algo que no se arregla solo, o que se reintentaron sin éxito hasta agotar el plazo. Ya no se reintentan: avísale a la persona por otro medio. Son los mismos para todos los admins."
+        vacio="Todos los correos salieron."
+      >
+        <ul className={estilos.lista}>
+          {bandeja.correosSinEnviar.map((correo) => (
+            <li key={correo.id} className={estilos.fila}>
+              <span className={estilos.nombre}>
+                {correo.tipo} · {correo.destinatario}
+              </span>
+              <span className={estilos.meta}>
+                Desde el {formatearFechaHora(correo.creadoEn)}
+                {correo.error ? ` · ${correo.error}` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <AvisoDeCorte mostrados={bandeja.correosSinEnviar.length} total={contadores.correosSinEnviar} />
       </Seccion>
     </div>
   );

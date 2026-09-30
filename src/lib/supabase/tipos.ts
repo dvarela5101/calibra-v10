@@ -51,13 +51,13 @@ isOneToOne: false
                   ]
                 },"correo_envio": {
                   Row: {
-                    "actualizado_en": string,"clave": string,"creado_en": string,"destinatario": string,"enviado_en": string | null,"estado": Database["public"]['Enums']["estado_correo"],"id": string,"id_proveedor": string | null,"intentos": number,"plantilla": string,"ultimo_error": string | null
+                    "actualizado_en": string,"clave": string,"creado_en": string,"destinatario": string,"enviado_en": string | null,"estado": Database["public"]['Enums']["estado_correo"],"id": string,"id_proveedor": string | null,"intentos": number,"plantilla": string,"reintentable": boolean,"ultimo_error": string | null
                   }
                   Insert: {
-                    "actualizado_en"?: string,"clave": string,"creado_en"?: string,"destinatario": string,"enviado_en"?: string | null,"estado"?: Database["public"]['Enums']["estado_correo"],"id"?: string,"id_proveedor"?: string | null,"intentos"?: number,"plantilla": string,"ultimo_error"?: string | null
+                    "actualizado_en"?: string,"clave": string,"creado_en"?: string,"destinatario": string,"enviado_en"?: string | null,"estado"?: Database["public"]['Enums']["estado_correo"],"id"?: string,"id_proveedor"?: string | null,"intentos"?: number,"plantilla": string,"reintentable"?: boolean,"ultimo_error"?: string | null
                   }
                   Update: {
-                    "actualizado_en"?: string,"clave"?: string,"creado_en"?: string,"destinatario"?: string,"enviado_en"?: string | null,"estado"?: Database["public"]['Enums']["estado_correo"],"id"?: string,"id_proveedor"?: string | null,"intentos"?: number,"plantilla"?: string,"ultimo_error"?: string | null
+                    "actualizado_en"?: string,"clave"?: string,"creado_en"?: string,"destinatario"?: string,"enviado_en"?: string | null,"estado"?: Database["public"]['Enums']["estado_correo"],"id"?: string,"id_proveedor"?: string | null,"intentos"?: number,"plantilla"?: string,"reintentable"?: boolean,"ultimo_error"?: string | null
                   }
                   Relationships: [
                     

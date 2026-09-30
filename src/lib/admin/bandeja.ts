@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { VENTANA_DE_REINTENTO_MS } from "@/lib/correo/reintentos";
+import { esPlantilla, NOMBRE_DE_PLANTILLA } from "@/lib/correo/plantillas";
 import { revisionHasta } from "@/lib/plazos/motor";
 import { cargarParametros } from "@/lib/plazos/parametros";
 import { describirTiempoRestante, type TiempoRestante } from "@/lib/plazos/restante";
@@ -28,12 +30,24 @@ export type DesembolsoEjecutable = {
   fechaSesion: string;
 };
 
+/** Un correo que no salió y que el proceso de reintentos ya no va a mandar (HU-065). */
+export type CorreoSinEnviar = {
+  id: string;
+  /** Nombre legible de la plantilla. */
+  tipo: string;
+  destinatario: string;
+  creadoEn: Date;
+  error: string | null;
+};
+
 export type Bandeja = {
   pagos: PagoPorRevisar[];
   /** Cada estado activo tiene su propia lista y su propio corte: una larga no tapa a la otra. */
   reembolsos: { esperandoLlave: ReembolsoActivo[]; pendientes: ReembolsoActivo[] };
   reportes: ReporteEnRevision[];
   desembolsos: DesembolsoEjecutable[];
+  /** Correos que fallaron de forma definitiva o siguieron fallando 24 horas (HU-065). Los ven todos los admins. */
+  correosSinEnviar: CorreoSinEnviar[];
   /** Cuántos hay en cada sección, contando los que no caben en la lista. */
   contadores: {
     pagos: number;
@@ -42,6 +56,7 @@ export type Bandeja = {
     reembolsosPendientes: number;
     reportes: number;
     desembolsos: number;
+    correosSinEnviar: number;
   };
 };
 
@@ -83,7 +98,10 @@ export async function cargarBandeja(
       .order("fecha_generacion", { ascending: true })
       .limit(maxFilas);
 
-  const [parametros, pagos, esperandoLlave, pendientes, reportes, desembolsos] = await Promise.all([
+  // El proceso de reintentos deja de intentar a las 24 horas: desde ahí, o si la falla fue definitiva, le toca al admin.
+  const finDeReintentos = new Date(ahora.getTime() - VENTANA_DE_REINTENTO_MS).toISOString();
+
+  const [parametros, pagos, esperandoLlave, pendientes, reportes, desembolsos, correos] = await Promise.all([
     cargarParametros(cliente),
     cliente
       .from("pago")
@@ -107,6 +125,18 @@ export async function cargarBandeja(
       .select("id, monto_neto, desembolsable_desde, fecha_sesion", { count: "exact" })
       .order("desembolsable_desde", { ascending: true })
       .limit(maxFilas),
+    cliente
+      .from("correo_envio")
+      .select("id, plantilla, destinatario, creado_en, ultimo_error", { count: "exact" })
+      // Fallidos definitivos o que agotaron el plazo, y `pendiente` de antes del plazo (su envío murió y
+      // ya no se reintenta).
+      .or(
+        `and(estado.eq.fallido,reintentable.is.false),` +
+          `and(estado.eq.fallido,creado_en.lte.${finDeReintentos}),` +
+          `and(estado.eq.pendiente,creado_en.lte.${finDeReintentos})`,
+      )
+      .order("creado_en", { ascending: false })
+      .limit(maxFilas),
   ]);
 
   const p = exigir("los pagos por revisar", pagos);
@@ -114,6 +144,7 @@ export async function cargarBandeja(
   const r = exigir("los reembolsos listos para transferir", pendientes);
   const i = exigir("los reportes de inasistencia", reportes);
   const d = exigir("los desembolsos", desembolsos);
+  const c = exigir("los correos que no salieron", correos);
 
   const reembolso = (fila: { id: string; monto: number; motivo: string }): ReembolsoActivo => ({
     id: fila.id,
@@ -151,6 +182,13 @@ export async function cargarBandeja(
           ]
         : [],
     ),
+    correosSinEnviar: c.filas.map((fila) => ({
+      id: fila.id,
+      tipo: esPlantilla(fila.plantilla) ? NOMBRE_DE_PLANTILLA[fila.plantilla] : fila.plantilla,
+      destinatario: fila.destinatario,
+      creadoEn: new Date(fila.creado_en),
+      error: fila.ultimo_error,
+    })),
     contadores: {
       pagos: p.total,
       reembolsos: e.total + r.total,
@@ -158,6 +196,7 @@ export async function cargarBandeja(
       reembolsosPendientes: r.total,
       reportes: i.total,
       desembolsos: d.total,
+      correosSinEnviar: c.total,
     },
   };
 }

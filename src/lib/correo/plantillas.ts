@@ -24,6 +24,21 @@ export const PLANTILLAS = [
 
 export type Plantilla = (typeof PLANTILLAS)[number];
 
+/** Cómo llamar a cada correo en la bandeja del admin (HU-065). */
+export const NOMBRE_DE_PLANTILLA: Record<Plantilla, string> = {
+  recuperacion_diagnostico: "Resultados del diagnóstico",
+  resena_individual: "Reseña de la monitoría",
+  solicitud_llave_reembolso: "Pedido de llave para reembolso",
+  pago_rechazado_individual: "Pago rechazado (individual)",
+  pago_rechazado_grupal: "Pago rechazado (grupal)",
+  escalamiento_pago: "Pago escalado a otro admin",
+  invitacion_monitor: "Invitación de monitor",
+};
+
+export function esPlantilla(valor: string): valor is Plantilla {
+  return (PLANTILLAS as readonly string[]).includes(valor);
+}
+
 export type DatosPorPlantilla = {
   /** Diagnóstico completado: enlace con token para recuperar los resultados (RN-12). Al Lead. */
   recuperacion_diagnostico: { nombre: string; materia: string; enlace: string };
@@ -42,6 +57,12 @@ export type DatosPorPlantilla = {
 };
 
 export type CorreoRenderizado = { asunto: string; html: string; texto: string };
+
+/**
+ * Lo que necesita el proceso de reintentos para volver a mandar un correo (HU-065): el registro no
+ * guarda el cuerpo, así que cada plantilla sabe reconstruir sus datos a partir de la entidad.
+ */
+export type Reconstruccion<P extends Plantilla> = { destinatario: string; datos: DatosPorPlantilla[P] };
 
 /** Un texto que viene de fuera: no vacío y en una sola línea (va también al asunto). */
 function linea(valor: string, campo: string): string {
