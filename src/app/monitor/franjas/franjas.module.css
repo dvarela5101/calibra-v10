@@ -1,0 +1,81 @@
+/* Franjas del monitor (HU-015). */
+
+.par {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--e3);
+}
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  border: 0;
+}
+
+.grupo:disabled {
+  color: var(--muted);
+}
+
+.opcion {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  min-block-size: var(--toque-min);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.radio {
+  inline-size: 22px;
+  block-size: 22px;
+  accent-color: var(--primary);
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  list-style: none;
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+  text-decoration: none;
+  color: inherit;
+  min-block-size: var(--toque-min);
+}
+
+.cabeza {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.detalle {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.cerrada {
+  font-size: 15px;
+  color: var(--alert-text);
+}
+
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-block-start: var(--e4);
+}
+
+.titulo {
+  font-size: 19px;
+  font-weight: 700;
+}

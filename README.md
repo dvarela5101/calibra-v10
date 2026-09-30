@@ -109,6 +109,15 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 - El tiempo restante de un pago sale del motor de plazos (HU-003) y respeta el borde inclusivo de P-40.
 - Cada sección se vuelve accionable cuando llegan HU-020 (pagos), HU-026 (reembolsos), HU-030 (reportes) y HU-028 (desembolsos).
 
+## Franjas del monitor
+
+`/monitor/franjas` (HU-015): el monitor certificado abre franjas semanales (día, hora, duración, precio y modalidad, con lugar o enlace de videollamada), las edita y las cierra desde una fecha. Las reglas (P-30, P-31) las aplica el trigger `privado.validar_franja_del_monitor` a toda escritura que no sea de confianza, y `src/lib/franjas/reglas.ts` da los mismos mensajes antes de ir a la base.
+
+- La franja se lee en público (para agendar), pero el lugar y el enlace no: los permisos de `select` son por columna. El monitor lee los suyos con `public.acceso_a_mis_franjas()`. Quien necesite mostrarlos a un estudiante (la cita confirmada, HU-019) los lee desde el servidor.
+- Día, hora y duración no cambian si la franja tiene monitorías no canceladas: los plazos de cada monitoría salen del horario de la franja. El precio sí cambia; la monitoría guarda su `valor_total` (RN-32).
+- Cerrar es poner `cerrada_desde`, posterior a la última monitoría activa. Una franja ya cerrada no se edita ni se reabre.
+- Las escrituras con la llave secreta (pruebas, herramientas) no pasan por esas reglas: quien escriba franjas así tiene que respetarlas por su cuenta.
+
 ## Comprobantes de pago
 
 Los comprobantes van en el bucket privado `comprobantes` de Supabase Storage (HU-007). La ruta es `<id del usuario>/<uuid>.<jpg|png|pdf>`, con el id del usuario de Auth que sube (la sesión anónima del pagador también lo es), y `pago.comprobante` guarda esa ruta.

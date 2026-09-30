@@ -164,13 +164,13 @@ isOneToOne: false
                   ]
                 },"franja": {
                   Row: {
-                    "dia": number,"duracion_min": number,"hora": string,"id": string,"id_monitor": string,"precio": number,"presencial": boolean
+                    "abierta_desde": string,"cerrada_desde": string | null,"dia": number,"duracion_min": number,"enlace": string | null,"hora": string,"id": string,"id_monitor": string,"lugar": string | null,"precio": number,"presencial": boolean
                   }
                   Insert: {
-                    "dia": number,"duracion_min": number,"hora": string,"id"?: string,"id_monitor": string,"precio": number,"presencial": boolean
+                    "abierta_desde"?: string,"cerrada_desde"?: string | null,"dia": number,"duracion_min": number,"enlace"?: string | null,"hora": string,"id"?: string,"id_monitor": string,"lugar"?: string | null,"precio": number,"presencial": boolean
                   }
                   Update: {
-                    "dia"?: number,"duracion_min"?: number,"hora"?: string,"id"?: string,"id_monitor"?: string,"precio"?: number,"presencial"?: boolean
+                    "abierta_desde"?: string,"cerrada_desde"?: string | null,"dia"?: number,"duracion_min"?: number,"enlace"?: string | null,"hora"?: string,"id"?: string,"id_monitor"?: string,"lugar"?: string | null,"precio"?: number,"presencial"?: boolean
                   }
                   Relationships: [
                     {
@@ -477,7 +477,12 @@ isOneToOne: true
                 }
           }
           Functions: {
-            "cancelable_hasta":
+            "acceso_a_mis_franjas":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "enlace": string,"id_franja": string,"lugar": string
+            }[]
+                           },
+"cancelable_hasta":
 { Args: { "p_es_grupal": boolean,"p_inicio": string }; Returns: string
                            },
 "comision":
