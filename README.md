@@ -112,6 +112,15 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 - El tiempo restante de un pago sale del motor de plazos (HU-003) y respeta el borde inclusivo de P-40.
 - Cada sección se vuelve accionable cuando llegan HU-020 (pagos), HU-026 (reembolsos), HU-030 (reportes) y HU-028 (desembolsos).
 
+## Contacto al agendar
+
+`/agendar/contacto?siguiente=/ruta` (HU-068, D-3): el diagnóstico es opcional, así que quien va a agendar sin ser Lead deja aquí nombre, correo, teléfono opcional y su autorización de datos (HU-008). Al terminar vuelve a `siguiente`. Quien ya es Lead sigue de largo; con `&editar=1` cambia sus datos.
+
+- La base admite un Lead por correo normalizado y uno por sesión. Lo crea el servidor con `public.registrar_lead()`, que también le liga los diagnósticos que la sesión hizo antes. Solo lo llama service_role.
+- Si el correo ya es de otro Lead (P-23), no se liga nada: se manda el correo `verificacion_lead` con un enlace a `/contacto/verificar`. El enlace vence en 24 horas y sirve una vez; se mandan como máximo 3 por hora al mismo Lead.
+- En esa página, el botón "Sí, es mi correo" liga **el navegador que abrió el enlace** a ese Lead (`lead_sesion`, que `privado.es_mi_lead` tiene en cuenta), con sus diagnósticos. Abrir el enlace no cambia nada, así que un revisor de enlaces no lo gasta.
+- El origen del Lead es la campaña con la que llegó el visitante (`?utm_campaign=...`). `OrigenDeCampana` la guarda en la cookie `calibra_origen` por 30 días.
+
 ## Franjas del monitor
 
 `/monitor/franjas` (HU-015): el monitor certificado abre franjas semanales (día, hora, duración, precio y modalidad, con lugar o enlace de videollamada), las edita y las cierra desde una fecha. Las reglas (P-30, P-31) las aplica el trigger `privado.validar_franja_del_monitor` a toda escritura que no sea de confianza, y `src/lib/franjas/reglas.ts` da los mismos mensajes antes de ir a la base.
