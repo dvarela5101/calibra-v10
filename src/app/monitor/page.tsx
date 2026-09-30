@@ -4,20 +4,27 @@ import { BotonSalir } from "@/components/BotonSalir";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { exigirRol } from "@/lib/auth/sesion";
+import { formatearDia } from "@/lib/fechas";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { FormularioLlave } from "./FormularioLlave";
+import estilos from "./monitor.module.css";
 
 export const metadata: Metadata = { title: "Panel del monitor · Calibra" };
 
 export default async function PanelMonitor() {
   const sesion = await exigirRol("monitor", "/monitor");
   const supabase = await crearClienteServidor();
-  const [{ data: monitor }, { data: privado }, { count: certificados }] = await Promise.all([
+  const [{ data: monitor }, { data: privado }, { data: certificados }] = await Promise.all([
     supabase!.from("monitor").select("nombre").eq("id", sesion.idUsuario).maybeSingle(),
     supabase!.from("monitor_privado").select("llave").eq("id_monitor", sesion.idUsuario).maybeSingle(),
-    supabase!.from("certificado").select("id", { count: "exact", head: true }).eq("id_monitor", sesion.idUsuario),
+    // HU-014: sus materias certificadas, con la fecha del certificado.
+    supabase!
+      .from("certificado")
+      .select("id, fecha_emision, materia(nombre, codigo)")
+      .eq("id_monitor", sesion.idUsuario)
+      .order("fecha_emision", { ascending: true }),
   ]);
-  const sinCertificados = !certificados;
+  const sinCertificados = !certificados?.length;
 
   return (
     <Pantalla
@@ -33,6 +40,21 @@ export default async function PanelMonitor() {
         <p role="status" className={formulario.ayuda}>
           Aún no tienes materias certificadas.
         </p>
+      )}
+      {!sinCertificados && (
+        <section aria-labelledby="materias-certificadas" className={estilos.seccion}>
+          <h2 id="materias-certificadas" className={estilos.titulo}>
+            Tus materias certificadas
+          </h2>
+          <ul className={estilos.lista}>
+            {certificados!.map((c) => (
+              <li key={c.id}>
+                {c.materia ? `${c.materia.nombre} (${c.materia.codigo})` : "Materia"}
+                <span className={estilos.meta}> · desde el {formatearDia(c.fecha_emision)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
       {!sinCertificados && (
         <Link href="/monitor/franjas" className={formulario.enlace}>

@@ -20,13 +20,13 @@ export type Database = {
                   ]
                 },"certificado": {
                   Row: {
-                    "fecha_emision": string,"id": string,"id_admin": string,"id_materia": string,"id_monitor": string
+                    "fecha_emision": string,"fecha_evaluacion": string,"id": string,"id_admin": string,"id_materia": string,"id_monitor": string
                   }
                   Insert: {
-                    "fecha_emision"?: string,"id"?: string,"id_admin": string,"id_materia": string,"id_monitor": string
+                    "fecha_emision"?: string,"fecha_evaluacion"?: string,"id"?: string,"id_admin": string,"id_materia": string,"id_monitor": string
                   }
                   Update: {
-                    "fecha_emision"?: string,"id"?: string,"id_admin"?: string,"id_materia"?: string,"id_monitor"?: string
+                    "fecha_emision"?: string,"fecha_evaluacion"?: string,"id"?: string,"id_admin"?: string,"id_materia"?: string,"id_monitor"?: string
                   }
                   Relationships: [
                     {
