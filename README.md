@@ -142,6 +142,14 @@ En producción el proveedor es Resend (`RESEND_API_KEY` y `CORREO_REMITENTE`, ve
 
 Antes de mandar a personas reales hay que verificar un dominio en Resend. Mientras no esté verificado, Resend solo entrega a la cuenta dueña de la llave.
 
+### Reintentos y procesos programados (HU-065)
+
+Si un correo falla por algo temporal (red, un 4xx de SMTP, un 5xx o el límite de ritmo de Resend, o el proveedor sin configurar), queda `fallido` con `reintentable = true`. Cada 10 minutos pg_cron corre `privado.disparar_reintento_correos()`, que con pg_net hace un `POST` a `/api/procesos/reintentar-correos` con `Authorization: Bearer <CRON_SECRETO>`. La ruta (`src/lib/correo/reintentos.ts`) toma los reintentables de las últimas 24 horas, reconstruye cada correo desde su entidad (`src/lib/correo/reconstructores.ts`) y lo vuelve a mandar con la misma clave. Lo definitivo, o lo que siguió fallando 24 horas, aparece en la bandeja del admin como "Correos que no salieron".
+
+- La base toma la dirección del sitio y el secreto de Vault (`calibra_sitio_url` y `calibra_cron_secreto`). Sin ellos no dispara nada, que es lo que pasa en local.
+- Toda plantilla que una HU empiece a disparar necesita su reconstructor: `pruebas/reconstructores.test.ts` falla si falta.
+- La invitación de monitor se reconstruye con un token nuevo, porque el token no se guarda: el enlace que no llegó deja de servir.
+
 ## CI y despliegue
 
 `.github/workflows/ci.yml` corre en cada push a `main` y en cada PR hacia `main`:

@@ -1,4 +1,5 @@
 import "server-only";
+import type { Reconstruccion } from "@/lib/correo/plantillas";
 import { enviarCorreoDesdeServidor, urlDelSitio } from "@/lib/correo/servidor";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { generarToken, hashDeToken, rutaDeRegistro, tieneFormaDeToken, type DatosDeRegistro } from "./invitacion";
@@ -113,3 +114,31 @@ export async function registrarMonitor(token: unknown, datos: DatosDeRegistro): 
   }
   return { ok: true, correo: invitacion.correo };
 }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Reconstruye el correo de una invitación que no salió (HU-065). El token no se guarda, así que no se
+ * puede volver a armar el mismo enlace: se genera uno nuevo y se reemplaza el hash. El enlace viejo
+ * nunca llegó (el correo falló), así que nadie lo pierde. Si la invitación ya se usó o venció, `null`:
+ * ese correo ya no tiene sentido.
+ */
+export async function reconstruirInvitacion(
+  idInvitacion: string,
+  ahora: Date = new Date(),
+): Promise<Reconstruccion<"invitacion_monitor"> | null> {
+  if (!UUID.test(idInvitacion)) return null;
+  const { token, hash } = generarToken();
+  const { data, error } = await crearClienteAdmin()
+    .from("invitacion_monitor")
+    .update({ token_hash: hash })
+    .eq("id", idInvitacion)
+    .is("usada_en", null)
+    .gt("vence_en", ahora.toISOString())
+    .select("correo, vence_en")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return { destinatario: data.correo, datos: { enlace: urlDelSitio(rutaDeRegistro(token)), venceEn: data.vence_en } };
+}
+

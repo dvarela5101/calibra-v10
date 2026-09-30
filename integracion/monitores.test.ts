@@ -30,6 +30,10 @@ afterEach(async () => {
   for (const correo of correos.splice(0)) {
     // Cuentas que creó registrarMonitor (no las conoce Fixtures): se buscan por el correo de la invitación.
     const { data: privado } = await fx.admin.from("monitor_privado").select("id_monitor").eq("correo", correo);
+    // El registro de correos no cae en cascada con la invitación: se borra por su clave (invitacion_monitor:<id>).
+    const { data: invitaciones } = await fx.admin.from("invitacion_monitor").select("id").eq("correo", correo);
+    const claves = (invitaciones ?? []).map(({ id }) => `invitacion_monitor:${id}`);
+    if (claves.length) await fx.admin.from("correo_envio").delete().in("clave", claves);
     await fx.admin.from("invitacion_monitor").delete().eq("correo", correo);
     for (const { id_monitor } of privado ?? []) await fx.admin.auth.admin.deleteUser(id_monitor);
     await fetch(`${mailpit}/api/v1/search?query=${encodeURIComponent(`to:"${correo}"`)}`, { method: "DELETE" });

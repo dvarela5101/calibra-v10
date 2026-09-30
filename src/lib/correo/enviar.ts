@@ -28,7 +28,8 @@ export type RegistroDeEnvios = {
   /** Reserva la clave. Solo quien recibe `enviar` manda el correo. */
   reservar(datos: { clave: string; plantilla: string; destinatario: string }): Promise<Reserva>;
   marcarEnviado(clave: string, datos: { idProveedor: string | null; intentos: number }): Promise<void>;
-  marcarFallido(clave: string, datos: { error: string; intentos: number }): Promise<void>;
+  /** `reintentable`: la falla fue temporal y el proceso programado la reintenta (HU-065). */
+  marcarFallido(clave: string, datos: { error: string; intentos: number; reintentable: boolean }): Promise<void>;
 };
 
 export type Dependencias = {
@@ -127,10 +128,12 @@ export async function enviarCorreo<P extends Plantilla>(
   let intentos = reserva.intentosPrevios;
 
   if (!proveedor.ok) {
-    return await terminarConFallo(registro, clave, "sin_proveedor", proveedor.error, intentos);
+    // Falta configurar el proveedor: cuando se configure, el proceso programado lo reintenta.
+    return await terminarConFallo(registro, clave, "sin_proveedor", proveedor.error, intentos, true);
   }
 
   let ultimoError = "";
+  let ultimoReintentable = true;
   for (let intento = 1; intento <= intentosMaximos; intento++) {
     intentos += 1;
     const resultado = await enviarUnaVez(proveedor.proveedor, {
@@ -150,10 +153,11 @@ export async function enviarCorreo<P extends Plantilla>(
       return { ok: true, yaEnviado: false, intentos, idProveedor: resultado.idProveedor };
     }
     ultimoError = resultado.error;
+    ultimoReintentable = resultado.reintentable;
     if (!resultado.reintentable || intento === intentosMaximos) break;
     await esperar(esperas[Math.min(intento - 1, esperas.length - 1)] ?? 0);
   }
-  return await terminarConFallo(registro, clave, "fallo_del_proveedor", ultimoError, intentos);
+  return await terminarConFallo(registro, clave, "fallo_del_proveedor", ultimoError, intentos, ultimoReintentable);
 }
 
 function mensajeDe(error: unknown): string {
@@ -175,9 +179,10 @@ async function terminarConFallo(
   motivo: "sin_proveedor" | "fallo_del_proveedor",
   error: string,
   intentos: number,
+  reintentable: boolean,
 ): Promise<ResultadoEnvio> {
   try {
-    await registro.marcarFallido(clave, { error, intentos });
+    await registro.marcarFallido(clave, { error, intentos, reintentable });
   } catch (falloDelRegistro) {
     console.error("[correo] no se pudo anotar el fallo:", limpiarError(mensajeDe(falloDelRegistro)));
   }

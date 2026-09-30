@@ -65,6 +65,10 @@ Todavía no. Se hace una sola vez, cuando el flujo principal esté listo, y lo g
 - [ ] **Base en la nube.** v10 usará el mismo proyecto Supabase del prototipo (`uotlhaitdkfroavqkvee`). En el corte: respaldo, mover las tablas del prototipo a un esquema aparte, aplicar las migraciones de v10 y desactivar el webhook y la función `enviar-correo` del prototipo.
 - [ ] **Variables de Supabase en Vercel:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y `SUPABASE_SECRET_KEY` (esta última **Sensitive**). Salen de Supabase, **Project Settings**, **API Keys**.
 - [ ] **Supabase Auth en la nube:** activar el inicio anónimo, contraseña mínima de 8, `Site URL` y URLs de redirección de producción, la plantilla de "recuperar contraseña" y un SMTP propio para los correos de Auth (se puede usar el mismo Gmail).
+- [ ] **Reintento automático de correos (HU-065).** Genera un secreto largo (por ejemplo, en una terminal: `openssl rand -hex 32`) y:
+  - cárgalo en Vercel como `CRON_SECRETO` (**Sensitive**);
+  - en Supabase, **SQL Editor**, guárdalo en Vault junto con la dirección del sitio: `select vault.create_secret('<el secreto>', 'calibra_cron_secreto');` y `select vault.create_secret('https://<tu sitio>', 'calibra_sitio_url');`.
+  Desde ahí, cada 10 minutos la base le pide a la app que reintente los correos que fallaron. Sin esto, los correos fallidos no se reintentan solos (el admin igual los ve en su bandeja).
 - [ ] **Admins reales:** la lista de admins y su orden de revisión.
 - [ ] **CAPTCHA (HU-058):** crear las llaves de Cloudflare Turnstile (gratis) y cargarlas en Vercel y en Supabase Auth. HU-058 pasa a `Lista` cuando existan.
 - [ ] **Datos del prototipo:** decidir si los diagnósticos viejos se importan como históricos. Los leads del prototipo no se migran como contactables (no tenían autorización de datos).

@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-09-29 22:34. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-09-29 23:22. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -60,7 +60,7 @@ _Generado automaticamente: 2026-09-29 22:34. No editar a mano; usa `scripts/back
 | [HU-067](backlog/HU-067.md) | [Técnica] Impedir que un pagador pise su propio comprobante con una URL de subida firmada | Lista | P1 | S | HU-007 |
 | [HU-059](backlog/HU-059.md) | [Técnica] Endurecer los comprobantes: contenido real, huérfanos y cuota por sesión | Lista | P2 | S | HU-007 |
 | [HU-066](backlog/HU-066.md) | [Técnica] Enviar los correos desde calibra.monitorias@gmail.com por SMTP de Gmail | En progreso | P0 | S | HU-006 |
-| [HU-065](backlog/HU-065.md) | [Sistema] Reintentar los correos que fallaron | En progreso | P1 | S | HU-006 |
+| [HU-065](backlog/HU-065.md) | [Sistema] Reintentar los correos que fallaron | En revision | P1 | S | HU-006 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |

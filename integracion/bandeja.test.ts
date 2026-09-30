@@ -56,6 +56,7 @@ describe("criterio 3: la semilla deja los admins iniciales con su orden de revis
       reembolsosPendientes: 0,
       reportes: 0,
       desembolsos: bandeja.desembolsos.length, // los ejecutables son de todos: puede haber de otras pruebas
+      correosSinEnviar: bandeja.correosSinEnviar.length, // los correos sin enviar también: puede haber de otras pruebas
     });
   });
 });
@@ -196,7 +197,7 @@ describe("criterio 2: un ítem con plazo muestra el tiempo restante", () => {
 });
 
 describe("quién puede leer la bandeja", () => {
-  it("con la sesión de un monitor las cuatro listas salen vacías (las políticas son solo de admins)", async () => {
+  it("con la sesión de un monitor las cinco listas salen vacías (las políticas son solo de admins)", async () => {
     const m = await armarMundo();
     const monitor = await fx.crearMonitor();
     const bandeja = await cargarBandeja(await fx.iniciarSesion(monitor), m.a.id, AHORA);
@@ -205,7 +206,16 @@ describe("quién puede leer la bandeja", () => {
     expect(bandeja.reembolsos).toEqual({ esperandoLlave: [], pendientes: [] });
     expect(bandeja.reportes).toEqual([]);
     expect(bandeja.desembolsos).toEqual([]);
-    expect(bandeja.contadores).toEqual({ pagos: 0, reembolsos: 0, reembolsosEsperandoLlave: 0, reembolsosPendientes: 0, reportes: 0, desembolsos: 0 });
+    expect(bandeja.correosSinEnviar).toEqual([]);
+    expect(bandeja.contadores).toEqual({
+      pagos: 0,
+      reembolsos: 0,
+      reembolsosEsperandoLlave: 0,
+      reembolsosPendientes: 0,
+      reportes: 0,
+      desembolsos: 0,
+      correosSinEnviar: 0,
+    });
   });
 
   it("las políticas dejan leer a todo admin: el filtro por admin lo pone quien llama (la página usa el id de la sesión)", async () => {
