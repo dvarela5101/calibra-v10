@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { armarHtml, armarTexto, enlaceSeguro, escaparHtml, protocoloAdmitido } from "./html";
 import { PLANTILLAS, renderizar, type DatosPorPlantilla, type Plantilla } from "./plantillas";
 
@@ -187,6 +187,15 @@ describe("enlaces", () => {
       expect(enlaceSeguro("http://[::1]:3000/r", PRODUCCION)).toBe("http://[::1]:3000/r");
     });
 
+    it.each([
+      ["un host que solo parece local (usuario localhost y host real)", "http://localhost@evil.com/"],
+      ["0.0.0.0, que no es esta máquina para un correo", "http://0.0.0.0/"],
+      ["localhost con punto final", "http://localhost./"],
+      ["IPv6 mapeada a IPv4, que la URL normaliza a otro texto", "http://[::ffff:127.0.0.1]/"],
+    ])("en producción rechaza http hacia %s", (_nombre, enlace) => {
+      expect(() => enlaceSeguro(enlace, PRODUCCION)).toThrow(RangeError);
+    });
+
     it("fuera de producción, http se acepta hacia cualquier host", () => {
       expect(enlaceSeguro("http://calibra.example/r", { NODE_ENV: "development" })).toBe("http://calibra.example/r");
       expect(enlaceSeguro("http://calibra.example/r", {})).toBe("http://calibra.example/r");
@@ -200,7 +209,32 @@ describe("enlaces", () => {
     });
 
     it("el mensaje del error no repite el enlace, que puede traer un token", () => {
-      expect(() => enlaceSeguro("http://calibra.example/r?token=SECRETO123", PRODUCCION)).toThrow(/^(?!.*SECRETO123)/);
+      let mensaje = "";
+      try {
+        enlaceSeguro("http://calibra.example/r?token=SECRETO123", PRODUCCION);
+      } catch (error) {
+        mensaje = (error as Error).message;
+      }
+      expect(mensaje).toBe("En producción el enlace debe ser https.");
+      expect(mensaje).not.toContain("SECRETO123");
+    });
+
+    describe("con NODE_ENV=production de verdad (la ruta que sigue una plantilla al armar el correo)", () => {
+      afterEach(() => vi.unstubAllEnvs());
+
+      it("una plantilla con un enlace http a otro host falla con RangeError", () => {
+        vi.stubEnv("NODE_ENV", "production");
+        expect(() => render("recuperacion_diagnostico", { enlace: "http://calibra.example/resultados?token=abc123" })).toThrow(RangeError);
+        expect(() => render("recuperacion_diagnostico", { enlace: "http://calibra.example/resultados?token=abc123" })).toThrow(
+          "En producción el enlace debe ser https.",
+        );
+      });
+
+      it("con https arma el correo, y con http hacia localhost también", () => {
+        vi.stubEnv("NODE_ENV", "production");
+        expect(render("recuperacion_diagnostico").texto).toContain(`Ver mis resultados: ${ENLACE}`);
+        expect(render("recuperacion_diagnostico", { enlace: "http://localhost:3000/r" }).texto).toContain("http://localhost:3000/r");
+      });
     });
   });
 

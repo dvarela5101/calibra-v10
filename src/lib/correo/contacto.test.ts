@@ -125,6 +125,19 @@ describe("urlDelSitio", () => {
     expect(() => urlDelSitio("/r", { NODE_ENV: "production", SITIO_URL: "http://localhost.evil.com" })).toThrow(RangeError);
   });
 
+  it.each([
+    ["un usuario localhost con host real", "http://localhost@evil.com"],
+    ["0.0.0.0", "http://0.0.0.0:3000"],
+    ["localhost con punto final", "http://localhost.:3000"],
+    ["IPv6 mapeada a IPv4", "http://[::ffff:127.0.0.1]:3000"],
+  ])("en producción, SITIO_URL http hacia %s se rechaza", (_nombre, sitio) => {
+    expect(() => urlDelSitio("/r", { NODE_ENV: "production", SITIO_URL: sitio })).toThrow(RangeError);
+  });
+
+  it("en producción, http hacia [::1] también sirve", () => {
+    expect(urlDelSitio("/r", { NODE_ENV: "production", SITIO_URL: "http://[::1]:3000" })).toBe("http://[::1]:3000/r");
+  });
+
   it("fuera de producción, SITIO_URL puede ser http", () => {
     expect(urlDelSitio("/r", { NODE_ENV: "development", SITIO_URL: "http://192.168.1.10:3000" })).toBe("http://192.168.1.10:3000/r");
   });
