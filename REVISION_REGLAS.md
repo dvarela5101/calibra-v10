@@ -327,6 +327,9 @@ El banco de preguntas ([HU-005](backlog/HU-005.md)) se hace después. Para que e
 |---|---|---|
 | D-2 | Certificar monitores no espera el banco de preguntas: el certificado solo necesita que la materia exista. Mientras el banco no cargue las materias reales, la base local trae materias de prueba en la semilla. | [HU-014](backlog/HU-014.md) |
 | D-3 | El diagnóstico es opcional para agendar. Quien ya sabe qué necesita agenda directo; si hay un diagnóstico de esa materia, se liga a la cita (P-35). Si la sesión no es Lead, el contacto se pide al agendar. | [HU-068](backlog/HU-068.md) (nueva), [HU-017](backlog/HU-017.md), [HU-016](backlog/HU-016.md), [HU-010](backlog/HU-010.md) |
+| D-4 | La lista de monitores de una materia muestra las fechas libres de las próximas 4 semanas. Un monitor sin fechas libres, o con la cuenta desactivada, no aparece. Se ordenan por su fecha libre más próxima y luego por nombre (todavía no hay reseñas). El inicio enlaza a la lista. | [HU-016](backlog/HU-016.md) |
+| D-5 | Antes de agendar, una franja presencial solo dice "Presencial": el lugar llega con la cita confirmada (HU-019), como el enlace de una virtual. | [HU-016](backlog/HU-016.md), [HU-019](backlog/HU-019.md) |
+| D-6 | El nombre del monitor se muestra como lo escribió al registrarse. Que los estudiantes lo vean se dirá en el aviso de privacidad y en el registro del monitor, en una HU aparte. | [HU-016](backlog/HU-016.md), [HU-069](backlog/HU-069.md) |
 
 ## 5. Cortes propuestos
 
