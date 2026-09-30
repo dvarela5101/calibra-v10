@@ -200,7 +200,9 @@ email_sent = 2
 # Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
 sms_sent = 30
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
-anonymous_users = 30
+# Local y CI: las pruebas crean muchas sesiones anónimas desde una sola IP; con 30 la suite completa queda en el
+# límite. En la nube se configura aparte (HU-057).
+anonymous_users = 150
 # Number of sessions that can be refreshed in a 5 minute interval per IP address.
 token_refresh = 150
 # Number of sign up and sign-in requests that can be made in a 5 minute interval per IP address (excludes anonymous users).

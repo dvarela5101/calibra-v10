@@ -1,4 +1,5 @@
 import "server-only";
+import { reconstruirVerificacion } from "@/lib/leads/servidor";
 import { reconstruirInvitacion } from "@/lib/monitores/servidor";
 import type { Reconstructores } from "./reintentos";
 
@@ -9,6 +10,7 @@ import type { Reconstructores } from "./reintentos";
  */
 export const RECONSTRUCTORES: Reconstructores = {
   invitacion_monitor: (entidad) => reconstruirInvitacion(entidad),
+  verificacion_lead: (entidad) => reconstruirVerificacion(entidad),
   // Todavía ninguna HU dispara estas plantillas.
   recuperacion_diagnostico: null,
   resena_individual: null,
