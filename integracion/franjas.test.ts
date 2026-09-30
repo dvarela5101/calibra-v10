@@ -575,3 +575,66 @@ describe("cerrar una franja", () => {
     expect(despues.error).toMatchObject({ code: "P0001", message: "La franja está cerrada desde esa fecha." });
   });
 });
+
+describe("P-31: el lugar y el enlace son solo para su monitor", () => {
+  it("sin sesión se lee lo necesario para agendar, pero no el enlace ni el lugar", async () => {
+    const monitor = await crearMonitorCertificado();
+    const franja = await abrir(monitor, { presencial: false });
+    const anonimo = crearCliente();
+
+    const visible = await anonimo.from("franja").select(COLUMNAS_VISIBLES).eq("id", franja.id).single();
+    expect(visible.error).toBeNull();
+    expect(visible.data).toMatchObject({ id: franja.id, precio: 30_000 });
+    for (const columna of ["enlace", "lugar"] as const) {
+      const oculta = await anonimo.from("franja").select(columna).eq("id", franja.id);
+      expect(oculta.error, columna).toMatchObject({ code: "42501" });
+    }
+  });
+
+  it("otro monitor tampoco los lee de la tabla, y acceso_a_mis_franjas() solo le da los suyos", async () => {
+    const duena = await crearMonitorCertificado();
+    const franja = await abrir(duena, { presencial: false });
+    const otro = await crearMonitorCertificado();
+
+    expect((await otro.cliente.from("franja").select("enlace").eq("id", franja.id)).error).toMatchObject({ code: "42501" });
+    expect(exito(await otro.cliente.rpc("acceso_a_mis_franjas"), "acceso del otro")).toEqual([]);
+    expect(exito(await duena.cliente.rpc("acceso_a_mis_franjas"), "acceso de la dueña")).toEqual([
+      { id_franja: franja.id, lugar: null, enlace: "https://meet.example.com/abc-defg" },
+    ]);
+  });
+
+  it("sin sesión no se llama acceso_a_mis_franjas()", async () => {
+    const { error } = await crearCliente().rpc("acceso_a_mis_franjas");
+    expect(error).not.toBeNull();
+  });
+});
+
+describe("franja ya cerrada y horas con segundos", () => {
+  it("una franja ya cerrada no se edita ni se reabre: se abre otra", async () => {
+    const monitor = await crearMonitorCertificado();
+    const franja = await abrir(monitor);
+    exito(await monitor.cliente.from("franja").update({ cerrada_desde: hoy() }).eq("id", franja.id).select("id"), "cerrar");
+
+    for (const cambio of [{ precio: 40_000 }, { cerrada_desde: null }]) {
+      const { error } = await monitor.cliente.from("franja").update(cambio).eq("id", franja.id);
+      expect(error).toMatchObject({ code: "P0001", message: "Esta franja ya está cerrada. Para volver a ofrecer ese horario, abre otra." });
+    }
+  });
+
+  it("un cierre programado para más adelante sí se puede mover", async () => {
+    const monitor = await crearMonitorCertificado();
+    const franja = await abrir(monitor);
+    exito(await monitor.cliente.from("franja").update({ cerrada_desde: sumarDias(hoy(), 7) }).eq("id", franja.id).select("id"), "programar");
+    const movida = exito(
+      await monitor.cliente.from("franja").update({ cerrada_desde: sumarDias(hoy(), 14) }).eq("id", franja.id).select("cerrada_desde"),
+      "mover el cierre",
+    );
+    expect(movida).toEqual([{ cerrada_desde: sumarDias(hoy(), 14) }]);
+  });
+
+  it("la hora va en horas y minutos: con segundos se rechaza", async () => {
+    const monitor = await crearMonitorCertificado();
+    const { error } = await monitor.cliente.from("franja").insert(presencial(monitor.usuario.id, { hora: "10:00:30" }));
+    expect(error).toMatchObject({ code: "P0001", message: "Escribe la hora en horas y minutos, por ejemplo 14:00." });
+  });
+});

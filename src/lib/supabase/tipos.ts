@@ -477,7 +477,12 @@ isOneToOne: true
                 }
           }
           Functions: {
-            "cancelable_hasta":
+            "acceso_a_mis_franjas":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "enlace": string,"id_franja": string,"lugar": string
+            }[]
+                           },
+"cancelable_hasta":
 { Args: { "p_es_grupal": boolean,"p_inicio": string }; Returns: string
                            },
 "comision":
