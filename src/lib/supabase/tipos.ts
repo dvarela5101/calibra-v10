@@ -219,6 +219,25 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"lead_sesion": {
+                  Row: {
+                    "id_lead": string,"id_sesion": string,"ligada_en": string
+                  }
+                  Insert: {
+                    "id_lead": string,"id_sesion": string,"ligada_en"?: string
+                  }
+                  Update: {
+                    "id_lead"?: string,"id_sesion"?: string,"ligada_en"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lead_sesion_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: false
+      referencedRelation: "lead"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"materia": {
                   Row: {
                     "codigo": string,"id": string,"nombre": string
@@ -445,6 +464,25 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"verificacion_lead": {
+                  Row: {
+                    "creada_en": string,"id": string,"id_lead": string,"siguiente": string,"token_hash": string,"usada_en": string | null,"vence_en": string
+                  }
+                  Insert: {
+                    "creada_en"?: string,"id"?: string,"id_lead": string,"siguiente"?: string,"token_hash": string,"usada_en"?: string | null,"vence_en"?: string
+                  }
+                  Update: {
+                    "creada_en"?: string,"id"?: string,"id_lead"?: string,"siguiente"?: string,"token_hash"?: string,"usada_en"?: string | null,"vence_en"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "verificacion_lead_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: false
+      referencedRelation: "lead"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -488,6 +526,11 @@ isOneToOne: true
 "comision":
 { Args: { "p_monto_bruto": number }; Returns: number
                            },
+"confirmar_correo_de_lead":
+{ Args: { "p_id_sesion": string,"p_token_hash": string }; Returns: {
+              "id_lead": string,"siguiente": string
+            }[]
+                           },
 "cumple_antelacion":
 { Args: { "p_ahora": string,"p_es_grupal": boolean,"p_inicio": string }; Returns: boolean
                            },
@@ -530,6 +573,9 @@ isOneToOne: true
                            },
 "plazo_alcanzado":
 { Args: { "p_ahora": string,"p_desde": string }; Returns: boolean
+                           },
+"registrar_lead":
+{ Args: { "p_acepta_contacto": boolean,"p_correo": string,"p_fecha_consentimiento": string,"p_id_sesion": string,"p_nombre": string,"p_numero_telefono": string,"p_origen": string }; Returns: string
                            },
 "registrar_monitor":
 { Args: { "p_correo": string,"p_id_usuario": string,"p_llave": string,"p_nombre": string,"p_numero_telefono": string,"p_token_hash": string }; Returns: boolean

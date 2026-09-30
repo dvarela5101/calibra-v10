@@ -20,6 +20,7 @@ export const PLANTILLAS = [
   "pago_rechazado_grupal",
   "escalamiento_pago",
   "invitacion_monitor",
+  "verificacion_lead",
 ] as const;
 
 export type Plantilla = (typeof PLANTILLAS)[number];
@@ -33,6 +34,7 @@ export const NOMBRE_DE_PLANTILLA: Record<Plantilla, string> = {
   pago_rechazado_grupal: "Pago rechazado (grupal)",
   escalamiento_pago: "Pago escalado a otro admin",
   invitacion_monitor: "Invitación de monitor",
+  verificacion_lead: "Confirmación de correo para agendar",
 };
 
 export function esPlantilla(valor: string): valor is Plantilla {
@@ -54,6 +56,11 @@ export type DatosPorPlantilla = {
   escalamiento_pago: { nombreAdmin: string; nombrePagador: string; monto: number; enlace: string };
   /** Invitación a crear la cuenta de monitor tras la evaluación presencial (P-20, HU-013). Al aspirante. */
   invitacion_monitor: { enlace: string; venceEn: string };
+  /**
+   * Alguien quiso agendar con un correo que ya es de un Lead (P-23, HU-068): enlace para confirmar que
+   * es suyo. Al Lead dueño del correo, con su nombre.
+   */
+  verificacion_lead: { nombre: string; enlace: string; venceEn: string };
 };
 
 export type CorreoRenderizado = { asunto: string; html: string; texto: string };
@@ -191,6 +198,24 @@ function contenidoDe<P extends Plantilla>(plantilla: P, datos: DatosPorPlantilla
           ],
           boton: { texto: "Crear mi cuenta", enlace: d.enlace },
           pie: "Este enlace es solo tuyo. No lo compartas. Si no esperabas esta invitación, ignora este correo.",
+        },
+      };
+    }
+    case "verificacion_lead": {
+      const d = datos as DatosPorPlantilla["verificacion_lead"];
+      const vence = new Date(d.venceEn);
+      if (Number.isNaN(vence.getTime())) throw new RangeError("venceEn debe ser un instante válido.");
+      return {
+        asunto: "Confirma tu correo para agendar en Calibra",
+        contenido: {
+          titulo: "Confirma que este correo es tuyo",
+          parrafos: [
+            `Hola, ${linea(d.nombre, "nombre")}.`,
+            "Alguien escribió este correo en Calibra para agendar una monitoría. Si fuiste tú, confírmalo con el botón: el navegador donde lo abras queda con tus datos y puedes seguir agendando ahí.",
+            `El enlace sirve una sola vez y vence el ${formatearFechaHora(vence)}.`,
+          ],
+          boton: { texto: "Confirmar mi correo", enlace: d.enlace },
+          pie: "Si no fuiste tú, ignora este correo: sin confirmarlo, nadie ve tus datos ni tus citas.",
         },
       };
     }

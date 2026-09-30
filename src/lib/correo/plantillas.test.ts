@@ -15,15 +15,16 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
   pago_rechazado_grupal: { nombre: "Ana", monto: 20_000, fechaSesion: "2020-01-13", enlace: ENLACE },
   escalamiento_pago: { nombreAdmin: "Admin Uno", nombrePagador: "Ana Pérez", monto: 25_000, enlace: "https://calibra.example/admin" },
   invitacion_monitor: { enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
+  verificacion_lead: { nombre: "Ana", enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
 };
 
 const render = <P extends Plantilla>(plantilla: P, cambios: Partial<DatosPorPlantilla[P]> = {}) =>
   renderizar(plantilla, { ...EJEMPLOS[plantilla], ...cambios });
 
 describe("las plantillas de correo", () => {
-  it("son las que salen por correo: diagnóstico, reseña, llave, dos rechazos, escalamiento e invitación de monitor", () => {
+  it("son las que salen por correo: diagnóstico, reseña, llave, dos rechazos, escalamiento, invitación de monitor y verificación del correo del Lead", () => {
     expect([...PLANTILLAS].sort()).toEqual(Object.keys(EJEMPLOS).sort());
-    expect(PLANTILLAS).toHaveLength(7);
+    expect(PLANTILLAS).toHaveLength(8);
   });
 
   it.each(PLANTILLAS)("%s sale en español con HTML y texto plano", (plantilla) => {
@@ -359,5 +360,22 @@ describe("el HTML respeta las reglas de diseño del producto", () => {
     const relleno = Number(/padding:(\d+)px/.exec(boton)![1]);
     const interlineado = 16 * 1.5; // font-size y line-height que hereda del body
     expect(2 * relleno + interlineado).toBeGreaterThanOrEqual(44);
+  });
+});
+
+describe("verificación del correo del Lead (HU-068, P-23)", () => {
+  it("saluda al dueño del correo, explica qué pasa al confirmar y cuándo vence, y avisa que puede ignorarlo", () => {
+    const { asunto, texto } = render("verificacion_lead");
+    expect(asunto).toBe("Confirma tu correo para agendar en Calibra");
+    expect(texto).toContain("Hola, Ana.");
+    expect(texto).toContain("el navegador donde lo abras queda con tus datos");
+    expect(texto).toContain("El enlace sirve una sola vez y vence el");
+    expect(texto).toContain(`Confirmar mi correo: ${ENLACE}`);
+    expect(texto).toContain("Si no fuiste tú, ignora este correo");
+  });
+
+  it("un nombre vacío o una fecha inválida es un error", () => {
+    expect(() => render("verificacion_lead", { nombre: "  " })).toThrow(RangeError);
+    expect(() => render("verificacion_lead", { venceEn: "mañana" })).toThrow(RangeError);
   });
 });

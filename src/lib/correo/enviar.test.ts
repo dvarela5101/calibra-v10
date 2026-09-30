@@ -21,6 +21,7 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
   pago_rechazado_grupal: { nombre: "Ana", monto: 20_000, fechaSesion: "2020-01-13", enlace: ENLACE },
   escalamiento_pago: { nombreAdmin: "Admin", nombrePagador: "Ana", monto: 25_000, enlace: ENLACE },
   invitacion_monitor: { enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
+  verificacion_lead: { nombre: "Ana", enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
 };
 
 const entrada = (cambios: Partial<EntradaDeEnvio<"solicitud_llave_reembolso">> = {}): EntradaDeEnvio<"solicitud_llave_reembolso"> => ({
