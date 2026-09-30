@@ -14,15 +14,16 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
   pago_rechazado_individual: { nombre: "Ana", monto: 25_000, fechaSesion: "2020-01-06", contactoSoporte: "ayuda@calibra.example" },
   pago_rechazado_grupal: { nombre: "Ana", monto: 20_000, fechaSesion: "2020-01-13", enlace: ENLACE },
   escalamiento_pago: { nombreAdmin: "Admin Uno", nombrePagador: "Ana Pérez", monto: 25_000, enlace: "https://calibra.example/admin" },
+  invitacion_monitor: { enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
 };
 
 const render = <P extends Plantilla>(plantilla: P, cambios: Partial<DatosPorPlantilla[P]> = {}) =>
   renderizar(plantilla, { ...EJEMPLOS[plantilla], ...cambios });
 
-describe("las seis plantillas de la sección 8", () => {
-  it("son las que salen por correo: diagnóstico, reseña, llave, dos rechazos y escalamiento", () => {
+describe("las plantillas de correo", () => {
+  it("son las que salen por correo: diagnóstico, reseña, llave, dos rechazos, escalamiento e invitación de monitor", () => {
     expect([...PLANTILLAS].sort()).toEqual(Object.keys(EJEMPLOS).sort());
-    expect(PLANTILLAS).toHaveLength(6);
+    expect(PLANTILLAS).toHaveLength(7);
   });
 
   it.each(PLANTILLAS)("%s sale en español con HTML y texto plano", (plantilla) => {

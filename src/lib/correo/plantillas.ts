@@ -1,4 +1,4 @@
-import { formatearDia } from "@/lib/fechas";
+import { formatearDia, formatearFechaHora } from "@/lib/fechas";
 import { formatearPesos } from "@/lib/moneda";
 import { armarHtml, armarTexto, type Contenido } from "./html";
 
@@ -19,6 +19,7 @@ export const PLANTILLAS = [
   "pago_rechazado_individual",
   "pago_rechazado_grupal",
   "escalamiento_pago",
+  "invitacion_monitor",
 ] as const;
 
 export type Plantilla = (typeof PLANTILLAS)[number];
@@ -36,6 +37,8 @@ export type DatosPorPlantilla = {
   pago_rechazado_grupal: { nombre: string; monto: number; fechaSesion: string; enlace: string };
   /** Pago sin revisar tras el plazo: pasa al siguiente admin (RN-42). Al admin. */
   escalamiento_pago: { nombreAdmin: string; nombrePagador: string; monto: number; enlace: string };
+  /** Invitación a crear la cuenta de monitor tras la evaluación presencial (P-20, HU-013). Al aspirante. */
+  invitacion_monitor: { enlace: string; venceEn: string };
 };
 
 export type CorreoRenderizado = { asunto: string; html: string; texto: string };
@@ -149,6 +152,24 @@ function contenidoDe<P extends Plantilla>(plantilla: P, datos: DatosPorPlantilla
           ],
           boton: { texto: "Abrir mi bandeja", enlace: d.enlace },
           pie: "Lo encuentras en la sección de pagos por revisar.",
+        },
+      };
+    }
+    case "invitacion_monitor": {
+      const d = datos as DatosPorPlantilla["invitacion_monitor"];
+      const vence = new Date(d.venceEn);
+      if (Number.isNaN(vence.getTime())) throw new RangeError("venceEn debe ser un instante válido.");
+      return {
+        asunto: "Crea tu cuenta de monitor en Calibra",
+        contenido: {
+          titulo: "Ya puedes crear tu cuenta de monitor",
+          parrafos: [
+            "Hola.",
+            "Después de tu evaluación presencial, el equipo de Calibra te invita a crear tu cuenta de monitor. Con ella vas a abrir tus franjas y recibir tus pagos.",
+            `El enlace sirve una sola vez y vence el ${formatearFechaHora(vence)}.`,
+          ],
+          boton: { texto: "Crear mi cuenta", enlace: d.enlace },
+          pie: "Este enlace es solo tuyo. No lo compartas. Si no esperabas esta invitación, ignora este correo.",
         },
       };
     }

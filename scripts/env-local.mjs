@@ -19,6 +19,8 @@ const contenido = [
   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${estado.PUBLISHABLE_KEY}`,
   `SUPABASE_SECRET_KEY=${estado.SECRET_KEY}`,
   `MAILPIT_URL=${estado.MAILPIT_URL ?? "http://127.0.0.1:54324"}`,
+  // El build de producción (`npm run start`, el que prueba CI) exige SITIO_URL para los enlaces de los correos.
+  "SITIO_URL=http://localhost:3000",
   "",
 ].join("\n");
 

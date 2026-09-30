@@ -87,3 +87,8 @@
   font-size: 15px;
   color: var(--success-text);
 }
+
+.ayuda {
+  font-size: 14px;
+  color: var(--muted);
+}

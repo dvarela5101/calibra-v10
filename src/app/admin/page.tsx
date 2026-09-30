@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { BotonSalir } from "@/components/BotonSalir";
+import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { cargarBandeja, type Bandeja } from "@/lib/admin/bandeja";
 import { exigirRol } from "@/lib/auth/sesion";
@@ -36,6 +38,9 @@ export default async function PanelAdmin() {
           No pudimos cargar tu bandeja. Recarga la página; si sigue igual, avisa al equipo.
         </p>
       )}
+      <Link href="/admin/monitores" className={formulario.enlace}>
+        Invitar a un monitor
+      </Link>
       <BotonSalir />
     </Pantalla>
   );

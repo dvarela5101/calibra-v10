@@ -441,6 +441,11 @@ export class Fixtures {
     if (monitorias.length) await intentar("borrar monitoria", this.admin.from("monitoria").delete().in("id", monitorias));
     if (franjas.length) await intentar("borrar franja", this.admin.from("franja").delete().in("id", franjas));
 
+    // invitacion_monitor.id_admin no cae en cascada: las invitaciones van antes que los admins.
+    if (usuarios.length) {
+      await intentar("borrar invitacion_monitor", this.admin.from("invitacion_monitor").delete().in("id_admin", usuarios));
+    }
+
     if (usuarios.length || materias.length) {
       const filtros = [
         usuarios.length && `id_monitor.in.(${usuarios.join(",")})`,

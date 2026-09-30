@@ -223,6 +223,8 @@ export const test = base.extend<{ cuentas: Cuentas }>({
     const fallos: string[] = [];
     for (const id of usuarios) {
       const pasos = [
+        // HU-013: id_admin no cae en cascada; las invitaciones del admin se borran antes que él.
+        await cliente.from("invitacion_monitor").delete().eq("id_admin", id),
         await cliente.from("monitor").delete().eq("id", id),
         await cliente.from("admin").delete().eq("id", id),
         await cliente.auth.admin.deleteUser(id),
