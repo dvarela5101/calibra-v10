@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ZONA_HORARIA_NEGOCIO, IDIOMA, LOCALE } from "@/config/regional";
-import { formatearDia, formatearFechaHora } from "./fechas";
+import { diaDelNegocio, formatearDia, formatearFechaHora } from "./fechas";
 
 describe("configuración regional", () => {
   it("fija la zona de negocio y el idioma", () => {
@@ -75,5 +75,13 @@ describe("formatearFechaHora: la hora y su a. m. no se separan", () => {
   it("no cambia lo demás: el día y la fecha siguen con espacios normales", () => {
     const texto = formatearFechaHora(new Date("2026-09-28T17:00:00Z"));
     expect(texto).toMatch(/^lunes, 28 de septiembre de 2026, 12:00/);
+  });
+});
+
+describe("diaDelNegocio", () => {
+  it("usa la zona del negocio, no la del servidor", () => {
+    // 2026-10-01 02:00 UTC todavía es 30 de septiembre en Bogotá (UTC-5).
+    expect(diaDelNegocio(new Date("2026-10-01T02:00:00Z"))).toBe("2026-09-30");
+    expect(diaDelNegocio(new Date("2026-10-01T05:00:00Z"))).toBe("2026-10-01");
   });
 });

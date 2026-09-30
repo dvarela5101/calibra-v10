@@ -27,3 +27,16 @@ export function formatearDia(fecha: string): string {
   }
   return formatoDia.format(instante);
 }
+
+const formatoDiaDelNegocio = new Intl.DateTimeFormat("en-CA", {
+  timeZone: ZONA_HORARIA_NEGOCIO,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** El día de calendario (`AAAA-MM-DD`) de un instante en la zona del negocio, no en la del servidor. */
+export function diaDelNegocio(instante: Date): string {
+  return formatoDiaDelNegocio.format(instante);
+}
+
