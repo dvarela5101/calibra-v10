@@ -9,6 +9,7 @@ import {
   dentroDePlazo,
   derivadosDeMonitoria,
   desembolsableDesde,
+  desembolsoEjecutable,
   diaIsoDeFecha,
   fechaLimiteDiferencia,
   fechaLimitePago,
@@ -20,8 +21,15 @@ import {
   revisionHasta,
   ventanaResenaHasta,
 } from "@/lib/plazos/motor";
-import { cargarParametros, comoParametros, type ParametrosNegocio } from "@/lib/plazos/parametros";
-import { PARAMETROS_DEL_DOCUMENTO } from "../pruebas/plazos-referencia";
+import {
+  cargarParametros,
+  cargarParametrosComision,
+  comoParametros,
+  comoParametrosComision,
+  type ParametrosComision,
+  type ParametrosNegocio,
+} from "@/lib/plazos/parametros";
+import { COMISION_DEL_DOCUMENTO, PARAMETROS_DEL_DOCUMENTO } from "../pruebas/plazos-referencia";
 import { crearCliente, exigirSupabaseLocal, Fixtures } from "./utilidades";
 
 // HU-003, criterio 6: los procesos de la base y las pantallas usan las mismas fórmulas.
@@ -35,6 +43,7 @@ const HORA = 60 * MINUTO;
 
 let bd: pg.Client;
 let parametros: ParametrosNegocio;
+let parametrosComision: ParametrosComision;
 
 beforeAll(async () => {
   if (!/@(127\.0\.0\.1|localhost):/.test(URL_BD)) {
@@ -42,8 +51,11 @@ beforeAll(async () => {
   }
   bd = new pg.Client({ connectionString: URL_BD });
   await bd.connect();
+  // Esta conexión es la del dueño de la base: puede leer la comisión, que ninguna sesión de la app puede.
   const { rows } = await bd.query("select * from public.parametros_negocio()");
   parametros = comoParametros(rows[0]);
+  const { rows: filaComision } = await bd.query("select * from public.parametros_comision()");
+  parametrosComision = comoParametrosComision(filaComision[0]);
 });
 
 afterAll(async () => {
@@ -76,6 +88,27 @@ const tiempos = (filas: { [columna: string]: unknown }[], columna: string) =>
 describe("parámetros: un solo lugar", () => {
   it("la base devuelve exactamente la tabla 6.1 del documento y la comisión de RN-81", () => {
     expect(parametros).toEqual(PARAMETROS_DEL_DOCUMENTO);
+    expect(parametrosComision).toEqual(COMISION_DEL_DOCUMENTO);
+  });
+
+  it("los parámetros de plazo no incluyen la comisión: solo parametros_comision() la devuelve", async () => {
+    const { rows } = await bd.query("select * from public.parametros_negocio()");
+    expect(Object.keys(rows[0]).filter((columna) => /comision/.test(columna))).toEqual([]);
+    const { rows: comision } = await bd.query("select * from public.parametros_comision()");
+    expect(Object.keys(comision[0]).sort()).toEqual(["comision_porcentaje", "comision_tope"]);
+  });
+
+  it("las funciones que leen parámetros son stable, no immutable (su valor cambia con una migración)", async () => {
+    const { rows } = await bd.query(
+      `select proname from pg_proc
+       where pronamespace = 'public'::regnamespace
+         and proname in ('parametros_negocio', 'parametros_comision', 'comision', 'monto_neto', 'reserva_hasta',
+                         'revision_hasta', 'cancelable_hasta', 'fecha_limite_pago', 'fecha_limite_diferencia',
+                         'reporte_inasistencia_hasta', 'ventana_resena_hasta', 'desembolsable_desde',
+                         'cumple_antelacion', 'desembolso_ejecutable')
+         and provolatile <> 's'`,
+    );
+    expect(rows).toEqual([]);
   });
 });
 
@@ -203,6 +236,49 @@ describe("plazos derivados (sección 6.1)", () => {
   });
 });
 
+describe("ventana de reseña sin fecha de finalización", () => {
+  it("SQL y TypeScript rechazan la misma entrada vacía", async () => {
+    await expect(bd.query("select public.ventana_resena_hasta(null)")).rejects.toMatchObject({ code: "22004" });
+    expect(() => ventanaResenaHasta(null as unknown as Date, parametros)).toThrow(RangeError);
+  });
+
+  it("con fecha, las dos siguen dando el mismo instante", async () => {
+    const { rows } = await bd.query("select public.ventana_resena_hasta('2026-10-05 16:20:00+00') as v");
+    expect((rows[0].v as Date).getTime()).toBe(ventanaResenaHasta(new Date("2026-10-05T16:20:00.000Z"), parametros).getTime());
+  });
+});
+
+describe("desembolso ejecutable (RN-83 y N-6)", () => {
+  it("SQL y TypeScript coinciden alrededor de fin + 24 h y con desfases al azar; el borde exacto nunca es ejecutable", async () => {
+    const azar = generador(8);
+    const fines = instantes(150, 9);
+    const desfases = [-HORA, -MINUTO, -1000, -1, 0, 1, 1000, MINUTO, HORA];
+    const casos: { fin: Date; ahora: Date; desfase: number }[] = [];
+    for (const fin of fines) {
+      const limite = desembolsableDesde(fin, parametros).getTime();
+      for (const desfase of [...desfases, ...Array.from({ length: 5 }, () => Math.floor((azar() - 0.5) * 4 * 24 * HORA))]) {
+        casos.push({ fin, ahora: new Date(limite + desfase), desfase });
+      }
+    }
+
+    const { rows } = await bd.query(
+      `select public.desembolso_ejecutable(f, a) as ejecutable
+       from unnest($1::timestamptz[], $2::timestamptz[]) with ordinality as x(f, a, n) order by n`,
+      [casos.map((c) => c.fin.toISOString()), casos.map((c) => c.ahora.toISOString())],
+    );
+    expect(rows).toHaveLength(casos.length);
+    casos.forEach((c, i) => {
+      const contexto = `fin=${c.fin.toISOString()} ahora=${c.ahora.toISOString()}`;
+      expect(desembolsoEjecutable(c.fin, c.ahora, parametros), contexto).toBe(rows[i].ejecutable);
+      // Referencia escrita aparte: solo después de fin + 24 h (con los valores de hoy).
+      expect(rows[i].ejecutable, contexto).toBe(c.desfase > 0);
+    });
+    // La comparación no es vacía: hay casos de los dos lados y el borde exacto está entre ellos.
+    expect(new Set(rows.map((r) => r.ejecutable))).toEqual(new Set([true, false]));
+    expect(casos.filter((c) => c.desfase === 0).length).toBeGreaterThanOrEqual(fines.length);
+  });
+});
+
 describe("comisión de la plataforma (RN-81)", () => {
   it("comisión y neto coinciden para todos los brutos de 0 a 3000, los bordes del tope y valores al azar", async () => {
     const azar = generador(6);
@@ -216,8 +292,8 @@ describe("comisión de la plataforma (RN-81)", () => {
       [brutos],
     );
     brutos.forEach((bruto, i) => {
-      expect(calcularComision(bruto, parametros), `comisión de ${bruto}`).toBe(rows[i].comision);
-      expect(calcularMontoNeto(bruto, parametros), `neto de ${bruto}`).toBe(rows[i].neto);
+      expect(calcularComision(bruto, parametrosComision), `comisión de ${bruto}`).toBe(rows[i].comision);
+      expect(calcularMontoNeto(bruto, parametrosComision), `neto de ${bruto}`).toBe(rows[i].neto);
     });
   });
 
@@ -235,7 +311,7 @@ describe("comisión de la plataforma (RN-81)", () => {
 
   it("ambas rechazan un bruto negativo", async () => {
     await expect(bd.query("select public.comision(-1)")).rejects.toMatchObject({ code: "22023" });
-    expect(() => calcularComision(-1, parametros)).toThrow(RangeError);
+    expect(() => calcularComision(-1, parametrosComision)).toThrow(RangeError);
   });
 });
 
@@ -416,20 +492,20 @@ describe("expuestas a la app por la Data API", () => {
     fx = new Fixtures();
   });
 
-  it("una sesión anónima lee los parámetros y llama a las funciones por RPC", async () => {
+  it("una sesión anónima lee los parámetros de plazo y llama a las funciones de plazos por RPC", async () => {
     try {
       const { cliente } = await fx.crearAnonimo();
       await expect(cargarParametros(cliente)).resolves.toEqual(PARAMETROS_DEL_DOCUMENTO);
 
-      const comision = await cliente.rpc("comision", { p_monto_bruto: 25_000 });
-      expect(comision.error).toBeNull();
-      expect(comision.data).toBe(2_500);
-
-      const neto = await cliente.rpc("monto_neto", { p_monto_bruto: 25_000 });
-      expect(neto.data).toBe(22_500);
-
       const inicio = await cliente.rpc("inicio_sesion", { p_fecha: "2026-10-05", p_hora: "10:00" });
       expect(new Date(inicio.data as string).toISOString()).toBe("2026-10-05T15:00:00.000Z");
+
+      const ejecutable = await cliente.rpc("desembolso_ejecutable", {
+        p_fin_programado: "2026-10-05T16:00:00Z",
+        p_ahora: "2026-10-06T16:00:00Z",
+      });
+      expect(ejecutable.error).toBeNull();
+      expect(ejecutable.data).toBe(false);
 
       // La vista respeta las políticas: una sesión anónima sin monitorías no ve ninguna fila.
       const vista = await cliente.from("monitoria_plazos").select("id_monitoria");
@@ -438,6 +514,40 @@ describe("expuestas a la app por la Data API", () => {
     } finally {
       await fx.limpiar();
     }
+  });
+
+  it("ninguna sesión de la app calcula la comisión, ni la anónima, ni la de un monitor, ni la de un admin (N-2)", async () => {
+    try {
+      const anonima = (await fx.crearAnonimo()).cliente;
+      const monitor = await fx.iniciarSesion(await fx.crearMonitor());
+      const admin = await fx.iniciarSesion(await fx.crearAdmin());
+
+      for (const [quien, cliente] of [["anónima", anonima], ["monitor", monitor], ["admin", admin]] as const) {
+        const comision = await cliente.rpc("comision", { p_monto_bruto: 25_000 });
+        expect(comision.error?.code, `comision con la sesión ${quien}`).toBe("42501");
+        expect(comision.data, `comision con la sesión ${quien}`).toBeNull();
+
+        const neto = await cliente.rpc("monto_neto", { p_monto_bruto: 25_000 });
+        expect(neto.error?.code, `monto_neto con la sesión ${quien}`).toBe("42501");
+
+        const parametrosDeComision = await cliente.rpc("parametros_comision");
+        expect(parametrosDeComision.error?.code, `parametros_comision con la sesión ${quien}`).toBe("42501");
+        await expect(cargarParametrosComision(cliente), quien).rejects.toThrow(/permission denied/);
+      }
+    } finally {
+      await fx.limpiar();
+    }
+  });
+
+  it("el servidor, con la llave secreta, sí calcula la comisión y lee sus parámetros", async () => {
+    const comision = await fx.admin.rpc("comision", { p_monto_bruto: 25_000 });
+    expect(comision.error).toBeNull();
+    expect(comision.data).toBe(2_500);
+
+    const neto = await fx.admin.rpc("monto_neto", { p_monto_bruto: 25_000 });
+    expect(neto.data).toBe(22_500);
+
+    await expect(cargarParametrosComision(fx.admin)).resolves.toEqual(COMISION_DEL_DOCUMENTO);
   });
 
   it("sin sesión (rol anon) no puede llamar a las funciones ni leer la vista", async () => {

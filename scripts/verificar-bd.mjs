@@ -17,6 +17,20 @@ if (!/@(127\.0\.0\.1|localhost):/.test(URL_BD)) {
   process.exit(1);
 }
 
+// Una migración posterior que cambia el tipo de salida de una función tiene que borrarla antes con
+// `drop function` (Postgres no deja `create or replace` con otras columnas). Desde entonces la migración
+// vieja que la creó ya no se puede reaplicar sobre la base final: chocaría con la función nueva. Esta
+// lista dice, por archivo, qué se borra antes de reaplicarla, para volver al estado en que esa migración
+// tenía sentido. La migración vieja no se toca (una migración que ya está en `main` no se edita) y la
+// última de la cadena deja la base en su estado final. `db reset` ya prueba la cadena completa en orden.
+const PREAMBULOS = new Map([
+  [
+    "20260929054533_plazos_y_comision.sql",
+    // HU-063 quitó la comisión de parametros_negocio(): pasó de 13 a 11 columnas.
+    "drop function if exists public.parametros_negocio();",
+  ],
+]);
+
 const cliente = new pg.Client({ connectionString: URL_BD });
 await cliente.connect();
 
@@ -25,6 +39,8 @@ for (const archivo of readdirSync(CARPETA).filter((a) => a.endsWith(".sql")).sor
   const sql = readFileSync(join(CARPETA, archivo), "utf8");
   try {
     await cliente.query("begin");
+    const preambulo = PREAMBULOS.get(archivo);
+    if (preambulo) await cliente.query(preambulo);
     await cliente.query(sql);
     await cliente.query("commit");
     console.log(`✓ reaplicada ${archivo}`);

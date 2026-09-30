@@ -1,10 +1,10 @@
-import type { ParametrosNegocio } from "@/lib/plazos/parametros";
+import type { ParametrosComision, ParametrosNegocio } from "@/lib/plazos/parametros";
 
 /**
- * La tabla de plazos (sección 6.1 de `calibra_reglas_negocio.md`) y la comisión (RN-81), tal
- * como las dicta el documento. Es el oráculo de las pruebas y NO se importa desde el código de
- * la app: los parámetros de verdad viven solo en `public.parametros_negocio()`.
- * `integracion/plazos.test.ts` comprueba que la base devuelva exactamente estos valores.
+ * La tabla de plazos (sección 6.1 de `calibra_reglas_negocio.md`), tal como la dicta el documento.
+ * Es el oráculo de las pruebas y NO se importa desde el código de la app: los parámetros de verdad
+ * viven solo en `public.parametros_negocio()`. `integracion/plazos.test.ts` comprueba que la base
+ * devuelva exactamente estos valores.
  */
 export const PARAMETROS_DEL_DOCUMENTO: ParametrosNegocio = {
   reservaMin: 10, // bloqueo de la franja: 10 min
@@ -18,6 +18,13 @@ export const PARAMETROS_DEL_DOCUMENTO: ParametrosNegocio = {
   reporteInasistenciaMin: 24 * 60, // reporte de inasistencia: hasta 24 h después del fin
   resenaGrupalMin: 60, // reseña grupal: 1 h después de finalizar
   desembolsoMin: 24 * 60, // desembolso ejecutable: desde 24 h después del fin
+};
+
+/**
+ * La comisión de la plataforma (RN-81, P-14), como la dicta el documento. Aparte de los plazos
+ * porque solo el servidor la lee (N-2): vive en `public.parametros_comision()`.
+ */
+export const COMISION_DEL_DOCUMENTO: ParametrosComision = {
   comisionPorcentaje: 10, // 10 % del bruto
   comisionTope: 15_000, // con tope de 15.000 COP
 };
