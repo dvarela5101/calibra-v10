@@ -60,17 +60,26 @@ export function crearRegistroDeEnvios(cliente: Cliente, ahora: () => number = Da
       const ahoraIso = new Date(ahora()).toISOString();
       const { error } = await cliente
         .from("correo_envio")
-        .update({ estado: "enviado", intentos, id_proveedor: idProveedor, ultimo_error: null, enviado_en: ahoraIso, actualizado_en: ahoraIso })
+        .update({
+          estado: "enviado",
+          intentos,
+          id_proveedor: idProveedor,
+          ultimo_error: null,
+          reintentable: false,
+          enviado_en: ahoraIso,
+          actualizado_en: ahoraIso,
+        })
         .eq("clave", clave);
       if (error) throw new Error(error.message);
     },
 
-    async marcarFallido(clave, { error: mensaje, intentos }) {
+    async marcarFallido(clave, { error: mensaje, intentos, reintentable }) {
       const { error } = await cliente
         .from("correo_envio")
         .update({
           estado: "fallido",
           intentos,
+          reintentable,
           // limpiarError deja el mensaje en una línea, sin secretos y en 300 caracteres: cabe en el tope de 500 de la columna.
           ultimo_error: limpiarError(mensaje),
           actualizado_en: new Date(ahora()).toISOString(),

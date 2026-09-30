@@ -17,7 +17,7 @@ export async function invitar(_anterior: EstadoInvitacion, datos: FormData): Pro
     if (!resultado.ok) return { error: resultado.error, exito: null };
     if (!resultado.correoEnviado) {
       return {
-        error: `La invitación quedó creada, pero el correo a ${correo} no salió. Intenta invitar de nuevo en unos minutos.`,
+        error: `La invitación quedó creada, pero el correo a ${correo} no salió todavía. Calibra lo reintenta solo; si no sale, lo verás en tu bandeja en "Correos que no salieron". No hace falta invitar de nuevo.`,
         exito: null,
       };
     }

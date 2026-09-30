@@ -156,7 +156,7 @@ describe("el registro guarda destinatario, plantilla, fecha y resultado, y no el
 
     const [fila] = await filaDe("recuperacion_diagnostico", entidad);
     expect(Object.keys(fila).sort()).toEqual(
-      ["actualizado_en", "clave", "creado_en", "destinatario", "enviado_en", "estado", "id", "id_proveedor", "intentos", "plantilla", "ultimo_error"].sort(),
+      ["actualizado_en", "clave", "creado_en", "destinatario", "enviado_en", "estado", "id", "id_proveedor", "intentos", "plantilla", "reintentable", "ultimo_error"].sort(),
     );
     const todo = JSON.stringify(fila);
     expect(todo).not.toContain("abc123");
@@ -253,7 +253,7 @@ describe("el registro sobre la tabla real: quién se queda con un correo", () =>
     const registro = crearRegistroDeEnvios(fx.admin);
     const clave = claveNueva();
     await registro.reservar(datos(clave));
-    await registro.marcarFallido(clave, { error: "Resend 503: caído", intentos: 3 });
+    await registro.marcarFallido(clave, { error: "Resend 503: caído", intentos: 3, reintentable: true });
     expect(await registro.reservar(datos(clave))).toEqual({ accion: "enviar", intentosPrevios: 3 });
     const { data } = await fx.admin.from("correo_envio").select("estado").eq("clave", clave).single();
     expect(data?.estado).toBe("pendiente");
@@ -263,7 +263,7 @@ describe("el registro sobre la tabla real: quién se queda con un correo", () =>
     const registro = crearRegistroDeEnvios(fx.admin);
     const clave = claveNueva();
     await registro.reservar(datos(clave));
-    await registro.marcarFallido(clave, { error: "x", intentos: 1 });
+    await registro.marcarFallido(clave, { error: "x", intentos: 1, reintentable: false });
 
     const tomas = await Promise.all(Array.from({ length: 6 }, () => registro.reservar(datos(clave))));
     expect(tomas.filter((t) => t.accion === "enviar")).toHaveLength(1);
@@ -296,7 +296,7 @@ describe("el registro sobre la tabla real: quién se queda con un correo", () =>
     const registro = crearRegistroDeEnvios(fx.admin);
     const clave = claveNueva();
     await registro.reservar(datos(clave));
-    await registro.marcarFallido(clave, { error: "x", intentos: 1 });
+    await registro.marcarFallido(clave, { error: "x", intentos: 1, reintentable: false });
     await registro.reservar({ ...datos(clave), destinatario: "nuevo@calibra.test" });
     const { data } = await fx.admin.from("correo_envio").select("destinatario").eq("clave", clave).single();
     expect(data?.destinatario).toBe("nuevo@calibra.test");
@@ -306,7 +306,7 @@ describe("el registro sobre la tabla real: quién se queda con un correo", () =>
     const registro = crearRegistroDeEnvios(fx.admin);
     const clave = claveNueva();
     await registro.reservar(datos(clave));
-    await registro.marcarFallido(clave, { error: "e".repeat(2_000), intentos: 3 });
+    await registro.marcarFallido(clave, { error: "e".repeat(2_000), intentos: 3, reintentable: false });
     const { data } = await fx.admin.from("correo_envio").select("estado, ultimo_error").eq("clave", clave).single();
     expect(data?.estado).toBe("fallido");
     expect(data?.ultimo_error?.length).toBeGreaterThan(0);

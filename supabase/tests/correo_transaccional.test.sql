@@ -19,7 +19,9 @@ select is(
   (select array_agg(attname::text order by attnum) from pg_attribute
    where attrelid = 'public.correo_envio'::regclass and attnum > 0 and not attisdropped),
   array['id', 'clave', 'plantilla', 'destinatario', 'estado', 'intentos', 'ultimo_error', 'id_proveedor',
-        'creado_en', 'actualizado_en', 'enviado_en'],
+        'creado_en', 'actualizado_en', 'enviado_en',
+        -- HU-065: si la última falla fue temporal (se reintenta). Tampoco es parte del correo.
+        'reintentable'],
   'Guarda destinatario, plantilla, fecha y resultado, y ninguna columna para el cuerpo ni los datos del correo');
 
 select ok(

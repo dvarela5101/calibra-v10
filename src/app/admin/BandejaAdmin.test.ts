@@ -13,7 +13,8 @@ const VACIA: Bandeja = {
   reembolsos: { esperandoLlave: [], pendientes: [] },
   reportes: [],
   desembolsos: [],
-  contadores: { pagos: 0, reembolsos: 0, reembolsosEsperandoLlave: 0, reembolsosPendientes: 0, reportes: 0, desembolsos: 0 },
+  correosSinEnviar: [],
+  contadores: { pagos: 0, reembolsos: 0, reembolsosEsperandoLlave: 0, reembolsosPendientes: 0, reportes: 0, desembolsos: 0, correosSinEnviar: 0 },
 };
 
 const pintar = (bandeja: Bandeja) => renderToStaticMarkup(createElement(BandejaAdmin, { bandeja }));
@@ -41,16 +42,21 @@ describe("BandejaAdmin: secciones vacías", () => {
     expect(t).toContain("No tienes reembolsos por atender.");
     expect(t).toContain("No tienes reportes en revisión.");
     expect(t).toContain("No hay desembolsos listos para ejecutar.");
+    expect(t).toContain("Todos los correos salieron.");
   });
 
-  it("los cuatro contadores están arriba, en un nav con nombre, y cada uno lleva a su sección", () => {
-    const html = pintar({ ...VACIA, contadores: { ...VACIA.contadores, pagos: 3, reembolsos: 2, reportes: 1, desembolsos: 5 } });
+  it("los cinco contadores están arriba, en un nav con nombre, y cada uno lleva a su sección", () => {
+    const html = pintar({
+      ...VACIA,
+      contadores: { ...VACIA.contadores, pagos: 3, reembolsos: 2, reportes: 1, desembolsos: 5, correosSinEnviar: 4 },
+    });
     expect(html).toContain('<nav aria-label="Resumen de tu bandeja">');
     for (const [id, cifra, rotulo] of [
       ["pagos", 3, "Pagos por revisar"],
       ["reembolsos", 2, "Reembolsos"],
       ["reportes", 1, "Reportes en revisión"],
       ["desembolsos", 5, "Desembolsos ejecutables"],
+      ["correos", 4, "Correos que no salieron"],
     ] as const) {
       expect(html).toMatch(new RegExp(`<a href="#${id}"[^>]*><span[^>]*>${cifra}</span><span[^>]*>${rotulo}</span></a>`));
       expect(html).toContain(`<section id="${id}" aria-labelledby="${id}-titulo"`);
@@ -186,3 +192,29 @@ describe("BandejaAdmin: lo que viene de la base no se interpreta como HTML", () 
     expect(html).toContain("&lt;script&gt;");
   });
 });
+
+describe("BandejaAdmin: correos que no salieron (HU-065)", () => {
+  it("muestra el tipo de correo, a quién, desde cuándo y el último error", () => {
+    const t = texto(
+      pintar({
+        ...VACIA,
+        correosSinEnviar: [
+          {
+            id: "c-1",
+            tipo: "Invitación de monitor",
+            destinatario: "aspirante@uniandes.edu.co",
+            creadoEn: new Date("2026-09-29T15:00:00Z"),
+            error: "SMTP 535 EAUTH: credenciales inválidas",
+          },
+        ],
+        contadores: { ...VACIA.contadores, correosSinEnviar: 1 },
+      }),
+    );
+    expect(t).toContain("Correos que no salieron (1)");
+    expect(t).toContain("Invitación de monitor · aspirante@uniandes.edu.co");
+    expect(t).toContain("SMTP 535 EAUTH: credenciales inválidas");
+    // 10:00 en Bogotá: la fecha sale en la zona del negocio.
+    expect(t).toMatch(/29 de septiembre de 2026.*10:00/);
+  });
+});
+
