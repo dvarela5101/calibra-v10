@@ -112,4 +112,20 @@ describe("urlDelSitio", () => {
   it("una ruta inválida sigue siendo un error", () => {
     expect(() => urlDelSitio("admin", { SITIO_URL: "https://calibra.example" })).toThrow(RangeError);
   });
+
+  it("en producción, SITIO_URL tiene que ser https: con http el token viajaría en claro (HU-064)", () => {
+    expect(() => urlDelSitio("/r?token=abc", { NODE_ENV: "production", SITIO_URL: "http://calibra.example" })).toThrow(
+      "En producción el sitio debe ser https.",
+    );
+  });
+
+  it("en producción, http solo sirve hacia esta misma máquina (la e2e corre el build contra localhost)", () => {
+    expect(urlDelSitio("/r", { NODE_ENV: "production", SITIO_URL: "http://localhost:3000" })).toBe("http://localhost:3000/r");
+    expect(urlDelSitio("/r", { NODE_ENV: "production", SITIO_URL: "http://127.0.0.1:3000" })).toBe("http://127.0.0.1:3000/r");
+    expect(() => urlDelSitio("/r", { NODE_ENV: "production", SITIO_URL: "http://localhost.evil.com" })).toThrow(RangeError);
+  });
+
+  it("fuera de producción, SITIO_URL puede ser http", () => {
+    expect(urlDelSitio("/r", { NODE_ENV: "development", SITIO_URL: "http://192.168.1.10:3000" })).toBe("http://192.168.1.10:3000/r");
+  });
 });

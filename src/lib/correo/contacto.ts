@@ -1,3 +1,5 @@
+import { protocoloAdmitido } from "./html";
+
 /**
  * ¿Es esto un correo? Sirve para decidir si un contacto (que puede ser un correo o un teléfono,
  * RN-44) admite un mensaje por correo. Es deliberadamente simple: una sola arroba, sin espacios,
@@ -19,13 +21,15 @@ export function esCorreo(valor: string): boolean {
  * tabulación entre las barras la leen los navegadores como otro host, y aquí se rechaza. Los mensajes de
  * error no repiten la ruta: puede traer un token.
  */
-export function enlaceAbsoluto(sitio: string, ruta: string): string {
+export function enlaceAbsoluto(sitio: string, ruta: string, entorno: Record<string, string | undefined> = process.env): string {
   if (!ruta.startsWith("/") || ruta.startsWith("//")) {
     throw new RangeError("La ruta debe empezar por una sola barra.");
   }
   const base = new URL(sitio);
-  if (base.protocol !== "https:" && base.protocol !== "http:") {
-    throw new RangeError(`El sitio debe ser http o https (llegó "${sitio}").`);
+  if (!protocoloAdmitido(base, entorno)) {
+    throw new RangeError(
+      base.protocol === "http:" ? "En producción el sitio debe ser https." : `El sitio debe ser http o https (llegó "${sitio}").`,
+    );
   }
   const url = new URL(ruta, base);
   if (url.origin !== base.origin) throw new RangeError("La ruta debe quedarse en el sitio.");
@@ -34,14 +38,14 @@ export function enlaceAbsoluto(sitio: string, ruta: string): string {
 
 /**
  * URL pública de una ruta del sitio, con la dirección que diga `SITIO_URL`. En producción es
- * obligatoria: un enlace a localhost en un correo real no le sirve a nadie. En desarrollo, sin ella se
- * usa `http://localhost:3000`.
+ * obligatoria y https: un enlace a localhost en un correo real no le sirve a nadie, y uno http deja
+ * viajar el token en claro. En desarrollo, sin ella se usa `http://localhost:3000`.
  */
 export function urlDelSitio(ruta: string, entorno: Record<string, string | undefined> = process.env): string {
   const sitio = entorno.SITIO_URL?.trim();
-  if (sitio) return enlaceAbsoluto(sitio, ruta);
+  if (sitio) return enlaceAbsoluto(sitio, ruta, entorno);
   if (entorno.NODE_ENV === "production") {
     throw new Error("Falta SITIO_URL: los enlaces de los correos necesitan la dirección pública del sitio.");
   }
-  return enlaceAbsoluto("http://localhost:3000", ruta);
+  return enlaceAbsoluto("http://localhost:3000", ruta, entorno);
 }

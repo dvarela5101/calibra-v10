@@ -1,8 +1,10 @@
 -- Semilla de la base LOCAL. HU-012.
 --
--- La corre `supabase db reset` y `supabase start` sobre una base nueva. Nunca corre contra el
--- proyecto real: `supabase db push` no aplica semillas y CLAUDE.md prohíbe `db reset --linked`.
--- No la ejecutes a mano contra una base remota: crea cuentas con una contraseña que está en el repo.
+-- La corren `supabase db reset` y `supabase start` sobre una base nueva. Nunca se usa contra el
+-- proyecto real. Ojo: `supabase db push` sin más no aplica semillas, pero `supabase db push
+-- --include-seed` sí la aplicaría, igual que `db reset --linked`. CLAUDE.md prohíbe todo `db push`
+-- y todo `--linked` contra el proyecto real. No la ejecutes a mano contra una base remota: crea
+-- cuentas con una contraseña que está en el repo.
 --
 -- Admins iniciales de PRUEBA con su orden de revisión (RN-07). La lista real de admins y su orden
 -- la define la persona antes del corte a producción (HU-057); esta semilla no llega ahí.

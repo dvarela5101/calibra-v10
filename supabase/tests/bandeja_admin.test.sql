@@ -1,11 +1,11 @@
--- Pruebas pgTAP de la bandeja del admin (HU-012): vista desembolsos_ejecutables (RN-83) y semilla.
+-- Pruebas pgTAP de la bandeja del admin (HU-012 y HU-064): vista desembolsos_ejecutables (RN-83), semilla y admin desactivado (RN-23).
 -- Corre con: npx supabase test db
 -- Todo ocurre en una transacción que termina en rollback: no deja datos.
 
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(29);
 
 -- ---------------------------------------------------------------------------
 -- 1. Estructura y permisos
@@ -215,6 +215,56 @@ select is((select count(*)::int from public.desembolsos_ejecutables), 0, 'Quien 
 reset role;
 set local role anon;
 select throws_ok($$select * from public.desembolsos_ejecutables$$, '42501', null, 'Sin sesión (anon) no hay acceso');
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- 6. Un admin desactivado (RN-23) no ve nada de la bandeja. HU-064.
+--    Desactivar es banear la cuenta en Auth: la fila de admin y lo que tiene asignado se conservan,
+--    pero privado.es_admin() ya no lo cuenta aunque su token siga vigente. Se le asignan un pago, un
+--    reembolso y un reporte, y hay un correo sin enviar: todo lo que lee la bandeja.
+-- ---------------------------------------------------------------------------
+insert into auth.users (id, is_anonymous, banned_until) values
+  ('a0000000-0000-0000-0000-000000000002', false, now() + interval '100 years');
+insert into public.admin (id, nombre, correo, orden_revision) values
+  ('a0000000-0000-0000-0000-000000000002', 'Admin Desactivado', 'admin-desactivado@example.com', 9000002);
+insert into public.monitoria (id, id_franja, id_materia, id_lead, fecha, valor_total, estado, fecha_finalizacion) values
+  ('50000000-0000-0000-0000-000000000008', '30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-00000000000a', '2020-02-24', 25000, 'realizada', '2020-02-24 16:30:00+00');
+insert into public.pago (id, id_monitoria, monto, nombre_pagador, contacto, id_admin, comprobante) values
+  ('60000000-0000-0000-0000-000000000008', '50000000-0000-0000-0000-000000000008', 25000, 'Pagador Prueba', 'pagador@example.com',
+   'a0000000-0000-0000-0000-000000000002', 'comprobante.png');
+insert into public.reembolso (id_pago, id_admin, monto, motivo) values
+  ('60000000-0000-0000-0000-000000000008', 'a0000000-0000-0000-0000-000000000002', 25000, 'Prueba');
+insert into public.reporte_inasistencia (id_monitoria, id_admin) values
+  ('50000000-0000-0000-0000-000000000008', 'a0000000-0000-0000-0000-000000000002');
+insert into public.correo_envio (clave, plantilla, destinatario, estado, ultimo_error) values
+  ('invitacion_monitor:prueba-hu-064', 'invitacion_monitor', 'desactivado@example.com', 'fallido', 'Prueba');
+
+set local role authenticated;
+set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-000000000002","role":"authenticated"}';
+
+select is(public.mi_rol(), null, 'Con la cuenta desactivada ya no tiene rol de admin');
+select is((select count(*)::int from public.desembolsos_ejecutables), 0, 'Un admin desactivado no ve desembolsos ejecutables');
+select is((select count(*)::int from public.pago), 0, 'Ni los pagos, tampoco el que tiene asignado');
+select is((select count(*)::int from public.reembolso), 0, 'Ni los reembolsos');
+select is((select count(*)::int from public.reporte_inasistencia), 0, 'Ni los reportes de inasistencia');
+select is((select count(*)::int from public.correo_envio), 0, 'Ni los correos que no salieron');
+
+-- Control: con la misma sesión y la cuenta reactivada, ve todo lo anterior. Lo que lo ocultaba era la desactivación.
+reset role;
+update auth.users set banned_until = null where id = 'a0000000-0000-0000-0000-000000000002';
+set local role authenticated;
+set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-000000000002","role":"authenticated"}';
+
+select is(
+  array[
+    (select count(*)::int from public.desembolsos_ejecutables where id_monitoria::text like '50000000-%'),
+    (select count(*)::int from public.pago where id = '60000000-0000-0000-0000-000000000008'),
+    (select count(*)::int from public.reembolso where id_pago = '60000000-0000-0000-0000-000000000008'),
+    (select count(*)::int from public.reporte_inasistencia where id_monitoria = '50000000-0000-0000-0000-000000000008'),
+    (select count(*)::int from public.correo_envio where clave = 'invitacion_monitor:prueba-hu-064')
+  ],
+  array[2, 1, 1, 1, 1],
+  'Reactivado, el mismo admin vuelve a ver sus desembolsos, pago, reembolso, reporte y correo');
 reset role;
 
 select * from finish();

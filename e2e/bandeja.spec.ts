@@ -186,6 +186,12 @@ test.describe("Criterios 1 y 2 · el admin ve lo que tiene asignado y cuánto le
     // El neto de este mundo es único: entre los desembolsos de todos los admins se reconoce el propio.
     await expect(desembolsos).toContainText(`Transferir $ ${netoDesembolso.toLocaleString("es-CO")}`);
     await expect(desembolsos).toContainText("Sesión del 6 de enero de 2020");
+    await expect(desembolsos).toContainText("ejecutable después del");
+    // La bandeja no promete lo que aún no existe (HU-064): el orden por vencimiento se anuncia solo en los pagos
+    // y el paso al siguiente admin llega con HU-034.
+    await expect(pagos).toContainText("el que vence primero va arriba");
+    await expect(page.locator("body")).not.toContainText("Lo que vence primero va arriba");
+    await expect(page.locator("body")).not.toContainText(/siguiente admin/i);
     // Ni el bruto ni la comisión llegan a la pantalla (P-32).
     await expect(page.locator("body")).not.toContainText(`$ ${(netoDesembolso + 2_000).toLocaleString("es-CO")}`);
     await expect(page.locator("body")).not.toContainText("$ 2.000");

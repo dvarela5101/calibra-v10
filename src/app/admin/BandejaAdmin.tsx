@@ -105,7 +105,7 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
         id="pagos"
         titulo="Pagos por revisar"
         total={contadores.pagos}
-        ayuda="Cada pago tiene un plazo para revisarse; en cada fila ves cuánto queda. Si vence, pasa al siguiente admin."
+        ayuda="Cada pago tiene un plazo para revisarse: el que vence primero va arriba y en cada fila ves cuánto le queda."
         vacio="No tienes pagos por revisar."
       >
         <ul className={estilos.lista}>
@@ -176,7 +176,7 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
             <li key={desembolso.id} className={estilos.fila}>
               <span className={estilos.nombre}>Transferir {formatearPesos(desembolso.montoNeto)}</span>
               <span className={estilos.meta}>
-                Sesión del {formatearDia(desembolso.fechaSesion)} · ejecutable desde el {formatearFechaHora(desembolso.desembolsableDesde)}
+                Sesión del {formatearDia(desembolso.fechaSesion)} · ejecutable después del {formatearFechaHora(desembolso.desembolsableDesde)}
               </span>
             </li>
           ))}

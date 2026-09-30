@@ -28,12 +28,29 @@ export function escaparHtml(texto: string): string {
   return texto.replace(/[&<>"']/g, (caracter) => ESCAPES[caracter]);
 }
 
+type Entorno = Record<string, string | undefined>;
+
+/** Los nombres de esta máquina: un enlace http hacia ellos no sale a la red. */
+const HOSTS_LOCALES = ["localhost", "127.0.0.1", "[::1]"];
+
 /**
- * Valida un enlace antes de ponerlo en un href: solo http o https, sin espacios ni caracteres de
- * control. Rechaza `javascript:`, `data:` y lo que no se pueda leer como URL. Devuelve la URL
- * normalizada.
+ * ¿Se acepta el protocolo de esta URL en un correo? https siempre. http solo en local: fuera de
+ * producción, o en producción hacia esta misma máquina (la e2e corre el build de producción contra
+ * localhost). Los enlaces de los correos llevan tokens (invitaciones, gestionar una cita) y en
+ * producción no viajan en claro. HU-064.
  */
-export function enlaceSeguro(enlace: string): string {
+export function protocoloAdmitido(url: URL, entorno: Entorno = process.env): boolean {
+  if (url.protocol === "https:") return true;
+  if (url.protocol !== "http:") return false;
+  return entorno.NODE_ENV !== "production" || HOSTS_LOCALES.includes(url.hostname);
+}
+
+/**
+ * Valida un enlace antes de ponerlo en un href: https (o http en local, ver `protocoloAdmitido`), sin
+ * espacios ni caracteres de control. Rechaza `javascript:`, `data:` y lo que no se pueda leer como URL.
+ * Devuelve la URL normalizada.
+ */
+export function enlaceSeguro(enlace: string, entorno: Entorno = process.env): string {
   if (/[\s\u0000-\u001f\u007f]/.test(enlace)) throw new RangeError("El enlace no puede tener espacios ni caracteres de control.");
   let url: URL;
   try {
@@ -41,8 +58,10 @@ export function enlaceSeguro(enlace: string): string {
   } catch {
     throw new RangeError("El enlace no es una URL válida.");
   }
-  if (url.protocol !== "https:" && url.protocol !== "http:") {
-    throw new RangeError(`El enlace debe ser http o https (llegó "${url.protocol}").`);
+  if (!protocoloAdmitido(url, entorno)) {
+    throw new RangeError(
+      url.protocol === "http:" ? "En producción el enlace debe ser https." : `El enlace debe ser http o https (llegó "${url.protocol}").`,
+    );
   }
   return url.href;
 }

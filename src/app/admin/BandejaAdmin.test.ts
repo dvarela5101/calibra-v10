@@ -156,7 +156,7 @@ describe("BandejaAdmin: lo que se ve en cada ítem", () => {
     expect(t).toContain("Reportado el martes, 29 de septiembre de 2026, 2:09 a. m.");
   });
 
-  it("un desembolso muestra el neto y desde cuándo es ejecutable, y nada de bruto ni comisión", () => {
+  it("un desembolso muestra el neto y después de cuándo es ejecutable, y nada de bruto ni comisión", () => {
     const html = pintar({
       ...VACIA,
       desembolsos: [
@@ -166,7 +166,9 @@ describe("BandejaAdmin: lo que se ve en cada ítem", () => {
     });
     const t = texto(html);
     expect(t).toContain("Transferir $ 22.500");
-    expect(t).toContain("Sesión del 6 de enero de 2020 · ejecutable desde el martes, 7 de enero de 2020, 11:00 a. m.");
+    // Es ejecutable después de ese instante, no desde él: en el instante exacto el reporte sigue abierto (N-6, HU-064).
+    expect(t).toContain("Sesión del 6 de enero de 2020 · ejecutable después del martes, 7 de enero de 2020, 11:00 a. m.");
+    expect(t).not.toContain("ejecutable desde");
     expect(html.toLowerCase()).not.toContain("comisi");
     expect(html.toLowerCase()).not.toContain("bruto");
   });
@@ -175,6 +177,14 @@ describe("BandejaAdmin: lo que se ve en cada ítem", () => {
     const t = texto(pintar(VACIA));
     expect(t).not.toMatch(/\b\d+ horas?\b/);
     expect(t).not.toMatch(/\b\d+ min/);
+  });
+
+  it("no promete lo que aún no existe: el orden por vencimiento es solo de los pagos y no hay escalamiento (HU-064)", () => {
+    const t = texto(pintar(VACIA));
+    expect(t).toContain("Cada pago tiene un plazo para revisarse: el que vence primero va arriba y en cada fila ves cuánto le queda.");
+    // El paso al siguiente admin llega con HU-034; hasta entonces la bandeja no lo anuncia.
+    expect(t).not.toMatch(/siguiente admin/i);
+    expect(t.match(/vence primero/g)).toHaveLength(1);
   });
 });
 
