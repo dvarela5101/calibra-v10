@@ -8,7 +8,17 @@ import { enviarCredenciales, expect, test } from "./utilidades";
 test.describe.configure({ mode: "default", timeout: 60_000 });
 
 /** Lo que solo puede aparecer en el servidor: la dirección del proveedor, sus variables y sus cabeceras. */
-const RASTROS_DEL_SERVIDOR = ["api.resend.com", "RESEND_API_KEY", "CORREO_REMITENTE", "Idempotency-Key", "/api/v1/send"];
+const RASTROS_DEL_SERVIDOR = [
+  "api.resend.com",
+  "RESEND_API_KEY",
+  "CORREO_REMITENTE",
+  "Idempotency-Key",
+  "/api/v1/send",
+  // HU-066: el transporte SMTP y su contraseña.
+  "SMTP_CONTRASENA",
+  "smtp.gmail.com",
+  "nodemailer",
+];
 
 /** Las direcciones de todos los .js que la página cargó, tanto los <script> como los que se pidieron después. */
 async function scriptsCargados(page: Page): Promise<string[]> {

@@ -5,6 +5,11 @@ import { defineConfig, devices } from "@playwright/test";
 // No pisa variables que ya vengan del entorno.
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 
+// HU-066: con SMTP configurado, la app enviaría correos de verdad por Gmail a las direcciones de prueba.
+if (process.env.SMTP_CONTRASENA?.trim()) {
+  throw new Error("Las e2e no corren con SMTP_CONTRASENA definida: quítala de .env.local y del entorno (los correos locales van a Mailpit).");
+}
+
 const PUERTO = 3000;
 const enCI = Boolean(process.env.CI);
 

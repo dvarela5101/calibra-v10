@@ -276,7 +276,8 @@ describe("elegirProveedor", () => {
     (entorno) => {
       expect(elegirProveedor(entorno)).toEqual({
         ok: false,
-        error: "No hay proveedor de correo: define RESEND_API_KEY y CORREO_REMITENTE (o MAILPIT_URL en local).",
+        error:
+          "No hay proveedor de correo: define SMTP_SERVIDOR, SMTP_USUARIO y SMTP_CONTRASENA (o RESEND_API_KEY y CORREO_REMITENTE, o MAILPIT_URL en local).",
       });
     },
   );

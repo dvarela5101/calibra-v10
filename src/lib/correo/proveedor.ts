@@ -1,14 +1,18 @@
 /**
- * Transportes de correo. Dos, con la misma forma:
+ * Transportes de correo. Tres, con la misma forma:
  *
- *  - Resend, en producción: `POST https://api.resend.com/emails` con la llave en el servidor.
+ *  - SMTP (`smtp.ts`), en producción mientras no haya dominio propio: Gmail desde
+ *    calibra.monitorias@gmail.com (decisión D-1, HU-066).
+ *  - Resend, cuando haya dominio: `POST https://api.resend.com/emails` con la llave en el servidor.
  *  - Mailpit, solo en local: su API HTTP `POST /api/v1/send`. Es el buzón que ya levanta el Supabase
- *    local (http://127.0.0.1:54324), así que no hace falta un cliente SMTP ni ninguna dependencia.
+ *    local (http://127.0.0.1:54324).
  *
- * Nada de este archivo debe llegar al navegador: lee la llave del proveedor. Solo lo importa
+ * Nada de este archivo debe llegar al navegador: lee la llave y la contraseña del proveedor. Solo lo importa
  * `servidor.ts` (que tiene `server-only`) y las pruebas; `pruebas/correo-sin-llaves.test.ts` y la
  * e2e `e2e/correo.spec.ts` lo vigilan.
  */
+
+import { crearProveedorSmtp, leerConfiguracionSmtp } from "./smtp";
 
 export type CorreoSaliente = {
   para: string;
@@ -176,14 +180,24 @@ export function crearProveedorMailpit({
 export type EleccionDeProveedor = { ok: true; proveedor: Proveedor } | { ok: false; error: string };
 
 /**
- * Elige el transporte según el entorno. Con `RESEND_API_KEY` es Resend (y exige `CORREO_REMITENTE`,
- * que Resend solo deja usar desde un dominio verificado). Sin ella, y solo en local, Mailpit vía
- * `MAILPIT_URL`. Si no hay ninguno, lo dice en vez de fingir que envió.
+ * Elige el transporte según el entorno, en este orden:
+ *  1. SMTP, si están `SMTP_SERVIDOR`, `SMTP_USUARIO` y `SMTP_CONTRASENA` (D-1: Gmail). El remitente es
+ *     `CORREO_REMITENTE` o, si falta, `Calibra <usuario>`: Gmail reescribe cualquier otra dirección.
+ *  2. Resend, con `RESEND_API_KEY` (y exige `CORREO_REMITENTE`, que Resend solo deja usar desde un
+ *     dominio verificado).
+ *  3. Solo en local, Mailpit vía `MAILPIT_URL`.
+ * Si no hay ninguno, lo dice en vez de fingir que envió.
  */
 export function elegirProveedor(
   entorno: Record<string, string | undefined>,
   fetchImpl: Fetch = fetch,
 ): EleccionDeProveedor {
+  const smtp = leerConfiguracionSmtp(entorno);
+  if (smtp) {
+    if (!smtp.ok) return smtp;
+    const remitente = entorno.CORREO_REMITENTE?.trim() || `Calibra <${smtp.configuracion.usuario}>`;
+    return { ok: true, proveedor: crearProveedorSmtp({ configuracion: smtp.configuracion, remitente }) };
+  }
   const llave = entorno.RESEND_API_KEY?.trim();
   if (llave) {
     const remitente = entorno.CORREO_REMITENTE?.trim();
@@ -195,5 +209,8 @@ export function elegirProveedor(
     const remitente = entorno.CORREO_REMITENTE?.trim() || "Calibra <no-responder@calibra.test>";
     return { ok: true, proveedor: crearProveedorMailpit({ url: mailpit, remitente, fetchImpl }) };
   }
-  return { ok: false, error: "No hay proveedor de correo: define RESEND_API_KEY y CORREO_REMITENTE (o MAILPIT_URL en local)." };
+  return {
+    ok: false,
+    error: "No hay proveedor de correo: define SMTP_SERVIDOR, SMTP_USUARIO y SMTP_CONTRASENA (o RESEND_API_KEY y CORREO_REMITENTE, o MAILPIT_URL en local).",
+  };
 }

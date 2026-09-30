@@ -125,18 +125,23 @@ Los comprobantes van en el bucket privado `comprobantes` de Supabase Storage (HU
 | `pago_rechazado_individual` | Pago rechazado en una individual: la cita se cancela | Pagador |
 | `pago_rechazado_grupal` | Pago rechazado en una grupal: se anula ese cupo | Pagador |
 | `escalamiento_pago` | Pago sin revisar tras el plazo: pasa al siguiente admin | Admin |
+| `invitacion_monitor` | El admin invita a un aspirante tras la evaluación presencial (HU-013) | Aspirante a monitor |
 
 Cada llamada lleva la plantilla, sus datos, el destinatario y una `entidad`, que es lo que motiva el correo (el id del reembolso o del diagnóstico). Plantilla más entidad forman la clave del correo. La entidad debe cambiar cada vez que el mismo evento tenga que volver a avisar: el escalamiento de un pago vuelve al primer admin al terminar la lista (RN-42), así que ahí la entidad es `pago:admin:n`, con el número de escalamiento, y no `pago:admin`, que la segunda vuelta descartaría como ya enviado. Solo admite ASCII imprimible, porque viaja como `Idempotency-Key`.
 
 - La clave es única en `correo_envio`, el registro de envíos (destinatario, plantilla, fecha, resultado; sin el cuerpo). Si el correo ya salió, otra llamada con la misma clave no lo manda otra vez.
 - Un fallo pasajero (red, 5xx, límite de ritmo) se reintenta hasta tres veces con espera creciente. Uno definitivo (llave inválida, remitente sin verificar) no. Si no sale, queda `fallido` con su error y la siguiente llamada con la misma clave lo reintenta sobre la misma fila. Como el registro no guarda el cuerpo, reintentar es volver a llamar con los mismos datos.
-- La clave también viaja como `Idempotency-Key` a Resend, por si el envío llegó pero la respuesta no. Resend la recuerda 24 horas y rechaza reusarla con otro contenido, así que una plantilla no puede leer el reloj.
+- Con Resend, la clave también viaja como `Idempotency-Key`, por si el envío llegó pero la respuesta no. Resend la recuerda 24 horas y rechaza reusarla con otro contenido, así que una plantilla no puede leer el reloj. SMTP no tiene ese encabezado: la idempotencia la pone el registro, y la clave da un `Message-ID` estable. Si la conexión se cae justo después de entregar el mensaje, el reintento puede duplicarlo; es raro y se acepta.
 - Un contacto que no es un correo (un teléfono) no se envía: WhatsApp y SMS quedan fuera (P-22).
 - La función no lanza por un fallo del proveedor ni del registro: devuelve `ok: false` con el motivo, para que un correo caído no tumbe el flujo que lo pidió.
 
-En producción el proveedor es Resend (`RESEND_API_KEY` y `CORREO_REMITENTE`, ver `.env.example`). En local, sin esas variables, el correo sale por el Mailpit del Supabase local y se ve en http://127.0.0.1:54324. Los enlaces de los correos se arman con `urlDelSitio()` a partir de `SITIO_URL`. La llave solo la lee código de servidor: `pruebas/correo-sin-llaves.test.ts` y `e2e/correo.spec.ts` comprueban que no llegue al navegador.
+El proveedor sale del entorno (`elegirProveedor`, ver `.env.example`), en este orden:
 
-Antes de mandar a personas reales hay que verificar un dominio en Resend. Mientras no esté verificado, Resend solo entrega a la cuenta dueña de la llave.
+1. **SMTP de Gmail** (HU-066, decisión D-1): mientras no haya dominio propio, los correos salen desde `calibra.monitorias@gmail.com` con `SMTP_SERVIDOR`, `SMTP_PUERTO`, `SMTP_USUARIO` y `SMTP_CONTRASENA`, que es una contraseña de aplicación de Google. Las respuestas llegan a ese buzón. Gmail permite unos 500 correos al día; si se pasa, responde 550 y el envío queda `fallido` (no se reintenta solo: al día siguiente, volver a disparar el mismo correo lo manda sobre la misma fila).
+2. **Resend**, cuando haya dominio verificado (`RESEND_API_KEY` y `CORREO_REMITENTE`). Sin dominio verificado, Resend solo entrega a la cuenta dueña de la llave.
+3. **Mailpit**, solo en local y sin nada de lo anterior: el correo se ve en http://127.0.0.1:54324.
+
+Los enlaces de los correos se arman con `urlDelSitio()` a partir de `SITIO_URL`. La llave de Resend y la contraseña de SMTP solo las lee código de servidor: `pruebas/correo-sin-llaves.test.ts` y `e2e/correo.spec.ts` comprueban que no lleguen al navegador.
 
 ## CI y despliegue
 
