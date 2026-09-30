@@ -18,6 +18,7 @@ const correos: string[] = [];
 /** Claves de correo_envio de esta prueba. */
 const claves: string[] = [];
 
+const MINUTO = 60_000;
 const HORA = 3_600_000;
 const DIA = 86_400_000;
 const hace = (milisegundos: number) => new Date(Date.now() - milisegundos).toISOString();
@@ -89,10 +90,20 @@ async function invitacionDe(id: string) {
 }
 
 /**
- * Una invitación cuyo correo no salió: el proveedor no está configurado en ese momento (sin_proveedor, que es
- * temporal), así que la fila de correo_envio queda `fallido` y `reintentable`. Luego vuelve Mailpit.
+ * Deja la fila quieta desde hace un rato. El proceso solo toma un fallido que lleva 2 minutos sin tocarse
+ * (y un pendiente que lleva 5): una fila recién fallida espera, así que las pruebas que esperan que se
+ * reintente la envejecen antes.
  */
-async function invitacionQueNoSalio(idAdmin: string) {
+async function envejecer(clave: string, milisegundos = 3 * MINUTO) {
+  exito(await fx.admin.from("correo_envio").update({ actualizado_en: hace(milisegundos) }).eq("clave", clave).select("id").single(), `envejecer ${clave}`);
+}
+
+/**
+ * Una invitación cuyo correo no salió: el proveedor no está configurado en ese momento (sin_proveedor, que es
+ * temporal), así que la fila de correo_envio queda `fallido` y `reintentable`. Luego vuelve Mailpit. Por
+ * defecto la fila queda con 3 minutos de quieta, lista para que el proceso la tome.
+ */
+async function invitacionQueNoSalio(idAdmin: string, { esperada = true }: { esperada?: boolean } = {}) {
   const correo = correoNuevo();
   vi.stubEnv("MAILPIT_URL", "");
   const resultado = await invitarMonitor(idAdmin, correo);
@@ -102,11 +113,28 @@ async function invitacionQueNoSalio(idAdmin: string) {
   const invitacion = exito(await fx.admin.from("invitacion_monitor").select("*").eq("correo", correo).single(), "leer invitación");
   const clave = `invitacion_monitor:${invitacion.id}`;
   claves.push(clave);
-  const envio = await filaDe(clave);
-  expect(envio).toMatchObject({ estado: "fallido", reintentable: true, intentos: 0, destinatario: correo, enviado_en: null, id_proveedor: null });
-  expect(envio.ultimo_error).toContain("RESEND_API_KEY");
+  const recien = await filaDe(clave);
+  expect(recien).toMatchObject({ estado: "fallido", reintentable: true, intentos: 0, destinatario: correo, enviado_en: null, id_proveedor: null });
+  expect(recien.ultimo_error).toContain("RESEND_API_KEY");
   expect(await mensajesPara(correo)).toEqual([]);
-  return { correo, invitacion, clave, envio };
+  if (esperada) await envejecer(clave);
+  return { correo, invitacion, clave, envio: await filaDe(clave) };
+}
+
+/**
+ * Deja la fila como la de un envío que se cortó a la mitad: `pendiente`, sin fallo anotado, tocada por
+ * última vez hace `hace` milisegundos (el proceso que la reservó murió).
+ */
+async function dejarPendiente(clave: string, hace_: number) {
+  exito(
+    await fx.admin
+      .from("correo_envio")
+      .update({ estado: "pendiente", reintentable: false, ultimo_error: null, intentos: 0, actualizado_en: hace(hace_) })
+      .eq("clave", clave)
+      .select("id")
+      .single(),
+    `dejar pendiente ${clave}`,
+  );
 }
 
 /** Una fila de correo_envio hecha a mano, para probar lo que ve el admin sin depender del envío. */
@@ -116,6 +144,8 @@ async function insertarCorreo(datos: {
   reintentable?: boolean;
   /** Cuánto hace que se creó. */
   hace?: number;
+  /** Cuánto hace que se tocó por última vez. Por defecto, lo mismo que `hace`. */
+  tocadaHace?: number;
   error?: string;
 }) {
   const clave = `${datos.plantilla}:${randomUUID()}`;
@@ -133,7 +163,7 @@ async function insertarCorreo(datos: {
         intentos: datos.estado === "pendiente" ? 0 : 3,
         ultimo_error: datos.estado === "fallido" ? (datos.error ?? "Resend 503: caído") : null,
         creado_en: creado,
-        actualizado_en: creado,
+        actualizado_en: datos.tocadaHace === undefined ? creado : hace(datos.tocadaHace),
         enviado_en: datos.estado === "enviado" ? creado : null,
       })
       .select()
@@ -291,8 +321,14 @@ describe("criterio 1: un correo fallido por una causa temporal se reintenta sobr
     expect(fallida.ultimo_error).toContain("Mailpit no respondió");
     expect(await mensajesPara(correo)).toEqual([]);
 
-    // Vuelve el proveedor: la próxima corrida lo manda, sobre la misma fila, y suma sus intentos.
+    // Vuelve el proveedor, pero la fila acaba de fallar: el proceso espera 2 minutos antes de volver a tomarla.
     vi.stubEnv("MAILPIT_URL", mailpit);
+    await reintentarCorreosDesdeServidor();
+    expect(await filaDe(clave)).toMatchObject({ estado: "fallido", reintentable: true, intentos: 3 });
+    expect(await mensajesPara(correo)).toEqual([]);
+
+    // Pasada la espera, la corrida lo manda, sobre la misma fila, y suma sus intentos.
+    await envejecer(clave);
     const vuelta = await reintentarCorreosDesdeServidor();
     expect(vuelta.enviados).toBeGreaterThanOrEqual(1);
     expect(await filaDe(clave)).toMatchObject({ id: envio.id, estado: "enviado", intentos: 4, ultimo_error: null, reintentable: false });
@@ -333,16 +369,109 @@ describe("criterio 1: un correo fallido por una causa temporal se reintenta sobr
     console.info(`[prueba] corridas que encontraron la fila tomada por la otra: ${tomadosPorOtro}`);
   }, 90_000);
 
-  it("no toca los correos que ya salieron ni los que otro proceso tiene en curso", async () => {
-    const enviado = await insertarCorreo({ plantilla: "invitacion_monitor", estado: "enviado", reintentable: true });
-    const pendiente = await insertarCorreo({ plantilla: "invitacion_monitor", estado: "pendiente", reintentable: true });
+  it("un fallido que acaba de fallar espera: con menos de 2 minutos no se toca, y pasado ese tiempo sale", async () => {
+    const { admin } = await sesionDeAdmin();
+    const { correo, invitacion, clave, envio } = await invitacionQueNoSalio(admin.id, { esperada: false });
+
+    await reintentarCorreosDesdeServidor();
+    expect(await filaDe(clave)).toMatchObject({ estado: "fallido", reintentable: true, intentos: 0, actualizado_en: envio.actualizado_en });
+    expect((await invitacionDe(invitacion.id)).token_hash).toBe(invitacion.token_hash);
+    expect(await mensajesPara(correo)).toEqual([]);
+
+    // Con 1 minuto 50 segundos todavía espera.
+    await envejecer(clave, 2 * MINUTO - 10_000);
+    await reintentarCorreosDesdeServidor();
+    expect(await filaDe(clave)).toMatchObject({ estado: "fallido", intentos: 0 });
+    expect(await mensajesPara(correo)).toEqual([]);
+
+    // Con 2 minutos 10 segundos ya le toca.
+    await envejecer(clave, 2 * MINUTO + 10_000);
+    await reintentarCorreosDesdeServidor();
+    expect(await filaDe(clave)).toMatchObject({ estado: "enviado", intentos: 1 });
+    expect(await mensajesPara(correo)).toHaveLength(1);
+  });
+
+  it("no toca los correos que ya salieron", async () => {
+    const enviado = await insertarCorreo({ plantilla: "invitacion_monitor", estado: "enviado", reintentable: true, tocadaHace: 10 * MINUTO });
 
     await reintentarCorreosDesdeServidor();
 
     expect(await filaDe(enviado.clave)).toMatchObject({ estado: "enviado", intentos: 3, ultimo_error: null });
-    expect(await filaDe(pendiente.clave)).toMatchObject({ estado: "pendiente", intentos: 0 });
     expect(await mensajesPara(enviado.destinatario)).toEqual([]);
-    expect(await mensajesPara(pendiente.destinatario)).toEqual([]);
+  });
+
+  it("un pendiente reciente (hace 1 minuto, o hasta 4) es de otro proceso que sigue enviando: no se toca", async () => {
+    const { admin } = await sesionDeAdmin();
+    for (const minutos of [1, 4]) {
+      const { correo, invitacion, clave } = await invitacionQueNoSalio(admin.id, { esperada: false });
+      await dejarPendiente(clave, minutos * MINUTO);
+
+      await reintentarCorreosDesdeServidor();
+
+      expect(await filaDe(clave), `${minutos} min`).toMatchObject({ estado: "pendiente", intentos: 0, enviado_en: null });
+      expect((await invitacionDe(invitacion.id)).token_hash, `${minutos} min`).toBe(invitacion.token_hash);
+      expect(await mensajesPara(correo), `${minutos} min`).toEqual([]);
+    }
+  });
+
+  it("un pendiente abandonado (hace 6 minutos) de una invitación vigente se reintenta y sale una sola vez", async () => {
+    const { admin } = await sesionDeAdmin();
+    const { correo, invitacion, clave, envio } = await invitacionQueNoSalio(admin.id, { esperada: false });
+    // El envío se cortó a la mitad: la fila quedó pendiente, sin fallo anotado (ni `reintentable`).
+    await dejarPendiente(clave, 6 * MINUTO);
+
+    const resumen = await reintentarCorreosDesdeServidor();
+
+    expect(resumen.enviados).toBeGreaterThanOrEqual(1);
+    expect(await filaDe(clave)).toMatchObject({ id: envio.id, estado: "enviado", intentos: 1, ultimo_error: null, reintentable: false });
+    const mensajes = await mensajesPara(correo);
+    expect(mensajes).toHaveLength(1);
+    const token = tokenDe(mensajes[0]);
+    expect(await buscarInvitacion(token)).toMatchObject({ vigente: true, correo });
+    expect((await invitacionDe(invitacion.id)).token_hash).toBe(sha256(token));
+
+    // Otra corrida no lo manda de nuevo.
+    await reintentarCorreosDesdeServidor();
+    expect(await mensajesPara(correo)).toHaveLength(1);
+    expect(await filaDe(clave)).toMatchObject({ estado: "enviado", intentos: 1 });
+  });
+
+  it("dos corridas a la vez sobre un pendiente abandonado: sale un solo correo y su enlace sirve", async () => {
+    const { admin } = await sesionDeAdmin();
+    const { correo, invitacion, clave } = await invitacionQueNoSalio(admin.id, { esperada: false });
+    await dejarPendiente(clave, 6 * MINUTO);
+
+    await Promise.all([reintentarCorreosDesdeServidor(), reintentarCorreosDesdeServidor()]);
+
+    const mensajes = await mensajesPara(correo);
+    expect(mensajes).toHaveLength(1);
+    const token = tokenDe(mensajes[0]);
+    expect(await buscarInvitacion(token)).toMatchObject({ vigente: true, correo });
+    expect((await invitacionDe(invitacion.id)).token_hash).toBe(sha256(token));
+    expect(await filaDe(clave)).toMatchObject({ estado: "enviado", intentos: 1 });
+  });
+});
+
+describe("el lote: cada corrida toma los más antiguos, hasta 10", () => {
+  it("con más de 10 candidatos en espera, una corrida revisa 10 y deja el más nuevo para la siguiente", async () => {
+    // Doce fallidos de una plantilla sin reconstructor (se descartan sin enviar nada), del más viejo al más nuevo.
+    const filas: Awaited<ReturnType<typeof insertarCorreo>>[] = [];
+    for (let i = 0; i < 12; i++) {
+      filas.push(await insertarCorreo({ plantilla: "resena_individual", estado: "fallido", reintentable: true, tocadaHace: (60 - i) * MINUTO }));
+    }
+    const masNueva = filas[filas.length - 1];
+    const reintentables = async () =>
+      (await fx.admin.from("correo_envio").select("id").in("id", filas.map((f) => f.id)).eq("reintentable", true)).data?.length ?? -1;
+
+    const primera = await reintentarCorreosDesdeServidor();
+
+    expect(primera.revisados).toBe(10);
+    expect(await filaDe(masNueva.clave)).toMatchObject({ estado: "fallido", reintentable: true });
+    expect(await reintentables()).toBeGreaterThanOrEqual(2);
+
+    // Las corridas siguientes terminan con el resto.
+    for (let vuelta = 0; vuelta < 3 && (await reintentables()) > 0; vuelta++) await reintentarCorreosDesdeServidor();
+    expect(await reintentables()).toBe(0);
   });
 });
 
@@ -367,6 +496,21 @@ describe("criterio 2: lo definitivo, o lo que sigue fallando después de 24 hora
     expect(propio?.creadoEn).toEqual(new Date((await filaDe(clave)).creado_en));
   });
 
+  it("un pendiente abandonado de hace más de 24 horas tampoco se reintenta: lo ve el admin", async () => {
+    const { admin, cliente } = await sesionDeAdmin();
+    const { correo, invitacion, clave, envio } = await invitacionQueNoSalio(admin.id, { esperada: false });
+    await dejarPendiente(clave, 25 * HORA);
+    await fx.admin.from("correo_envio").update({ creado_en: hace(25 * HORA) }).eq("clave", clave);
+
+    await reintentarCorreosDesdeServidor();
+
+    expect(await filaDe(clave)).toMatchObject({ id: envio.id, estado: "pendiente", intentos: 0 });
+    expect((await invitacionDe(invitacion.id)).token_hash).toBe(invitacion.token_hash);
+    expect(await mensajesPara(correo)).toEqual([]);
+    const bandeja = await cargarBandeja(cliente, admin.id, new Date(), { maxFilas: 1_000 });
+    expect(bandeja.correosSinEnviar.find((c) => c.id === envio.id)).toMatchObject({ tipo: "Invitación de monitor", destinatario: correo, error: null });
+  });
+
   it("la ventana se mide desde la creación: a 23 horas sí se reintenta; con el reloj 2 horas adelante ya no", async () => {
     const { admin, cliente } = await sesionDeAdmin();
     const { correo, invitacion, clave, envio } = await invitacionQueNoSalio(admin.id);
@@ -389,7 +533,7 @@ describe("criterio 2: lo definitivo, o lo que sigue fallando después de 24 hora
     expect(await mensajesPara(correo)).toHaveLength(1);
   });
 
-  it("la bandeja lista los fallidos definitivos y los vencidos, no los reintentables recientes, ni los enviados, ni los pendientes", async () => {
+  it("la bandeja lista los fallidos definitivos, los vencidos y los pendientes de más de 24 horas; no los reintentables recientes, ni los enviados, ni los pendientes recientes", async () => {
     const definitivo = await insertarCorreo({ plantilla: "pago_rechazado_individual", estado: "fallido", reintentable: false, error: "Resend 401 invalid_api_key" });
     const definitivoViejo = await insertarCorreo({ plantilla: "escalamiento_pago", estado: "fallido", reintentable: false, hace: 30 * HORA });
     const vencido = await insertarCorreo({ plantilla: "resena_individual", estado: "fallido", reintentable: true, hace: 25 * HORA });
@@ -397,15 +541,17 @@ describe("criterio 2: lo definitivo, o lo que sigue fallando después de 24 hora
     const casiVencido = await insertarCorreo({ plantilla: "resena_individual", estado: "fallido", reintentable: true, hace: 23 * HORA });
     const enviado = await insertarCorreo({ plantilla: "resena_individual", estado: "enviado", reintentable: false });
     const pendiente = await insertarCorreo({ plantilla: "resena_individual", estado: "pendiente" });
+    const pendienteReciente = await insertarCorreo({ plantilla: "resena_individual", estado: "pendiente", hace: 1 * HORA });
+    const pendienteViejo = await insertarCorreo({ plantilla: "resena_individual", estado: "pendiente", hace: 25 * HORA });
     const desconocido = await insertarCorreo({ plantilla: "plantilla_de_otra_epoca", estado: "fallido", reintentable: false });
     const { admin, cliente } = await sesionDeAdmin();
 
     const bandeja = await cargarBandeja(cliente, admin.id, new Date(), { maxFilas: 1_000 });
 
     const ids = bandeja.correosSinEnviar.map((c) => c.id);
-    for (const fila of [definitivo, definitivoViejo, vencido, desconocido]) expect(ids, fila.clave).toContain(fila.id);
-    for (const fila of [reciente, casiVencido, enviado, pendiente]) expect(ids, fila.clave).not.toContain(fila.id);
-    expect(bandeja.contadores.correosSinEnviar).toBeGreaterThanOrEqual(4);
+    for (const fila of [definitivo, definitivoViejo, vencido, pendienteViejo, desconocido]) expect(ids, fila.clave).toContain(fila.id);
+    for (const fila of [reciente, casiVencido, enviado, pendiente, pendienteReciente]) expect(ids, fila.clave).not.toContain(fila.id);
+    expect(bandeja.contadores.correosSinEnviar).toBeGreaterThanOrEqual(5);
     expect(bandeja.contadores.correosSinEnviar).toBe(bandeja.correosSinEnviar.length); // maxFilas alto: cabe todo
 
     // Cada uno con su nombre legible, su destinatario, su fecha y su error.
@@ -418,6 +564,8 @@ describe("criterio 2: lo definitivo, o lo que sigue fallando después de 24 hora
       error: "Resend 401 invalid_api_key",
     });
     expect(propio(vencido.id)?.tipo).toBe("Reseña de la monitoría");
+    // Un pendiente de hace más de 24 horas es un envío que murió y ya no se reintenta: se muestra sin error.
+    expect(propio(pendienteViejo.id)).toMatchObject({ tipo: "Reseña de la monitoría", destinatario: pendienteViejo.destinatario, error: null });
     expect(propio(definitivoViejo.id)?.tipo).toBe("Pago escalado a otro admin");
     // Una plantilla que ya no existe se muestra tal cual, en vez de romper la bandeja.
     expect(propio(desconocido.id)?.tipo).toBe("plantilla_de_otra_epoca");
@@ -505,6 +653,26 @@ describe("criterio 3: cada plantilla se reconstruye desde su entidad, y si la en
     expect(await buscarInvitacion("a".repeat(64))).toEqual({ vigente: false });
   });
 
+  it("un pendiente abandonado cuya invitación ya se usó: queda fallido y sin reintento, y el admin lo ve", async () => {
+    const { admin, cliente } = await sesionDeAdmin();
+    const { correo, invitacion, clave, envio } = await invitacionQueNoSalio(admin.id, { esperada: false });
+    await dejarPendiente(clave, 6 * MINUTO);
+    exito(await fx.admin.from("invitacion_monitor").update({ usada_en: new Date().toISOString() }).eq("id", invitacion.id).select().single(), "usar la invitación");
+
+    const resumen = await reintentarCorreosDesdeServidor();
+
+    expect(resumen.descartados).toBeGreaterThanOrEqual(1);
+    // Ya no está `pendiente` (no se queda en el limbo): el descarte lo deja `fallido`, sin reintento, con el motivo.
+    const despues = await filaDe(clave);
+    expect(despues).toMatchObject({ id: envio.id, estado: "fallido", reintentable: false, intentos: 0, enviado_en: null });
+    expect(despues.ultimo_error).toContain("ya no aplica");
+    expect(await mensajesPara(correo)).toEqual([]);
+    expect((await invitacionDe(invitacion.id)).token_hash).toBe(invitacion.token_hash);
+
+    const bandeja = await cargarBandeja(cliente, admin.id, new Date(), { maxFilas: 1_000 });
+    expect(bandeja.correosSinEnviar.find((c) => c.id === envio.id)).toMatchObject({ tipo: "Invitación de monitor", destinatario: correo, error: despues.ultimo_error });
+  });
+
   it("otras causas de descarte: invitación borrada, entidad que no es un id, plantilla sin reconstructor o desconocida", async () => {
     const { admin } = await sesionDeAdmin();
     const borrada = await invitacionQueNoSalio(admin.id);
@@ -515,20 +683,20 @@ describe("criterio 3: cada plantilla se reconstruye desde su entidad, y si la en
     const filaSinId = exito(
       await fx.admin
         .from("correo_envio")
-        .insert({ clave: claveSinId, plantilla: "invitacion_monitor", destinatario: correoNuevo(), estado: "fallido", reintentable: true, ultimo_error: "x" })
+        .insert({ clave: claveSinId, plantilla: "invitacion_monitor", destinatario: correoNuevo(), estado: "fallido", reintentable: true, ultimo_error: "x", actualizado_en: hace(3 * MINUTO) })
         .select()
         .single(),
       "insertar correo con entidad inválida",
     );
-    const sinReconstructor = await insertarCorreo({ plantilla: "resena_individual", estado: "fallido", reintentable: true });
-    const desconocida = await insertarCorreo({ plantilla: "plantilla_de_otra_epoca", estado: "fallido", reintentable: true });
+    const sinReconstructor = await insertarCorreo({ plantilla: "resena_individual", estado: "fallido", reintentable: true, tocadaHace: 3 * MINUTO });
+    const desconocida = await insertarCorreo({ plantilla: "plantilla_de_otra_epoca", estado: "fallido", reintentable: true, tocadaHace: 3 * MINUTO });
     // La clave no es de su plantilla.
     const claveAjena = `resena_individual:${randomUUID()}`;
     claves.push(claveAjena);
     const filaAjena = exito(
       await fx.admin
         .from("correo_envio")
-        .insert({ clave: claveAjena, plantilla: "invitacion_monitor", destinatario: correoNuevo(), estado: "fallido", reintentable: true, ultimo_error: "x" })
+        .insert({ clave: claveAjena, plantilla: "invitacion_monitor", destinatario: correoNuevo(), estado: "fallido", reintentable: true, ultimo_error: "x", actualizado_en: hace(3 * MINUTO) })
         .select()
         .single(),
       "insertar correo con clave de otra plantilla",
@@ -600,10 +768,10 @@ describe("la ruta /api/procesos/reintentar-correos", () => {
     expect(respuesta.status).toBe(200);
     expect(respuesta.headers.get("content-type")).toContain("application/json");
     const resumen = await respuesta.json();
-    expect(Object.keys(resumen).sort()).toEqual(["conError", "descartados", "enviados", "revisados", "siguenFallando", "tomadosPorOtro"]);
+    expect(Object.keys(resumen).sort()).toEqual(["conError", "descartados", "enviados", "pospuestos", "revisados", "siguenFallando", "tomadosPorOtro"]);
     for (const cantidad of Object.values(resumen)) expect(cantidad).toEqual(expect.any(Number));
     expect(resumen.revisados).toBe(
-      resumen.enviados + resumen.siguenFallando + resumen.descartados + resumen.conError + resumen.tomadosPorOtro,
+      resumen.enviados + resumen.siguenFallando + resumen.descartados + resumen.conError + resumen.tomadosPorOtro + resumen.pospuestos,
     );
   });
 

@@ -137,7 +137,7 @@ export async function reconstruirInvitacion(
     .gt("vence_en", ahora.toISOString())
     .select("correo, vence_en")
     .maybeSingle();
-  if (error) throw error;
+  if (error) throw new Error(`No se pudo reconstruir la invitación: ${error.message}`);
   if (!data) return null;
   return { destinatario: data.correo, datos: { enlace: urlDelSitio(rutaDeRegistro(token)), venceEn: data.vence_en } };
 }

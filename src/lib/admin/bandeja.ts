@@ -128,8 +128,13 @@ export async function cargarBandeja(
     cliente
       .from("correo_envio")
       .select("id, plantilla, destinatario, creado_en, ultimo_error", { count: "exact" })
-      .eq("estado", "fallido")
-      .or(`reintentable.eq.false,creado_en.lte.${finDeReintentos}`)
+      // Fallidos definitivos o que agotaron el plazo, y `pendiente` de antes del plazo (su envío murió y
+      // ya no se reintenta).
+      .or(
+        `and(estado.eq.fallido,reintentable.is.false),` +
+          `and(estado.eq.fallido,creado_en.lte.${finDeReintentos}),` +
+          `and(estado.eq.pendiente,creado_en.lte.${finDeReintentos})`,
+      )
       .order("creado_en", { ascending: false })
       .limit(maxFilas),
   ]);

@@ -67,8 +67,9 @@ Todavía no. Se hace una sola vez, cuando el flujo principal esté listo, y lo g
 - [ ] **Supabase Auth en la nube:** activar el inicio anónimo, contraseña mínima de 8, `Site URL` y URLs de redirección de producción, la plantilla de "recuperar contraseña" y un SMTP propio para los correos de Auth (se puede usar el mismo Gmail).
 - [ ] **Reintento automático de correos (HU-065).** Genera un secreto largo (por ejemplo, en una terminal: `openssl rand -hex 32`) y:
   - cárgalo en Vercel como `CRON_SECRETO` (**Sensitive**);
-  - en Supabase, **SQL Editor**, guárdalo en Vault junto con la dirección del sitio: `select vault.create_secret('<el secreto>', 'calibra_cron_secreto');` y `select vault.create_secret('https://<tu sitio>', 'calibra_sitio_url');`.
-  Desde ahí, cada 10 minutos la base le pide a la app que reintente los correos que fallaron. Sin esto, los correos fallidos no se reintentan solos (el admin igual los ve en su bandeja).
+  - en Supabase, guárdalo en **Vault** (panel del proyecto, **Integrations**, **Vault**; mejor que el SQL Editor, que guarda el historial de consultas) con el nombre `calibra_cron_secreto`;
+  - en Vault, también la dirección del sitio con el nombre `calibra_sitio_url`: la de producción, con `https://` y sin barra al final (por ejemplo `https://calibra.vercel.app`). Tiene que ser la dirección final, sin redirecciones ni protección de despliegue de Vercel, o la llamada fallaría.
+  Desde ahí, cada 10 minutos la base le pide a la app que reintente los correos que fallaron por algo temporal, durante 24 horas. Sin esto no se reintentan solos. Los que fallan de forma definitiva, o agotan las 24 horas, el admin los ve en su bandeja en "Correos que no salieron".
 - [ ] **Admins reales:** la lista de admins y su orden de revisión.
 - [ ] **CAPTCHA (HU-058):** crear las llaves de Cloudflare Turnstile (gratis) y cargarlas en Vercel y en Supabase Auth. HU-058 pasa a `Lista` cuando existan.
 - [ ] **Datos del prototipo:** decidir si los diagnósticos viejos se importan como históricos. Los leads del prototipo no se migran como contactables (no tenían autorización de datos).
