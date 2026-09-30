@@ -18,8 +18,9 @@ beforeAll(async () => {
 
 beforeEach(() => {
   fx = new Fixtures();
-  // Siempre Mailpit (nunca Resend) y un sitio conocido para comprobar el enlace.
+  // Siempre Mailpit (nunca Resend ni Gmail) y un sitio conocido para comprobar el enlace.
   vi.stubEnv("RESEND_API_KEY", "");
+  vi.stubEnv("SMTP_CONTRASENA", "");
   vi.stubEnv("CORREO_REMITENTE", "");
   vi.stubEnv("MAILPIT_URL", mailpit);
   vi.stubEnv("SITIO_URL", "https://calibra.test");
