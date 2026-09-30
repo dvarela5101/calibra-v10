@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { BotonSalir } from "@/components/BotonSalir";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
@@ -25,13 +26,18 @@ export default async function PanelMonitor() {
       subtitulo={
         sinCertificados
           ? "Tu cuenta está lista. Espera a que un admin te certifique en tu materia: cuando lo haga, podrás abrir tus franjas y recibir estudiantes."
-          : "Aquí verás tu agenda, tus franjas y el diagnóstico de cada estudiante. Estamos terminando de construirlo."
+          : "Abre tus franjas para que te agenden. Pronto verás aquí tu agenda y el diagnóstico de cada estudiante."
       }
     >
       {sinCertificados && (
         <p role="status" className={formulario.ayuda}>
           Aún no tienes materias certificadas.
         </p>
+      )}
+      {!sinCertificados && (
+        <Link href="/monitor/franjas" className={formulario.enlace}>
+          Mis franjas
+        </Link>
       )}
       {privado && <FormularioLlave llave={privado.llave} />}
       <BotonSalir />

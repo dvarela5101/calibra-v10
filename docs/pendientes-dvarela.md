@@ -1,6 +1,6 @@
 # Pendientes de dvarela5101
 
-**Actualizado:** 29 de septiembre de 2026, noche. Son las tareas que solo tú puedes hacer: tocan cuentas, contraseñas, paneles o decisiones del producto. Van ordenadas por **cuándo hacen falta**. Marca cada una al terminarla, o dile a Claude "ya hice X" y él marca la casilla y sigue.
+**Actualizado:** 30 de septiembre de 2026, madrugada. Son las tareas que solo tú puedes hacer: tocan cuentas, contraseñas, paneles o decisiones del producto. Van ordenadas por **cuándo hacen falta**. Marca cada una al terminarla, o dile a Claude "ya hice X" y él marca la casilla y sigue.
 
 Nada de lo de aquí se pega en el chat ni se guarda en el repo: las contraseñas y las llaves van directo al panel que corresponda.
 
@@ -18,11 +18,18 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [x] **HU-013, cuenta de monitor por invitación**: aprobada el 29-sep.
 - [x] **HU-063 de Juzou04**: aprobada el 29-sep con cambios menores (van en HU-064 y en una nota de HU-028).
 - [ ] **HU-066, correos por Gmail** ([PR #9](https://github.com/dvarela5101/calibra-v10/pull/9)). Se prueba de verdad cuando cargues las variables SMTP (sección B).
+- [ ] **HU-065, reintentar los correos que fallaron** ([PR #10](https://github.com/dvarela5101/calibra-v10/pull/10)). En local se prueba con las pruebas; en la nube necesita lo de la sección C.
+- [ ] **HU-015, franjas del monitor.** Entra como monitor certificado a `/monitor/franjas`: abre, edita y cierra franjas. Las decisiones que te tocan están en A2.
 - [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
 ### A2. Decisiones de las HUs recientes
 
 - [ ] **Texto del aviso de privacidad (HU-008).** Además de lo que pide la HU, el aviso menciona los datos del pagador y el comprobante, el uso para revisar pagos y tramitar reembolsos, y los correos sobre citas y pagos. Salen del modelo de datos, pero no estaban escritos como regla. Confirma que quedan o dime qué quitar.
+- [ ] **Franjas (HU-015): certificado para abrir franjas.** Un monitor sin certificado no puede abrir franjas: nadie podría agendarle, porque la monitoría exige una materia certificada. Sale del orden del flujo F2, no de una regla escrita. Recomendación: dejarlo así.
+- [ ] **Franjas (HU-015): cambiar el horario.** P-30 dice que no se cambian día, hora ni duración con reservas **futuras**. Hoy tampoco se cambian si la franja tiene monitorías **pasadas** (no canceladas): los plazos de cada monitoría (inicio, fin, ventana de reporte, desembolso) se calculan con el horario actual de la franja, y cambiarlo reescribiría el historial. Para otro horario se cierra la franja y se abre otra. Recomendación: dejarlo así. La otra opción es guardar hora y duración en cada monitoría, como el precio.
+- [ ] **Franjas (HU-015): cambiar entre presencial y virtual.** Con monitorías futuras no se puede (el estudiante agendó una modalidad). El lugar y el enlace sí se corrigen, pero hoy nadie avisa al estudiante del cambio. Recomendación: dejarlo así y avisar cuando exista el correo de la cita (HU-019).
+- [ ] **Franjas (HU-015): una franja cerrada es definitiva.** Cuando llega su fecha de cierre ya no se edita ni se reabre; para volver a ofrecer ese horario se abre otra. Un cierre programado para más adelante sí se puede mover. Recomendación: dejarlo así.
+- [ ] **Franjas (HU-015): cuándo ve el estudiante el lugar y el enlace.** Hoy nadie fuera del monitor los ve: con el enlace a la vista, cualquiera entraría a una sesión pagada. Recomendación: el enlace solo en la cita confirmada (HU-019). El lugar de una presencial se podría mostrar antes, al elegir la franja (HU-016), porque ayuda a decidir. Dime si el lugar se muestra al agendar.
 - [ ] **Correo que ya tiene cuenta (HU-013).** Si invitas a un correo que ya tiene cuenta de Calibra (por ejemplo, de estudiante), hoy el registro no la convierte en monitor y le pide escribir al equipo. Confirma que así está bien, o pide que se pueda convertir.
 
 ### A3. Preparar la cuenta de Gmail (para HU-066)
