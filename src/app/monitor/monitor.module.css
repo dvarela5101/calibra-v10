@@ -1,0 +1,25 @@
+/* Panel del monitor: sus materias certificadas (HU-014). */
+
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin-block-start: var(--e3);
+}
+
+.titulo {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  padding-inline-start: var(--e4);
+  font-size: 16px;
+}
+
+.meta {
+  color: var(--muted);
+}

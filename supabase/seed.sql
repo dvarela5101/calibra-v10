@@ -1,4 +1,4 @@
--- Semilla de la base LOCAL. HU-012.
+-- Semilla de la base LOCAL. HU-012 (admins) y HU-014 (materias de prueba).
 --
 -- La corren `supabase db reset` y `supabase start` sobre una base nueva. Nunca se usa contra el
 -- proyecto real. Ojo: `supabase db push` sin más no aplica semillas, pero `supabase db push
@@ -49,3 +49,12 @@ insert into public.admin (id, nombre, correo, orden_revision) values
   ('a1000000-0000-4000-8000-000000000001', 'Admin Uno', 'admin1@calibra.test', 1),
   ('a1000000-0000-4000-8000-000000000002', 'Admin Dos', 'admin2@calibra.test', 2)
 on conflict (id) do nothing;
+
+-- Materias de PRUEBA para certificar monitores en local (HU-014, D-2). Las reales las cargará el banco
+-- de preguntas (HU-005) o la gestión de materias (HU-055); esta semilla no llega a producción. Los
+-- nombres y códigos son los que usaba el prototipo.
+insert into public.materia (nombre, codigo) values
+  ('Cálculo Integral con Ecuaciones Diferenciales', 'MATE-1214'),
+  ('Cálculo Vectorial', 'MATE-1207'),
+  ('Física I', 'FISI-1018')
+on conflict (codigo) do nothing;
