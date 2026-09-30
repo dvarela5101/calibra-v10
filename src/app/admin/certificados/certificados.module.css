@@ -1,5 +1,10 @@
 /* Certificados de monitor (HU-014). Mismas tarjetas que la bandeja del admin. */
 
+/* Agrupa los campos del formulario para remontarlos juntos sin cambiar el diseño. */
+.campos {
+  display: contents;
+}
+
 .seccion {
   display: flex;
   flex-direction: column;

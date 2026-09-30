@@ -18,16 +18,29 @@ export default async function CertificarMonitores() {
   const supabase = await crearClienteServidor();
 
   const [monitoresLeidos, privadosLeidos, materiasLeidas, certificadosLeidos] = await Promise.all([
-    supabase!.from("monitor").select("id, nombre").order("nombre", { ascending: true }),
+    supabase!.from("monitor").select("id, nombre").order("nombre", { ascending: true }).order("id", { ascending: true }),
     supabase!.from("monitor_privado").select("id_monitor, correo"),
     supabase!.from("materia").select("id, nombre, codigo").order("nombre", { ascending: true }),
     supabase!
       .from("certificado")
       .select("id, id_monitor, fecha_emision, fecha_evaluacion, materia(nombre, codigo), admin(nombre)")
-      .order("fecha_emision", { ascending: false }),
+      .order("fecha_emision", { ascending: false })
+      .order("id", { ascending: true }),
   ]);
   const fallo = monitoresLeidos.error ?? privadosLeidos.error ?? materiasLeidas.error ?? certificadosLeidos.error;
-  if (fallo) throw new Error(`No se pudieron leer los monitores y sus certificados: ${fallo.message}`);
+  if (fallo) {
+    console.error("[admin] no se pudieron leer los monitores y sus certificados:", fallo.message);
+    return (
+      <Pantalla eyebrow="Administración" titulo="Certificar monitores">
+        <p role="alert" className={formulario.error}>
+          No pudimos cargar los monitores y sus certificados. Recarga la página; si sigue igual, avisa al equipo.
+        </p>
+        <Link href="/admin" className={formulario.enlace}>
+          Volver a mi bandeja
+        </Link>
+      </Pantalla>
+    );
+  }
 
   const correos = new Map((privadosLeidos.data ?? []).map((p) => [p.id_monitor, p.correo]));
   const monitores = monitoresLeidos.data ?? [];
@@ -81,6 +94,7 @@ export default async function CertificarMonitores() {
             {certificados.map((m) => (
               <li key={m.id} className={estilos.fila}>
                 <span className={estilos.nombre}>{m.nombre}</span>
+                {correos.has(m.id) && <span className={estilos.meta}>{correos.get(m.id)}</span>}
                 <ul className={estilos.materias}>
                   {porMonitor.get(m.id)!.map((c) => (
                     <li key={c.id} className={estilos.meta}>

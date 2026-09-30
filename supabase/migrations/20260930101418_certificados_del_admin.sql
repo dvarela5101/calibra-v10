@@ -17,7 +17,8 @@ alter table public.certificado add column if not exists fecha_evaluacion date;
 update public.certificado set fecha_evaluacion = fecha_emision where fecha_evaluacion is null;
 
 -- El valor por defecto solo lo usan las escrituras de confianza (pruebas, herramientas). La pantalla
--- del admin siempre la pide, y la acción siempre la manda.
+-- del admin siempre la pide, y la acción siempre la manda. La importación del prototipo (HU-057)
+-- debe mandar la fecha real de cada evaluación: con el valor por defecto quedaría la del día de la carga.
 alter table public.certificado
   alter column fecha_evaluacion set default ((now() at time zone 'America/Bogota')::date),
   alter column fecha_evaluacion set not null;
