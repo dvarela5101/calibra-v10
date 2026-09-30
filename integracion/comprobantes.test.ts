@@ -73,6 +73,8 @@ describe("el bucket", () => {
     expect(error).toBeNull();
     expect(data?.public).toBe(false);
     expect(data?.file_size_limit).toBe(LIMITE_COMPROBANTE_BYTES);
+    // El número también escrito a mano: 10 MiB (N-3). Si alguien lo cambia, lo hace en los dos lados a propósito.
+    expect(data?.file_size_limit).toBe(10_485_760);
     expect([...(data?.allowed_mime_types ?? [])].sort()).toEqual(Object.keys(TIPOS_DE_COMPROBANTE).sort());
   });
 });
@@ -95,6 +97,15 @@ describe("criterio 1: el pagador sube un JPG, un PNG o un PDF dentro del límite
     const descarga = await cliente.storage.from(BUCKET_COMPROBANTES).download(resultado.ruta);
     expect(descarga.error).toBeNull();
     expect(new Uint8Array(await descarga.data!.arrayBuffer())).toEqual(bytes);
+  });
+
+  it("sube un archivo de 6 MB, que con el límite anterior de 5 MB se rechazaba", async () => {
+    const { cliente, id } = await fx.crearAnonimo();
+    const bytes = new Uint8Array(6 * 1024 * 1024);
+    bytes.set(PDF);
+    const resultado = await subirComprobante(cliente, id, archivo(bytes, "seis.pdf", "application/pdf"));
+    expect(resultado.ok).toBe(true);
+    if (resultado.ok) fx.registrarComprobante(resultado.ruta);
   });
 
   it("sube un archivo del tamaño exacto del límite", async () => {
@@ -152,9 +163,9 @@ describe("criterio 2: un archivo de otro tipo o más grande que el límite se re
     ["un SVG", archivo(PNG, "a.svg", "image/svg+xml"), "El comprobante debe ser una imagen JPG o PNG, o un PDF."],
     ["un archivo vacío", archivo(0, "vacio.png", "image/png"), "El archivo está vacío. Elige la captura o el PDF del comprobante."],
     [
-      "un archivo de 5,1 MB",
+      "un archivo de 10,1 MB",
       archivo(LIMITE_COMPROBANTE_BYTES + 1, "grande.png", "image/png"),
-      "El comprobante pesa 5,1 MB y el máximo es 5 MB. Comprime la imagen o toma otra captura.",
+      "El comprobante pesa 10,1 MB y el máximo es 10 MB. Comprime la imagen o toma otra captura.",
     ],
     [
       "un HTML que se hace pasar por PNG",
@@ -181,7 +192,7 @@ describe("criterio 2: un archivo de otro tipo o más grande que el límite se re
     expect((await fx.admin.storage.from(BUCKET_COMPROBANTES).list(id)).data ?? []).toEqual([]);
   });
 
-  it("el Storage lo hace cumplir aunque se salte la app: más de 5 MB (413)", async () => {
+  it("el Storage lo hace cumplir aunque se salte la app: más de 10 MB (413)", async () => {
     const { cliente, id } = await fx.crearAnonimo();
     const { error } = await subirCrudo(
       cliente,
@@ -297,6 +308,73 @@ describe("criterio 4: un visitante u otro pagador no abre el comprobante aunque 
     const { error } = await fx.admin.auth.admin.updateUserById(admin.id, { ban_duration: "876000h" });
     expect(error).toBeNull();
     expect((await crearEnlaceDeComprobante(clienteAdmin, dueno.ruta)).ok).toBe(false);
+  });
+});
+
+describe("un comprobante ajeno no se reemplaza, ni se mueve ni se copia (HU-063)", () => {
+  /** Lo que hay en una carpeta del bucket, visto con la llave secreta. */
+  const archivosDe = async (idCarpeta: string) =>
+    ((await fx.admin.storage.from(BUCKET_COMPROBANTES).list(idCarpeta)).data ?? []).map((o) => o.name).sort();
+
+  it("otro pagador no lo pisa: ni con move, ni con copy, ni con una URL de subida firmada con upsert", async () => {
+    const dueno = await pagadorConComprobante();
+    const atacante = await pagadorConComprobante();
+    const bucket = atacante.cliente.storage.from(BUCKET_COMPROBANTES);
+    // Si alguna llegara a funcionar, la limpieza borra lo que haya quedado.
+    const destinoMio = rutaDeComprobante(atacante.id, "png");
+    fx.registrarComprobante(destinoMio);
+    const antesDelDueno = await archivosDe(dueno.id);
+    const antesDelAtacante = await archivosDe(atacante.id);
+
+    // move: su archivo sobre la ruta del otro, y el del otro hacia su carpeta.
+    expect((await bucket.move(atacante.ruta, dueno.ruta)).error, "move de lo mío sobre lo ajeno").not.toBeNull();
+    expect((await bucket.move(dueno.ruta, destinoMio)).error, "move de lo ajeno a lo mío").not.toBeNull();
+    // copy: igual, en las dos direcciones.
+    expect((await bucket.copy(atacante.ruta, dueno.ruta)).error, "copy de lo mío sobre lo ajeno").not.toBeNull();
+    expect((await bucket.copy(dueno.ruta, destinoMio)).error, "copy de lo ajeno a lo mío").not.toBeNull();
+    // URL de subida firmada sobre la ruta del otro, con y sin upsert.
+    expect((await bucket.createSignedUploadUrl(dueno.ruta, { upsert: true })).error, "URL firmada con upsert").not.toBeNull();
+    expect((await bucket.createSignedUploadUrl(dueno.ruta)).error, "URL firmada sin upsert").not.toBeNull();
+
+    // Nada cambió: ni el contenido del comprobante ajeno, ni las dos carpetas.
+    const descarga = await fx.admin.storage.from(BUCKET_COMPROBANTES).download(dueno.ruta);
+    expect(descarga.error).toBeNull();
+    expect(new Uint8Array(await descarga.data!.arrayBuffer())).toEqual(PNG);
+    expect(await archivosDe(dueno.id)).toEqual(antesDelDueno);
+    expect(await archivosDe(atacante.id)).toEqual(antesDelAtacante);
+  });
+
+  it("un visitante sin sesión tampoco: ni move, ni copy, ni URL firmada", async () => {
+    const dueno = await pagadorConComprobante();
+    const visitante = crearCliente().storage.from(BUCKET_COMPROBANTES);
+    const destino = rutaDeComprobante(dueno.id, "png");
+    fx.registrarComprobante(destino);
+
+    expect((await visitante.move(dueno.ruta, destino)).error).not.toBeNull();
+    expect((await visitante.copy(dueno.ruta, destino)).error).not.toBeNull();
+    expect((await visitante.createSignedUploadUrl(dueno.ruta, { upsert: true })).error).not.toBeNull();
+    expect(await archivosDe(dueno.id)).toEqual([dueno.ruta.split("/")[1]]);
+  });
+
+  it("ni siquiera el dueño mueve su comprobante, ni lo pisa con copy ni con una URL firmada con upsert sobre la misma ruta", async () => {
+    const dueno = await pagadorConComprobante();
+    const bucket = dueno.cliente.storage.from(BUCKET_COMPROBANTES);
+    const segundo = await subirComprobante(dueno.cliente, dueno.id, archivo(PNG, "otro.png", "image/png"));
+    if (!segundo.ok) throw new Error(segundo.mensaje);
+    fx.registrarComprobante(segundo.ruta);
+    const destinoNuevo = rutaDeComprobante(dueno.id, "png");
+    fx.registrarComprobante(destinoNuevo);
+
+    // Mover cambiaría la ruta que guarda pago.comprobante.
+    expect((await bucket.move(dueno.ruta, destinoNuevo)).error, "move").not.toBeNull();
+    // Copiar sobre una ruta que ya tiene archivo sería pisarlo, en cualquiera de las dos direcciones.
+    expect((await bucket.copy(dueno.ruta, segundo.ruta)).error, "copy sobre el segundo").not.toBeNull();
+    expect((await bucket.copy(segundo.ruta, dueno.ruta)).error, "copy sobre el original").not.toBeNull();
+    // Una URL firmada con upsert para una ruta que ya tiene archivo.
+    expect((await bucket.createSignedUploadUrl(dueno.ruta, { upsert: true })).error, "URL firmada con upsert").not.toBeNull();
+
+    const descarga = await fx.admin.storage.from(BUCKET_COMPROBANTES).download(dueno.ruta);
+    expect(new Uint8Array(await descarga.data!.arrayBuffer())).toEqual(PNG);
   });
 });
 

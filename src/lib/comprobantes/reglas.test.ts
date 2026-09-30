@@ -27,10 +27,10 @@ describe("los tipos permitidos son los del criterio: JPG, PNG y PDF", () => {
   });
 });
 
-describe("los supuestos a validar de HU-007 están fijados con su valor", () => {
+describe("las decisiones sobre los comprobantes están fijadas con su valor", () => {
   // Si alguien cambia el límite o la vigencia, esta prueba obliga a que lo haga a propósito.
-  it("5 MiB por archivo y enlaces firmados de 60 segundos", () => {
-    expect(LIMITE_COMPROBANTE_BYTES).toBe(5 * 1024 * 1024);
+  it("10 MiB por archivo (N-3) y enlaces firmados de 60 segundos", () => {
+    expect(LIMITE_COMPROBANTE_BYTES).toBe(10_485_760);
     expect(VIGENCIA_ENLACE_COMPROBANTE_SEG).toBe(60);
   });
 });
@@ -44,23 +44,28 @@ describe("validarComprobante: tipo y tamaño", () => {
     expect(validarComprobante({ name: "comprobante", type, size: 200_000 })).toEqual({ ok: true, tipo: type, extension });
   });
 
-  it("acepta un archivo de 1 byte y uno del tamaño exacto del límite (5 MB)", () => {
+  it("acepta un archivo de 1 byte y uno del tamaño exacto del límite (10 MB)", () => {
     expect(validarComprobante({ name: "a.png", type: "image/png", size: 1 }).ok).toBe(true);
-    expect(validarComprobante({ name: "a.png", type: "image/png", size: LIMITE_COMPROBANTE_BYTES }).ok).toBe(true);
+    expect(validarComprobante({ name: "a.png", type: "image/png", size: 10 * MB }).ok).toBe(true);
+  });
+
+  it("un archivo de más de 5 MB, que antes se rechazaba, ahora se acepta", () => {
+    expect(validarComprobante({ name: "a.png", type: "image/png", size: 5 * MB + 1 }).ok).toBe(true);
+    expect(validarComprobante({ name: "a.pdf", type: "application/pdf", size: 9 * MB }).ok).toBe(true);
   });
 
   it("rechaza un byte más que el límite y dice cuánto pesa y cuál es el máximo", () => {
     const r = validarComprobante({ name: "a.png", type: "image/png", size: LIMITE_COMPROBANTE_BYTES + 1 });
     expect(r).toEqual({
       ok: false,
-      mensaje: "El comprobante pesa 5,1 MB y el máximo es 5 MB. Comprime la imagen o toma otra captura.",
+      mensaje: "El comprobante pesa 10,1 MB y el máximo es 10 MB. Comprime la imagen o toma otra captura.",
     });
   });
 
   it("usa la coma decimal de es-CO en el mensaje de tamaño", () => {
-    const r = validarComprobante({ name: "a.pdf", type: "application/pdf", size: Math.round(6.2 * MB) });
+    const r = validarComprobante({ name: "a.pdf", type: "application/pdf", size: 10.5 * MB });
     expect(r).toMatchObject({ ok: false });
-    expect(r.ok === false && r.mensaje).toContain("6,2 MB");
+    expect(r.ok === false && r.mensaje).toContain("10,5 MB");
     // Un archivo de 12 MB no se muestra con decimales que no dicen nada.
     const grande = validarComprobante({ name: "a.pdf", type: "application/pdf", size: 12 * MB });
     expect(grande.ok === false && grande.mensaje).toContain("pesa 12 MB");

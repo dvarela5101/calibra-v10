@@ -1,5 +1,5 @@
 import { ZONA_HORARIA_NEGOCIO } from "@/config/regional";
-import type { ParametrosNegocio } from "./parametros";
+import type { ParametrosComision, ParametrosNegocio } from "./parametros";
 
 /**
  * Motor de plazos y montos derivados (HU-003): las mismas fórmulas de la base
@@ -9,8 +9,9 @@ import type { ParametrosNegocio } from "./parametros";
  *
  * Bordes inclusivos (P-40): "hasta X" es ahora <= X, "desde X" es ahora >= X, y con la
  * antelación exacta todavía se puede agendar. Solo `dentroDePlazo` y `plazoAlcanzado` deciden el
- * borde. Hoy únicamente `cumpleAntelacion` las llama; las demás funciones devuelven el instante
- * límite sin compararlo, y quien lo compare con `ahora` debe usar esas dos y no repetir < ni >.
+ * borde. Hoy únicamente `cumpleAntelacion` y `desembolsoEjecutable` las llaman; las demás
+ * funciones devuelven el instante límite sin compararlo, y quien lo compare con `ahora` debe usar
+ * esas dos y no repetir < ni >.
  *
  * Los instantes son `Date` (UTC). Nada usa la zona del servidor ni la del navegador: la fecha y
  * la hora de una franja se interpretan siempre en `ZONA_HORARIA_NEGOCIO`.
@@ -186,7 +187,10 @@ export function reporteInasistenciaHasta(finProgramadoDeSesion: Date, p: Paramet
   return sumarMinutos(finProgramadoDeSesion, p.reporteInasistenciaMin, "finProgramado");
 }
 
-/** `/ventanaResenaHasta`: 1 h después de finalizar una grupal (RN-71). */
+/**
+ * `/ventanaResenaHasta`: 1 h después de finalizar una grupal (RN-71). Sin fecha de finalización no
+ * hay ventana: rechaza, igual que `public.ventana_resena_hasta(null)` en la base.
+ */
 export function ventanaResenaHasta(fechaFinalizacion: Date, p: ParametrosNegocio): Date {
   return sumarMinutos(fechaFinalizacion, p.resenaGrupalMin, "fechaFinalizacion");
 }
@@ -194,6 +198,20 @@ export function ventanaResenaHasta(fechaFinalizacion: Date, p: ParametrosNegocio
 /** `/desembolsableDesde`: 24 h después del fin programado (RN-83). */
 export function desembolsableDesde(finProgramadoDeSesion: Date, p: ParametrosNegocio): Date {
   return sumarMinutos(finProgramadoDeSesion, p.desembolsoMin, "finProgramado");
+}
+
+/**
+ * ¿Se puede ejecutar el desembolso de una sesión que terminó en `finProgramadoDeSesion`? Solo cuando
+ * ya venció la ventana de reporte de inasistencia (RN-83, N-6): se alcanzó `desembolsableDesde` y
+ * `ahora` ya no está dentro de `reporteInasistenciaHasta`. En el instante exacto fin + 24 h el
+ * reporte todavía se puede hacer (P-40), así que el desembolso todavía no es ejecutable; lo es
+ * desde un instante después. Igual que `public.desembolso_ejecutable()` en la base.
+ */
+export function desembolsoEjecutable(finProgramadoDeSesion: Date, ahora: Date, p: ParametrosNegocio): boolean {
+  return (
+    plazoAlcanzado(desembolsableDesde(finProgramadoDeSesion, p), ahora) &&
+    !dentroDePlazo(reporteInasistenciaHasta(finProgramadoDeSesion, p), ahora)
+  );
 }
 
 /**
@@ -257,17 +275,19 @@ export function derivadosDeMonitoria(entrada: EntradaMonitoria, p: ParametrosNeg
 
 /**
  * `comision = min(10 % del bruto, 15.000)`. Los montos son pesos enteros, así que el 10 % se
- * redondea al peso más cercano y, en el empate de medio peso, hacia arriba. SUPUESTO A
- * VALIDAR: RN-81 no fija el redondeo (solo importa si el bruto no es múltiplo de 10).
- * Aritmética entera: nada de coma flotante en dinero.
+ * redondea al peso más cercano y, en el empate de medio peso, hacia arriba (N-1, aprobado el
+ * 29-sep-2026). Aritmética entera: nada de coma flotante en dinero.
+ *
+ * La comisión solo la calcula el servidor (N-2): los parámetros salen de `cargarParametrosComision`,
+ * que necesita la llave secreta, y ninguna pantalla debe mostrar la cifra (P-32).
  */
-export function calcularComision(montoBruto: number, p: ParametrosNegocio): number {
+export function calcularComision(montoBruto: number, p: ParametrosComision): number {
   exigirEnteroNoNegativo(montoBruto, "montoBruto");
   const porcentaje = Math.floor((montoBruto * p.comisionPorcentaje + 50) / 100);
   return Math.min(porcentaje, p.comisionTope);
 }
 
 /** `montoNeto = montoBruto - comision`. */
-export function calcularMontoNeto(montoBruto: number, p: ParametrosNegocio): number {
+export function calcularMontoNeto(montoBruto: number, p: ParametrosComision): number {
   return montoBruto - calcularComision(montoBruto, p);
 }

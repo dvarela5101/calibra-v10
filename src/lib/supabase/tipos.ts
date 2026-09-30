@@ -492,6 +492,9 @@ isOneToOne: true
 "desembolsable_desde":
 { Args: { "p_fin_programado": string }; Returns: string
                            },
+"desembolso_ejecutable":
+{ Args: { "p_ahora": string,"p_fin_programado": string }; Returns: boolean
+                           },
 "fecha_limite_diferencia":
 { Args: { "p_inicio": string }; Returns: string
                            },
@@ -510,9 +513,14 @@ isOneToOne: true
 "monto_neto":
 { Args: { "p_monto_bruto": number }; Returns: number
                            },
+"parametros_comision":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "comision_porcentaje": number,"comision_tope": number
+            }[]
+                           },
 "parametros_negocio":
 { Args: Record<PropertyKey, never>; Returns: {
-              "antelacion_grupal_min": number,"antelacion_individual_min": number,"cancelacion_grupal_min": number,"cancelacion_individual_min": number,"comision_porcentaje": number,"comision_tope": number,"desembolso_min": number,"diferencia_min": number,"pago_integrantes_min": number,"reporte_inasistencia_min": number,"resena_grupal_min": number,"reserva_min": number,"revision_min": number
+              "antelacion_grupal_min": number,"antelacion_individual_min": number,"cancelacion_grupal_min": number,"cancelacion_individual_min": number,"desembolso_min": number,"diferencia_min": number,"pago_integrantes_min": number,"reporte_inasistencia_min": number,"resena_grupal_min": number,"reserva_min": number,"revision_min": number
             }[]
                            },
 "plazo_alcanzado":

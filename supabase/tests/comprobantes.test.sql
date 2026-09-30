@@ -41,8 +41,8 @@ insert into storage.objects (bucket_id, name) values
 -- ---------------------------------------------------------------------------
 select results_eq(
   $$select public, file_size_limit, allowed_mime_types from storage.buckets where id = 'comprobantes'$$,
-  $$values (false, 5242880::bigint, array['image/jpeg', 'image/png', 'application/pdf']::text[])$$,
-  'El bucket comprobantes es privado, de 5 MiB y solo admite JPG, PNG y PDF');
+  $$values (false, 10485760::bigint, array['image/jpeg', 'image/png', 'application/pdf']::text[])$$,
+  'El bucket comprobantes es privado, de 10 MiB (N-3) y solo admite JPG, PNG y PDF');
 
 select ok(
   (select relrowsecurity from pg_class where oid = 'storage.objects'::regclass),

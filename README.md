@@ -36,6 +36,8 @@ npm run dev
 
 `db:env` escribe `.env.local` con las llaves del Supabase local; nunca pongas ahí las del proyecto real.
 
+Si tu stack local ya estaba corriendo de antes, sin Storage, `npm run db:iniciar` no le agrega el servicio que falta: hay que correr `npm run db:detener` y luego `npm run db:iniciar`. Sin Storage no existe el bucket `comprobantes` y fallan las pruebas de integración de comprobantes. Para una base limpia con las migraciones y la semilla, `npm run db:reiniciar`.
+
 Para las pruebas de punta a punta hace falta Chromium de Playwright, una sola vez por máquina:
 
 ```bash
@@ -61,6 +63,8 @@ npx playwright install --no-shell chromium
 | `npm run db:reiniciar` | Borra la base local y aplica las migraciones y la semilla desde cero |
 | `npm run db:verificar` | Reaplica las migraciones (idempotencia) y corre las pruebas pgTAP |
 | `npm run db:detener` | Detiene los contenedores locales de Supabase |
+
+Una migración nueva que cambia las columnas de salida de una función tiene que borrarla antes con `drop function`. Desde entonces la migración vieja que la creó ya no se puede reaplicar sobre la base final, y `db:verificar` fallaría al reaplicarla. Sin editar la migración vieja, `scripts/verificar-bd.mjs` lleva una lista de preámbulos (`PREAMBULOS`) que dice qué borrar antes de reaplicar cada una. Hoy tiene una entrada: `parametros_negocio()`, que HU-063 dejó sin la comisión.
 
 ## Variables de entorno
 
@@ -108,10 +112,10 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 
 Los comprobantes van en el bucket privado `comprobantes` de Supabase Storage (HU-007). La ruta es `<id del usuario>/<uuid>.<jpg|png|pdf>`, con el id del usuario de Auth que sube (la sesión anónima del pagador también lo es), y `pago.comprobante` guarda esa ruta.
 
-- Se suben desde el navegador con la sesión del pagador, directo al Storage: un archivo de hasta 5 MB no cabe en una función de Vercel, que acepta 4,5 MB. `subirComprobante()` (`src/lib/comprobantes/almacenamiento.ts`) valida tipo, tamaño y contenido y devuelve un mensaje en español. El bucket vuelve a hacer cumplir el tamaño y los tipos por su cuenta.
-- Leen el dueño de la carpeta y los admins. Desde la app nadie sobrescribe ni borra. Un admin abre un comprobante con `enlaceDeComprobanteDePago()`, que pide un enlace firmado de 60 segundos cada vez que se abre el pago.
+- Se suben desde el navegador con la sesión del pagador, directo al Storage: un archivo de hasta 10 MB no cabe en una función de Vercel, que acepta 4,5 MB. `subirComprobante()` (`src/lib/comprobantes/almacenamiento.ts`) valida tipo, tamaño y contenido y devuelve un mensaje en español. El bucket vuelve a hacer cumplir el tamaño y los tipos por su cuenta.
+- Leen el dueño de la carpeta y los admins. Desde la app nadie borra, y nadie mueve, copia sobre otro archivo ni pisa el comprobante de otra persona (`move`, `copy` y las URL de subida firmadas con `upsert` fallan, y `integracion/comprobantes.test.ts` lo comprueba). Queda un caso abierto: el dueño puede pisar el suyo con una URL de subida firmada creada con `upsert` antes de que el archivo exista ([HU-067](backlog/HU-067.md)). Un admin abre un comprobante con `enlaceDeComprobanteDePago()`, que pide un enlace firmado de 60 segundos cada vez que se abre el pago.
 - Quien cree un pago desde el servidor con la llave secreta debe comprobar con `rutaEsDelUsuario()` que la ruta sea de la carpeta del pagador antes de guardarla en `pago.comprobante`. Si no, alguien podría apuntar su pago al comprobante de otra persona.
-- Los límites están en la migración `*_comprobantes_privados.sql` y se repiten en `src/lib/comprobantes/reglas.ts` para dar mensajes claros antes de subir. `integracion/comprobantes.test.ts` comprueba que coincidan.
+- El límite de 10 MB (N-3, HU-063; era 5 MB) y los tipos están en el bucket, que declara la migración `*_ajustes_comprobantes.sql` sobre la de `*_comprobantes_privados.sql`. Se repiten en `src/lib/comprobantes/reglas.ts` para dar mensajes claros antes de subir, y `integracion/comprobantes.test.ts` comprueba que coincidan.
 
 ## Correo transaccional
 

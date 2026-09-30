@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { PARAMETROS_DEL_DOCUMENTO as P } from "../../../pruebas/plazos-referencia";
-import type { ParametrosNegocio } from "./parametros";
+import { COMISION_DEL_DOCUMENTO as C, PARAMETROS_DEL_DOCUMENTO as P } from "../../../pruebas/plazos-referencia";
+import type { ParametrosComision, ParametrosNegocio } from "./parametros";
 import {
   calcularComision,
   calcularMontoNeto,
@@ -9,6 +9,7 @@ import {
   dentroDePlazo,
   derivadosDeMonitoria,
   desembolsableDesde,
+  desembolsoEjecutable,
   diaIsoDeFecha,
   fechaLimiteDiferencia,
   fechaLimitePago,
@@ -169,6 +170,13 @@ describe("plazos derivados (sección 6.1)", () => {
     expect(iso(ventanaResenaHasta(finalizacion, P))).toBe("2026-10-05T17:20:00.000Z");
   });
 
+  it("reseña grupal: sin fecha de finalización no hay ventana y rechaza, igual que la base", () => {
+    // public.ventana_resena_hasta(null) lanza 22004; integracion/plazos.test.ts compara ambos lados.
+    expect(() => ventanaResenaHasta(null as unknown as Date, P)).toThrow(RangeError);
+    expect(() => ventanaResenaHasta(null as unknown as Date, P)).toThrow(/fechaFinalizacion/);
+    expect(() => ventanaResenaHasta(undefined as unknown as Date, P)).toThrow(/fechaFinalizacion/);
+  });
+
   it("los parámetros salen del argumento, no del módulo", () => {
     const otros = { ...P, reservaMin: 15, cancelacionIndividualMin: 60 };
     expect(iso(reservaHasta(creacion, otros))).toBe("2026-10-01T14:15:00.000Z");
@@ -189,6 +197,8 @@ describe("bordes inclusivos (P-40): un minuto antes, en el borde y un minuto des
   // Para un plazo "desde X" se esperan [false, true, true].
   const HASTA = [true, true, false];
   const DESDE = [false, true, true];
+  // Para el desembolso ejecutable (N-6): el borde exacto todavía es de la ventana de reporte.
+  const DESPUES = [false, false, true];
 
   // El borde se escribe a mano desde la referencia (inicio, fin, creación...), sin pasar por la
   // función que se prueba: si un plazo estuviera mal, el borde que dice la tabla 6.1 y el que
@@ -204,7 +214,8 @@ describe("bordes inclusivos (P-40): un minuto antes, en el borde y un minuto des
     ["diferencia hasta 5 h antes (RN-55)", en(INICIO, -5 * HORA), (ahora) => dentroDePlazo(fechaLimiteDiferencia(INICIO, P), ahora), HASTA],
     ["reporte de inasistencia hasta 24 h después del fin (RN-62)", en(FIN, 24 * HORA), (ahora) => dentroDePlazo(reporteInasistenciaHasta(FIN, P), ahora), HASTA],
     ["reseña grupal hasta 1 h después de finalizar (RN-71)", en(finalizacion, HORA), (ahora) => dentroDePlazo(ventanaResenaHasta(finalizacion, P), ahora), HASTA],
-    ["desembolso desde 24 h después del fin (RN-83)", en(FIN, 24 * HORA), (ahora) => plazoAlcanzado(desembolsableDesde(FIN, P), ahora), DESDE],
+    ["desembolsableDesde: el plazo se alcanza en fin + 24 h (RN-83)", en(FIN, 24 * HORA), (ahora) => plazoAlcanzado(desembolsableDesde(FIN, P), ahora), DESDE],
+    ["desembolso ejecutable solo después de fin + 24 h (RN-83, N-6)", en(FIN, 24 * HORA), (ahora) => desembolsoEjecutable(FIN, ahora, P), DESPUES],
   ];
 
   it.each(casos)("%s", (_nombre, borde, evaluar, esperado) => {
@@ -235,6 +246,68 @@ describe("bordes inclusivos (P-40): un minuto antes, en el borde y un minuto des
   it("rechaza fechas inválidas en los predicados", () => {
     expect(() => dentroDePlazo(new Date(Number.NaN), INICIO)).toThrow(/limite/);
     expect(() => plazoAlcanzado(INICIO, new Date(Number.NaN))).toThrow(/ahora/);
+  });
+});
+
+describe("desembolsoEjecutable (RN-83 y N-6): solo cuando venció la ventana de reporte", () => {
+  const limite = en(FIN, 24 * HORA); // fin + 24 h, escrito a mano
+
+  it("con el instante exacto fin + 24 h el reporte sigue abierto y el desembolso todavía no es ejecutable", () => {
+    expect(dentroDePlazo(reporteInasistenciaHasta(FIN, P), limite)).toBe(true);
+    expect(desembolsoEjecutable(FIN, limite, P)).toBe(false);
+  });
+
+  it("lo es desde un milisegundo después, y no un milisegundo antes", () => {
+    expect(desembolsoEjecutable(FIN, en(limite, -1), P)).toBe(false);
+    expect(desembolsoEjecutable(FIN, en(limite, 1), P)).toBe(true);
+    expect(dentroDePlazo(reporteInasistenciaHasta(FIN, P), en(limite, 1))).toBe(false);
+  });
+
+  it.each([
+    ["justo al terminar la sesión", FIN, false],
+    ["a las 23 h 59 min 59 s de terminar", en(FIN, 24 * HORA - 1000), false],
+    ["un segundo después del límite", en(limite, 1000), true],
+    ["una semana después", en(FIN, 7 * 24 * HORA), true],
+  ])("%s", (_nombre, ahora, esperado) => {
+    expect(desembolsoEjecutable(FIN, ahora, P)).toBe(esperado);
+  });
+
+  it("nunca hay un instante en que se pueda reportar y desembolsar a la vez", () => {
+    for (let desfase = -3 * HORA; desfase <= 3 * HORA; desfase += 7 * MINUTO + 13) {
+      const ahora = en(limite, desfase);
+      const sePuedeReportar = dentroDePlazo(reporteInasistenciaHasta(FIN, P), ahora);
+      expect(desembolsoEjecutable(FIN, ahora, P) && sePuedeReportar, `desfase ${desfase} ms`).toBe(false);
+    }
+  });
+
+  it("con los valores de hoy, es exactamente que ya no se puede reportar", () => {
+    for (const desfase of [-HORA, -MINUTO, -1000, -1, 0, 1, 1000, MINUTO, HORA]) {
+      const ahora = en(limite, desfase);
+      expect(desembolsoEjecutable(FIN, ahora, P), `desfase ${desfase} ms`).toBe(!dentroDePlazo(reporteInasistenciaHasta(FIN, P), ahora));
+    }
+  });
+
+  // Con primos distintos se ve cuál parámetro manda en cada caso.
+  it("si el desembolso se pudiera antes que el fin del reporte, el reporte igual manda", () => {
+    const otros = { ...P, reporteInasistenciaMin: 61, desembolsoMin: 43 };
+    const enMs = (min: number) => en(FIN, min * MINUTO);
+    expect(desembolsoEjecutable(FIN, enMs(42), otros)).toBe(false); // antes del desembolso
+    expect(desembolsoEjecutable(FIN, enMs(43), otros)).toBe(false); // en el desembolso: el reporte sigue abierto
+    expect(desembolsoEjecutable(FIN, enMs(61), otros)).toBe(false); // en el fin del reporte: todavía abierto
+    expect(desembolsoEjecutable(FIN, en(enMs(61), 1), otros)).toBe(true);
+  });
+
+  it("si el reporte cerrara antes que el desembolso, el desembolso manda y su borde es inclusivo", () => {
+    const otros = { ...P, reporteInasistenciaMin: 43, desembolsoMin: 61 };
+    const enMs = (min: number) => en(FIN, min * MINUTO);
+    expect(desembolsoEjecutable(FIN, enMs(44), otros)).toBe(false); // el reporte ya cerró, el desembolso aún no
+    expect(desembolsoEjecutable(FIN, en(enMs(61), -1), otros)).toBe(false);
+    expect(desembolsoEjecutable(FIN, enMs(61), otros)).toBe(true);
+  });
+
+  it("rechaza fechas inválidas", () => {
+    expect(() => desembolsoEjecutable(new Date(Number.NaN), FIN, P)).toThrow(/finProgramado/);
+    expect(() => desembolsoEjecutable(FIN, new Date(Number.NaN), P)).toThrow(/ahora/);
   });
 });
 
@@ -290,17 +363,17 @@ describe("comisión de la plataforma (RN-81)", () => {
     [200_000, 15_000, 185_000], // por encima, la comisión no crece
     [0, 0, 0],
   ])("bruto %i: comisión %i y neto %i", (bruto, comision, neto) => {
-    expect(calcularComision(bruto, P)).toBe(comision);
-    expect(calcularMontoNeto(bruto, P)).toBe(neto);
+    expect(calcularComision(bruto, C)).toBe(comision);
+    expect(calcularMontoNeto(bruto, C)).toBe(neto);
   });
 
   it("alrededor del tope: un peso menos, el borde y un peso más", () => {
-    expect(calcularComision(149_990, P)).toBe(14_999);
-    expect(calcularComision(150_000, P)).toBe(15_000);
-    expect(calcularComision(150_010, P)).toBe(15_000);
+    expect(calcularComision(149_990, C)).toBe(14_999);
+    expect(calcularComision(150_000, C)).toBe(15_000);
+    expect(calcularComision(150_010, C)).toBe(15_000);
   });
 
-  // SUPUESTO A VALIDAR: RN-81 no fija el redondeo; se toma el peso más cercano, medio peso hacia arriba.
+  // N-1 (29-sep-2026): RN-81 no fija el redondeo y se queda el peso más cercano, con medio peso hacia arriba.
   it.each([
     [4, 0],
     [5, 1],
@@ -310,21 +383,21 @@ describe("comisión de la plataforma (RN-81)", () => {
     [149_994, 14_999],
     [149_995, 15_000],
   ])("redondeo al peso más cercano: bruto %i da comisión %i", (bruto, comision) => {
-    expect(calcularComision(bruto, P)).toBe(comision);
+    expect(calcularComision(bruto, C)).toBe(comision);
   });
 
   it("la comisión es el 10 % del bruto (a medio peso) y nunca pasa del tope", () => {
     for (let bruto = 0; bruto <= 300_000; bruto += 137) {
-      const comision = calcularComision(bruto, P);
+      const comision = calcularComision(bruto, C);
       // Independiente de la implementación: el 10 % exacto, con tolerancia de medio peso, hasta el tope.
       if (bruto <= 150_000) expect(Math.abs(comision - bruto / 10)).toBeLessThanOrEqual(0.5);
       else expect(comision).toBe(15_000);
-      expect(calcularMontoNeto(bruto, P)).toBe(bruto - comision);
+      expect(calcularMontoNeto(bruto, C)).toBe(bruto - comision);
     }
   });
 
   it("usa el porcentaje y el tope que le pasan", () => {
-    const otros = { ...P, comisionPorcentaje: 20, comisionTope: 1_000 };
+    const otros: ParametrosComision = { comisionPorcentaje: 20, comisionTope: 1_000 };
     expect(calcularComision(2_000, otros)).toBe(400);
     expect(calcularComision(10_000, otros)).toBe(1_000);
   });
@@ -332,8 +405,8 @@ describe("comisión de la plataforma (RN-81)", () => {
   it.each([-1, -25_000, 1.5, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1])(
     "rechaza el bruto %s",
     (bruto) => {
-      expect(() => calcularComision(bruto, P)).toThrow(/montoBruto/);
-      expect(() => calcularMontoNeto(bruto, P)).toThrow(/montoBruto/);
+      expect(() => calcularComision(bruto, C)).toThrow(/montoBruto/);
+      expect(() => calcularMontoNeto(bruto, C)).toThrow(/montoBruto/);
     },
   );
 });
@@ -354,9 +427,8 @@ describe("cada función lee su propio parámetro y ninguna lleva un número prop
     reporteInasistenciaMin: 37,
     resenaGrupalMin: 41,
     desembolsoMin: 43,
-    comisionPorcentaje: 47,
-    comisionTope: 53,
   };
+  const DC: ParametrosComision = { comisionPorcentaje: 47, comisionTope: 53 };
   const T = new Date("2026-10-05T15:00:00.000Z");
   const minutos = (desde: Date, hasta: Date) => (hasta.getTime() - desde.getTime()) / MINUTO;
 
@@ -381,8 +453,8 @@ describe("cada función lee su propio parámetro y ninguna lleva un número prop
   });
 
   it("calcularComision usa comisionPorcentaje (47 %) y comisionTope (53)", () => {
-    expect(calcularComision(100, D)).toBe(47);
-    expect(calcularComision(1_000, D)).toBe(53);
-    expect(calcularMontoNeto(100, D)).toBe(53);
+    expect(calcularComision(100, DC)).toBe(47);
+    expect(calcularComision(1_000, DC)).toBe(53);
+    expect(calcularMontoNeto(100, DC)).toBe(53);
   });
 });
