@@ -9,6 +9,8 @@
  * coincidan. Todo aquí es puro: no toca red ni base.
  */
 
+import { formatearFechaHora } from "@/lib/fechas";
+
 export const BUCKET_COMPROBANTES = "comprobantes";
 
 /**
@@ -31,6 +33,31 @@ export type TipoDeComprobante = keyof typeof TIPOS_DE_COMPROBANTE;
 
 /** Lo que ve la persona cuando el archivo no es JPG, PNG ni PDF. */
 export const MENSAJE_TIPO = "El comprobante debe ser una imagen JPG o PNG, o un PDF.";
+
+/** Lo que ve la persona cuando el contenido del archivo no es del formato que dice ser. */
+export const MENSAJE_CONTENIDO = "El contenido del archivo no coincide con su formato. Sube la captura o el PDF original.";
+
+/**
+ * Cuota por sesión (N-4, 29-sep-2026): máximo 5 comprobantes cada 24 horas, y un comprobante que ningún
+ * pago usa se borra después de 24 horas. La base los hace cumplir (`parametros_comprobantes()` en
+ * `*_endurecer_comprobantes.sql`); aquí se repiten para los mensajes, e
+ * `integracion/comprobantes-endurecidos.test.ts` comprueba que coincidan.
+ */
+export const CUOTA_COMPROBANTES = 5;
+export const VENTANA_CUOTA_HORAS = 24;
+export const HUERFANO_TRAS_HORAS = 24;
+
+/**
+ * El mensaje cuando la sesión ya usó su cuota. Con `libreDesde` (lo devuelve `mi_cuota_de_comprobantes()`)
+ * dice desde cuándo puede subir otro, en la hora de Bogotá.
+ */
+export function mensajeDeCuota(maximo: number = CUOTA_COMPROBANTES, libreDesde?: Date | null): string {
+  const base = `Ya subiste ${maximo} comprobantes en las últimas ${VENTANA_CUOTA_HORAS} horas, el máximo permitido.`;
+  if (!libreDesde || Number.isNaN(libreDesde.getTime())) return `${base} Inténtalo más tarde.`;
+  // La hora termina en "a. m." o "p. m.": ese punto cierra también la oración.
+  const cuando = formatearFechaHora(libreDesde);
+  return `${base} Podrás subir otro desde el ${cuando}${cuando.endsWith(".") ? "" : "."}`;
+}
 
 /** Primeros bytes de cada formato. El tipo que declara el navegador no basta: se contrasta con esto. */
 const FIRMAS: readonly (readonly [TipoDeComprobante, readonly number[]])[] = [
@@ -80,7 +107,7 @@ export function validarComprobante(archivo: ArchivoDeComprobante, inicio?: Uint8
     };
   }
   if (inicio && tipoPorContenido(inicio) !== archivo.type) {
-    return { ok: false, mensaje: "El contenido del archivo no coincide con su formato. Sube la captura o el PDF original." };
+    return { ok: false, mensaje: MENSAJE_CONTENIDO };
   }
   return { ok: true, tipo: archivo.type, extension: TIPOS_DE_COMPROBANTE[archivo.type] };
 }
@@ -102,6 +129,14 @@ export function rutaDeComprobante(idUsuario: string, extension: string, idArchiv
 /** ¿Tiene la forma de una ruta de comprobante? Nada de carpetas anidadas, `..` ni otros nombres. */
 export function esRutaDeComprobante(ruta: string): boolean {
   return RUTA.test(ruta);
+}
+
+/** El tipo que corresponde a la extensión de una ruta de comprobante, o null si la ruta no es válida. */
+export function tipoDeRuta(ruta: string): TipoDeComprobante | null {
+  if (!esRutaDeComprobante(ruta)) return null;
+  const extension = ruta.slice(ruta.lastIndexOf(".") + 1);
+  const tipo = (Object.keys(TIPOS_DE_COMPROBANTE) as TipoDeComprobante[]).find((t) => TIPOS_DE_COMPROBANTE[t] === extension);
+  return tipo ?? null;
 }
 
 /**

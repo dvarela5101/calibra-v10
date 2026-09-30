@@ -109,6 +109,7 @@ export class Fixtures {
   private readonly reportes: string[] = [];
   private readonly desembolsos: string[] = [];
   private readonly archivos: string[] = [];
+  private readonly revisados: string[] = [];
 
   constructor() {
     exigirEntorno();
@@ -295,6 +296,16 @@ export class Fixtures {
     return monitoria;
   }
 
+  /**
+   * Anota un comprobante como revisado (HU-059), como lo haría `revisarComprobante()` en el servidor: un
+   * pago solo puede apuntar a un comprobante revisado. El tipo sale de la extensión de la ruta.
+   */
+  async marcarRevisado(ruta: string): Promise<void> {
+    const tipo = ruta.endsWith(".pdf") ? "application/pdf" : ruta.endsWith(".jpg") ? "image/jpeg" : "image/png";
+    exito(await this.admin.from("comprobante_revisado").upsert({ ruta, tipo }, { onConflict: "ruta" }).select().single(), "anotar comprobante revisado");
+    if (!this.revisados.includes(ruta)) this.revisados.push(ruta);
+  }
+
   /** Un pago de una monitoría. Si no es `en_revision`, se le pone la fecha de revisión que la base exige. */
   async crearPagoDe(
     idMonitoria: string,
@@ -308,6 +319,8 @@ export class Fixtures {
     },
   ) {
     const estado = datos.estado ?? "en_revision";
+    const comprobante = datos.comprobante ?? `${randomUUID()}/${randomUUID()}.png`;
+    await this.marcarRevisado(comprobante);
     const pago = exito(
       await this.admin
         .from("pago")
@@ -317,7 +330,7 @@ export class Fixtures {
           nombre_pagador: datos.nombrePagador ?? "Pagador de prueba",
           contacto: "pagador@calibra.test",
           id_admin: datos.idAdmin,
-          comprobante: datos.comprobante ?? `${randomUUID()}/${randomUUID()}.png`,
+          comprobante,
           estado,
           fecha_asignacion: datos.fechaAsignacion ?? new Date().toISOString(),
           fecha_revision: estado === "en_revision" ? null : new Date().toISOString(),
@@ -420,7 +433,7 @@ export class Fixtures {
       const { error } = await accion;
       if (error && !sinBorrar(error.message)) errores.push(`${contexto}: ${error.message}`);
     };
-    const { usuarios, materias, evaluaciones, leads, franjas, monitorias, pagos, archivos, reembolsos, reportes, desembolsos } = this;
+    const { usuarios, materias, evaluaciones, leads, franjas, monitorias, pagos, archivos, revisados, reembolsos, reportes, desembolsos } = this;
 
     // Storage no deja borrar por SQL: los comprobantes se quitan con su API y la llave secreta.
     // Además de los anotados, se barre la carpeta de cada usuario creado: así una subida que una regresión
@@ -438,6 +451,14 @@ export class Fixtures {
     if (reportes.length) await intentar("borrar reporte", this.admin.from("reporte_inasistencia").delete().in("id", reportes));
     if (desembolsos.length) await intentar("borrar desembolso", this.admin.from("desembolso").delete().in("id", desembolsos));
     if (pagos.length) await intentar("borrar pago", this.admin.from("pago").delete().in("id", pagos));
+    // Después de los pagos: la llave foránea pago.comprobante impide borrar antes un revisado en uso. Además de
+    // los anotados con marcarRevisado(), los de cualquier archivo borrado arriba (una revisión que lo anotó).
+    // Por lotes: cada ruta mide unos 77 caracteres y el filtro viaja en la URL.
+    const rutasRevisadas = [...new Set([...revisados, ...porBorrar])];
+    for (let i = 0; i < rutasRevisadas.length; i += 40) {
+      const lote = rutasRevisadas.slice(i, i + 40);
+      await intentar("borrar comprobante_revisado", this.admin.from("comprobante_revisado").delete().in("ruta", lote));
+    }
     if (monitorias.length) await intentar("borrar monitoria", this.admin.from("monitoria").delete().in("id", monitorias));
     if (franjas.length) await intentar("borrar franja", this.admin.from("franja").delete().in("id", franjas));
 
@@ -473,7 +494,7 @@ export class Fixtures {
     }
 
     usuarios.length = materias.length = evaluaciones.length = leads.length = 0;
-    franjas.length = monitorias.length = pagos.length = archivos.length = 0;
+    franjas.length = monitorias.length = pagos.length = archivos.length = revisados.length = 0;
     reembolsos.length = reportes.length = desembolsos.length = 0;
     if (errores.length) throw new Error(`La limpieza dejó datos de prueba en la base local:\n- ${errores.join("\n- ")}`);
   }

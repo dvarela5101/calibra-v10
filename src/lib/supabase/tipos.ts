@@ -49,6 +49,19 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"comprobante_revisado": {
+                  Row: {
+                    "revisado_en": string,"ruta": string,"tipo": string
+                  }
+                  Insert: {
+                    "revisado_en"?: string,"ruta": string,"tipo": string
+                  }
+                  Update: {
+                    "revisado_en"?: string,"ruta"?: string,"tipo"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"correo_envio": {
                   Row: {
                     "actualizado_en": string,"clave": string,"creado_en": string,"destinatario": string,"enviado_en": string | null,"estado": Database["public"]['Enums']["estado_correo"],"id": string,"id_proveedor": string | null,"intentos": number,"plantilla": string,"reintentable": boolean,"ultimo_error": string | null
@@ -351,6 +364,12 @@ isOneToOne: true
                   }
                   Relationships: [
                     {
+      foreignKeyName: "pago_comprobante_revisado_fk"
+      columns: ["comprobante"]
+isOneToOne: false
+      referencedRelation: "comprobante_revisado"
+      referencedColumns: ["ruta"]
+    },{
       foreignKeyName: "pago_id_admin_fkey"
       columns: ["id_admin"]
 isOneToOne: false
@@ -520,6 +539,9 @@ isOneToOne: true
               "enlace": string,"id_franja": string,"lugar": string
             }[]
                            },
+"anotar_comprobante_revisado":
+{ Args: { "p_ruta": string,"p_tipo": string }; Returns: string
+                           },
 "cancelable_hasta":
 { Args: { "p_es_grupal": boolean,"p_inicio": string }; Returns: string
                            },
@@ -560,6 +582,11 @@ isOneToOne: true
 "inicio_sesion":
 { Args: { "p_fecha": string,"p_hora": string }; Returns: string
                            },
+"mi_cuota_de_comprobantes":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "libre_desde": string,"maximo": number,"usados": number
+            }[]
+                           },
 "mi_rol":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -569,6 +596,11 @@ isOneToOne: true
 "parametros_comision":
 { Args: Record<PropertyKey, never>; Returns: {
               "comision_porcentaje": number,"comision_tope": number
+            }[]
+                           },
+"parametros_comprobantes":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "cuota_subidas": number,"cuota_ventana_min": number,"huerfano_tras_min": number
             }[]
                            },
 "parametros_negocio":
@@ -593,6 +625,11 @@ isOneToOne: true
                            },
 "revision_hasta":
 { Args: { "p_fecha_asignacion": string }; Returns: string
+                           },
+"tomar_comprobantes_huerfanos":
+{ Args: { "p_limite"?: number }; Returns: {
+              "ruta": string
+            }[]
                            },
 "ventana_resena_hasta":
 { Args: { "p_fecha_finalizacion": string }; Returns: string

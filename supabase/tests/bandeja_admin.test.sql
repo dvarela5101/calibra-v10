@@ -229,9 +229,12 @@ insert into public.admin (id, nombre, correo, orden_revision) values
   ('a0000000-0000-0000-0000-000000000002', 'Admin Desactivado', 'admin-desactivado@example.com', 9000002);
 insert into public.monitoria (id, id_franja, id_materia, id_lead, fecha, valor_total, estado, fecha_finalizacion) values
   ('50000000-0000-0000-0000-000000000008', '30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-00000000000a', '2020-02-24', 25000, 'realizada', '2020-02-24 16:30:00+00');
+-- Un pago solo puede apuntar a un comprobante que el servidor revisó (HU-059).
+insert into public.comprobante_revisado (ruta, tipo) values
+  ('c0000000-0000-0000-0000-00000000000a/60000000-0000-0000-0000-000000000008.png', 'image/png');
 insert into public.pago (id, id_monitoria, monto, nombre_pagador, contacto, id_admin, comprobante) values
   ('60000000-0000-0000-0000-000000000008', '50000000-0000-0000-0000-000000000008', 25000, 'Pagador Prueba', 'pagador@example.com',
-   'a0000000-0000-0000-0000-000000000002', 'comprobante.png');
+   'a0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-00000000000a/60000000-0000-0000-0000-000000000008.png');
 insert into public.reembolso (id_pago, id_admin, monto, motivo) values
   ('60000000-0000-0000-0000-000000000008', 'a0000000-0000-0000-0000-000000000002', 25000, 'Prueba');
 insert into public.reporte_inasistencia (id_monitoria, id_admin) values

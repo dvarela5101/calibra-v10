@@ -5,6 +5,7 @@ import {
   BYTES_PARA_RECONOCER,
   MENSAJE_TIPO,
   VIGENCIA_ENLACE_COMPROBANTE_SEG,
+  mensajeDeCuota,
   rutaDeComprobante,
   validarComprobante,
 } from "./reglas";
@@ -24,17 +25,32 @@ export function mensajeDeSubida(error: { message: string; statusCode?: string | 
     return "El comprobante es demasiado pesado. Comprime la imagen o toma otra captura.";
   }
   if (codigo === "415" || texto.includes("mime type")) return MENSAJE_TIPO;
+  // El trigger de la cuota (HU-059) rechaza con check_violation; el Storage lo devuelve como error de base.
+  if (texto.includes("23514")) return mensajeDeCuota();
   if (texto.includes("row-level security") || codigo === "403" || codigo === "401") {
     return "No tienes permiso para subir este comprobante. Recarga la página e inténtalo de nuevo.";
   }
   return MENSAJE_GENERICO;
 }
 
+export type UsoDeCuota = { usados: number; maximo: number; libreDesde: Date | null };
+
+/**
+ * Cuántos comprobantes subió la sesión de `cliente` en la ventana de la cuota (HU-059). Devuelve null si
+ * no se pudo saber: la subida sigue, porque la base hace cumplir la cuota de todas formas.
+ */
+export async function consultarCuota(cliente: Cliente): Promise<UsoDeCuota | null> {
+  const { data, error } = await cliente.rpc("mi_cuota_de_comprobantes").maybeSingle();
+  if (error || !data) return null;
+  return { usados: data.usados, maximo: data.maximo, libreDesde: data.libre_desde ? new Date(data.libre_desde) : null };
+}
+
 /**
  * Sube un comprobante a la carpeta de `idUsuario` (el pagador, con la sesión de `cliente`) en el
- * bucket privado. Valida antes tipo, tamaño y contenido; el Storage vuelve a hacer cumplir tipo y
- * tamaño por su cuenta. No sobrescribe: cada subida es un archivo nuevo. Devuelve la ruta que
- * después se guarda en `pago.comprobante`.
+ * bucket privado. Valida antes tipo, tamaño y contenido, y que la sesión no haya usado su cuota; el
+ * Storage y la base vuelven a hacer cumplir todo eso por su cuenta. No sobrescribe: cada subida es un
+ * archivo nuevo. Devuelve la ruta que después se guarda en `pago.comprobante`, una vez que el servidor
+ * revise el contenido (`revisarComprobante`).
  */
 export async function subirComprobante(cliente: Cliente, idUsuario: string, archivo: File): Promise<ResultadoSubida> {
   let inicio: Uint8Array;
@@ -46,6 +62,9 @@ export async function subirComprobante(cliente: Cliente, idUsuario: string, arch
 
   const validacion = validarComprobante(archivo, inicio);
   if (!validacion.ok) return validacion;
+
+  const cuota = await consultarCuota(cliente);
+  if (cuota && cuota.usados >= cuota.maximo) return { ok: false, mensaje: mensajeDeCuota(cuota.maximo, cuota.libreDesde) };
 
   const ruta = rutaDeComprobante(idUsuario, validacion.extension);
   const { error } = await cliente.storage.from(BUCKET_COMPROBANTES).upload(ruta, archivo, {
