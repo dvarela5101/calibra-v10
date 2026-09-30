@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-09-29 19:43. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-09-29 20:00. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -55,11 +55,11 @@ _Generado automaticamente: 2026-09-29 19:43. No editar a mano; usa `scripts/back
 | [HU-027](backlog/HU-027.md) | [Sistema] Expirar reservas sin comprobante a los 10 minutos | Lista | P0 | S | HU-017 |
 | [HU-028](backlog/HU-028.md) | [Admin] Ejecutar desembolsos a monitores | Lista | P0 | M | HU-023, HU-020 |
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | Lista | P0 | M | HU-019 |
-| [HU-066](backlog/HU-066.md) | [Técnica] Enviar los correos desde calibra.monitorias@gmail.com por SMTP de Gmail | Lista | P0 | S | HU-006 |
 | [HU-062](backlog/HU-062.md) | [Aspirante a monitor] Pedir la certificación de una materia dejando mis datos | Lista | P1 | M | HU-008, HU-012 |
 | [HU-064](backlog/HU-064.md) | [Técnica] Ajustes de la revisión de HU-006 y HU-012 | Lista | P1 | S | HU-006, HU-012 |
 | [HU-065](backlog/HU-065.md) | [Sistema] Reintentar los correos que fallaron | Lista | P1 | S | HU-006 |
 | [HU-059](backlog/HU-059.md) | [Técnica] Endurecer los comprobantes: contenido real, huérfanos y cuota por sesión | Lista | P2 | S | HU-007 |
+| [HU-066](backlog/HU-066.md) | [Técnica] Enviar los correos desde calibra.monitorias@gmail.com por SMTP de Gmail | En progreso | P0 | S | HU-006 |
 | [HU-063](backlog/HU-063.md) | [Técnica] Ajustes de la revisión de HU-003 y HU-007 | En progreso | P1 | S | HU-003, HU-007 |
 | [HU-008](backlog/HU-008.md) | [Visitante] Leer el aviso de privacidad y autorizar el tratamiento de mis datos | En revision | P0 | S | HU-001 |
 | [HU-013](backlog/HU-013.md) | [Monitor] Crear mi cuenta de monitor e iniciar sesión | En revision | P0 | M | HU-004 |
