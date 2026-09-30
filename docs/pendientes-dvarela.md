@@ -21,6 +21,8 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [x] **HU-065, reintentar los correos que fallaron** ([PR #10](https://github.com/dvarela5101/calibra-v10/pull/10)). En local se prueba con las pruebas; en la nube necesita lo de la sección C.
 - [x] **HU-015, franjas del monitor.** Entra como monitor certificado a `/monitor/franjas`: abre, edita y cierra franjas. Las decisiones que te tocan están en A2.
 - [x] **HU-064, ajustes de la revisión de HU-006 y HU-012.** Textos de la bandeja, https en producción para los enlaces de los correos, server-only y la prueba del admin desactivado.
+- [x] **HU-014, certificar monitores** ([PR #13](https://github.com/dvarela5101/calibra-v10/pull/13)): aprobada el 30-sep.
+- [ ] **HU-068, contacto al agendar.** Abre `/agendar/contacto`, deja tus datos y vuelve a abrirla: ya no te los pide. Las decisiones que te tocan están en A2.
 - [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
 ### A2. Decisiones de las HUs recientes
@@ -30,7 +32,19 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [ ] **Franjas (HU-015): cambiar el horario.** P-30 dice que no se cambian día, hora ni duración con reservas **futuras**. Hoy tampoco se cambian si la franja tiene monitorías **pasadas** (no canceladas): los plazos de cada monitoría (inicio, fin, ventana de reporte, desembolso) se calculan con el horario actual de la franja, y cambiarlo reescribiría el historial. Para otro horario se cierra la franja y se abre otra. Recomendación: dejarlo así. La otra opción es guardar hora y duración en cada monitoría, como el precio.
 - [ ] **Franjas (HU-015): cambiar entre presencial y virtual.** Con monitorías futuras no se puede (el estudiante agendó una modalidad). El lugar y el enlace sí se corrigen, pero hoy nadie avisa al estudiante del cambio. Recomendación: dejarlo así y avisar cuando exista el correo de la cita (HU-019).
 - [ ] **Franjas (HU-015): una franja cerrada es definitiva.** Cuando llega su fecha de cierre ya no se edita ni se reabre; para volver a ofrecer ese horario se abre otra. Un cierre programado para más adelante sí se puede mover. Recomendación: dejarlo así.
-- [ ] **Franjas (HU-015): cuándo ve el estudiante el lugar y el enlace.** Hoy nadie fuera del monitor los ve: con el enlace a la vista, cualquiera entraría a una sesión pagada. Recomendación: el enlace solo en la cita confirmada (HU-019). El lugar de una presencial se podría mostrar antes, al elegir la franja (HU-016), porque ayuda a decidir. Dime si el lugar se muestra al agendar.
+- [x] **Franjas (HU-015): cuándo ve el estudiante el lugar y el enlace.** Hoy nadie fuera del monitor los ve: con el enlace a la vista, cualquiera entraría a una sesión pagada. Recomendación: el enlace solo en la cita confirmada (HU-019). El lugar de una presencial se podría mostrar antes, al elegir la franja (HU-016), porque ayuda a decidir. Dime si el lugar se muestra al agendar. **Decidido el 30-sep (D-5):** el lugar tampoco se muestra antes de agendar; llega con la cita confirmada.
+- [ ] **Contacto al agendar (HU-068): detalles del enlace para confirmar el correo.** Cuando alguien escribe un correo que ya es de otro contacto, le mandamos un enlace a ese correo (P-23). Recomendación para cada punto:
+  - el enlace vence a las 24 horas;
+  - se mandan como máximo 3 por hora al mismo contacto, para que nadie le llene el buzón;
+  - el navegador que queda con los datos es el que abre el enlace y confirma, no el que escribió el correo. Así nadie ve los datos de otra persona con solo escribir su correo.
+
+  Confirma o dime qué cambiar.
+- [ ] **Contacto al agendar (HU-068): lo que la revisión dejó para ti.** Ninguna de las dos frena el MVP:
+  - El primer correo no se verifica (P-23). Quien escriba primero el correo de otra persona crea ese contacto y su navegador lo conserva. Si después la dueña real confirma el enlace, comparte ese contacto con ese navegador. Recomendación: aceptarlo en el MVP. Más adelante, cuando alguien confirme un correo que nunca se verificó, el navegador que lo escribió pierde el acceso salvo que también lo confirme.
+  - El aviso "Ese correo ya está en Calibra" le dice a quien escribe que ese correo existe. Recomendación: aceptarlo con el CAPTCHA (HU-058) y un tope de intentos por sesión antes de publicar. La otra opción es verificar todo correo antes de crear el contacto, que cambia el criterio 1 y agrega un paso.
+- [ ] **Contacto al agendar (HU-068): teléfono sin indicativo.** Si alguien escribe el teléfono sin "+", se guarda con el de Colombia (+57). Recomendación: dejarlo así.
+- [ ] **Contacto al agendar (HU-068): origen del contacto.** Si alguien llega por un enlace de campaña (`?utm_campaign=...`), el contacto guarda la última campaña con la que llegó en los últimos 30 días. Recomendación: dejarlo así. Para tus campañas, usa enlaces con `utm_campaign`.
+- [x] **Monitores y fechas libres (HU-016).** Decidido el 30-sep (D-4 a D-6 en `REVISION_REGLAS.md` §4): todo como se recomendó. 4 semanas; sin fechas libres o desactivado no aparece; orden por la fecha más próxima y luego por nombre; enlace desde el inicio; solo "Presencial", sin lugar; el nombre como lo registró, y el aviso de privacidad lo cubre [HU-069](../backlog/HU-069.md).
 - [ ] **Correo que ya tiene cuenta (HU-013).** Si invitas a un correo que ya tiene cuenta de Calibra (por ejemplo, de estudiante), hoy el registro no la convierte en monitor y le pide escribir al equipo. Confirma que así está bien, o pide que se pueda convertir.
 
 ### A3. Preparar la cuenta de Gmail (para HU-066)

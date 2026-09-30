@@ -120,6 +120,17 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 - Los certificados de un admin desactivado siguen vigentes (RN-23).
 - Las materias reales llegarán con el banco de preguntas (HU-005) o con la gestión de materias (HU-055). Mientras tanto (D-2), la semilla local trae tres de prueba: MATE-1214, MATE-1207 y FISI-1018.
 
+## Contacto al agendar
+
+`/agendar/contacto?siguiente=/ruta` (HU-068, D-3): el diagnóstico es opcional, así que quien va a agendar sin ser Lead deja aquí nombre, correo, teléfono opcional y su autorización de datos (HU-008). Al terminar vuelve a `siguiente`. Quien ya es Lead sigue de largo; con `&editar=1` cambia sus datos.
+
+- La base admite un Lead por correo normalizado y uno por sesión. Lo crea el servidor con `public.registrar_lead()`, que también le liga los diagnósticos que la sesión hizo antes. Solo lo llama service_role.
+- Si el correo ya es de otro Lead (P-23), no se liga nada: se manda el correo `verificacion_lead` con un enlace a `/contacto/verificar`. El enlace vence en 24 horas y sirve una vez. Se mandan como máximo 3 por hora al mismo Lead: lo cuenta y lo crea `public.crear_verificacion_lead()` con la fila del Lead bloqueada, así que ni muchos pedidos a la vez lo pasan. El aviso al visitante dice si el enlace salió, se frenó o falló.
+- En esa página (que muestra el correo a medias, `a***@u***.edu.co`), el botón "Sí, es mi correo" liga **el navegador que abrió el enlace** a ese Lead (`lead_sesion`, que `privado.es_mi_lead` tiene en cuenta), con sus diagnósticos. Abrir el enlace no cambia nada, así que un revisor de enlaces no lo gasta.
+- Una sesión, un Lead: `registrar_lead` y `confirmar_correo_de_lead` toman el mismo candado por sesión y cuentan el Lead propio, el confirmado y el de la cuenta de Estudiante.
+- `siguiente` solo admite rutas internas ya normalizadas (`rutaSiguiente`, y un CHECK en la base): `/.//otro.sitio` termina en `/`.
+- El origen del Lead es la campaña con la que llegó el visitante (`?utm_campaign=...`). `OrigenDeCampana` la guarda en la cookie `calibra_origen` por 30 días.
+
 ## Franjas del monitor
 
 `/monitor/franjas` (HU-015): el monitor certificado abre franjas semanales (día, hora, duración, precio y modalidad, con lugar o enlace de videollamada), las edita y las cierra desde una fecha. Las reglas (P-30, P-31) las aplica el trigger `privado.validar_franja_del_monitor` a toda escritura que no sea de confianza, y `src/lib/franjas/reglas.ts` da los mismos mensajes antes de ir a la base.

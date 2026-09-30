@@ -203,6 +203,7 @@ function reconstructoresCon(cambios: Partial<Reconstructores> = {}): Reconstruct
     pago_rechazado_grupal: null,
     escalamiento_pago: null,
     invitacion_monitor: null,
+    verificacion_lead: null,
     ...cambios,
   };
 }
