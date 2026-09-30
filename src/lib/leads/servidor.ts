@@ -3,7 +3,7 @@ import type { Reconstruccion } from "@/lib/correo/plantillas";
 import { enviarCorreoDesdeServidor, urlDelSitio } from "@/lib/correo/servidor";
 import type { Consentimiento } from "@/lib/privacidad/consentimiento";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
-import type { DatosDeContacto } from "./reglas";
+import { enmascararCorreo, type DatosDeContacto } from "./reglas";
 import { MAXIMO_DE_ENLACES_POR_HORA, generarToken, hashDeToken, rutaDeVerificacion, tieneFormaDeToken } from "./verificacion";
 
 /**
@@ -42,9 +42,12 @@ export async function leadDeLaSesion(idSesion: string): Promise<LeadDeSesion | n
   return fila ? deFila(fila) : null;
 }
 
+/** Qué pasó con el enlace de verificación: salió, se frenó (ya van muchos en una hora) o no salió. */
+export type EnvioDeVerificacion = "enviado" | "frenado" | "fallido";
+
 export type ResultadoContacto =
   | { resultado: "lead" }
-  | { resultado: "verificar"; correoEnviado: boolean }
+  | { resultado: "verificar"; envio: EnvioDeVerificacion }
   | { resultado: "error"; error: string };
 
 export type EntradaDeContacto = {
@@ -100,60 +103,57 @@ export async function registrarContacto(entrada: EntradaDeContacto): Promise<Res
   });
   if (!error) return { resultado: "lead" };
   if (error.code !== "23505") throw error;
-  // Otra pestaña de la misma sesión lo creó un instante antes: ya es Lead.
-  if (!esPorElCorreo(error)) return { resultado: "lead" };
+  // La sesión ya tiene un Lead: otra pestaña lo creó o confirmó uno un instante antes.
+  if (!esPorElCorreo(error) || (await leadDeLaSesion(idSesion))) return { resultado: "lead" };
 
-  return { resultado: "verificar", correoEnviado: await mandarVerificacion(contacto.correo, siguiente) };
+  return { resultado: "verificar", envio: await mandarVerificacion(contacto.correo, siguiente) };
 }
 
-/** Manda el enlace de verificación al dueño del correo. `false` si no salió (o si se frenó por abuso). */
-async function mandarVerificacion(correo: string, siguiente: string, ahora: Date = new Date()): Promise<boolean> {
-  const admin = crearClienteAdmin();
-  const { data: dueno, error } = await admin.from("lead").select("id, nombre, correo").eq("correo", correo).maybeSingle();
-  if (error) throw error;
-  if (!dueno?.correo) return false;
-
-  // Freno: pocos enlaces por hora a un mismo Lead, para que nadie llene su buzón escribiendo su correo.
-  const haceUnaHora = new Date(ahora.getTime() - 60 * 60_000).toISOString();
-  const { count, error: errorConteo } = await admin
-    .from("verificacion_lead")
-    .select("id", { count: "exact", head: true })
-    .eq("id_lead", dueno.id)
-    .gt("creada_en", haceUnaHora);
-  if (errorConteo) throw errorConteo;
-  if ((count ?? 0) >= MAXIMO_DE_ENLACES_POR_HORA) {
-    console.warn(`[leads] se frenó otro enlace de verificación para el Lead ${dueno.id}: ya van ${count} en una hora.`);
-    return false;
-  }
-
+/**
+ * Manda el enlace de verificación al dueño del correo. El freno (pocos enlaces por hora a un mismo Lead,
+ * para que nadie llene su buzón escribiendo su correo) lo aplica la base, sin carreras.
+ */
+async function mandarVerificacion(correo: string, siguiente: string): Promise<EnvioDeVerificacion> {
   const { token, hash } = generarToken();
-  const { data: verificacion, error: errorVerificacion } = await admin
-    .from("verificacion_lead")
-    .insert({ id_lead: dueno.id, token_hash: hash, siguiente })
-    .select("id, vence_en")
-    .single();
-  if (errorVerificacion) throw errorVerificacion;
+  const { data, error } = await crearClienteAdmin().rpc("crear_verificacion_lead", {
+    p_correo: correo,
+    p_token_hash: hash,
+    p_siguiente: siguiente,
+    p_maximo_por_hora: MAXIMO_DE_ENLACES_POR_HORA,
+  });
+  if (error) throw error;
+  const verificacion = data?.[0];
+  // Sin dueño: el Lead se borró entre el 23505 y ahora. Para quien escribe, es un envío que no salió.
+  if (!verificacion?.correo_lead) return "fallido";
+  if (!verificacion.id_verificacion || !verificacion.vence) {
+    console.warn(`[leads] se frenó otro enlace de verificación para el Lead ${verificacion.id_del_lead}: ya van ${MAXIMO_DE_ENLACES_POR_HORA} en una hora.`);
+    return "frenado";
+  }
 
   const envio = await enviarCorreoDesdeServidor({
     plantilla: "verificacion_lead",
-    datos: { nombre: dueno.nombre, enlace: urlDelSitio(rutaDeVerificacion(token)), venceEn: verificacion.vence_en },
-    destinatario: dueno.correo,
-    entidad: verificacion.id,
+    datos: { nombre: verificacion.nombre_lead, enlace: urlDelSitio(rutaDeVerificacion(token)), venceEn: verificacion.vence },
+    destinatario: verificacion.correo_lead,
+    entidad: verificacion.id_verificacion,
   });
-  if (!envio.ok) console.error(`[leads] el enlace de verificación ${verificacion.id} no salió: ${envio.motivo}`);
-  return envio.ok;
+  if (!envio.ok) console.error(`[leads] el enlace de verificación ${verificacion.id_verificacion} no salió: ${envio.motivo}`);
+  return envio.ok ? "enviado" : "fallido";
 }
 
-/** ¿El enlace todavía sirve (sin usar y sin vencer)? Para mostrar el botón de confirmar o avisar que no. */
-export async function verificacionVigente(token: unknown, ahora: Date = new Date()): Promise<boolean> {
-  if (!tieneFormaDeToken(token)) return false;
+/**
+ * Si el enlace todavía sirve (sin usar y sin vencer), el correo que confirma, enmascarado: quien lo abre
+ * sabe qué correo confirma sin verlo entero. `null` si ya no sirve.
+ */
+export async function verificacionVigente(token: unknown, ahora: Date = new Date()): Promise<{ correo: string } | null> {
+  if (!tieneFormaDeToken(token)) return null;
   const { data, error } = await crearClienteAdmin()
     .from("verificacion_lead")
-    .select("vence_en, usada_en")
+    .select("vence_en, usada_en, lead(correo)")
     .eq("token_hash", hashDeToken(token))
     .maybeSingle();
   if (error) throw error;
-  return Boolean(data && !data.usada_en && new Date(data.vence_en) > ahora);
+  if (!data || data.usada_en || new Date(data.vence_en) <= ahora || !data.lead?.correo) return null;
+  return { correo: enmascararCorreo(data.lead.correo) };
 }
 
 export type ResultadoConfirmacion = { ok: true; siguiente: string } | { ok: false };

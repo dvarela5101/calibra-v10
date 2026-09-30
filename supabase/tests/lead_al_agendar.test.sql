@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(30);
+select plan(41);
 
 -- ---------------------------------------------------------------------------
 -- Estructura y permisos: todo lo escribe el servidor
@@ -37,6 +37,11 @@ select ok(
   and not has_function_privilege('authenticated', 'public.confirmar_correo_de_lead(text, uuid)', 'execute')
   and not has_function_privilege('anon', 'public.confirmar_correo_de_lead(text, uuid)', 'execute'),
   'confirmar_correo_de_lead solo la llama el servidor');
+select ok(
+  has_function_privilege('service_role', 'public.crear_verificacion_lead(text, text, text, integer)', 'execute')
+  and not has_function_privilege('authenticated', 'public.crear_verificacion_lead(text, text, text, integer)', 'execute')
+  and not has_function_privilege('anon', 'public.crear_verificacion_lead(text, text, text, integer)', 'execute'),
+  'crear_verificacion_lead solo la llama el servidor');
 
 -- ---------------------------------------------------------------------------
 -- Fixtures (como postgres): tres sesiones anónimas, una materia y su evaluación.
@@ -118,6 +123,14 @@ select throws_ok(
     select id, encode(extensions.digest('x2', 'sha256'), 'hex'), 'https://otro.sitio/x' from creado$$,
   '23514', null, 'Ni a una URL completa');
 select throws_ok(
+  $$insert into public.verificacion_lead (id_lead, token_hash, siguiente)
+    select id, encode(extensions.digest('x4', 'sha256'), 'hex'), '/.//otro.sitio/x' from creado$$,
+  '23514', null, 'Ni a una ruta con "." que se normaliza a otro sitio (/.//otro)');
+select throws_ok(
+  $$insert into public.verificacion_lead (id_lead, token_hash, siguiente)
+    select id, encode(extensions.digest('x5', 'sha256'), 'hex'), '/%2E%2E//otro.sitio' from creado$$,
+  '23514', null, 'Ni con los puntos codificados');
+select throws_ok(
   $$insert into public.verificacion_lead (id_lead, token_hash) select id, 'no-es-un-hash' from creado$$,
   '23514', null, 'Se guarda el SHA-256 del token, no el token');
 
@@ -154,6 +167,52 @@ select is(
 select is(
   (select usada_en from public.verificacion_lead where id = '70000000-0000-0000-0000-000000006803'),
   null::timestamptz, 'Y el enlace no se gasta');
+
+-- Tampoco una cuenta de Estudiante, que ya tiene su Lead.
+insert into auth.users (id, is_anonymous) values ('c0000000-0000-0000-0000-0000000068a5', false);
+insert into public.lead (id, nombre, correo, acepta_tratamiento_datos, fecha_consentimiento) values
+  ('40000000-0000-0000-0000-0000000068a5', 'Caro', 'caro@example.com', true, now());
+insert into public.estudiante (id, id_lead) values
+  ('c0000000-0000-0000-0000-0000000068a5', '40000000-0000-0000-0000-0000000068a5');
+select is(
+  (select count(*)::int from public.confirmar_correo_de_lead(
+      encode(extensions.digest('otra-sesion', 'sha256'), 'hex'), 'c0000000-0000-0000-0000-0000000068a5')),
+  0, 'Una cuenta de Estudiante no se liga a otro Lead');
+select is(
+  (select count(*)::int from public.lead_sesion where id_sesion = 'c0000000-0000-0000-0000-0000000068a5'),
+  0, 'Y no queda con dos Leads');
+
+-- La sesión que ya confirmó puede usar otro enlace del mismo Lead (por ejemplo, uno que llegó después).
+insert into public.verificacion_lead (id, id_lead, token_hash) values
+  ('70000000-0000-0000-0000-000000006804', (select id from creado), encode(extensions.digest('de-nuevo', 'sha256'), 'hex'));
+select is(
+  (select count(*)::int from public.confirmar_correo_de_lead(
+      encode(extensions.digest('de-nuevo', 'sha256'), 'hex'), 'c0000000-0000-0000-0000-0000000068a2')),
+  1, 'Otro enlace del mismo Lead sirve en la sesión que ya lo confirmó');
+
+-- Una sesión ligada por lead_sesion o de un Estudiante no crea otro Lead.
+select throws_ok(
+  $$select public.registrar_lead('c0000000-0000-0000-0000-0000000068a2', 'Otra vez', 'otra-vez@example.com', '', false, now(), '')$$,
+  '23505', null, 'Una sesión que confirmó un correo no crea otro Lead');
+select throws_ok(
+  $$select public.registrar_lead('c0000000-0000-0000-0000-0000000068a5', 'Caro otra vez', 'caro2@example.com', '', false, now(), '')$$,
+  '23505', null, 'Un Estudiante tampoco');
+
+-- ---------------------------------------------------------------------------
+-- El freno de enlaces por hora (crear_verificacion_lead)
+-- ---------------------------------------------------------------------------
+select isnt(
+  (select id_verificacion from public.crear_verificacion_lead(
+      ' Ana@Example.com ', encode(extensions.digest('freno-1', 'sha256'), 'hex'), '/agendar', 100)),
+  null::uuid, 'Crea el enlace para el Lead dueño del correo (normalizado)');
+select is(
+  (select id_verificacion from public.crear_verificacion_lead(
+      'ana@example.com', encode(extensions.digest('freno-2', 'sha256'), 'hex'), '/agendar', 1)),
+  null::uuid, 'Con los enlaces de la última hora ya en el tope, se frena y no crea otro');
+select is(
+  (select count(*)::int from public.crear_verificacion_lead(
+      'nadie@example.com', encode(extensions.digest('freno-3', 'sha256'), 'hex'), '/agendar', 100)),
+  0, 'Sin Lead con ese correo, nada');
 
 -- ---------------------------------------------------------------------------
 -- Quién ve el Lead (privado.es_mi_lead con lead_sesion)

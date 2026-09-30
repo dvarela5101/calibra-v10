@@ -531,6 +531,11 @@ isOneToOne: true
               "id_lead": string,"siguiente": string
             }[]
                            },
+"crear_verificacion_lead":
+{ Args: { "p_correo": string,"p_maximo_por_hora": number,"p_siguiente": string,"p_token_hash": string }; Returns: {
+              "correo_lead": string,"id_del_lead": string,"id_verificacion": string,"nombre_lead": string,"vence": string
+            }[]
+                           },
 "cumple_antelacion":
 { Args: { "p_ahora": string,"p_es_grupal": boolean,"p_inicio": string }; Returns: boolean
                            },

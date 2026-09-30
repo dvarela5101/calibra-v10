@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { leerOrigen } from "./origen";
-import { leerContacto, normalizarCorreo, normalizarTelefono, rutaSiguiente } from "./reglas";
+import { enmascararCorreo, leerContacto, normalizarCorreo, normalizarTelefono, resumenDeError, rutaSiguiente } from "./reglas";
 import { generarToken, hashDeToken, rutaDeVerificacion, tieneFormaDeToken } from "./verificacion";
 
 const formulario = (campos: Record<string, string>) => {
@@ -56,6 +56,10 @@ describe("normalizarTelefono (P-22)", () => {
     ["300 123 4567", "+573001234567"],
     ["(300) 123-4567", "+573001234567"],
     ["+1 (212) 555-0100", "+12125550100"],
+    ["573001234567", "+573001234567"],
+    ["57 300 123 4567", "+573001234567"],
+    ["0057 300 123 4567", "+573001234567"],
+    ["001 212 555 0100", "+12125550100"],
   ])("%j se guarda como %j", (entrada, guardado) => {
     expect(normalizarTelefono(entrada)).toBe(guardado);
   });
@@ -84,6 +88,11 @@ describe("rutaSiguiente", () => {
     "//otro.sitio/x",
     "/\\otro.sitio/x",
     "/\t/otro.sitio",
+    "/.//otro.sitio/x",
+    "/..//otro.sitio",
+    "/%2e//otro.sitio",
+    "/%2E%2E//otro.sitio",
+    "/a/..//otro.sitio",
     "javascript:alert(1)",
     "agendar",
     "",
@@ -95,6 +104,29 @@ describe("rutaSiguiente", () => {
   it("sin valor, al inicio", () => {
     expect(rutaSiguiente(undefined)).toBe("/");
     expect(rutaSiguiente(["/a"])).toBe("/");
+  });
+
+  it("aplicarla dos veces da lo mismo", () => {
+    for (const ruta of ["/agendar/x?a=1#b", "/./agendar", "/a/../agendar", "/.//otro.sitio", "/%2e%2e/x"]) {
+      expect(rutaSiguiente(rutaSiguiente(ruta))).toBe(rutaSiguiente(ruta));
+    }
+    expect(rutaSiguiente("/a/../agendar")).toBe("/agendar");
+  });
+});
+
+describe("enmascararCorreo", () => {
+  it("deja ver solo la primera letra del usuario y del dominio", () => {
+    expect(enmascararCorreo("ana.perez@uniandes.edu.co")).toBe("a***@u***.edu.co");
+    expect(enmascararCorreo("b@ejemplo.com")).toBe("b***@e***.com");
+  });
+});
+
+describe("resumenDeError", () => {
+  it("registra código y mensaje, nunca los detalles con datos", () => {
+    const error = { code: "23505", message: "duplicate key", details: "Key (correo)=(ana@ejemplo.com) already exists." };
+    expect(resumenDeError(error)).toBe("23505 duplicate key");
+    expect(resumenDeError(new Error("se cayó"))).toBe("se cayó");
+    expect(resumenDeError("texto")).toBe("texto");
   });
 });
 

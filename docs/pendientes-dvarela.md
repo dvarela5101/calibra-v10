@@ -39,6 +39,9 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   - el navegador que queda con los datos es el que abre el enlace y confirma, no el que escribió el correo. Así nadie ve los datos de otra persona con solo escribir su correo.
 
   Confirma o dime qué cambiar.
+- [ ] **Contacto al agendar (HU-068): lo que la revisión dejó para ti.** Ninguna de las dos frena el MVP:
+  - El primer correo no se verifica (P-23). Quien escriba primero el correo de otra persona crea ese contacto y su navegador lo conserva. Si después la dueña real confirma el enlace, comparte ese contacto con ese navegador. Recomendación: aceptarlo en el MVP. Más adelante, cuando alguien confirme un correo que nunca se verificó, el navegador que lo escribió pierde el acceso salvo que también lo confirme.
+  - El aviso "Ese correo ya está en Calibra" le dice a quien escribe que ese correo existe. Recomendación: aceptarlo con el CAPTCHA (HU-058) y un tope de intentos por sesión antes de publicar. La otra opción es verificar todo correo antes de crear el contacto, que cambia el criterio 1 y agrega un paso.
 - [ ] **Contacto al agendar (HU-068): teléfono sin indicativo.** Si alguien escribe el teléfono sin "+", se guarda con el de Colombia (+57). Recomendación: dejarlo así.
 - [ ] **Contacto al agendar (HU-068): origen del contacto.** Si alguien llega por un enlace de campaña (`?utm_campaign=...`), el contacto guarda la última campaña con la que llegó en los últimos 30 días. Recomendación: dejarlo así. Para tus campañas, usa enlaces con `utm_campaign`.
 - [x] **Monitores y fechas libres (HU-016).** Decidido el 30-sep (D-4 a D-6 en `REVISION_REGLAS.md` §4): todo como se recomendó. 4 semanas; sin fechas libres o desactivado no aparece; orden por la fecha más próxima y luego por nombre; enlace desde el inicio; solo "Presencial", sin lugar; el nombre como lo registró, y el aviso de privacidad lo cubre [HU-069](../backlog/HU-069.md).

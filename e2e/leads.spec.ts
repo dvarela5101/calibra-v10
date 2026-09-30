@@ -212,6 +212,13 @@ test.describe("Criterios 1, 2, 4, 5 y 6 · dejar el contacto al agendar", () => 
       await expect(page.getByLabel("Tu nombre")).toHaveCount(0);
     });
 
+    await test.step("un siguiente que lleva a otro sitio (también disfrazado con /./ o %2e) termina en el inicio", async () => {
+      for (const hostil of ["//otro.example/x", "/.//otro.example/x", "/%2e//otro.example/x", "https://otro.example/x"]) {
+        await page.goto(`/agendar/contacto?siguiente=${encodeURIComponent(hostil)}`);
+        await expect(page, hostil).toHaveURL("/", ESPERA);
+      }
+    });
+
     await test.step("con editar=1 ve sus datos y, si cambia algo, se actualiza el mismo Lead", async () => {
       await abrir(page, `${FORMULARIO}&editar=1`);
       await expect(page.getByRole("heading", { level: 1, name: "Cambia tus datos" })).toBeVisible(ESPERA);

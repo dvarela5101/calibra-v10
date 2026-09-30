@@ -27,8 +27,8 @@ export default async function VerificarCorreo({ searchParams }: PageProps<"/cont
         titulo="Este enlace ya no sirve"
         subtitulo="Ya se usó, venció o está incompleto. Si quieres agendar, vuelve a escribir tu correo y te mandamos otro."
       >
-        <Link href="/" className={formulario.enlace}>
-          Ir al inicio
+        <Link href="/agendar/contacto" className={formulario.enlace}>
+          Escribir mi correo
         </Link>
       </Pantalla>
     );
@@ -38,7 +38,7 @@ export default async function VerificarCorreo({ searchParams }: PageProps<"/cont
     <Pantalla
       eyebrow="Tu correo"
       titulo="Confirma que este correo es tuyo"
-      subtitulo="Al confirmar, este navegador queda con tus datos de Calibra y puedes seguir agendando aquí. Si no fuiste tú quien quiso agendar, cierra esta página: sin confirmar, nadie ve tus datos."
+      subtitulo={`El enlace es para ${vigente.correo}. Al confirmar, este navegador queda con tus datos de Calibra y puedes seguir agendando aquí. Si no fuiste tú quien quiso agendar, cierra esta página: sin confirmar, nadie ve tus datos.`}
     >
       <FormularioConfirmar token={token as string} />
     </Pantalla>

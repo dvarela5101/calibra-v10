@@ -224,7 +224,7 @@ async function crearLeadDeDuena(correo: string, campos: Partial<CamposDeContacto
  */
 async function pedirEnlace(sesion: Sesion, correo: string, siguiente = "/agendar/fecha") {
   const resultado = await registrarContacto(entradaDe(sesion.id, { nombre: "Otra Persona", correo, siguiente }));
-  expect(resultado).toEqual({ resultado: "verificar", correoEnviado: true });
+  expect(resultado).toEqual({ resultado: "verificar", envio: "enviado" });
   const { id: idLead } = exito(await fx.admin.from("lead").select("id").eq("correo", correo).single(), "leer el Lead dueño del correo");
   const enlaces = await enlacesDe(idLead);
   const mensajes = await mensajesPara(correo);
@@ -347,6 +347,19 @@ describe("criterio 4: una sesión que ya es Lead no crea otro", () => {
     expect(await mensajesPara(correoDeBeto)).toEqual([]);
   });
 
+  it("dos pestañas de la misma sesión envían a la vez con correos distintos: queda un solo Lead", async () => {
+    const [primero, segundo] = [correoNuevo(), correoNuevo()];
+
+    const resultados = await Promise.all([
+      registrarContacto(entradaDe(tercera.id, { correo: primero })),
+      registrarContacto(entradaDe(tercera.id, { correo: segundo })),
+    ]);
+
+    expect(resultados).toEqual([{ resultado: "lead" }, { resultado: "lead" }]);
+    const { data } = await fx.admin.from("lead").select("correo").eq("id_sesion_anonima", tercera.id);
+    expect(data).toHaveLength(1);
+  });
+
   it("una cuenta de Estudiante ya es Lead: sus datos se actualizan y no se le crea otro", async () => {
     const estudiante = await fx.crearEstudiante();
     const { id_lead: idLead } = exito(await fx.admin.from("estudiante").select("id_lead").eq("id", estudiante.id).single(), "leer el estudiante");
@@ -370,7 +383,7 @@ describe("criterio 3 (P-23): un correo que ya es de otro Lead no se liga de inme
 
     const resultado = await registrarContacto(entradaDe(otra.id, { nombre: "Otra Persona", correo: ` ${correo.toUpperCase()} `, siguiente }));
 
-    expect(resultado).toEqual({ resultado: "verificar", correoEnviado: true });
+    expect(resultado).toEqual({ resultado: "verificar", envio: "enviado" });
     // La sesión nueva no quedó como Lead, y ese correo sigue teniendo un solo Lead.
     expect(await leadDeLaSesion(otra.id)).toBeNull();
     const { data: conEseCorreo } = await fx.admin.from("lead").select("id").eq("correo", correo);
@@ -395,7 +408,7 @@ describe("criterio 3 (P-23): un correo que ya es de otro Lead no se liga de inme
     expect(mensajes[0].Text).not.toContain("Otra Persona");
     expect(verificacion.token_hash).toBe(sha256(token));
     expect(JSON.stringify(verificacion)).not.toContain(token);
-    expect(await verificacionVigente(token)).toBe(true);
+    expect(await verificacionVigente(token)).toEqual({ correo: expect.stringContaining("***@") });
 
     // Y el envío quedó anotado con la plantilla y su clave.
     expect(await envioDe(verificacion.id)).toMatchObject({
@@ -418,7 +431,7 @@ describe("criterio 3 (P-23): un correo que ya es de otro Lead no se liga de inme
     const resultado = await registrarContacto(entradaDe(otra.id, { nombre: "Otra Persona", correo, siguiente: "/agendar/fecha" }));
     vi.stubEnv("MAILPIT_URL", mailpit);
 
-    expect(resultado).toEqual({ resultado: "verificar", correoEnviado: false });
+    expect(resultado).toEqual({ resultado: "verificar", envio: "fallido" });
     const [verificacion] = await enlacesDe(lead.id);
     const fallido = await envioDe(verificacion.id);
     expect(fallido).toMatchObject({ plantilla: "verificacion_lead", destinatario: correo, estado: "fallido", reintentable: true, intentos: 0, enviado_en: null });
@@ -481,7 +494,7 @@ describe("confirmarCorreo (P-23): la sesión que abre el enlace queda ligada al 
     const lead = await crearLeadDeDuena(correo);
     const { token } = await pedirEnlace(otra, correo);
     expect(await confirmarCorreo(token, otra.id)).toMatchObject({ ok: true });
-    expect(await verificacionVigente(token)).toBe(false);
+    expect(await verificacionVigente(token)).toBeNull();
 
     expect(await confirmarCorreo(token, tercera.id)).toEqual({ ok: false });
     expect(await confirmarCorreo(token, otra.id)).toEqual({ ok: false });
@@ -500,7 +513,7 @@ describe("confirmarCorreo (P-23): la sesión que abre el enlace queda ligada al 
       "vencer el enlace",
     );
 
-    expect(await verificacionVigente(token)).toBe(false);
+    expect(await verificacionVigente(token)).toBeNull();
     expect(await confirmarCorreo(token, otra.id)).toEqual({ ok: false });
 
     expect(await sesionesLigadasA(lead.id)).toEqual([]);
@@ -517,7 +530,7 @@ describe("confirmarCorreo (P-23): la sesión que abre el enlace queda ligada al 
 
     expect(await confirmarCorreo(token, tercera.id)).toEqual({ ok: false });
 
-    expect(await verificacionVigente(token)).toBe(true);
+    expect(await verificacionVigente(token)).not.toBeNull();
     expect(await sesionesLigadasA(lead.id)).toEqual([]);
     expect(await leadDeLaSesion(tercera.id)).toMatchObject({ correo: correoDeTercera });
     expect(await idsVisibles(tercera.cliente, "lead", "id", lead.id)).toEqual([]);
@@ -525,10 +538,34 @@ describe("confirmarCorreo (P-23): la sesión que abre el enlace queda ligada al 
     expect(await confirmarCorreo(token, otra.id)).toMatchObject({ ok: true });
   });
 
+  it("una cuenta de Estudiante ya tiene su Lead: no se liga a otro con un enlace, y el enlace queda sin gastar", async () => {
+    const correo = correoNuevo();
+    const lead = await crearLeadDeDuena(correo);
+    const estudiante = await fx.crearEstudiante();
+    const { token } = await pedirEnlace(otra, correo);
+
+    expect(await confirmarCorreo(token, estudiante.id)).toEqual({ ok: false });
+
+    expect(await verificacionVigente(token)).not.toBeNull();
+    expect(await sesionesLigadasA(lead.id)).toEqual([]);
+    expect(await leadDeLaSesion(estudiante.id)).not.toMatchObject({ id: lead.id });
+  });
+
+  it("dos clics a la vez sobre el mismo enlace: solo uno lo usa", async () => {
+    const correo = correoNuevo();
+    const lead = await crearLeadDeDuena(correo);
+    const { token } = await pedirEnlace(otra, correo);
+
+    const resultados = await Promise.all([confirmarCorreo(token, otra.id), confirmarCorreo(token, tercera.id)]);
+
+    expect(resultados.filter((r) => r.ok)).toHaveLength(1);
+    expect(await sesionesLigadasA(lead.id)).toHaveLength(1);
+  });
+
   it("un token inventado, con mala forma o que no es texto no sirve", async () => {
     for (const token of ["basura", "a".repeat(64), "A".repeat(64), "", undefined, null, 42]) {
       expect(await confirmarCorreo(token, otra.id), String(token)).toEqual({ ok: false });
-      expect(await verificacionVigente(token), String(token)).toBe(false);
+      expect(await verificacionVigente(token), String(token)).toBeNull();
     }
   });
 });
@@ -542,7 +579,7 @@ describe("freno (RN-12): como máximo 3 enlaces por Lead en una hora", () => {
 
     // Tres enlaces pedidos desde dos sesiones distintas: el freno es por Lead, no por sesión.
     for (const sesion of [otra, otra, tercera]) {
-      expect(await registrarContacto(entradaDe(sesion.id, { correo }))).toEqual({ resultado: "verificar", correoEnviado: true });
+      expect(await registrarContacto(entradaDe(sesion.id, { correo }))).toEqual({ resultado: "verificar", envio: "enviado" });
     }
     const enviados = await enlacesDe(lead.id);
     expect(enviados).toHaveLength(3);
@@ -551,7 +588,7 @@ describe("freno (RN-12): como máximo 3 enlaces por Lead en una hora", () => {
 
     const cuarto = await registrarContacto(entradaDe(tercera.id, { correo }));
 
-    expect(cuarto).toEqual({ resultado: "verificar", correoEnviado: false });
+    expect(cuarto).toEqual({ resultado: "verificar", envio: "frenado" });
     expect((await enlacesDe(lead.id)).map((e) => e.id)).toEqual(enviados.map((e) => e.id));
     expect(await mensajesPara(correo)).toHaveLength(3);
     const { data: registros } = await fx.admin.from("correo_envio").select("clave").eq("destinatario", correo);
@@ -560,11 +597,24 @@ describe("freno (RN-12): como máximo 3 enlaces por Lead en una hora", () => {
     expect(aviso).toHaveBeenCalledWith(expect.stringContaining(lead.id));
   });
 
+  it("con muchos pedidos a la vez, igual salen solo 3: el freno no tiene carreras", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const correo = correoNuevo();
+    const lead = await crearLeadDeDuena(correo);
+
+    const resultados = await Promise.all(Array.from({ length: 6 }, () => registrarContacto(entradaDe(otra.id, { correo }))));
+
+    const envios = resultados.map((r) => (r.resultado === "verificar" ? r.envio : r.resultado)).sort();
+    expect(envios).toEqual(["enviado", "enviado", "enviado", "frenado", "frenado", "frenado"]);
+    expect(await enlacesDe(lead.id)).toHaveLength(MAXIMO_DE_ENLACES_POR_HORA);
+    expect(await mensajesPara(correo)).toHaveLength(MAXIMO_DE_ENLACES_POR_HORA);
+  });
+
   it("la cuenta es por hora: con los tres enlaces de hace más de una hora, vuelve a mandar", async () => {
     const correo = correoNuevo();
     const lead = await crearLeadDeDuena(correo);
     for (let i = 0; i < MAXIMO_DE_ENLACES_POR_HORA; i++) {
-      expect(await registrarContacto(entradaDe(otra.id, { correo }))).toEqual({ resultado: "verificar", correoEnviado: true });
+      expect(await registrarContacto(entradaDe(otra.id, { correo }))).toEqual({ resultado: "verificar", envio: "enviado" });
     }
     // Con dos de hace 61 minutos y uno de hace 59, todavía hay 1 dentro de la hora y caben dos más.
     const [a, b, c] = await enlacesDe(lead.id);
@@ -572,11 +622,11 @@ describe("freno (RN-12): como máximo 3 enlaces por Lead en una hora", () => {
       exito(await fx.admin.from("verificacion_lead").update({ creada_en: hace(minutos * MINUTO) }).eq("id", enlace.id).select().single(), "envejecer el enlace");
     }
 
-    expect(await registrarContacto(entradaDe(otra.id, { correo }))).toEqual({ resultado: "verificar", correoEnviado: true });
-    expect(await registrarContacto(entradaDe(otra.id, { correo }))).toEqual({ resultado: "verificar", correoEnviado: true });
+    expect(await registrarContacto(entradaDe(otra.id, { correo }))).toEqual({ resultado: "verificar", envio: "enviado" });
+    expect(await registrarContacto(entradaDe(otra.id, { correo }))).toEqual({ resultado: "verificar", envio: "enviado" });
     // Ya hay tres dentro de la hora (el de hace 59 minutos y los dos nuevos): el siguiente se frena.
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    expect(await registrarContacto(entradaDe(otra.id, { correo }))).toEqual({ resultado: "verificar", correoEnviado: false });
+    expect(await registrarContacto(entradaDe(otra.id, { correo }))).toEqual({ resultado: "verificar", envio: "frenado" });
 
     expect(await enlacesDe(lead.id)).toHaveLength(5);
     expect(await mensajesPara(correo)).toHaveLength(5);
@@ -608,8 +658,8 @@ describe("reconstruirVerificacion (HU-065): rehacer el correo que no salió", ()
     expect(despues.token_hash).toBe(sha256(nuevo!));
     expect(despues.token_hash).not.toBe(verificacion.token_hash);
     expect(await enlacesDe(idLead)).toHaveLength(1);
-    expect(await verificacionVigente(token)).toBe(false);
-    expect(await verificacionVigente(nuevo)).toBe(true);
+    expect(await verificacionVigente(token)).toBeNull();
+    expect(await verificacionVigente(nuevo)).not.toBeNull();
     // Y el enlace nuevo confirma.
     expect(await confirmarCorreo(nuevo, otra.id)).toEqual({ ok: true, siguiente: "/agendar/fecha" });
   });
