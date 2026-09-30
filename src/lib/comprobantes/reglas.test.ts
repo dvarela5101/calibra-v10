@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   BYTES_PARA_RECONOCER,
+  CUOTA_COMPROBANTES,
+  HUERFANO_TRAS_HORAS,
   LIMITE_COMPROBANTE_BYTES,
   TIPOS_DE_COMPROBANTE,
+  VENTANA_CUOTA_HORAS,
   VIGENCIA_ENLACE_COMPROBANTE_SEG,
   esRutaDeComprobante,
+  mensajeDeCuota,
   rutaDeComprobante,
   rutaEsDelUsuario,
+  tipoDeRuta,
   tipoPorContenido,
   validarComprobante,
 } from "./reglas";
@@ -193,5 +198,48 @@ describe("rutas de comprobantes", () => {
     expect(rutaEsDelUsuario(ID_B, ruta)).toBe(false);
     expect(rutaEsDelUsuario(ID_A, `${ID_A}/../${ID_B}/${ARCHIVO}.png`)).toBe(false);
     expect(rutaEsDelUsuario(ID_A, "cualquier cosa")).toBe(false);
+  });
+});
+
+describe("tipoDeRuta: el tipo que manda la extensión de la ruta", () => {
+  const CARPETA = "0f9d5e1c-3b7a-4c52-9d11-6a1f2b3c4d5e";
+  const ARCHIVO_X = "6a1f2b3c-4d5e-4c52-9d11-0f9d5e1c3b7a";
+  it.each([
+    ["png", "image/png"],
+    ["jpg", "image/jpeg"],
+    ["pdf", "application/pdf"],
+  ])(".%s es %s", (extension, tipo) => {
+    expect(tipoDeRuta(`${CARPETA}/${ARCHIVO_X}.${extension}`)).toBe(tipo);
+  });
+
+  it.each(["", "comprobante.png", `${CARPETA}/${ARCHIVO_X}.gif`, `${CARPETA}/${ARCHIVO_X}.jpeg`, `${CARPETA}/../${ARCHIVO_X}.png`])(
+    "una ruta que no es de comprobante (%j) no tiene tipo",
+    (ruta) => {
+      expect(tipoDeRuta(ruta)).toBeNull();
+    },
+  );
+});
+
+describe("la cuota por sesión (N-4, HU-059)", () => {
+  it("5 comprobantes cada 24 horas, y un huérfano se borra a las 24 horas", () => {
+    expect([CUOTA_COMPROBANTES, VENTANA_CUOTA_HORAS, HUERFANO_TRAS_HORAS]).toEqual([5, 24, 24]);
+  });
+
+  it("el mensaje dice el máximo y, si lo sabe, desde cuándo puede subir otro en hora de Bogotá", () => {
+    // 21:09 UTC son las 4:09 p. m. en Bogotá.
+    expect(mensajeDeCuota(5, new Date("2026-10-01T21:09:26Z"))).toBe(
+      "Ya subiste 5 comprobantes en las últimas 24 horas, el máximo permitido. Podrás subir otro desde el jueves, 1 de octubre de 2026, 4:09\xa0p.\xa0m.",
+    );
+  });
+
+  it("sin fecha (o con una inválida) pide intentarlo más tarde", () => {
+    const esperado = "Ya subiste 5 comprobantes en las últimas 24 horas, el máximo permitido. Inténtalo más tarde.";
+    expect(mensajeDeCuota()).toBe(esperado);
+    expect(mensajeDeCuota(5, null)).toBe(esperado);
+    expect(mensajeDeCuota(5, new Date(Number.NaN))).toBe(esperado);
+  });
+
+  it("usa el máximo que le pasan", () => {
+    expect(mensajeDeCuota(3)).toMatch(/^Ya subiste 3 comprobantes/);
   });
 });
