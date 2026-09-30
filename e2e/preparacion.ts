@@ -8,7 +8,7 @@ import { exigirSupabaseLocal, variable } from "./utilidades";
  *     visita y, en paralelo (móvil y escritorio), esa espera agotaría los tiempos de las pruebas.
  */
 
-const RUTAS = ["/", "/ingresar", "/restablecer", "/restablecer/nueva", "/monitor", "/admin", "/auth/confirmar"];
+const RUTAS = ["/", "/ingresar", "/restablecer", "/restablecer/nueva", "/monitor", "/admin", "/auth/confirmar", "/monitores"];
 
 async function comprobar(nombre: string, url: string, cabeceras: Record<string, string> = {}): Promise<void> {
   const respuesta = await fetch(url, { headers: cabeceras, signal: AbortSignal.timeout(10_000) }).catch((error: unknown) => {

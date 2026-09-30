@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ZONA_HORARIA_NEGOCIO, IDIOMA, LOCALE } from "@/config/regional";
-import { diaDelNegocio, formatearDia, formatearFechaHora } from "./fechas";
+import { diaDelNegocio, formatearDia, formatearDiaConSemana, formatearFechaHora } from "./fechas";
 
 describe("configuración regional", () => {
   it("fija la zona de negocio y el idioma", () => {
@@ -61,6 +61,21 @@ describe("formatearDia", () => {
 
   it.each(["2026-02-30x", "2026-13-01", "5/10/2026", "", "2026-02-30", "2026-04-31", "2027-02-29", "2026-00-10", "2026-01-00"])("rechaza %j", (fecha) => {
     expect(() => formatearDia(fecha)).toThrow(RangeError);
+  });
+});
+
+describe("formatearDiaConSemana (HU-016)", () => {
+  it.each([
+    ["2026-10-05", "Lunes, 5 de octubre"],
+    ["2026-10-07", "Miércoles, 7 de octubre"],
+    ["2026-11-01", "Domingo, 1 de noviembre"],
+  ])("%s se ve %s", (fecha, esperado) => {
+    // Según la versión de ICU puede ir o no la coma: se compara sin ella.
+    expect(formatearDiaConSemana(fecha).replace(",", "")).toBe(esperado.replace(",", ""));
+  });
+
+  it("rechaza lo que no es un día", () => {
+    expect(() => formatearDiaConSemana("2026-02-30")).toThrow(RangeError);
   });
 });
 

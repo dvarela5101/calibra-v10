@@ -506,6 +506,11 @@ isOneToOne: true
 "fecha_limite_pago":
 { Args: { "p_inicio": string }; Returns: string
                            },
+"fechas_libres_de_materia":
+{ Args: { "p_codigo_materia": string,"p_semanas": number }; Returns: {
+              "duracion_min": number,"fecha": string,"hora": string,"id_franja": string,"id_monitor": string,"nombre_monitor": string,"precio": number,"presencial": boolean
+            }[]
+                           },
 "fin_programado":
 { Args: { "p_duracion_min": number,"p_inicio": string }; Returns: string
                            },
