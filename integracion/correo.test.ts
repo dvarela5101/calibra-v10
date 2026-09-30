@@ -75,7 +75,8 @@ const REMITENTE = "Calibra <no-responder@calibra.test>";
 
 /**
  * Siempre Mailpit, sin pasar por `elegirProveedor(process.env)`: si quien corre las pruebas tiene una
- * RESEND_API_KEY en su entorno, esa función elegiría Resend y las pruebas mandarían correo de verdad.
+ * RESEND_API_KEY o variables SMTP en su entorno, esa función elegiría Resend o Gmail y las pruebas
+ * mandarían correo de verdad.
  */
 const porMailpit = () => ({ ok: true, proveedor: crearProveedorMailpit({ url: mailpit, remitente: REMITENTE }) }) as const;
 
@@ -102,7 +103,7 @@ async function filaDe(plantilla: Plantilla, entidad: string) {
 }
 
 describe("el entorno local envía por Mailpit", () => {
-  it("sin RESEND_API_KEY, y con MAILPIT_URL local, el proveedor es Mailpit", () => {
+  it("sin RESEND_API_KEY ni SMTP, y con MAILPIT_URL local, el proveedor es Mailpit", () => {
     expect(elegirProveedor({ MAILPIT_URL: mailpit })).toMatchObject({ ok: true, proveedor: { nombre: "mailpit" } });
   });
 });
@@ -320,6 +321,7 @@ describe("la puerta del servidor: enviarCorreoDesdeServidor", () => {
 
   it("con el entorno local (Mailpit, sin llave de Resend) manda el correo y lo anota", async () => {
     vi.stubEnv("RESEND_API_KEY", "");
+    vi.stubEnv("SMTP_CONTRASENA", ""); // sin contraseña no hay SMTP (HU-066): nunca sale correo de verdad
     vi.stubEnv("CORREO_REMITENTE", "");
     vi.stubEnv("MAILPIT_URL", mailpit);
     const para = destinatarioNuevo();
@@ -334,6 +336,7 @@ describe("la puerta del servidor: enviarCorreoDesdeServidor", () => {
 
   it("sin ningún proveedor configurado no manda nada, no lanza y deja el correo fallido a la vista del admin", async () => {
     vi.stubEnv("RESEND_API_KEY", "");
+    vi.stubEnv("SMTP_CONTRASENA", ""); // sin contraseña no hay SMTP (HU-066): nunca sale correo de verdad
     vi.stubEnv("CORREO_REMITENTE", "");
     vi.stubEnv("MAILPIT_URL", "");
     const para = destinatarioNuevo();

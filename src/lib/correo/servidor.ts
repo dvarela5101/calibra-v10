@@ -10,7 +10,8 @@ import { crearRegistroDeEnvios } from "./registro";
  * `enviarCorreo` con el registro de la base (llave secreta) y con el proveedor que diga el entorno.
  * Es solo de servidor: la llave del proveedor nunca llega al navegador.
  *
- * Variables de entorno (ver `.env.example`): `RESEND_API_KEY` y `CORREO_REMITENTE` en producción,
+ * Variables de entorno (ver `.env.example`): `SMTP_*` y `CORREO_REMITENTE` en producción (Gmail, D-1),
+ * o `RESEND_API_KEY` cuando haya dominio,
  * `MAILPIT_URL` en local, y `SITIO_URL` para armar los enlaces de los correos.
  */
 export async function enviarCorreoDesdeServidor<P extends Plantilla>(entrada: EntradaDeEnvio<P>): Promise<ResultadoEnvio> {
