@@ -140,6 +140,14 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 - `siguiente` solo admite rutas internas ya normalizadas (`rutaSiguiente`, y un CHECK en la base): `/.//otro.sitio` termina en `/`.
 - El origen del Lead es la campaña con la que llegó el visitante (`?utm_campaign=...`). `OrigenDeCampana` la guarda en la cookie `calibra_origen` por 30 días.
 
+## Monitores y fechas libres
+
+`/monitores?materia=CODIGO` (HU-016, D-4, D-5): los monitores certificados en la materia y sus fechas libres de las próximas 4 semanas (`SEMANAS_DEL_HORIZONTE`), con hora, duración, modalidad y precio. Sin materia, o con un código que no existe, el visitante la elige. Los enlaces a esta lista se arman con `rutaDeMonitores(codigo)`.
+
+- Las fechas las calcula la base: `public.fechas_libres_de_materia(codigo, semanas)` (security invoker) llama a `privado.fechas_libres_de_materia`, que es security definer porque nadie fuera del servidor lee `monitoria` y la primera página de un visitante corre sin sesión (rol `anon`). Devuelve solo lo público: nunca el contacto ni la llave del monitor, ni el lugar o el enlace de la franja.
+- `privado.fecha_libre(franja, fecha, ahora)` es la regla única de "esta fecha se puede agendar": el día de la franja, abierta en esa fecha (HU-015), la antelación de 3 h del motor de plazos (P-40, borde incluido), sin monitoría que no esté cancelada (RN-33) y con el monitor activo. La reserva (HU-017) debe usar la misma.
+- Se ordena por la fecha libre más próxima de cada monitor y luego por nombre. Las fechas todavía no se agendan desde aquí: eso llega con HU-017.
+
 ## Franjas del monitor
 
 `/monitor/franjas` (HU-015): el monitor certificado abre franjas semanales (día, hora, duración, precio y modalidad, con lugar o enlace de videollamada), las edita y las cierra desde una fecha. Las reglas (P-30, P-31) las aplica el trigger `privado.validar_franja_del_monitor` a toda escritura que no sea de confianza, y `src/lib/franjas/reglas.ts` da los mismos mensajes antes de ir a la base.

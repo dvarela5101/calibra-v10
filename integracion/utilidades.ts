@@ -214,6 +214,56 @@ export class Fixtures {
     return { materia, evaluacion };
   }
 
+  /** Materia sola, con un código único (HU-016). */
+  async crearMateria(nombre = "Materia de prueba") {
+    const materia = exito(
+      await this.admin.from("materia").insert({ nombre, codigo: `INT-${randomUUID().slice(0, 12)}` }).select().single(),
+      "insertar materia",
+    );
+    this.materias.push(materia.id);
+    return materia;
+  }
+
+  /**
+   * Franja de un monitor (HU-016). Por defecto, presencial de 60 min a $ 25.000, abierta desde hoy; con
+   * `abiertaDesde` y `cerradaDesde` se prueban la apertura y el cierre (HU-015).
+   */
+  async crearFranja(datos: {
+    idMonitor: string;
+    dia: number;
+    hora?: string;
+    duracionMin?: number;
+    presencial?: boolean;
+    precio?: number;
+    lugar?: string | null;
+    enlace?: string | null;
+    abiertaDesde?: string;
+    cerradaDesde?: string | null;
+  }) {
+    const presencial = datos.presencial ?? true;
+    const franja = exito(
+      await this.admin
+        .from("franja")
+        .insert({
+          id_monitor: datos.idMonitor,
+          dia: datos.dia,
+          hora: datos.hora ?? "10:00",
+          duracion_min: datos.duracionMin ?? 60,
+          presencial,
+          precio: datos.precio ?? 25_000,
+          lugar: datos.lugar ?? (presencial ? "Salón de prueba" : null),
+          enlace: datos.enlace ?? (presencial ? null : "https://meet.example/prueba"),
+          ...(datos.abiertaDesde ? { abierta_desde: datos.abiertaDesde } : {}),
+          cerrada_desde: datos.cerradaDesde ?? null,
+        })
+        .select()
+        .single(),
+      "insertar franja",
+    );
+    this.franjas.push(franja.id);
+    return franja;
+  }
+
   async crearCertificado(datos: { idMonitor: string; idMateria: string; idAdmin: string }) {
     return exito(
       await this.admin
@@ -273,7 +323,7 @@ export class Fixtures {
   /** Una monitoría de ese contexto en un lunes. `realizada` exige fecha de finalización. */
   async crearMonitoria(
     contexto: Awaited<ReturnType<Fixtures["crearContextoDeMonitoria"]>>,
-    datos: { fecha: string; estado?: "pendiente_pago" | "confirmada" | "realizada"; fechaFinalizacion?: string },
+    datos: { fecha: string; estado?: "pendiente_pago" | "confirmada" | "realizada" | "cancelada"; fechaFinalizacion?: string },
   ) {
     const monitoria = exito(
       await this.admin
@@ -287,6 +337,8 @@ export class Fixtures {
           valor_total: 25_000,
           estado: datos.estado ?? "confirmada",
           fecha_finalizacion: datos.fechaFinalizacion ?? null,
+          // Una cancelada lleva su motivo (restricción de la tabla).
+          motivo_cancelacion: datos.estado === "cancelada" ? "estudiante" : null,
         })
         .select()
         .single(),

@@ -1,4 +1,7 @@
+import Link from "next/link";
+import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
+import { rutaDeMonitores } from "@/lib/disponibilidad/reglas";
 import styles from "./page.module.css";
 
 export default function Inicio() {
@@ -14,6 +17,10 @@ export default function Inicio() {
         </h2>
         <p>Muy pronto podrás tomar el diagnóstico y agendar tu monitoría desde aquí.</p>
       </section>
+      {/* HU-016 (D-4): la lista de monitores ya existe, aunque todavía no se agende desde ella. */}
+      <Link href={rutaDeMonitores()} className={formulario.enlace}>
+        Ver monitores certificados
+      </Link>
     </Pantalla>
   );
 }
