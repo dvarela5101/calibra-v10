@@ -54,6 +54,12 @@ jobs:
       - name: Pruebas unitarias (Vitest)
         run: npm test
 
+      # HU-005: valida el banco de preguntas (contenido/) sin base de datos y falla si tiene errores. Corre en
+      # todo push y PR, no solo cuando cambia contenido/: tarda segundos y también atrapa un cambio del
+      # convertidor que rompa el banco real.
+      - name: Banco de preguntas (convertidor --dry-run)
+        run: npm run contenido:validar
+
       # Supabase local (Postgres, Auth, REST, Storage y Mailpit) con las migraciones aplicadas.
       - name: Levantar Supabase local
         run: npm run db:iniciar

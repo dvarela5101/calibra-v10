@@ -331,6 +331,15 @@ El banco de preguntas ([HU-005](backlog/HU-005.md)) se hace después. Para que e
 | D-5 | Antes de agendar, una franja presencial solo dice "Presencial": el lugar llega con la cita confirmada (HU-019), como el enlace de una virtual. | [HU-016](backlog/HU-016.md), [HU-019](backlog/HU-019.md) |
 | D-6 | El nombre del monitor se muestra como lo escribió al registrarse. Que los estudiantes lo vean se dirá en el aviso de privacidad y en el registro del monitor, en una HU aparte. | [HU-016](backlog/HU-016.md), [HU-069](backlog/HU-069.md) |
 
+Esa noche dvarela5101 y Juzou04 empezaron HU-005 en persona y decidieron cómo migrar el banco del prototipo:
+
+| # | Decisión | HUs |
+|---|---|---|
+| D-12 | Una Evaluación queda activa si cada habilidad de sus temas tiene al menos 3 preguntas revisadas en al menos 2 dificultades. La meta de misconcepciones (cada una ofrecida como trampa en 2 preguntas revisadas) se reporta pero no decide. Con el banco migrado quedan activas Física II e Introducción a la Programación. | [HU-005](backlog/HU-005.md), [HU-060](backlog/HU-060.md) |
+| D-13 | Una opción incorrecta puede llevar, después de su misconcepción, un texto de error propio (`· [signo-partes] texto`). Sin él vale el de la misconcepción. El prototipo lo usa en 123 de las 153 opciones incorrectas de Cálculo Integral, y así no se pierde. Como la misconcepción, solo lo ve el servidor. | [HU-005](backlog/HU-005.md), [HU-060](backlog/HU-060.md), [HU-061](backlog/HU-061.md) |
+| D-14 | Los 39 borradores de Cálculo Integral (no 41) migran como `borrador · origen: ia (desconocido)`. Una pregunta de origen IA necesita su solución para pasar a `revisada`; mientras es borrador, que le falte es solo un aviso. | [HU-005](backlog/HU-005.md), [HU-061](backlog/HU-061.md) |
+| D-15 | Cada materia migra con una Evaluación, la de su `contexto` en el prototipo, y la semana sale del programa del curso más reciente que se encontró: Álgebra Lineal parcial 1 en la semana 6, Cálculo Diferencial parcial 1 en la 5, Cálculo Integral parcial 2 en la 8, Cálculo Vectorial parcial 1 en la 7, Física I parcial 1 en la 7, Física II parcial 1 en la 5, Introducción a la Programación examen de nivel 2 en la 8 y Probabilidad y Estadística parcial 1 en la 7. Las fuentes están en `scripts/contenido/migrar-prototipo.mts`. La semana cambia entre secciones y semestres, y se corrige con un PR en el `materia.md` de cada materia. La de Física II es dudosa: el único programa público (2022-2) usa el código FISI-1028, no FISI-1019, y su parcial 1 es de termodinámica, un tema que el banco no tiene. | [HU-005](backlog/HU-005.md) |
+
 ## 5. Cortes propuestos
 
 | Corte | Prioridad | HUs | Tallas | Qué cubre |
