@@ -572,7 +572,7 @@ test.describe("D-8 · un Lead con una reserva por pagar no aparta otra fecha", (
 // La reserva es privada, y lo que no se puede confirmar se dice
 // ---------------------------------------------------------------------------
 test.describe("Reserva privada · solo la ve quien la apartó", () => {
-  test("otra sesión, quien no tiene sesión y un id que no existe reciben la página 404 de Next", async ({ page, escenario, otroContexto }) => {
+  test("otra sesión, quien no tiene sesión y un id que no existe reciben la página 404", async ({ page, escenario, otroContexto }) => {
     const fecha = sumarDias(hoy(), 2);
     const { materia, monitor, franja } = await montar(escenario, fecha);
 
@@ -587,7 +587,7 @@ test.describe("Reserva privada · solo la ve quien la apartó", () => {
     const sinPagina = async (otra: Page, ruta: string, donde: string) => {
       const respuesta = await otra.goto(ruta);
       expect(respuesta?.status(), `${donde}: debía responder 404`).toBe(404);
-      await expect(otra.getByText("This page could not be found.")).toBeVisible(ESPERA);
+      await expect(otra.getByRole("heading", { level: 1, name: "No encontramos esta página" })).toBeVisible(ESPERA);
       await expect(otra.getByRole("heading", { name: "Apartamos tu fecha" })).toHaveCount(0);
       const html = await otra.content();
       for (const privado of [materia.nombre, monitor.nombre, "Apartamos tu fecha"]) {

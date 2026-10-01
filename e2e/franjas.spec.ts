@@ -345,6 +345,7 @@ test.describe("Las franjas son de cada monitor", () => {
 
     const respuesta = await page.goto(`/monitor/franjas/${ajena}`);
     expect(respuesta?.status()).toBe(404);
+    await expect(page.getByRole("heading", { level: 1, name: "No encontramos esta página" })).toBeVisible();
     await expect(page.getByLabel("Precio por persona (pesos)")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Cerrar la franja" })).toHaveCount(0);
   });
