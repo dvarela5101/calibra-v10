@@ -1,10 +1,9 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-01 03:08. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-01 03:20. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
-| [HU-005](backlog/HU-005.md) | [Técnica] Banco de preguntas por habilidades: formato, migración, validación y carga | Backlog | P0 | L | HU-002 |
 | [HU-009](backlog/HU-009.md) | [Visitante] Tomar el diagnóstico sin iniciar sesión | Backlog | P0 | L | HU-004, HU-005, HU-060 |
 | [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | Backlog | P0 | S | HU-009 |
 | [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | Backlog | P0 | L | HU-021, HU-009 |
@@ -54,6 +53,7 @@ _Generado automaticamente: 2026-10-01 03:08. No editar a mano; usa `scripts/back
 | [HU-027](backlog/HU-027.md) | [Sistema] Expirar reservas sin comprobante a los 10 minutos | Lista | P0 | S | HU-017 |
 | [HU-028](backlog/HU-028.md) | [Admin] Ejecutar desembolsos a monitores | Lista | P0 | M | HU-023, HU-020 |
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | Lista | P0 | M | HU-019 |
+| [HU-005](backlog/HU-005.md) | [Técnica] Banco de preguntas por habilidades: formato, migración, validación y carga | En progreso | P0 | L | HU-002 |
 | [HU-016](backlog/HU-016.md) | [Lead] Ver los monitores certificados de una materia y sus fechas libres | En revision | P0 | M | HU-014, HU-015 |
 | [HU-068](backlog/HU-068.md) | [Visitante] Dejar mi contacto al agendar y quedar como Lead | En revision | P0 | M | HU-004, HU-006, HU-008 |
 | [HU-062](backlog/HU-062.md) | [Aspirante a monitor] Pedir la certificación de una materia dejando mis datos | En revision | P1 | M | HU-008, HU-012 |
