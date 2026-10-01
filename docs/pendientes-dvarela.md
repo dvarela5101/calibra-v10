@@ -24,6 +24,11 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [x] **HU-014, certificar monitores** ([PR #13](https://github.com/dvarela5101/calibra-v10/pull/13)): aprobada el 30-sep.
 - [x] **HU-068, contacto al agendar.** Aprobada el 30-sep. Las decisiones que quedaron abiertas están en A2.
 - [x] **HU-016, HU-017, HU-021, HU-023, HU-059, HU-062 y HU-067**: aprobadas entre el 30-sep y el 1-oct.
+- [ ] **Por aprobar (sacadas el 1-oct en la noche):**
+  - [HU-069](../backlog/HU-069.md): abre `/privacidad` (sección "Si eres monitor" y la fecha de actualización) y un enlace de invitación de monitor (ayuda junto al nombre).
+  - [HU-071](../backlog/HU-071.md): abre cualquier ruta que no exista, por ejemplo `/algo`.
+  - [HU-051](../backlog/HU-051.md): `npm run test:integracion -- avisos` y mira los correos en http://127.0.0.1:54324. En la nube necesita la sección C (Vault y `CRON_SECRETO`). Tiene un supuesto técnico en su registro.
+  - [HU-054](../backlog/HU-054.md): entra como admin a `/admin/equipo` (enlace "Equipo de admins" en la bandeja). Tiene cuatro supuestos de seguridad en su registro para que los confirmes.
 - [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
 ### A2. Decisiones de las HUs recientes
@@ -95,7 +100,7 @@ Todavía no. Se hace una sola vez, cuando el flujo principal esté listo, y lo g
   - en Supabase, guárdalo en **Vault** (panel del proyecto, **Integrations**, **Vault**; mejor que el SQL Editor, que guarda el historial de consultas) con el nombre `calibra_cron_secreto`;
   - en Vault, también la dirección del sitio con el nombre `calibra_sitio_url`: la de producción, con `https://` y sin barra al final (por ejemplo `https://calibra.vercel.app`). Tiene que ser la dirección final, sin redirecciones ni protección de despliegue de Vercel, o la llamada fallaría.
   Desde ahí, cada 10 minutos la base le pide a la app que reintente los correos que fallaron por algo temporal, durante 24 horas. Con lo mismo salen los avisos al monitor de HU-051 (cita confirmada y cancelación del estudiante): sin esto, no salen. Sin esto no se reintentan solos. Los que fallan de forma definitiva, o agotan las 24 horas, el admin los ve en su bandeja en "Correos que no salieron".
-- [ ] **Admins reales:** la lista de admins y su orden de revisión.
+- [ ] **Admins reales:** la lista de admins y su orden de revisión. Hoy se crean con SQL; después el orden se cambia y se desactiva desde `/admin/equipo` (HU-054). Invitar admins desde la app es [HU-072](../backlog/HU-072.md), en Backlog con tres preguntas para ti.
 - [ ] **CAPTCHA (HU-058), deuda técnica (D-18):** HU-058 se construye con las llaves de prueba de Cloudflare Turnstile. Antes de salir hay que crear las llaves reales (gratis, en el panel de Cloudflare) y cargarlas: la del sitio y la secreta en Vercel, y la secreta en Supabase Auth (**Authentication**, **Attack Protection**, CAPTCHA). Con las de prueba en producción, el CAPTCHA no protege nada.
 - [ ] **Datos del prototipo:** decidir si los diagnósticos viejos se importan como históricos. Los leads del prototipo no se migran como contactables (no tenían autorización de datos).
 - [ ] **Publicar** en el repo real de Calibra y archivar el repo temporal.

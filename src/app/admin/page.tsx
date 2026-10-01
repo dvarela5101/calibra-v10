@@ -47,6 +47,9 @@ export default async function PanelAdmin() {
       <Link href="/admin/solicitudes" className={formulario.enlace}>
         Solicitudes para ser monitor
       </Link>
+      <Link href="/admin/equipo" className={formulario.enlace}>
+        Equipo de admins
+      </Link>
       <BotonSalir />
     </Pantalla>
   );

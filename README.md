@@ -112,6 +112,15 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 - El tiempo restante de un pago sale del motor de plazos (HU-003) y respeta el borde inclusivo de P-40.
 - Cada sección se vuelve accionable cuando llegan HU-020 (pagos), HU-026 (reembolsos), HU-030 (reportes) y HU-028 (desembolsos).
 
+## Equipo de admins
+
+`/admin/equipo` (HU-054, enlazada desde la bandeja): el equipo de admins en su orden de revisión (RN-07), con quién está activo y cuántos casos abiertos tiene. Un admin sube o baja a otro un puesto y desactiva a otro (RN-23), con confirmación.
+
+- `public.equipo_de_admins()` y `public.mover_admin(id, direccion)` (invoker, con la sesión) sobre funciones definer de `privado` que exigen un admin activo: a cualquier otro, el equipo le llega vacío y mover responde `sin_permiso`. Mover intercambia el orden con el vecino en una sola sentencia (la llave única es diferible).
+- El turno es `privado.siguiente_admin_activo(id)`: el admin activo que sigue en el orden, volviendo al primero, saltándose a los desactivados. Lo deben usar la asignación y el escalamiento de pagos (HU-018, HU-020).
+- Desactivar pasa por `desactivarCuenta()` (`src/lib/auth/cuentas.ts`): primero `public.reasignar_casos_de_admin(id)` (solo `service_role`) pasa sus reembolsos activos y reportes en revisión al siguiente activo (P-44), y después lo banea en Auth. Si la reasignación falla, no se desactiva. Sus certificados y revisiones se conservan.
+- Nadie se desactiva a sí mismo y el equipo nunca se queda sin admins activos (`src/lib/admin/equipo-reglas.ts`). Agregar admins aún no tiene pantalla: [HU-072](backlog/HU-072.md).
+
 ## Certificados de monitor
 
 `/admin/certificados` (HU-014): después de la evaluación presencial (P-19), el admin certifica al monitor en una materia con la fecha de esa evaluación. El certificado no vence, y es uno por monitor y materia (RN-21). El monitor ve sus materias certificadas en `/monitor`, y con al menos una puede abrir franjas.

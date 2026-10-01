@@ -661,6 +661,11 @@ isOneToOne: true
 "desembolso_ejecutable":
 { Args: { "p_ahora": string,"p_fin_programado": string }; Returns: boolean
                            },
+"equipo_de_admins":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "activo": boolean,"casos_abiertos": number,"correo": string,"id": string,"nombre": string,"orden_revision": number
+            }[]
+                           },
 "fecha_limite_diferencia":
 { Args: { "p_inicio": string }; Returns: string
                            },
@@ -697,6 +702,9 @@ isOneToOne: true
 "monto_neto":
 { Args: { "p_monto_bruto": number }; Returns: number
                            },
+"mover_admin":
+{ Args: { "p_direccion": string,"p_id": string }; Returns: string
+                           },
 "parametros_comision":
 { Args: Record<PropertyKey, never>; Returns: {
               "comision_porcentaje": number,"comision_tope": number
@@ -714,6 +722,9 @@ isOneToOne: true
                            },
 "plazo_alcanzado":
 { Args: { "p_ahora": string,"p_desde": string }; Returns: boolean
+                           },
+"reasignar_casos_de_admin":
+{ Args: { "p_id_admin": string }; Returns: number
                            },
 "registrar_lead":
 { Args: { "p_acepta_contacto": boolean,"p_correo": string,"p_fecha_consentimiento": string,"p_id_sesion": string,"p_nombre": string,"p_numero_telefono": string,"p_origen": string }; Returns: string
