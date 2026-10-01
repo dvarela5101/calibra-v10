@@ -96,7 +96,10 @@ test.describe("Criterio 4 · no hay autorregistro", () => {
   test("/ingresar no ofrece crear una cuenta de monitor", async ({ page }) => {
     await page.goto("/ingresar");
     await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible(ESPERA);
-    await expect(page.getByRole("link", { name: /monitor|crear.*cuenta|registr/i })).toHaveCount(0);
+    // El pie lleva "Quiero ser monitor" (HU-062), que pide la certificación y no crea una cuenta.
+    await expect(page.getByRole("main").getByRole("link", { name: /monitor/i })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /crear.*cuenta|registr/i })).toHaveCount(0);
+    await expect(page.locator('a[href*="/monitores/registro"]')).toHaveCount(0);
   });
 });
 

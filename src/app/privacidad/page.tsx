@@ -31,6 +31,9 @@ export default async function AvisoPrivacidad() {
             <li>Tus respuestas y el resultado de cada diagnóstico que tomes.</li>
             <li>Tu nombre, tu correo y, si quieres darlo, tu teléfono, cuando dejas tu contacto.</li>
             <li>El nombre y el contacto de quien paga una monitoría, y el comprobante de pago.</li>
+            <li>
+              Si quieres ser monitor: tu nombre, tu teléfono, tu correo y las materias en las que quieres certificarte.
+            </li>
           </ul>
         </section>
 
@@ -44,6 +47,7 @@ export default async function AvisoPrivacidad() {
             </li>
             <li>Agendar tus monitorías, revisar tus pagos y tramitar reembolsos.</li>
             <li>Escribirte sobre tus citas, pagos y reembolsos.</li>
+            <li>Si pediste ser monitor, contactarte para agendar y hacer tu evaluación presencial.</li>
             <li>Enviarte novedades y ofertas, solo si lo autorizas aparte. Esa autorización es opcional.</li>
           </ul>
         </section>
@@ -94,6 +98,7 @@ export default async function AvisoPrivacidad() {
             <li>
               Tu contacto: hasta que retires tu autorización o después de 24 meses sin actividad.
             </li>
+            <li>Tu solicitud para ser monitor: igual que tu contacto, hasta que retires tu autorización o después de 24 meses sin actividad.</li>
             <li>Tus diagnósticos: se conservan mientras se conserve la sesión o el contacto al que pertenecen.</li>
             <li>Comprobantes de pago: 5 años.</li>
           </ul>

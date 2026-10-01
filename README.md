@@ -120,6 +120,15 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 - Los certificados de un admin desactivado siguen vigentes (RN-23).
 - Las materias reales llegarán con el banco de preguntas (HU-005) o con la gestión de materias (HU-055). Mientras tanto (D-2), la semilla local trae tres de prueba: MATE-1214, MATE-1207 y FISI-1018.
 
+## Solicitudes para ser monitor
+
+`/quiero-ser-monitor` (HU-062, P-19): quien quiere ser monitor deja su nombre, su teléfono, su correo y las materias en las que quiere certificarse, con la autorización de datos (RN-13). Se llega desde el pie de cualquier página. Está fuera del grupo `(publico)`, así que no crea una sesión anónima de estudiante.
+
+- La solicitud la guarda el servidor con la llave secreta, con `crear_solicitud_monitor()`, que guarda la solicitud y sus materias en una sola transacción. Si falta un dato, el correo no sirve o no hay autorización, no se guarda nada. Ninguna sesión inserta directo. El correo solo admite letras, dígitos y `. _ % + ' -` antes de la arroba, y un dominio de letras, dígitos, guiones y puntos (en el `mailto:` del admin, un `?` sería un parámetro).
+- Como el formulario no pide sesión, tiene tres frenos contra los envíos masivos. Si la persona ya tiene una solicitud abierta (nueva o contactada) con el mismo correo o teléfono, se le devuelve esa y no se crea otra. Entre todos no se crean más de 30 solicitudes por hora: las creaciones van de a una (un candado) y la siguiente recibe el error 54000, con un mensaje que pide intentarlo en una hora. Y un campo trampa (`sitio_web`), fuera de la vista y del teclado, hace que lo que envíe un programa reciba la misma respuesta sin que se guarde nada.
+- `/admin/solicitudes` las muestra de la más antigua a la más nueva, por páginas de 50 (`?pagina=2`). Sin `?pagina=` redirige a la página de la solicitud abierta más antigua (o a la última, si no hay abiertas), para que lo pendiente quede a la vista; la columna generada `abierta` dice cuáles lo están. El orden no depende del estado, así que al marcar una solicitud ninguna cambia de lugar. El admin las marca como contactada, evaluada o descartada, a su nombre. Solo un admin activo las lee y les cambia el estado; nadie más lee ninguna, ni quien la envió. Si la evaluación sale bien, el admin invita al aspirante (`/admin/monitores`, HU-013) y lo certifica (`/admin/certificados`, HU-014).
+- El aviso de privacidad (`/privacidad`) dice qué datos se piden y para qué. Las solicitudes siguen la misma retención que el contacto (P-13); borrarlas cuando toque va con el proceso de retención.
+
 ## Contacto al agendar
 
 `/agendar/contacto?siguiente=/ruta` (HU-068, D-3): el diagnóstico es opcional, así que quien va a agendar sin ser Lead deja aquí nombre, correo, teléfono opcional y su autorización de datos (HU-008). Al terminar vuelve a `siguiente`. Quien ya es Lead sigue de largo; con `&editar=1` cambia sus datos.

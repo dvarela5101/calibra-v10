@@ -1,0 +1,132 @@
+/* Solicitudes para ser monitor (HU-062). Colores solo de tokens.css; ningún texto por debajo de 14 px. */
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-block: var(--e3) var(--e4);
+  list-style: none;
+}
+
+.solicitud {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  padding: var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+.encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+}
+
+.nombre {
+  font-size: 18px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.estado {
+  padding: 2px var(--e2);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+.estado[data-estado="nueva"] {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.dato {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.contacto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e1) var(--e3);
+}
+
+.enlace {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--toque-min);
+  font-size: 16px;
+  color: var(--primary);
+  overflow-wrap: anywhere;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+}
+
+.botonEstado {
+  min-block-size: var(--toque-min);
+  padding-inline: var(--e3);
+  font: inherit;
+  font-size: 15px;
+  color: var(--primary);
+  background: transparent;
+  border: 1px solid var(--primary);
+  border-radius: var(--r);
+  cursor: pointer;
+}
+
+/* El estado que ya tiene la solicitud. */
+.botonEstado[aria-pressed="true"] {
+  font-weight: 600;
+  color: #fff;
+  background: var(--primary);
+}
+
+/* Mientras se envía: sigue enfocable (un botón deshabilitado pierde el foco), pero no envía otra vez. */
+.botonEstado[aria-disabled="true"] {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.botonEstado:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.error,
+.exito {
+  inline-size: 100%;
+  font-size: 15px;
+}
+
+.error {
+  color: var(--alert-text);
+}
+
+.exito {
+  color: var(--success-text);
+}
+
+.paginas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--e3);
+  margin-block-end: var(--e4);
+}
+
+.vacio {
+  margin-block: var(--e3);
+  font-size: 16px;
+  color: var(--muted);
+}
