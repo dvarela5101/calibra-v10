@@ -1,4 +1,5 @@
 import "server-only";
+import { reconstruirAvisoCancelada, reconstruirAvisoConfirmada } from "@/lib/avisos/servidor";
 import { reconstruirVerificacion } from "@/lib/leads/servidor";
 import { reconstruirInvitacion } from "@/lib/monitores/servidor";
 import type { Reconstructores } from "./reintentos";
@@ -11,6 +12,8 @@ import type { Reconstructores } from "./reintentos";
 export const RECONSTRUCTORES: Reconstructores = {
   invitacion_monitor: (entidad) => reconstruirInvitacion(entidad),
   verificacion_lead: (entidad) => reconstruirVerificacion(entidad),
+  aviso_monitor_confirmada: (entidad) => reconstruirAvisoConfirmada(entidad),
+  aviso_monitor_cancelada: (entidad) => reconstruirAvisoCancelada(entidad),
   // Todavía ninguna HU dispara estas plantillas.
   recuperacion_diagnostico: null,
   resena_individual: null,

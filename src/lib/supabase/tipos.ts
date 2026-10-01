@@ -18,6 +18,31 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"aviso_monitor": {
+                  Row: {
+                    "creado_en": string,"evento": string,"id": string,"id_monitoria": string,"intentos": number,"procesado_en": string | null
+                  }
+                  Insert: {
+                    "creado_en"?: string,"evento": string,"id"?: string,"id_monitoria": string,"intentos"?: number,"procesado_en"?: string | null
+                  }
+                  Update: {
+                    "creado_en"?: string,"evento"?: string,"id"?: string,"id_monitoria"?: string,"intentos"?: number,"procesado_en"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "aviso_monitor_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: false
+      referencedRelation: "monitoria"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "aviso_monitor_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: false
+      referencedRelation: "monitoria_plazos"
+      referencedColumns: ["id_monitoria"]
+    }
+                  ]
                 },"certificado": {
                   Row: {
                     "fecha_emision": string,"fecha_evaluacion": string,"id": string,"id_admin": string,"id_materia": string,"id_monitor": string
@@ -621,6 +646,11 @@ isOneToOne: true
                            },
 "cumple_antelacion":
 { Args: { "p_ahora": string,"p_es_grupal": boolean,"p_inicio": string }; Returns: boolean
+                           },
+"datos_de_aviso_monitor":
+{ Args: { "p_id_monitoria": string }; Returns: {
+              "correo_monitor": string,"duracion_min": number,"estado": Database["public"]['Enums']["estado_monitoria"],"grupal": boolean,"inicio": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_estudiante": string,"nombre_materia": string,"nombre_monitor": string,"presencial": boolean
+            }[]
                            },
 "dentro_de_plazo":
 { Args: { "p_ahora": string,"p_limite": string }; Returns: boolean

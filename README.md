@@ -177,6 +177,15 @@ Cada fecha libre de `/monitores` lleva a `/agendar?franja=…&fecha=…&materia=
 - Cierre automático (P-05, D-14): pg_cron corre cada 15 minutos `privado.cerrar_monitorias_sin_finalizar(now())`, que cierra cada individual confirmada que alcanzó `public.cierre_automatico_desde(fin programado)` = fin + `cierre_automatico_min` (24 h, en `parametros_negocio()`). Las grupales no se cierran solas (su monitor entrega el enlace de reseña, HU-046).
 - El desembolso al pasar a `realizada` es de HU-028; el correo de reseña individual, de HU-035.
 
+## Avisos al monitor
+
+HU-051 (D-16): el monitor recibe un correo cuando una monitoría individual suya queda `confirmada` (fecha y hora en Bogotá, duración, materia, modalidad y el nombre del estudiante, nunca su contacto, P-37) y cuando el estudiante cancela una confirmada. Las reservas por pagar y las que vencen sin pago no se avisan. Sale aunque el cambio de estado lo haga otra HU (HU-018 confirma, HU-024 cancela).
+
+- El trigger `monitoria_anota_aviso_monitor` (`privado.anotar_aviso_monitor`, definer) anota el aviso en `public.aviso_monitor` en la misma transacción del cambio de estado. Solo individuales y solo dos transiciones: `pendiente_pago → confirmada` y `confirmada → cancelada` con motivo `estudiante`.
+- El mismo trigger llama `privado.disparar_avisos_monitor()`, que con pg_net hace un `POST` a `/api/procesos/avisar-monitores` (mismo secreto y mismas entradas de Vault que los reintentos de HU-065). pg_net lo envía al confirmarse la transacción, así que el correo sale en segundos. pg_cron repite el pedido cada 5 minutos si quedan avisos sin procesar. Si el pedido falla (Vault o pg_net), el trigger lo deja en un aviso del log y el cambio de estado sigue: nunca tumba una confirmación ni una cancelación.
+- Cada corrida toma hasta 10 avisos y deja de tomar pasados 20 s, como los reintentos. Un aviso que no se puede procesar (error de la base o de los datos) suma un intento en `aviso_monitor.intentos` y se abandona a los 5, para no tapar a los demás.
+- La ruta (`src/lib/avisos/servidor.ts`) lee los datos con `public.datos_de_aviso_monitor(id)` (solo `service_role`) y manda el correo con la entidad = id de la monitoría: la clave única de `correo_envio` impide mandarlo dos veces. Antes de mandarlo comprueba que el aviso siga valiendo: si la monitoría ya se canceló, el de confirmada no sale. Un correo que falla queda para los reintentos de HU-065, que lo reconstruyen desde la monitoría.
+
 ## Franjas del monitor
 
 `/monitor/franjas` (HU-015): el monitor certificado abre franjas semanales (día, hora, duración, precio y modalidad, con lugar o enlace de videollamada), las edita y las cierra desde una fecha. Las reglas (P-30, P-31) las aplica el trigger `privado.validar_franja_del_monitor` a toda escritura que no sea de confianza, y `src/lib/franjas/reglas.ts` da los mismos mensajes antes de ir a la base.
@@ -232,7 +241,7 @@ Los enlaces de los correos se arman con `urlDelSitio()` a partir de `SITIO_URL`.
 
 Si un correo falla por algo temporal (red, un 4xx de SMTP, un 5xx o el límite de ritmo de Resend, o el proveedor sin configurar), queda `fallido` con `reintentable = true`. Cada 10 minutos pg_cron corre `privado.disparar_reintento_correos()`, que con pg_net hace un `POST` a `/api/procesos/reintentar-correos` con `Authorization: Bearer <CRON_SECRETO>`. La ruta (`src/lib/correo/reintentos.ts`) toma los reintentables de las últimas 24 horas, reconstruye cada correo desde su entidad (`src/lib/correo/reconstructores.ts`) y lo vuelve a mandar con la misma clave. Lo definitivo, o lo que siguió fallando 24 horas, aparece en la bandeja del admin como "Correos que no salieron".
 
-- La base toma la dirección del sitio y el secreto de Vault (`calibra_sitio_url` y `calibra_cron_secreto`). Sin ellos no dispara nada, que es lo que pasa en local.
+- La base toma la dirección del sitio y el secreto de Vault (`calibra_sitio_url` y `calibra_cron_secreto`). Sin ellos no dispara nada, que es lo que pasa en local. Los avisos al monitor (HU-051) usan los mismos.
 - Toda plantilla que una HU empiece a disparar necesita su reconstructor: `pruebas/reconstructores.test.ts` falla si falta.
 - Se reintentan los fallidos temporales que llevan al menos 2 minutos quietos y los `pendiente` abandonados (su envío murió hace más de 5 minutos). Cada corrida toma hasta 10 y deja de tomar pasados 20 s, para terminar antes del límite de la función (60 s).
 - La invitación de monitor se reconstruye con un token nuevo, porque el token no se guarda: el enlace que no llegó deja de servir. Si el primer envío sí llegó y solo se perdió la respuesta, ese enlace también deja de servir; es raro y se acepta. Con Resend, además, el reintento repetiría la `Idempotency-Key` con otro contenido y Resend lo rechazaría (409, definitivo): al pasar a Resend hay que revisar este caso.
