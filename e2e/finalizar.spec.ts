@@ -12,16 +12,19 @@ import { enviarCredenciales, expect, test as base, type Cuenta } from "./utilida
 //
 // Cada entrada por /ingresar gasta cupo de Auth: cada prueba entra una vez y recorre sus pasos con `test.step`.
 //
-// La monitoría "de ayer" es la sesión de las 23:00 a las 24:00 de ayer: ya empezó a cualquier hora del día y su cierre
-// automático (fin programado + 24 h, D-14) cae a la medianoche de hoy a mañana, así que el cierre automático
-// (pg_cron, cada 15 minutos) nunca la cierra mientras corre la prueba.
+// Las confirmadas "que ya empezaron" empezaron hace 90 minutos (la fecha y la hora, del mismo instante en Bogotá; la
+// duración se recorta para no pasar de la medianoche). No son "de ayer" a propósito: pg_cron corre cada 15 minutos
+// `calibra-cerrar-monitorias`, que pasa a realizada toda individual confirmada cuyo fin programado + 24 h ya pasó
+// (D-14), también en la base local y en la de CI. Una confirmada de ayer o de días atrás podría cerrarse sola en
+// medio de la prueba y volverla intermitente; con inicio hace 90 minutos su cierre automático queda a más de 21 horas
+// a cualquier hora del día y el proceso no la toca. Lo mismo vale para cualquier otra confirmada pasada que se cree.
 
 const ESPERA = { timeout: 20_000 };
 const MINUTO_MS = 60_000;
 
-/** La sesión de ayer: de 23:00 a 24:00. */
-const HORA_DE_AYER = "23:00";
-const DURACION_DE_AYER_MIN = 60;
+/** Cuánto hace que empezó la sesión que ya se puede finalizar, y lo que dura (si no cruza la medianoche). */
+const HACE_MIN = 90;
+const DURACION_MAXIMA_MIN = 30;
 /** D-14: una individual sin finalizar se cierra sola 24 h después de su fin programado (`cierre_automatico_min`). */
 const CIERRE_AUTOMATICO_MIN = 1440;
 
@@ -46,14 +49,28 @@ function diaIso(fecha: string): number {
   return d === 0 ? 7 : d;
 }
 
-const ayer = () => sumarDias(hoy(), -1);
 /** La fecha de `semanas` semanas desde hoy: siempre futura si `semanas` es positiva. */
 const enSemanas = (semanas: number) => sumarDias(hoy(), 7 * semanas);
 
-/** Cuándo se cierra sola la sesión de ayer. Bogotá es UTC-5 todo el año (sin horario de verano). */
-function cierreAutomaticoDeAyer(): Date {
-  const inicio = new Date(`${ayer()}T${HORA_DE_AYER}:00-05:00`);
-  return new Date(inicio.getTime() + (DURACION_DE_AYER_MIN + CIERRE_AUTOMATICO_MIN) * MINUTO_MS);
+/** Una sesión de Bogotá: su fecha, su hora (`HH:MM`), cuánto dura y desde cuándo se cierra sola (D-14). */
+type Sesion = { fecha: string; hora: string; duracionMin: number; cierre: Date };
+
+/**
+ * La sesión que empezó hace 90 minutos, calculada una vez por prueba. Bogotá es UTC-5 todo el año (sin horario de
+ * verano), así que correr el reloj 5 horas da la fecha y la hora de pared sin depender de la zona de la máquina.
+ */
+function sesionQueYaEmpezo(): Sesion {
+  const inicioMs = Math.floor((Date.now() - HACE_MIN * MINUTO_MS) / MINUTO_MS) * MINUTO_MS;
+  const pared = new Date(inicioMs - 5 * 60 * MINUTO_MS).toISOString();
+  const minutosDelDia = Number(pared.slice(11, 13)) * 60 + Number(pared.slice(14, 16));
+  // La franja termina el mismo día (la regla de la base para franjas): si falta poco para la medianoche, se acorta.
+  const duracionMin = Math.min(DURACION_MAXIMA_MIN, 24 * 60 - minutosDelDia);
+  return {
+    fecha: pared.slice(0, 10),
+    hora: pared.slice(11, 16),
+    duracionMin,
+    cierre: new Date(inicioMs + (duracionMin + CIERRE_AUTOMATICO_MIN) * MINUTO_MS),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -197,16 +214,17 @@ const test = base.extend<{ escenario: Escenario }>({
 
 test.describe.configure({ mode: "default", timeout: 90_000 });
 
-/** Lo que tienen en común las pruebas: un monitor con la sesión de ayer (confirmada) y una confirmada de la próxima semana. */
-async function monitorConAyerYFutura(escenario: Escenario, nombreDeAyer = "Camila") {
+/** Lo que tienen en común las pruebas: un monitor con una confirmada que ya empezó y una confirmada de la próxima semana. */
+async function monitorConEmpezadaYFutura(escenario: Escenario, nombreDeLaEmpezada = "Camila") {
+  const sesion = sesionQueYaEmpezo();
   const materia = await escenario.materia();
   const monitor = await escenario.monitorCertificado(materia);
-  const franjaDeAyer = await escenario.franja(monitor, ayer(), { hora: HORA_DE_AYER, duracionMin: DURACION_DE_AYER_MIN, presencial: true });
+  const franjaEmpezada = await escenario.franja(monitor, sesion.fecha, { hora: sesion.hora, duracionMin: sesion.duracionMin, presencial: true });
   const franjaFutura = await escenario.franja(monitor, enSemanas(1), { hora: "14:30", duracionMin: 90, presencial: false });
-  const [leadDeAyer, leadFutura] = await Promise.all([escenario.lead(nombreDeAyer), escenario.lead("Daniela")]);
-  const idDeAyer = await escenario.confirmada(monitor, materia, franjaDeAyer, leadDeAyer, ayer());
+  const [leadEmpezada, leadFutura] = await Promise.all([escenario.lead(nombreDeLaEmpezada), escenario.lead("Daniela")]);
+  const idEmpezada = await escenario.confirmada(monitor, materia, franjaEmpezada, leadEmpezada, sesion.fecha);
   const idFutura = await escenario.confirmada(monitor, materia, franjaFutura, leadFutura, enSemanas(1));
-  return { materia, monitor, leadDeAyer, leadFutura, idDeAyer, idFutura };
+  return { sesion, materia, monitor, leadEmpezada, leadFutura, idEmpezada, idFutura };
 }
 
 // ---------------------------------------------------------------------------
@@ -240,18 +258,18 @@ async function expectTarjeta(zona: Locator, lead: Lead, renglones: string[]): Pr
   return tarjeta;
 }
 
-/** Los cinco renglones de la tarjeta de ayer en "Por finalizar". */
-function renglonesDeAyer(materia: Materia, lead: Lead): string[] {
+/** Los cinco renglones de la tarjeta de la que ya empezó, en "Por finalizar". */
+function renglonesDeLaEmpezada(materia: Materia, sesion: Sesion, lead: Lead): string[] {
   return [
-    `${formatearDiaConSemana(ayer())}, ${HORA_DE_AYER} a ${horaDeFin(HORA_DE_AYER, DURACION_DE_AYER_MIN)}`,
-    `${materia.nombre} · ${DURACION_DE_AYER_MIN} min · Presencial`,
+    `${formatearDiaConSemana(sesion.fecha)}, ${sesion.hora} a ${horaDeFin(sesion.hora, sesion.duracionMin)}`,
+    `${materia.nombre} · ${sesion.duracionMin} min · Presencial`,
     `Agendó: ${lead.nombre}`,
     "Confirmada · Pago aprobado",
-    `Si no la finalizas, se cierra sola el ${formatearFechaHora(cierreAutomaticoDeAyer())}.`,
+    `Si no la finalizas, se cierra sola el ${formatearFechaHora(sesion.cierre)}.`,
   ];
 }
 
-/** Los renglones de la confirmada de la próxima semana: la de ayer lleva uno más. */
+/** Los renglones de la confirmada de la próxima semana: la que ya empezó lleva uno más. */
 function renglonesDeLaFutura(materia: Materia, lead: Lead): string[] {
   return [
     `${formatearDiaConSemana(enSemanas(1))}, 14:30 a 16:00`,
@@ -281,11 +299,11 @@ const textoVisible = async (page: Page) => (await page.locator("body").innerText
 // Criterio 1 y D-15 · finalizar una monitoría que ya empezó
 // ---------------------------------------------------------------------------
 test.describe("Criterio 1 y D-15 · el monitor finaliza una confirmada cuyo inicio ya pasó", () => {
-  test("con una confirmada de ayer y una futura, el panel le recuerda finalizar; en Por finalizar toca Marcar como realizada y la monitoría pasa a Realizada con su fecha de finalización", async ({
+  test("con una confirmada que ya empezó y una futura, el panel le recuerda finalizar; en Por finalizar toca Marcar como realizada y la monitoría pasa a Realizada con su fecha de finalización", async ({
     page,
     escenario,
   }) => {
-    const { materia, monitor, leadDeAyer, leadFutura, idDeAyer, idFutura } = await monitorConAyerYFutura(escenario);
+    const { sesion, materia, monitor, leadEmpezada, leadFutura, idEmpezada, idFutura } = await monitorConEmpezadaYFutura(escenario);
 
     await test.step("D-15: el panel dice Tienes 1 monitoría por finalizar y lleva a Mi agenda", async () => {
       await entrar(page, "/monitor", monitor);
@@ -299,14 +317,13 @@ test.describe("Criterio 1 y D-15 · el monitor finaliza una confirmada cuyo inic
 
     const porFinalizar = seccion(page, "Por finalizar (1)");
     const proximas = seccion(page, "Próximas (1)");
-    const pasadas = seccion(page, "Pasadas (0)");
 
-    await test.step("Mi agenda: Por finalizar (1) con la tarjeta de ayer, cuándo se cierra sola y el botón; la futura, en Próximas, sin botón", async () => {
+    await test.step("Mi agenda: Por finalizar (1) con la tarjeta de la que ya empezó, cuándo se cierra sola y el botón; la futura, en Próximas, sin botón", async () => {
       await expect(subtitulo(page, "Por finalizar (1)")).toBeVisible();
       await expect(page.getByText("Márcalas como realizadas cuando termines la sesión. Si no, se cierran solas.")).toBeVisible();
       await expect(porFinalizar.getByRole("listitem")).toHaveCount(1);
-      const tarjeta = await expectTarjeta(porFinalizar, leadDeAyer, renglonesDeAyer(materia, leadDeAyer));
-      await expect(tarjeta.locator("time")).toHaveAttribute("datetime", ayer());
+      const tarjeta = await expectTarjeta(porFinalizar, leadEmpezada, renglonesDeLaEmpezada(materia, sesion, leadEmpezada));
+      await expect(tarjeta.locator("time")).toHaveAttribute("datetime", sesion.fecha);
       await expect(tarjeta).toContainText("Si no la finalizas, se cierra sola el");
       await expect(botonDeFinalizar(tarjeta)).toBeVisible();
       await expect(botonDeFinalizar(page)).toHaveCount(1);
@@ -318,8 +335,8 @@ test.describe("Criterio 1 y D-15 · el monitor finaliza una confirmada cuyo inic
       await expect(proximas.getByText("Si no la finalizas")).toHaveCount(0);
       await expect(subtitulo(page, "Pasadas (0)")).toBeVisible();
       await expect(page.getByText("Todavía no tienes monitorías pasadas.")).toBeVisible();
-      // Antes de tocar nada: la de ayer sigue confirmada y sin fecha de finalización.
-      expect(await escenario.enBase(idDeAyer)).toEqual({ estado: "confirmada", fecha_finalizacion: null });
+      // Antes de tocar nada: la que ya empezó sigue confirmada y sin fecha de finalización.
+      expect(await escenario.enBase(idEmpezada)).toEqual({ estado: "confirmada", fecha_finalizacion: null });
     });
 
     let antes = 0;
@@ -341,19 +358,19 @@ test.describe("Criterio 1 y D-15 · el monitor finaliza una confirmada cuyo inic
 
       await expect(subtitulo(page, "Pasadas (1)")).toBeVisible();
       const realizadas = seccion(page, "Pasadas (1)");
-      const tarjeta = await expectTarjeta(realizadas, leadDeAyer, [
-        `${formatearDiaConSemana(ayer())}, ${HORA_DE_AYER} a ${horaDeFin(HORA_DE_AYER, DURACION_DE_AYER_MIN)}`,
-        `${materia.nombre} · ${DURACION_DE_AYER_MIN} min · Presencial`,
-        `Agendó: ${leadDeAyer.nombre}`,
+      const tarjeta = await expectTarjeta(realizadas, leadEmpezada, [
+        `${formatearDiaConSemana(sesion.fecha)}, ${sesion.hora} a ${horaDeFin(sesion.hora, sesion.duracionMin)}`,
+        `${materia.nombre} · ${sesion.duracionMin} min · Presencial`,
+        `Agendó: ${leadEmpezada.nombre}`,
         "Realizada · Pago aprobado",
       ]);
-      await expect(tarjeta.locator("time")).toHaveAttribute("datetime", ayer());
+      await expect(tarjeta.locator("time")).toHaveAttribute("datetime", sesion.fecha);
       await expect(subtitulo(page, "Próximas (1)")).toBeVisible();
       await expectTarjeta(seccion(page, "Próximas (1)"), leadFutura, renglonesDeLaFutura(materia, leadFutura));
     });
 
     await test.step("en la base la monitoría quedó realizada con su fecha de finalización (la de ahora); la futura sigue confirmada", async () => {
-      const finalizada = await escenario.enBase(idDeAyer);
+      const finalizada = await escenario.enBase(idEmpezada);
       expect(finalizada.estado).toBe("realizada");
       expect(finalizada.fecha_finalizacion, "fecha_finalizacion guardada").not.toBeNull();
       const momento = new Date(finalizada.fecha_finalizacion!).getTime();
@@ -381,11 +398,11 @@ test.describe("Criterio 2 · una monitoría que aún no empieza no se puede fina
     page,
     escenario,
   }) => {
-    const { materia, monitor, leadDeAyer, leadFutura, idDeAyer, idFutura } = await monitorConAyerYFutura(escenario);
+    const { sesion, materia, monitor, leadEmpezada, leadFutura, idEmpezada, idFutura } = await monitorConEmpezadaYFutura(escenario);
     const porFinalizar = seccion(page, "Por finalizar (1)");
     const proximas = seccion(page, "Próximas (1)");
 
-    await test.step("el monitor entra: solo la tarjeta de ayer tiene botón; el formulario es de ayer y no lleva el id de la futura", async () => {
+    await test.step("el monitor entra: solo la tarjeta de la que ya empezó tiene botón; su formulario no lleva el id de la futura", async () => {
       await entrar(page, RUTA, monitor);
       await expect(titulo(page)).toBeVisible(ESPERA);
       await expect(subtitulo(page, "Por finalizar (1)")).toBeVisible();
@@ -394,9 +411,9 @@ test.describe("Criterio 2 · una monitoría que aún no empieza no se puede fina
       await expectTarjeta(proximas, leadFutura, renglonesDeLaFutura(materia, leadFutura));
       await expect(proximas.getByRole("button")).toHaveCount(0);
       await expect(proximas.locator("form, input")).toHaveCount(0);
-      // El único campo del formulario lleva el id de la de ayer: el de la futura no está en la página.
+      // El único campo del formulario lleva el id de la que ya empezó: el de la futura no está en la página.
       await expect(page.locator('input[name="monitoria"]')).toHaveCount(1);
-      await expect(page.locator('input[name="monitoria"]')).toHaveValue(idDeAyer);
+      await expect(page.locator('input[name="monitoria"]')).toHaveValue(idEmpezada);
       await expect(page.locator(`[value="${idFutura}"]`)).toHaveCount(0);
     });
 
@@ -412,7 +429,7 @@ test.describe("Criterio 2 · una monitoría que aún no empieza no se puede fina
         await expect(proximas.getByRole("listitem")).toContainText(leadFutura.nombre);
       }
       expect(await escenario.enBase(idFutura)).toEqual({ estado: "confirmada", fecha_finalizacion: null });
-      expect(await escenario.enBase(idDeAyer)).toEqual({ estado: "confirmada", fecha_finalizacion: null });
+      expect(await escenario.enBase(idEmpezada)).toEqual({ estado: "confirmada", fecha_finalizacion: null });
     });
 
     await test.step("se fuerza el envío del formulario con el id de la futura: Esa monitoría todavía no empieza", async () => {
@@ -425,22 +442,22 @@ test.describe("Criterio 2 · una monitoría que aún no empieza no se puede fina
       await expect(page.getByRole("status")).toHaveCount(0);
     });
 
-    await test.step("nada cambió: la futura sigue confirmada en Próximas, sin botón, y la de ayer sigue en Por finalizar", async () => {
+    await test.step("nada cambió: la futura sigue confirmada en Próximas, sin botón, y la que ya empezó sigue en Por finalizar", async () => {
       expect(await escenario.enBase(idFutura)).toEqual({ estado: "confirmada", fecha_finalizacion: null });
-      expect(await escenario.enBase(idDeAyer)).toEqual({ estado: "confirmada", fecha_finalizacion: null });
+      expect(await escenario.enBase(idEmpezada)).toEqual({ estado: "confirmada", fecha_finalizacion: null });
       await expect(subtitulo(page, "Por finalizar (1)")).toBeVisible();
-      await expectTarjeta(porFinalizar, leadDeAyer, renglonesDeAyer(materia, leadDeAyer));
+      await expectTarjeta(porFinalizar, leadEmpezada, renglonesDeLaEmpezada(materia, sesion, leadEmpezada));
       await expectTarjeta(proximas, leadFutura, renglonesDeLaFutura(materia, leadFutura));
       await expect(proximas.getByRole("button")).toHaveCount(0);
       await expect(subtitulo(page, "Pasadas (0)")).toBeVisible();
     });
 
-    await test.step("D-13: con el aviso a la vista, tocar el botón de la de ayer sí la finaliza (el rechazo no deja la agenda trabada)", async () => {
+    await test.step("D-13: con el aviso a la vista, tocar el botón de la que ya empezó sí la finaliza (el rechazo no deja la agenda trabada)", async () => {
       await botonDeFinalizar(porFinalizar).click();
       await expect(page).toHaveURL(`${RUTA}?finalizada=1`, ESPERA);
       await expect(aviso(page, "status", MENSAJE_FINALIZADA)).toBeVisible(ESPERA);
       await expect(aviso(page, "alert", MENSAJE_NO_EMPEZO)).toHaveCount(0);
-      expect((await escenario.enBase(idDeAyer)).estado).toBe("realizada");
+      expect((await escenario.enBase(idEmpezada)).estado).toBe("realizada");
       expect(await escenario.enBase(idFutura)).toEqual({ estado: "confirmada", fecha_finalizacion: null });
     });
   });
@@ -457,12 +474,13 @@ test.describe("Criterio 3 · un monitor no puede finalizar la monitoría de otro
     const materia = await escenario.materia();
     const duena = await escenario.monitorCertificado(materia);
     const otro = await escenario.monitorCertificado(materia);
-    const franjaDeLaDuena = await escenario.franja(duena, ayer(), { hora: HORA_DE_AYER, duracionMin: DURACION_DE_AYER_MIN, presencial: true });
-    const franjaDelOtro = await escenario.franja(otro, ayer(), { hora: HORA_DE_AYER, duracionMin: DURACION_DE_AYER_MIN, presencial: true });
+    const sesion = sesionQueYaEmpezo();
+    const franjaDeLaDuena = await escenario.franja(duena, sesion.fecha, { hora: sesion.hora, duracionMin: sesion.duracionMin, presencial: true });
+    const franjaDelOtro = await escenario.franja(otro, sesion.fecha, { hora: sesion.hora, duracionMin: sesion.duracionMin, presencial: true });
     const [leadDeLaDuena, leadDelOtro] = await Promise.all([escenario.lead("Estudiante ajena"), escenario.lead("Estudiante propia")]);
-    // La ajena ya empezó: si fuera suya se podría finalizar. Así el rechazo es por de quién es y no por la hora.
-    const idAjena = await escenario.confirmada(duena, materia, franjaDeLaDuena, leadDeLaDuena, ayer());
-    const idPropia = await escenario.confirmada(otro, materia, franjaDelOtro, leadDelOtro, ayer());
+    // La ajena ya empezó (hace 90 minutos, sin riesgo de que el cierre automático la toque): si fuera suya se podría finalizar. Así el rechazo es por de quién es y no por la hora.
+    const idAjena = await escenario.confirmada(duena, materia, franjaDeLaDuena, leadDeLaDuena, sesion.fecha);
+    const idPropia = await escenario.confirmada(otro, materia, franjaDelOtro, leadDelOtro, sesion.fecha);
 
     const sinCambios = async (donde: string) => {
       expect(await escenario.enBase(idAjena), `${donde}: la ajena sigue confirmada`).toEqual({ estado: "confirmada", fecha_finalizacion: null });
@@ -473,7 +491,7 @@ test.describe("Criterio 3 · un monitor no puede finalizar la monitoría de otro
       await entrar(page, RUTA, otro);
       await expect(titulo(page)).toBeVisible(ESPERA);
       await expect(subtitulo(page, "Por finalizar (1)")).toBeVisible();
-      await expectTarjeta(seccion(page, "Por finalizar (1)"), leadDelOtro, renglonesDeAyer(materia, leadDelOtro));
+      await expectTarjeta(seccion(page, "Por finalizar (1)"), leadDelOtro, renglonesDeLaEmpezada(materia, sesion, leadDelOtro));
       await expect(page.getByText(leadDeLaDuena.nombre)).toHaveCount(0);
       await expect(page.locator('input[name="monitoria"]')).toHaveValue(idPropia);
     });
@@ -493,7 +511,7 @@ test.describe("Criterio 3 · un monitor no puede finalizar la monitoría de otro
       expect(html).not.toContain(leadDeLaDuena.telefono);
       // Su propia monitoría sigue donde estaba, lista para finalizar.
       await expect(subtitulo(page, "Por finalizar (1)")).toBeVisible();
-      await expectTarjeta(seccion(page, "Por finalizar (1)"), leadDelOtro, renglonesDeAyer(materia, leadDelOtro));
+      await expectTarjeta(seccion(page, "Por finalizar (1)"), leadDelOtro, renglonesDeLaEmpezada(materia, sesion, leadDelOtro));
     });
 
     await test.step("con un id que no existe, o que ni es un id, el mensaje es el mismo: no se dice si existe", async () => {
@@ -530,7 +548,7 @@ test.describe("Accesibilidad · Por finalizar, sus avisos y el recordatorio del 
   }) => {
     // Un nombre largo y sin espacios: la tarjeta tiene que partirlo en vez de desbordar la pantalla.
     const sufijoLargo = randomUUID().replaceAll("-", "");
-    const { materia, monitor, leadDeAyer, leadFutura } = await monitorConAyerYFutura(escenario, `Sebastiano${sufijoLargo}${sufijoLargo}`);
+    const { sesion, materia, monitor, leadEmpezada, leadFutura } = await monitorConEmpezadaYFutura(escenario, `Sebastiano${sufijoLargo}${sufijoLargo}`);
 
     await test.step("el panel con el recordatorio", async () => {
       await entrar(page, "/monitor", monitor);
@@ -544,7 +562,7 @@ test.describe("Accesibilidad · Por finalizar, sus avisos y el recordatorio del 
       await expect(page).toHaveURL(RUTA, ESPERA);
       await expect(subtitulo(page, "Por finalizar (1)")).toBeVisible(ESPERA);
       await expect(botonDeFinalizar(page)).toBeVisible();
-      await expect(seccion(page, "Por finalizar (1)")).toContainText(leadDeAyer.nombre);
+      await expect(seccion(page, "Por finalizar (1)")).toContainText(leadEmpezada.nombre);
       await expect(seccion(page, "Próximas (1)")).toContainText(leadFutura.nombre);
       await expectReglasDelProducto(page, "mi agenda con Por finalizar");
     });
@@ -572,7 +590,7 @@ test.describe("Accesibilidad · Por finalizar, sus avisos y el recordatorio del 
     });
 
     await test.step("el nombre largo se parte dentro de la tarjeta (390 px) y la agenda mantiene sus textos", async () => {
-      await expectTarjeta(seccion(page, "Por finalizar (1)"), leadDeAyer, renglonesDeAyer(materia, leadDeAyer));
+      await expectTarjeta(seccion(page, "Por finalizar (1)"), leadEmpezada, renglonesDeLaEmpezada(materia, sesion, leadEmpezada));
     });
   });
 });
