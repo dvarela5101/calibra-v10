@@ -17,6 +17,7 @@ const FILA = {
   reporte_inasistencia_min: 1440,
   resena_grupal_min: 60,
   desembolso_min: 1440,
+  cierre_automatico_min: 1440,
 };
 
 /** La fila tal como la devuelve `parametros_comision()`. */

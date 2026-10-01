@@ -5,6 +5,7 @@ import {
   calcularComision,
   calcularMontoNeto,
   cancelableHasta,
+  cierreAutomaticoDesde,
   cumpleAntelacion,
   dentroDePlazo,
   derivadosDeMonitoria,
@@ -427,6 +428,7 @@ describe("cada función lee su propio parámetro y ninguna lleva un número prop
     reporteInasistenciaMin: 37,
     resenaGrupalMin: 41,
     desembolsoMin: 43,
+    cierreAutomaticoMin: 59,
   };
   const DC: ParametrosComision = { comisionPorcentaje: 47, comisionTope: 53 };
   const T = new Date("2026-10-05T15:00:00.000Z");
@@ -442,6 +444,7 @@ describe("cada función lee su propio parámetro y ninguna lleva un número prop
     ["reporteInasistenciaHasta usa reporteInasistenciaMin", () => minutos(T, reporteInasistenciaHasta(T, D)), 37],
     ["ventanaResenaHasta usa resenaGrupalMin", () => minutos(T, ventanaResenaHasta(T, D)), 41],
     ["desembolsableDesde usa desembolsoMin", () => minutos(T, desembolsableDesde(T, D)), 43],
+    ["cierreAutomaticoDesde usa cierreAutomaticoMin", () => minutos(T, cierreAutomaticoDesde(T, D)), 59],
   ])("%s", (_nombre, desfase, esperado) => {
     expect(desfase()).toBe(esperado);
   });

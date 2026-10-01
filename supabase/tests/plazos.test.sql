@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(109);
+select plan(110);
 
 -- ---------------------------------------------------------------------------
 -- 1. Estructura y permisos (auto_expose_new_tables = false: nada sin GRANT explícito)
@@ -80,10 +80,10 @@ select ok(
 select results_eq(
   $$select reserva_min, revision_min, antelacion_individual_min, antelacion_grupal_min,
            cancelacion_individual_min, cancelacion_grupal_min, pago_integrantes_min, diferencia_min,
-           reporte_inasistencia_min, resena_grupal_min, desembolso_min
+           reporte_inasistencia_min, resena_grupal_min, desembolso_min, cierre_automatico_min
     from public.parametros_negocio()$$,
-  $$values (10, 60, 3 * 60, 36 * 60, 12 * 60, 24 * 60, 24 * 60, 5 * 60, 24 * 60, 60, 24 * 60)$$,
-  'parametros_negocio() trae exactamente la tabla 6.1');
+  $$values (10, 60, 3 * 60, 36 * 60, 12 * 60, 24 * 60, 24 * 60, 5 * 60, 24 * 60, 60, 24 * 60, 24 * 60)$$,
+  'parametros_negocio() trae exactamente la tabla 6.1, con el cierre automático de HU-023 (D-14)');
 
 select is(
   (select array_agg(name order by ord)
@@ -91,8 +91,8 @@ select is(
         with ordinality as t(name, ord)),
   array['reserva_min', 'revision_min', 'antelacion_individual_min', 'antelacion_grupal_min',
         'cancelacion_individual_min', 'cancelacion_grupal_min', 'pago_integrantes_min', 'diferencia_min',
-        'reporte_inasistencia_min', 'resena_grupal_min', 'desembolso_min'],
-  'parametros_negocio() ya no devuelve la comisión: solo esas 11 columnas de plazo');
+        'reporte_inasistencia_min', 'resena_grupal_min', 'desembolso_min', 'cierre_automatico_min'],
+  'parametros_negocio() ya no devuelve la comisión: solo esas 12 columnas de plazo (la última, de HU-023)');
 
 select results_eq(
   $$select comision_porcentaje, comision_tope from public.parametros_comision()$$,
@@ -404,10 +404,11 @@ create or replace function public.parametros_negocio()
 returns table (
   reserva_min integer, revision_min integer, antelacion_individual_min integer, antelacion_grupal_min integer,
   cancelacion_individual_min integer, cancelacion_grupal_min integer, pago_integrantes_min integer,
-  diferencia_min integer, reporte_inasistencia_min integer, resena_grupal_min integer, desembolso_min integer
+  diferencia_min integer, reporte_inasistencia_min integer, resena_grupal_min integer, desembolso_min integer,
+  cierre_automatico_min integer
 )
 language sql stable parallel safe set search_path = ''
-as $$ select 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43 $$;
+as $$ select 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 59 $$;
 
 create or replace function public.parametros_comision()
 returns table (comision_porcentaje integer, comision_tope integer)
@@ -424,7 +425,8 @@ from (values
   ('fecha_limite_diferencia = -diferencia_min', public.fecha_limite_diferencia('2026-10-05 15:00:00+00'), '2026-10-05 15:00:00+00'::timestamptz, -31),
   ('reporte_inasistencia_hasta = reporte_inasistencia_min', public.reporte_inasistencia_hasta('2026-10-05 15:00:00+00'), '2026-10-05 15:00:00+00'::timestamptz, 37),
   ('ventana_resena_hasta = resena_grupal_min', public.ventana_resena_hasta('2026-10-05 15:00:00+00'), '2026-10-05 15:00:00+00'::timestamptz, 41),
-  ('desembolsable_desde = desembolso_min', public.desembolsable_desde('2026-10-05 15:00:00+00'), '2026-10-05 15:00:00+00'::timestamptz, 43)
+  ('desembolsable_desde = desembolso_min', public.desembolsable_desde('2026-10-05 15:00:00+00'), '2026-10-05 15:00:00+00'::timestamptz, 43),
+  ('cierre_automatico_desde = cierre_automatico_min', public.cierre_automatico_desde('2026-10-05 15:00:00+00'), '2026-10-05 15:00:00+00'::timestamptz, 59)
 ) as t(nombre, f, t, esperado);
 
 select is(
@@ -456,10 +458,11 @@ create or replace function public.parametros_negocio()
 returns table (
   reserva_min integer, revision_min integer, antelacion_individual_min integer, antelacion_grupal_min integer,
   cancelacion_individual_min integer, cancelacion_grupal_min integer, pago_integrantes_min integer,
-  diferencia_min integer, reporte_inasistencia_min integer, resena_grupal_min integer, desembolso_min integer
+  diferencia_min integer, reporte_inasistencia_min integer, resena_grupal_min integer, desembolso_min integer,
+  cierre_automatico_min integer
 )
 language sql stable parallel safe set search_path = ''
-as $$ select 7, 11, 13, 17, 19, 23, 29, 31, 43, 41, 37 $$;
+as $$ select 7, 11, 13, 17, 19, 23, 29, 31, 43, 41, 37, 59 $$;
 
 select is(
   array[

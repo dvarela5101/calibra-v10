@@ -200,6 +200,11 @@ export function desembolsableDesde(finProgramadoDeSesion: Date, p: ParametrosNeg
   return sumarMinutos(finProgramadoDeSesion, p.desembolsoMin, "finProgramado");
 }
 
+/** `/cierreAutomaticoDesde`: una individual confirmada sin finalizar se cierra sola desde aquí (P-05, D-14). */
+export function cierreAutomaticoDesde(finProgramadoDeSesion: Date, p: ParametrosNegocio): Date {
+  return sumarMinutos(finProgramadoDeSesion, p.cierreAutomaticoMin, "finProgramado");
+}
+
 /**
  * ¿Se puede ejecutar el desembolso de una sesión que terminó en `finProgramadoDeSesion`? Solo cuando
  * ya venció la ventana de reporte de inasistencia (RN-83, N-6): se alcanzó `desembolsableDesde` y

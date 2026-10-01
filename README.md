@@ -164,10 +164,18 @@ Cada fecha libre de `/monitores` lleva a `/agendar?franja=…&fecha=…&materia=
 
 ## Agenda del monitor
 
-`/monitor/agenda` (HU-021, enlazada desde `/monitor`): las monitorías del monitor, próximas (pendientes de pago vigentes y confirmadas, de la más cercana a la más lejana) y pasadas (realizadas, canceladas con su motivo y reservas vencidas, de la más reciente a la más antigua; D-12). Cada una con fecha, hora, duración, materia, modalidad, el nombre de quien agendó y el estado del pago.
+`/monitor/agenda` (HU-021, enlazada desde `/monitor`): las monitorías del monitor, por finalizar (HU-023), próximas (pendientes de pago vigentes y confirmadas, de la más cercana a la más lejana) y pasadas (realizadas, canceladas con su motivo y reservas vencidas, de la más reciente a la más antigua; D-12). Cada una con fecha, hora, duración, materia, modalidad, el nombre de quien agendó y el estado del pago.
 
 - La da `public.mi_agenda()` (invoker, solo con sesión) sobre `privado.agenda_del_monitor(ahora)` (definer): el monitor no lee `lead` ni `pago`, así que la función devuelve solo sus monitorías (`auth.uid()`), el nombre del Lead (nunca su correo ni su teléfono, P-37) y el estado agregado del pago (D-11), sin valor ni comisión (P-24).
 - Estado del pago (D-11): rechazado si algún comprobante lo fue, si no en revisión, si no aprobado; sin comprobantes, sin pagar.
+
+## Finalizar una sesión
+
+`/monitor/agenda` (HU-023) muestra arriba, en "Por finalizar", las confirmadas que ya empezaron, con el botón "Marcar como realizada" y la hora en que se cierran solas. El panel del monitor recuerda cuántas tiene (D-15).
+
+- `public.finalizar_monitoria(id)` (invoker, solo con sesión) sobre `privado.finalizar_monitoria` (definer): con `auth.uid()` y `now()`, la pasa a `realizada` con `fecha_finalizacion` si es del monitor, está confirmada y ya llegó su inicio (D-13, borde incluido).
+- Cierre automático (P-05, D-14): pg_cron corre cada 15 minutos `privado.cerrar_monitorias_sin_finalizar(now())`, que cierra cada individual confirmada que alcanzó `public.cierre_automatico_desde(fin programado)` = fin + `cierre_automatico_min` (24 h, en `parametros_negocio()`). Las grupales no se cierran solas (su monitor entrega el enlace de reseña, HU-046).
+- El desembolso al pasar a `realizada` es de HU-028; el correo de reseña individual, de HU-035.
 
 ## Franjas del monitor
 
