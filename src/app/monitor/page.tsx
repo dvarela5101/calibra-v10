@@ -37,7 +37,7 @@ export default async function PanelMonitor() {
       subtitulo={
         sinCertificados
           ? "Tu cuenta está lista. Espera a que un admin te certifique en tu materia: cuando lo haga, podrás abrir tus franjas y recibir estudiantes."
-          : "Abre tus franjas para que te agenden. Pronto verás aquí tu agenda y el diagnóstico de cada estudiante."
+          : "Abre tus franjas para que te agenden y revisa en tu agenda quién agendó. Pronto verás aquí el diagnóstico de cada estudiante."
       }
     >
       {errorCertificados && (
@@ -64,6 +64,11 @@ export default async function PanelMonitor() {
             ))}
           </ul>
         </section>
+      )}
+      {conCertificados && (
+        <Link href="/monitor/agenda" className={formulario.enlace}>
+          Mi agenda
+        </Link>
       )}
       {conCertificados && (
         <Link href="/monitor/franjas" className={formulario.enlace}>
