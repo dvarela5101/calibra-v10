@@ -85,12 +85,12 @@ solución: con u = x, du = dx y v = eˣ: x·eˣ − ∫eˣ dx = x·eˣ − eˣ +
 
 Una Evaluación solo queda activa si todas sus habilidades cumplen la cobertura.
 
-**Ajustes al implementar HU-005 (30 de septiembre de 2026).** Los decidió la persona con Juzou04 (D-12 a D-15 en `REVISION_REGLAS.md`). El formato exacto, con ejemplos, está en [contenido/README.md](../../contenido/README.md).
+**Ajustes al implementar HU-005 (30 de septiembre de 2026).** Los decidió la persona con Juzou04 (D-13 a D-16 en `REVISION_REGLAS.md`). El formato exacto, con ejemplos, está en [contenido/README.md](../../contenido/README.md).
 
-- La activación usa solo la meta de habilidades. La de misconcepciones se reporta pero no decide (D-12).
-- Una opción incorrecta puede llevar un texto de error propio después de la misconcepción (`· [signo-partes] texto`), porque el prototipo lo tiene en 123 de las 153 opciones incorrectas de Cálculo Integral (D-13).
-- Una pregunta de origen IA necesita `solución:` para pasar a `revisada`; en borrador, que le falte es un aviso (D-14).
-- `materia.md` lista sus temas en `## Temas`, en orden, y sus evaluaciones como `### clave · nombre · semana N [· acumulativa]` seguidas de `temas: ...` (RN-20 exige la semana; D-15). Cada tema empieza con `# Nombre`.
+- La activación usa solo la meta de habilidades. La de misconcepciones se reporta pero no decide (D-13).
+- Una opción incorrecta puede llevar un texto de error propio después de la misconcepción (`· [signo-partes] texto`), porque el prototipo lo tiene en 123 de las 153 opciones incorrectas de Cálculo Integral (D-14).
+- Una pregunta de origen IA necesita `solución:` para pasar a `revisada`; en borrador, que le falte es un aviso (D-15).
+- `materia.md` lista sus temas en `## Temas`, en orden, y sus evaluaciones como `### clave · nombre · semana N [· acumulativa]` seguidas de `temas: ...` (RN-20 exige la semana; D-16). Cada tema empieza con `# Nombre`.
 - El convertidor también rechaza, como el prototipo: una materia sin evaluaciones, una evaluación sin temas, un tema sin habilidades, opciones que no sean A a D y matemática mal escrita entre `$…$`.
 
 ## Motor (HU-060)

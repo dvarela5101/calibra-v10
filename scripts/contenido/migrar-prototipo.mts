@@ -31,7 +31,7 @@ import { armarEnunciado, formatearDiagnostico, leerBanco, partirOpcion } from ".
 import type { LineaNumerada } from "./banco.mts";
 import type { ArchivoBanco, Banco, Letra, Materia, Tema } from "./modelo.mts";
 
-// Semana del curso de la única evaluación de cada materia (RN-20, D-15). Sale del programa del curso más
+// Semana del curso de la única evaluación de cada materia (RN-20, D-16). Sale del programa del curso más
 // reciente que se encontró el 30-sep-2026. Cambia entre secciones y semestres: después de la migración se
 // corrige en el materia.md con un PR, no aquí.
 export const SEMANAS: Record<string, number> = {

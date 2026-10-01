@@ -113,7 +113,7 @@ Una opción incorrecta cualquiera no sirve. Si en una pregunta de conteo la resp
 
 ## Cobertura: cuándo una evaluación se activa
 
-Una evaluación solo se usa en el diagnóstico si está activa. Queda activa cuando cada habilidad de sus temas tiene al menos 3 preguntas `revisada` en al menos 2 dificultades distintas (decisión D-12 en `REVISION_REGLAS.md`).
+Una evaluación solo se usa en el diagnóstico si está activa. Queda activa cuando cada habilidad de sus temas tiene al menos 3 preguntas `revisada` en al menos 2 dificultades distintas (decisión D-13 en `REVISION_REGLAS.md`).
 
 Además, el reporte mide si cada misconcepción sale como trampa en al menos 2 preguntas revisadas, porque confirmarla exige que el estudiante la elija dos veces. Esa meta se reporta pero no decide la activación.
 

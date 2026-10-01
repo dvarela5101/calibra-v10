@@ -1,0 +1,62 @@
+/* Agenda del monitor (HU-021). Tarjetas como las de sus franjas. */
+
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-block-start: var(--e4);
+}
+
+.titulo {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  list-style: none;
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+.cabeza {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.detalle {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.dato {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.mas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+/* list-item conserva el triángulo que dice si está abierto. */
+.resumen {
+  display: list-item;
+  min-block-size: var(--toque-min);
+  padding-block: var(--e2);
+  font-size: 15px;
+  color: var(--primary);
+  cursor: pointer;
+}

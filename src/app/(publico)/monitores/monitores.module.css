@@ -1,0 +1,105 @@
+/* Monitores certificados de una materia y sus fechas libres (HU-016). Tarjetas como las de franjas. */
+
+.materias,
+.monitores,
+.fechas {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+}
+
+.materias,
+.monitores {
+  gap: var(--e3);
+}
+
+.fechas {
+  gap: var(--e2);
+}
+
+.materia,
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+.materia {
+  min-block-size: var(--toque-min);
+  justify-content: center;
+  color: inherit;
+  text-decoration: none;
+}
+
+.tarjeta {
+  gap: var(--e3);
+}
+
+.nombre {
+  font-size: 17px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Cada fecha es un enlace para agendarla (HU-017). */
+.fecha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  min-block-size: var(--toque-min);
+  padding: var(--e2) var(--e3);
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .fecha:hover {
+    border-color: var(--primary);
+  }
+}
+
+.datos {
+  display: flex;
+  flex-direction: column;
+}
+
+.agendar {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.dia {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.detalle {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.mas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+/* list-item conserva el triángulo que dice si está abierto. */
+.resumen {
+  display: list-item;
+  min-block-size: var(--toque-min);
+  padding-block: var(--e2);
+  font-size: 15px;
+  color: var(--primary);
+  cursor: pointer;
+}

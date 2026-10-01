@@ -12,9 +12,9 @@
 --     convertidor, que ve el banco entero.
 --   * P-18: una Evaluación es un conjunto de temas de su materia (`evaluacion_tema`). Una acumulativa
 --     llega ya con los temas de las anteriores: los expande el convertidor.
---   * D-12: una evaluación queda activa solo si cada habilidad de sus temas tiene al menos 3 preguntas
+--   * D-13: una evaluación queda activa solo si cada habilidad de sus temas tiene al menos 3 preguntas
 --     revisadas en al menos 2 dificultades. Lo calcula el convertidor y lo deja en `evaluacion.activa`.
---   * D-13: una opción incorrecta puede traer su propio texto de error (`opcion.error`); si no lo trae,
+--   * D-14: una opción incorrecta puede traer su propio texto de error (`opcion.error`); si no lo trae,
 --     vale el de su misconcepción.
 --   * Nadie con sesión lee estas tablas: la calificación va en el servidor, y el navegador nunca recibe
 --     la opción correcta, la misconcepción de una opción ni la solución. Solo service_role (RLS activa y

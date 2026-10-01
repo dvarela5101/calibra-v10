@@ -15,17 +15,37 @@ export function formatearFechaHora(instante: Date): string {
   return formatoFechaHora.format(instante).replace(/(\d)\s([ap])\.\s([mM])\./, "$1\xa0$2.\xa0$3.");
 }
 
+const formatoHora = new Intl.DateTimeFormat(LOCALE, { timeZone: ZONA_HORARIA_NEGOCIO, timeStyle: "short" });
+
+/** Solo la hora de un instante, en la zona del negocio: `10:42 a. m.`, con espacios duros como `formatearFechaHora`. */
+export function formatearHora(instante: Date): string {
+  return formatoHora.format(instante).replace(/(\d)\s([ap])\.\s([mM])\./, "$1\xa0$2.\xa0$3.");
+}
+
 // Un día de calendario no tiene zona: se formatea en UTC sobre el mediodía para que ninguna zona lo corra de día.
 const formatoDia = new Intl.DateTimeFormat(LOCALE, { timeZone: "UTC", dateStyle: "long" });
 
 /** Un día de calendario (`AAAA-MM-DD`, como lo guarda la base) legible en español: `6 de enero de 2020`. */
 export function formatearDia(fecha: string): string {
+  return formatoDia.format(mediodiaDe(fecha));
+}
+
+const formatoDiaConSemana = new Intl.DateTimeFormat(LOCALE, { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" });
+
+/** Un día de calendario con su día de la semana y sin el año: `Lunes, 5 de octubre`. */
+export function formatearDiaConSemana(fecha: string): string {
+  const texto = formatoDiaConSemana.format(mediodiaDe(fecha));
+  return texto.charAt(0).toLocaleUpperCase(LOCALE) + texto.slice(1);
+}
+
+/** El mediodía UTC de un día `AAAA-MM-DD`, para formatearlo sin que ninguna zona lo corra de día. */
+function mediodiaDe(fecha: string): Date {
   const instante = new Date(`${fecha}T12:00:00Z`);
   // El chequeo de ida y vuelta rechaza días que no existen (2026-02-30), que Date rueda al mes siguiente.
   if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || Number.isNaN(instante.getTime()) || instante.toISOString().slice(0, 10) !== fecha) {
     throw new RangeError(`La fecha debe ser AAAA-MM-DD (llegó "${fecha}").`);
   }
-  return formatoDia.format(instante);
+  return instante;
 }
 
 const formatoDiaDelNegocio = new Intl.DateTimeFormat("en-CA", {
