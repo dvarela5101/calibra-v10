@@ -1,6 +1,13 @@
 # Reparto de trabajo
 
-**Actualizado:** 30 de septiembre de 2026, madrugada (decisiones D-2 y D-3: el banco de preguntas queda para después). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+**Actualizado:** 1 de octubre de 2026 (ver "Actualización del 1-oct-2026"; lo de abajo es el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+
+## Actualización del 1-oct-2026
+
+- **Hecha:** dvarela5101 terminó su lista (HU-014, HU-068, HU-016, HU-017, HU-021 y HU-023), y también están aprobadas HU-059, HU-062 y HU-067 de Juzou04.
+- **Juzou04:** [HU-018](../backlog/HU-018.md) (pagar por Llave y adjuntar el comprobante) y [HU-027](../backlog/HU-027.md) (expirar reservas sin comprobante a los 10 minutos) son suyas, confirmado por dvarela5101. Después, [HU-020](../backlog/HU-020.md) (revisar pagos), que espera a HU-018. HU-005 sigue en persona.
+- **dvarela5101:** [HU-069](../backlog/HU-069.md) (el aviso de privacidad y el registro dicen que el nombre del monitor se ve) y [HU-071](../backlog/HU-071.md) (página 404 en español), las dos XS. Las pasó de Backlog a Lista el 1-oct.
+- **Lo que sigue a HU-018:** HU-019 (confirmación con enlace), luego HU-024 (cancelar), HU-025 y HU-026 (reembolsos) y HU-029 y HU-030 (inasistencia); HU-028 (desembolsos) cuando estén HU-020 y HU-023. Se reparte cuando HU-018 esté `Hecha`.
 
 ## Estado de partida
 
