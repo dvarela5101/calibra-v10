@@ -9,6 +9,16 @@
 - **dvarela5101:** [HU-069](../backlog/HU-069.md) (el aviso de privacidad y el registro dicen que el nombre del monitor se ve) y [HU-071](../backlog/HU-071.md) (página 404 en español), las dos XS. Las pasó de Backlog a Lista el 1-oct.
 - **Lo que sigue a HU-018:** HU-019 (confirmación con enlace), luego HU-024 (cancelar), HU-025 y HU-026 (reembolsos) y HU-029 y HU-030 (inasistencia); HU-028 (desembolsos) cuando estén HU-020 y HU-023. Se reparte cuando HU-018 esté `Hecha`.
 
+### Plan hasta el domingo (1-oct-2026)
+
+dvarela5101 pasó a `Lista` HU-051 (ahora P0, D-16), HU-054, HU-070, HU-035 (D-17) y HU-058 (D-18). HU-018 es el cuello de botella: de ella dependen ocho HUs, así que Juzou04 empieza por ahí.
+
+| Persona | Ahora | Cuando HU-018 esté `Hecha` |
+|---|---|---|
+| dvarela5101 | HU-069 y HU-071 (reservadas), [HU-051](../backlog/HU-051.md), [HU-054](../backlog/HU-054.md) y [HU-035](../backlog/HU-035.md) | La cadena del estudiante: HU-019 (confirmación con enlace), HU-024 (cancelar), HU-025 (entregar la llave del reembolso) y HU-029 (reportar inasistencia) |
+| Juzou04 | HU-018 y HU-027 (confirmadas); en los huecos, [HU-070](../backlog/HU-070.md) (toca su validador de HU-062) y [HU-058](../backlog/HU-058.md). Propuesta: confirmar con Juzou04 | La cadena del admin: HU-020 (revisar pagos), HU-028 (desembolsos), HU-026 (gestionar reembolsos) y HU-030 (resolver inasistencias). Propuesta: confirmar con Juzou04 |
+| Las dos | HU-005, en persona | HU-057 (corte), según se decida la salida temprana |
+
 ## Estado de partida
 
 - **Hecha:** HU-001 a HU-004, HU-006, HU-007, HU-008, HU-012, HU-013, HU-015, HU-063, HU-064, HU-065 y HU-066.

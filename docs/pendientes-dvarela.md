@@ -1,6 +1,6 @@
 # Pendientes de dvarela5101
 
-**Actualizado:** 30 de septiembre de 2026, madrugada. Son las tareas que solo tú puedes hacer: tocan cuentas, contraseñas, paneles o decisiones del producto. Van ordenadas por **cuándo hacen falta**. Marca cada una al terminarla, o dile a Claude "ya hice X" y él marca la casilla y sigue.
+**Actualizado:** 1 de octubre de 2026. Son las tareas que solo tú puedes hacer: tocan cuentas, contraseñas, paneles o decisiones del producto. Van ordenadas por **cuándo hacen falta**. Marca cada una al terminarla, o dile a Claude "ya hice X" y él marca la casilla y sigue.
 
 Nada de lo de aquí se pega en el chat ni se guarda en el repo: las contraseñas y las llaves van directo al panel que corresponda.
 
@@ -22,7 +22,8 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [x] **HU-015, franjas del monitor.** Entra como monitor certificado a `/monitor/franjas`: abre, edita y cierra franjas. Las decisiones que te tocan están en A2.
 - [x] **HU-064, ajustes de la revisión de HU-006 y HU-012.** Textos de la bandeja, https en producción para los enlaces de los correos, server-only y la prueba del admin desactivado.
 - [x] **HU-014, certificar monitores** ([PR #13](https://github.com/dvarela5101/calibra-v10/pull/13)): aprobada el 30-sep.
-- [ ] **HU-068, contacto al agendar.** Abre `/agendar/contacto`, deja tus datos y vuelve a abrirla: ya no te los pide. Las decisiones que te tocan están en A2.
+- [x] **HU-068, contacto al agendar.** Aprobada el 30-sep. Las decisiones que quedaron abiertas están en A2.
+- [x] **HU-016, HU-017, HU-021, HU-023, HU-059, HU-062 y HU-067**: aprobadas entre el 30-sep y el 1-oct.
 - [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
 ### A2. Decisiones de las HUs recientes
@@ -84,6 +85,8 @@ Sin esto, cada PR se prueba solo en local. Ojo: mientras no haya base en la nube
 
 Todavía no. Se hace una sola vez, cuando el flujo principal esté listo, y lo guía HU-057. Lo dejo aquí para que no sorprenda.
 
+**Deuda técnica antes de salir (decisión del 1-oct, D-18).** La idea es que, con toda la base lista, el corte sea solo poner variables de entorno y configurar los paneles de Vercel y Supabase. Por eso toda HU que agregue configuración externa (una llave, un secreto de Vault, un ajuste de Auth) la anota en esta sección y en `.env.example`, sin valores. Si aquí falta algo, es un error de esa HU.
+
 - [ ] **Base en la nube.** v10 usará el mismo proyecto Supabase del prototipo (`uotlhaitdkfroavqkvee`). En el corte: respaldo, mover las tablas del prototipo a un esquema aparte, aplicar las migraciones de v10 y desactivar el webhook y la función `enviar-correo` del prototipo.
 - [ ] **Variables de Supabase en Vercel:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y `SUPABASE_SECRET_KEY` (esta última **Sensitive**). Salen de Supabase, **Project Settings**, **API Keys**.
 - [ ] **Supabase Auth en la nube:** activar el inicio anónimo, contraseña mínima de 8, `Site URL` y URLs de redirección de producción, la plantilla de "recuperar contraseña" y un SMTP propio para los correos de Auth (se puede usar el mismo Gmail).
@@ -93,7 +96,7 @@ Todavía no. Se hace una sola vez, cuando el flujo principal esté listo, y lo g
   - en Vault, también la dirección del sitio con el nombre `calibra_sitio_url`: la de producción, con `https://` y sin barra al final (por ejemplo `https://calibra.vercel.app`). Tiene que ser la dirección final, sin redirecciones ni protección de despliegue de Vercel, o la llamada fallaría.
   Desde ahí, cada 10 minutos la base le pide a la app que reintente los correos que fallaron por algo temporal, durante 24 horas. Sin esto no se reintentan solos. Los que fallan de forma definitiva, o agotan las 24 horas, el admin los ve en su bandeja en "Correos que no salieron".
 - [ ] **Admins reales:** la lista de admins y su orden de revisión.
-- [ ] **CAPTCHA (HU-058):** crear las llaves de Cloudflare Turnstile (gratis) y cargarlas en Vercel y en Supabase Auth. HU-058 pasa a `Lista` cuando existan.
+- [ ] **CAPTCHA (HU-058), deuda técnica (D-18):** HU-058 se construye con las llaves de prueba de Cloudflare Turnstile. Antes de salir hay que crear las llaves reales (gratis, en el panel de Cloudflare) y cargarlas: la del sitio y la secreta en Vercel, y la secreta en Supabase Auth (**Authentication**, **Attack Protection**, CAPTCHA). Con las de prueba en producción, el CAPTCHA no protege nada.
 - [ ] **Datos del prototipo:** decidir si los diagnósticos viejos se importan como históricos. Los leads del prototipo no se migran como contactables (no tenían autorización de datos).
 - [ ] **Publicar** en el repo real de Calibra y archivar el repo temporal.
 
@@ -105,10 +108,10 @@ No bloquean el trabajo actual. Cada una tiene una recomendación en `REVISION_RE
 
 - [ ] **P-01:** campos del perfil del monitor (HU-049).
 - [ ] **P-02 y P-12:** descuento grupal y cupos mínimo y máximo (HU-036).
-- [ ] **P-03:** escala de las reseñas (se recomienda de 1 a 5).
+- [x] **P-03:** escala de las reseñas. Decidido el 1-oct (D-17): de 1 a 5, comentario opcional.
 - [ ] **P-06, P-25, P-26, P-27, P-38 y P-39:** grupales de pago único y paso a individual (HU-036, HU-041, HU-042, HU-047).
 - [ ] **P-08:** casos extremos de cancelación tardía (HU-052).
-- [ ] **P-11:** avisos al monitor (HU-051).
+- [x] **P-11:** avisos al monitor. Decidido el 1-oct (D-16): correo al confirmarse una monitoría y cuando el estudiante la cancela. HU-051 pasa al corte 1.
 - [ ] **P-22:** Lead solo con teléfono (HU-031, HU-035).
 - [ ] **P-32:** si el monitor ve la comisión (HU-050).
 - [ ] **P-42:** autorización de datos de quien paga sin ser Lead (HU-038, HU-042).
@@ -117,7 +120,7 @@ No bloquean el trabajo actual. Cada una tiene una recomendación en `REVISION_RE
 ### Validaciones pendientes
 
 - [ ] **Retención de datos (P-13):** los plazos (90 días, 24 meses, 5 años) quedaron "a validar con asesoría" legal.
-- [ ] **Cierre automático de sesiones (P-05):** se propuso 24 h después del fin programado; falta confirmarlo antes de HU-023.
+- [x] **Cierre automático de sesiones (P-05):** confirmado el 1-oct (D-14), 24 h después del fin programado.
 
 ---
 
