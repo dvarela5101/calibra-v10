@@ -265,7 +265,7 @@ function renglonesDeLaEmpezada(materia: Materia, sesion: Sesion, lead: Lead): st
     `${materia.nombre} · ${sesion.duracionMin} min · Presencial`,
     `Agendó: ${lead.nombre}`,
     "Confirmada · Pago aprobado",
-    `Si no la finalizas, se cierra sola el ${formatearFechaHora(sesion.cierre)}.`,
+    `Si no la finalizas, se cierra sola a partir del ${formatearFechaHora(sesion.cierre)}.`,
   ];
 }
 
@@ -309,7 +309,7 @@ test.describe("Criterio 1 y D-15 · el monitor finaliza una confirmada cuyo inic
       await entrar(page, "/monitor", monitor);
       await expect(page.getByRole("heading", { level: 1, name: `Hola, ${monitor.nombre}` })).toBeVisible(ESPERA);
       // Solo cuenta la que ya empezó: la de la próxima semana no hace parte del recordatorio.
-      await expect(page.getByRole("status")).toHaveText("Tienes 1 monitoría por finalizar. Márcalas como realizadas en tu agenda; si no, se cierran solas.");
+      await expect(page.getByRole("status")).toHaveText("Tienes 1 monitoría por finalizar. Márcala como realizada en tu agenda; si no, se cierra sola.");
       await page.getByRole("link", { name: "Mi agenda" }).click();
       await expect(page).toHaveURL(RUTA, ESPERA);
       await expect(titulo(page)).toBeVisible(ESPERA);
@@ -324,7 +324,7 @@ test.describe("Criterio 1 y D-15 · el monitor finaliza una confirmada cuyo inic
       await expect(porFinalizar.getByRole("listitem")).toHaveCount(1);
       const tarjeta = await expectTarjeta(porFinalizar, leadEmpezada, renglonesDeLaEmpezada(materia, sesion, leadEmpezada));
       await expect(tarjeta.locator("time")).toHaveAttribute("datetime", sesion.fecha);
-      await expect(tarjeta).toContainText("Si no la finalizas, se cierra sola el");
+      await expect(tarjeta).toContainText("Si no la finalizas, se cierra sola a partir del");
       await expect(botonDeFinalizar(tarjeta)).toBeVisible();
       await expect(botonDeFinalizar(page)).toHaveCount(1);
 
@@ -464,9 +464,9 @@ test.describe("Criterio 2 · una monitoría que aún no empieza no se puede fina
 });
 
 // ---------------------------------------------------------------------------
-// Criterio 3 · la monitoría de otro monitor no se finaliza
+// Monitoría ajena · la monitoría de otro monitor no se finaliza
 // ---------------------------------------------------------------------------
-test.describe("Criterio 3 · un monitor no puede finalizar la monitoría de otro", () => {
+test.describe("Monitoría ajena · un monitor no puede finalizar la monitoría de otro", () => {
   test("otro monitor que fuerza el envío con el id de una monitoría ajena (o inexistente) ve No encontramos esa monitoría en tu agenda y nada cambia", async ({
     page,
     escenario,
@@ -552,7 +552,7 @@ test.describe("Accesibilidad · Por finalizar, sus avisos y el recordatorio del 
 
     await test.step("el panel con el recordatorio", async () => {
       await entrar(page, "/monitor", monitor);
-      await expect(page.getByRole("status")).toHaveText("Tienes 1 monitoría por finalizar. Márcalas como realizadas en tu agenda; si no, se cierran solas.");
+      await expect(page.getByRole("status")).toHaveText("Tienes 1 monitoría por finalizar. Márcala como realizada en tu agenda; si no, se cierra sola.");
       await expect(page.getByRole("link", { name: "Mi agenda" })).toBeVisible();
       await expectReglasDelProducto(page, "el panel con el recordatorio");
     });

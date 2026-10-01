@@ -89,13 +89,14 @@ export default async function MiAgenda({ searchParams }: PageProps<"/monitor/age
           <ul className={estilos.lista}>
             {porFinalizar.map((m) => (
               <li key={m.idMonitoria} className={estilos.tarjeta}>
-                <DatosDeMonitoria monitoria={m} />
+                <DatosDeMonitoria monitoria={m} idCabeza={`cabeza-${m.idMonitoria}`} />
                 <span className={estilos.dato}>
-                  Si no la finalizas, se cierra sola el {formatearFechaHora(cierreAutomaticoDe(m, parametros))}.
+                  Si no la finalizas, se cierra sola a partir del {formatearFechaHora(cierreAutomaticoDe(m, parametros))}.
                 </span>
                 <form action={finalizar} className={estilos.accion}>
                   <input type="hidden" name="monitoria" value={m.idMonitoria} />
-                  <button type="submit" className={formulario.botonSecundario}>
+                  {/* El nombre del botón se repite en cada tarjeta: la descripción dice de qué monitoría es. */}
+                  <button type="submit" aria-describedby={`cabeza-${m.idMonitoria}`} className={formulario.botonSecundario}>
                     Marcar como realizada
                   </button>
                 </form>
@@ -156,10 +157,10 @@ function ListaDeMonitorias({ monitorias }: { monitorias: MonitoriaDeAgenda[] }) 
   );
 }
 
-function DatosDeMonitoria({ monitoria: m }: { monitoria: MonitoriaDeAgenda }) {
+function DatosDeMonitoria({ monitoria: m, idCabeza }: { monitoria: MonitoriaDeAgenda; idCabeza?: string }) {
   return (
     <>
-      <span className={estilos.cabeza}>
+      <span id={idCabeza} className={estilos.cabeza}>
         <time dateTime={m.fecha}>{formatearDiaConSemana(m.fecha)}</time>, {horaCorta(m.hora)} a {horaDeFin(m.hora, m.duracionMin)}
       </span>
       <span className={estilos.detalle}>

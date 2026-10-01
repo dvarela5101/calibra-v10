@@ -76,8 +76,9 @@ export default async function PanelMonitor() {
       )}
       {porFinalizar > 0 && (
         <p role="status" className={estilos.recordatorio}>
-          {porFinalizar === 1 ? "Tienes 1 monitoría por finalizar." : `Tienes ${porFinalizar} monitorías por finalizar.`} Márcalas como realizadas
-          en tu agenda; si no, se cierran solas.
+          {porFinalizar === 1
+            ? "Tienes 1 monitoría por finalizar. Márcala como realizada en tu agenda; si no, se cierra sola."
+            : `Tienes ${porFinalizar} monitorías por finalizar. Márcalas como realizadas en tu agenda; si no, se cierran solas.`}
         </p>
       )}
       {conCertificados && (

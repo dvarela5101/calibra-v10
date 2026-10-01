@@ -267,8 +267,7 @@ describe("criterio 1 (RN-17, D-12): próximas y pasadas", () => {
     const agenda = await cargarAgenda(e.sesionM1);
 
     expect(ids(agenda).sort()).toEqual(Object.values(e.esperadas).map((m) => m.idMonitoria).sort());
-    const { proximas, pasadas } = separarAgenda(agenda, new Date());
-    const { porFinalizar } = separarAgenda(agenda, new Date());
+    const { porFinalizar, proximas, pasadas } = separarAgenda(agenda, new Date());
     expect(porFinalizar.length + proximas.length + pasadas.length).toBe(5);
   });
 
