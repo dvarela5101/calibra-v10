@@ -38,6 +38,8 @@ const test = base.extend<{ mundo: (admin: Cuenta) => Promise<Mundo> }>({
       ["materia", []],
     ];
     const creados = new Map(tablas);
+    // Un pago solo puede apuntar a un comprobante revisado (HU-059). Su llave es la ruta, no un id.
+    const revisados: string[] = [];
 
     async function insertar(tabla: string, fila: Record<string, unknown>) {
       const { data, error } = await cuentas.cliente.from(tabla).insert(fila).select().single();
@@ -83,16 +85,21 @@ const test = base.extend<{ mundo: (admin: Cuenta) => Promise<Mundo> }>({
         nombrePagadorIntermedio: `Carla Vigente ${randomUUID().slice(0, 6)}`,
         nombrePagadorVigente: `Beto Vigente ${randomUUID().slice(0, 6)}`,
       };
-      const pago = (extra: Record<string, unknown>) =>
-        insertar("pago", {
+      const pago = async (extra: Record<string, unknown>) => {
+        const comprobante = `${randomUUID()}/${randomUUID()}.png`;
+        const { error } = await cuentas.cliente.from("comprobante_revisado").insert({ ruta: comprobante, tipo: "image/png" });
+        if (error) throw new Error(`insertar comprobante_revisado: ${error.message}`);
+        revisados.push(comprobante);
+        return insertar("pago", {
           id_monitoria: futura.id,
           monto: 25_000,
           contacto: "pagador@calibra.test",
           id_admin: admin.id,
-          comprobante: `${randomUUID()}/${randomUUID()}.png`,
+          comprobante,
           nombre_pagador: "Pagador",
           ...extra,
         });
+      };
 
       await pago({ nombre_pagador: nombres.nombrePagadorVencido, fecha_asignacion: hace(90) });
       await pago({ nombre_pagador: nombres.nombrePagadorVigente, fecha_asignacion: hace(10) });
@@ -129,6 +136,11 @@ const test = base.extend<{ mundo: (admin: Cuenta) => Promise<Mundo> }>({
       if (ids.length === 0) continue;
       const { error } = await cuentas.cliente.from(tabla).delete().in("id", ids);
       if (error) fallos.push(`${tabla}: ${error.message}`);
+    }
+    // Después de los pagos, que les apuntan.
+    if (revisados.length > 0) {
+      const { error } = await cuentas.cliente.from("comprobante_revisado").delete().in("ruta", revisados);
+      if (error) fallos.push(`comprobante_revisado: ${error.message}`);
     }
     if (fallos.length > 0) throw new Error(`No se pudo limpiar lo que creó la prueba:\n${fallos.join("\n")}`);
   },

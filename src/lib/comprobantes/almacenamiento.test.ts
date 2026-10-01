@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/tipos";
-import { crearEnlaceDeComprobante, enlaceDeComprobanteDePago, mensajeDeSubida, subirComprobante } from "./almacenamiento";
-import { BUCKET_COMPROBANTES, MENSAJE_TIPO, VIGENCIA_ENLACE_COMPROBANTE_SEG } from "./reglas";
+import { consultarCuota, crearEnlaceDeComprobante, enlaceDeComprobanteDePago, mensajeDeSubida, subirComprobante } from "./almacenamiento";
+import { BUCKET_COMPROBANTES, MENSAJE_TIPO, VIGENCIA_ENLACE_COMPROBANTE_SEG, mensajeDeCuota } from "./reglas";
 
 // Sin red ni base: el cliente es un doble que registra lo que se le pide y devuelve lo que se le diga.
 
@@ -11,9 +11,17 @@ const PNG = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 
 
 type ErrorDeStorage = { message: string; statusCode?: string };
 
-function clienteConSubida(respuesta: { error: ErrorDeStorage | null }) {
+type RespuestaDeCuota = { data: { usados: number; maximo: number; libre_desde: string | null } | null; error: { message: string } | null };
+const CUOTA_LIBRE: RespuestaDeCuota = { data: { usados: 0, maximo: 5, libre_desde: null }, error: null };
+
+function clienteConSubida(respuesta: { error: ErrorDeStorage | null }, cuota: RespuestaDeCuota = CUOTA_LIBRE) {
   const subidas: { bucket: string; ruta: string; opciones: unknown }[] = [];
+  const consultas: string[] = [];
   const cliente = {
+    rpc: (nombre: string) => {
+      consultas.push(nombre);
+      return { maybeSingle: async () => cuota };
+    },
     storage: {
       from: (bucket: string) => ({
         upload: async (ruta: string, _archivo: unknown, opciones: unknown) => {
@@ -23,7 +31,7 @@ function clienteConSubida(respuesta: { error: ErrorDeStorage | null }) {
       }),
     },
   } as unknown as SupabaseClient<Database>;
-  return { cliente, subidas };
+  return { cliente, subidas, consultas };
 }
 
 const png = () => new File([PNG], "captura.png", { type: "image/png" });
@@ -37,6 +45,7 @@ describe("mensajeDeSubida: el error del Storage se vuelve un mensaje claro", () 
     ["403", { statusCode: "403", message: "x" }, "No tienes permiso para subir este comprobante. Recarga la página e inténtalo de nuevo."],
     ["401", { statusCode: "401", message: "x" }, "No tienes permiso para subir este comprobante. Recarga la página e inténtalo de nuevo."],
     ["política de filas", { message: "new row violates row-level security policy" }, "No tienes permiso para subir este comprobante. Recarga la página e inténtalo de nuevo."],
+    ["cuota llena (el trigger de la base, 23514)", { statusCode: "500", message: "database error, code: 23514" }, mensajeDeCuota()],
     ["500", { statusCode: "500", message: "boom" }, "No se pudo subir el comprobante. Inténtalo de nuevo."],
     ["sin código ni pista", { message: "algo raro" }, "No se pudo subir el comprobante. Inténtalo de nuevo."],
   ])("%s", (_nombre, error, esperado) => {
@@ -102,6 +111,47 @@ describe("subirComprobante", () => {
     const { cliente, subidas } = clienteConSubida({ error: null });
     await expect(subirComprobante(cliente, "no-es-uuid", png())).rejects.toThrow(RangeError);
     expect(subidas).toEqual([]);
+  });
+});
+
+describe("subirComprobante y la cuota por sesión (HU-059)", () => {
+  it("pregunta la cuota antes de subir", async () => {
+    const { cliente, consultas, subidas } = clienteConSubida({ error: null });
+    expect((await subirComprobante(cliente, ID, png())).ok).toBe(true);
+    expect(consultas).toEqual(["mi_cuota_de_comprobantes"]);
+    expect(subidas).toHaveLength(1);
+  });
+
+  it("con la cuota llena no sube y dice desde cuándo puede subir otro", async () => {
+    const libre = "2026-10-01T21:09:26.419Z";
+    const { cliente, subidas } = clienteConSubida({ error: null }, { data: { usados: 5, maximo: 5, libre_desde: libre }, error: null });
+    expect(await subirComprobante(cliente, ID, png())).toEqual({ ok: false, mensaje: mensajeDeCuota(5, new Date(libre)) });
+    expect(subidas).toEqual([]);
+  });
+
+  it("con 4 de 5 todavía sube", async () => {
+    const { cliente, subidas } = clienteConSubida({ error: null }, { data: { usados: 4, maximo: 5, libre_desde: null }, error: null });
+    expect((await subirComprobante(cliente, ID, png())).ok).toBe(true);
+    expect(subidas).toHaveLength(1);
+  });
+
+  it("si no puede saber la cuota, intenta la subida: la base la hace cumplir igual", async () => {
+    const { cliente, subidas } = clienteConSubida({ error: null }, { data: null, error: { message: "sin red" } });
+    expect((await subirComprobante(cliente, ID, png())).ok).toBe(true);
+    expect(subidas).toHaveLength(1);
+  });
+
+  it("no pregunta la cuota si el archivo ya no sirve", async () => {
+    const { cliente, consultas } = clienteConSubida({ error: null });
+    await subirComprobante(cliente, ID, new File(["hola"], "notas.txt", { type: "text/plain" }));
+    expect(consultas).toEqual([]);
+  });
+
+  it("consultarCuota convierte la respuesta de la base", async () => {
+    const { cliente } = clienteConSubida({ error: null }, { data: { usados: 2, maximo: 5, libre_desde: "2026-10-01T00:00:00Z" }, error: null });
+    expect(await consultarCuota(cliente)).toEqual({ usados: 2, maximo: 5, libreDesde: new Date("2026-10-01T00:00:00Z") });
+    const sinDatos = clienteConSubida({ error: null }, { data: null, error: null });
+    expect(await consultarCuota(sinDatos.cliente)).toBeNull();
   });
 });
 

@@ -125,8 +125,10 @@ file_size_limit = "50MiB"
 # objects_path = "./images"
 
 # Allow connections via S3 compatible clients
+# Apagado (HU-059): la app no usa el protocolo S3, y sus subidas multiparte sin completar no pasan por
+# el trigger de la cuota de comprobantes. En la nube se apaga en el corte (HU-057).
 [storage.s3_protocol]
-enabled = true
+enabled = false
 
 # Image transformation API is available to Supabase Pro plan.
 # [storage.image_transformation]

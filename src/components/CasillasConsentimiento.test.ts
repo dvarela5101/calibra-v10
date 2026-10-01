@@ -27,3 +27,26 @@ describe("CasillasConsentimiento", () => {
     expect(html).toContain("compartir el resultado de mi diagnóstico con el monitor");
   });
 });
+
+describe("CasillasConsentimiento para el aspirante a monitor (HU-062)", () => {
+  const htmlAspirante = renderToStaticMarkup(createElement(CasillasConsentimiento, { variante: "aspirante" }));
+  const casillasAspirante = [...htmlAspirante.matchAll(/<input[^>]*>/g)].map(([etiqueta]) => etiqueta);
+
+  it("trae solo la casilla de tratamiento, desmarcada y obligatoria", () => {
+    expect(casillasAspirante).toHaveLength(1);
+    expect(casillasAspirante[0]).toContain('name="acepta_tratamiento_datos"');
+    expect(casillasAspirante[0]).toMatch(/\srequired/);
+    expect(casillasAspirante[0]).not.toMatch(/\schecked/);
+  });
+
+  it("enlaza al aviso y dice para qué: contactarlo y evaluar su certificación, no el diagnóstico", () => {
+    expect(htmlAspirante).toContain('href="/privacidad"');
+    expect(htmlAspirante).toContain("para contactarme y evaluar mi certificación como monitor");
+    expect(htmlAspirante).not.toContain("diagnóstico");
+  });
+
+  it("si ya la había marcado y el envío volvió con otro error, sigue marcada", () => {
+    const marcada = renderToStaticMarkup(createElement(CasillasConsentimiento, { variante: "aspirante", tratamientoMarcado: true }));
+    expect(marcada).toMatch(/<input[^>]*name="acepta_tratamiento_datos"[^>]*\schecked/);
+  });
+});

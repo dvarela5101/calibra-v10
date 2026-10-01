@@ -127,10 +127,13 @@ insert into public.monitoria (id, id_franja, id_materia, id_lead, fecha, valor_t
    '40000000-0000-0000-0000-00000000000a',
    '2026-10-05', 25000);
 
+-- Un pago solo puede apuntar a un comprobante que el servidor revisó (HU-059).
+insert into public.comprobante_revisado (ruta, tipo) values
+  ('c0000000-0000-0000-0000-00000000000a/60000000-0000-0000-0000-000000000001.png', 'image/png');
 insert into public.pago (id, id_monitoria, monto, nombre_pagador, contacto, id_admin, comprobante) values
   ('60000000-0000-0000-0000-000000000001',
    '50000000-0000-0000-0000-000000000001', 25000, 'Pagador Prueba', 'pagador@example.com',
-   'a0000000-0000-0000-0000-000000000001', 'comprobante.png');
+   'a0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-00000000000a/60000000-0000-0000-0000-000000000001.png');
 
 insert into public.desembolso (id_monitoria, monto_bruto, comision, monto_neto, llave_destino) values
   ('50000000-0000-0000-0000-000000000001', 25000, 2500, 22500, 'llave-m1');
