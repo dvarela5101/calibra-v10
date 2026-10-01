@@ -16,15 +16,31 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
   escalamiento_pago: { nombreAdmin: "Admin Uno", nombrePagador: "Ana Pérez", monto: 25_000, enlace: "https://calibra.example/admin" },
   invitacion_monitor: { enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
   verificacion_lead: { nombre: "Ana", enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
+  aviso_monitor_confirmada: {
+    nombreMonitor: "Camilo Rojas",
+    nombreEstudiante: "Ana",
+    materia: "Cálculo Integral",
+    inicio: "2020-01-13T15:00:00.000Z",
+    duracionMin: 90,
+    presencial: true,
+    enlace: "https://calibra.example/monitor/agenda",
+  },
+  aviso_monitor_cancelada: {
+    nombreMonitor: "Camilo Rojas",
+    nombreEstudiante: "Ana",
+    materia: "Cálculo Integral",
+    inicio: "2020-01-13T15:00:00.000Z",
+    enlace: "https://calibra.example/monitor/agenda",
+  },
 };
 
 const render = <P extends Plantilla>(plantilla: P, cambios: Partial<DatosPorPlantilla[P]> = {}) =>
   renderizar(plantilla, { ...EJEMPLOS[plantilla], ...cambios });
 
 describe("las plantillas de correo", () => {
-  it("son las que salen por correo: diagnóstico, reseña, llave, dos rechazos, escalamiento, invitación de monitor y verificación del correo del Lead", () => {
+  it("son las que salen por correo: diagnóstico, reseña, llave, dos rechazos, escalamiento, invitación de monitor, verificación del correo del Lead y dos avisos al monitor", () => {
     expect([...PLANTILLAS].sort()).toEqual(Object.keys(EJEMPLOS).sort());
-    expect(PLANTILLAS).toHaveLength(8);
+    expect(PLANTILLAS).toHaveLength(10);
   });
 
   it.each(PLANTILLAS)("%s sale en español con HTML y texto plano", (plantilla) => {
@@ -123,8 +139,46 @@ describe("el contenido de cada plantilla", () => {
 
   it("no lleva plazos escritos: viven en la base (HU-003)", () => {
     for (const plantilla of PLANTILLAS) {
-      expect(render(plantilla).texto).not.toMatch(/\b\d+\s?(horas?|minutos?|min|h)\b/);
+      // La duración de la sesión (avisos al monitor) es un dato de la franja, no un plazo.
+      const texto = render(plantilla).texto.replace(/^Duración: .*$/m, "");
+      expect(texto).not.toMatch(/\b\d+\s?(horas?|minutos?|min|h)\b/);
     }
+  });
+});
+
+describe("avisos al monitor (HU-051, D-16)", () => {
+  it("confirmada: fecha y hora en Bogotá, duración, materia, modalidad y el nombre del estudiante, con el enlace a su agenda", () => {
+    const { asunto, texto } = render("aviso_monitor_confirmada");
+    expect(asunto).toBe("Tienes una monitoría confirmada de Cálculo Integral");
+    const plano = texto.replace(/[\u00a0\u202f]/g, " ");
+    expect(plano).toContain("Hola, Camilo Rojas.");
+    expect(plano).toContain("Ana tiene una monitoría contigo y ya quedó confirmada.");
+    // 15:00 UTC son las 10:00 a. m. en Bogotá.
+    expect(plano).toContain("Cuándo: lunes, 13 de enero de 2020, 10:00 a. m.");
+    expect(plano).toContain("Duración: 90 minutos.");
+    expect(plano).toContain("Materia: Cálculo Integral.");
+    expect(plano).toContain("Modalidad: presencial.");
+    expect(plano).toContain("Ver mi agenda: https://calibra.example/monitor/agenda");
+    expect(render("aviso_monitor_confirmada", { presencial: false }).texto).toContain("Modalidad: virtual.");
+  });
+
+  it("cancelada: quién la canceló, la materia, la fecha y la hora", () => {
+    const { asunto, texto } = render("aviso_monitor_cancelada");
+    expect(asunto).toBe("Se canceló tu monitoría de Cálculo Integral");
+    expect(texto.replace(/[\u00a0\u202f]/g, " ")).toContain("Ana canceló la monitoría de Cálculo Integral del lunes, 13 de enero de 2020, 10:00 a. m.");
+  });
+
+  it("no lleva el contacto del estudiante: sus datos no lo incluyen (P-37)", () => {
+    for (const plantilla of ["aviso_monitor_confirmada", "aviso_monitor_cancelada"] as const) {
+      expect(Object.keys(EJEMPLOS[plantilla]).filter((campo) => /correo|telefono|contacto/i.test(campo))).toEqual([]);
+    }
+  });
+
+  it("rechaza un inicio que no es un instante o una duración que no es un entero positivo", () => {
+    expect(() => render("aviso_monitor_confirmada", { inicio: "mañana" })).toThrow(RangeError);
+    expect(() => render("aviso_monitor_cancelada", { inicio: "" })).toThrow(RangeError);
+    expect(() => render("aviso_monitor_confirmada", { duracionMin: 0 })).toThrow(RangeError);
+    expect(() => render("aviso_monitor_confirmada", { duracionMin: 1.5 })).toThrow(RangeError);
   });
 });
 

@@ -202,6 +202,8 @@ function reconstructoresCon(cambios: Partial<Reconstructores> = {}): Reconstruct
     pago_rechazado_individual: null,
     pago_rechazado_grupal: null,
     escalamiento_pago: null,
+    aviso_monitor_confirmada: null,
+    aviso_monitor_cancelada: null,
     invitacion_monitor: null,
     verificacion_lead: null,
     ...cambios,

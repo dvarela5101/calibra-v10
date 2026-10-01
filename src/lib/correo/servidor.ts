@@ -26,3 +26,4 @@ export async function enviarCorreoDesdeServidor<P extends Plantilla>(entrada: En
 }
 
 export { urlDelSitio } from "./contacto";
+export type { EntradaDeEnvio, ResultadoEnvio } from "./enviar";
