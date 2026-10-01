@@ -2,7 +2,9 @@
 
 .pie {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  gap: 0 var(--e4);
   max-inline-size: var(--col);
   margin-inline: auto;
   padding: var(--e4) max(var(--pad-x), env(safe-area-inset-left)) max(var(--e4), env(safe-area-inset-bottom));

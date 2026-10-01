@@ -483,6 +483,50 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"solicitud_monitor": {
+                  Row: {
+                    "abierta": boolean | null,"acepta_tratamiento_datos": boolean,"actualizada_en": string,"correo": string,"creada_en": string,"estado": Database["public"]['Enums']["estado_solicitud_monitor"],"fecha_consentimiento": string,"id": string,"id_admin_actualizo": string | null,"nombre": string,"numero_telefono": string
+                  }
+                  Insert: {
+                    "abierta"?: never,"acepta_tratamiento_datos": boolean,"actualizada_en"?: string,"correo": string,"creada_en"?: string,"estado"?: Database["public"]['Enums']["estado_solicitud_monitor"],"fecha_consentimiento": string,"id"?: string,"id_admin_actualizo"?: string | null,"nombre": string,"numero_telefono": string
+                  }
+                  Update: {
+                    "abierta"?: never,"acepta_tratamiento_datos"?: boolean,"actualizada_en"?: string,"correo"?: string,"creada_en"?: string,"estado"?: Database["public"]['Enums']["estado_solicitud_monitor"],"fecha_consentimiento"?: string,"id"?: string,"id_admin_actualizo"?: string | null,"nombre"?: string,"numero_telefono"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "solicitud_monitor_id_admin_actualizo_fkey"
+      columns: ["id_admin_actualizo"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"solicitud_monitor_materia": {
+                  Row: {
+                    "id_materia": string,"id_solicitud": string
+                  }
+                  Insert: {
+                    "id_materia": string,"id_solicitud": string
+                  }
+                  Update: {
+                    "id_materia"?: string,"id_solicitud"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "solicitud_monitor_materia_id_materia_fkey"
+      columns: ["id_materia"]
+isOneToOne: false
+      referencedRelation: "materia"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "solicitud_monitor_materia_id_solicitud_fkey"
+      columns: ["id_solicitud"]
+isOneToOne: false
+      referencedRelation: "solicitud_monitor"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"verificacion_lead": {
                   Row: {
                     "creada_en": string,"id": string,"id_lead": string,"siguiente": string,"token_hash": string,"usada_en": string | null,"vence_en": string
@@ -552,6 +596,9 @@ isOneToOne: true
 { Args: { "p_id_sesion": string,"p_token_hash": string }; Returns: {
               "id_lead": string,"siguiente": string
             }[]
+                           },
+"crear_solicitud_monitor":
+{ Args: { "p_correo": string,"p_fecha_consentimiento": string,"p_materias": (string)[],"p_nombre": string,"p_numero_telefono": string }; Returns: string
                            },
 "crear_verificacion_lead":
 { Args: { "p_correo": string,"p_maximo_por_hora": number,"p_siguiente": string,"p_token_hash": string }; Returns: {
@@ -636,7 +683,7 @@ isOneToOne: true
                            }
           }
           Enums: {
-            "estado_correo": "pendiente"|"enviado"|"fallido","estado_desembolso": "pendiente"|"desembolsado"|"anulado","estado_lead": "nuevo"|"contactado"|"descartado","estado_monitoria": "pendiente_pago"|"confirmada"|"realizada"|"cancelada","estado_pago": "en_revision"|"aprobado"|"rechazado","estado_reembolso": "esperando_llave"|"pendiente"|"reembolsado","estado_reporte": "en_revision"|"aceptado"|"rechazado","modalidad_pago": "unico"|"dividido","motivo_cancelacion": "reserva_expirada"|"pago_rechazado"|"estudiante"|"monitor_no_asistio"|"diferencia_no_cubierta"
+            "estado_correo": "pendiente"|"enviado"|"fallido","estado_desembolso": "pendiente"|"desembolsado"|"anulado","estado_lead": "nuevo"|"contactado"|"descartado","estado_monitoria": "pendiente_pago"|"confirmada"|"realizada"|"cancelada","estado_pago": "en_revision"|"aprobado"|"rechazado","estado_reembolso": "esperando_llave"|"pendiente"|"reembolsado","estado_reporte": "en_revision"|"aceptado"|"rechazado","estado_solicitud_monitor": "nueva"|"contactada"|"evaluada"|"descartada","modalidad_pago": "unico"|"dividido","motivo_cancelacion": "reserva_expirada"|"pago_rechazado"|"estudiante"|"monitor_no_asistio"|"diferencia_no_cubierta"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -752,7 +799,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "estado_correo": ["pendiente", "enviado", "fallido"],"estado_desembolso": ["pendiente", "desembolsado", "anulado"],"estado_lead": ["nuevo", "contactado", "descartado"],"estado_monitoria": ["pendiente_pago", "confirmada", "realizada", "cancelada"],"estado_pago": ["en_revision", "aprobado", "rechazado"],"estado_reembolso": ["esperando_llave", "pendiente", "reembolsado"],"estado_reporte": ["en_revision", "aceptado", "rechazado"],"modalidad_pago": ["unico", "dividido"],"motivo_cancelacion": ["reserva_expirada", "pago_rechazado", "estudiante", "monitor_no_asistio", "diferencia_no_cubierta"]
+            "estado_correo": ["pendiente", "enviado", "fallido"],"estado_desembolso": ["pendiente", "desembolsado", "anulado"],"estado_lead": ["nuevo", "contactado", "descartado"],"estado_monitoria": ["pendiente_pago", "confirmada", "realizada", "cancelada"],"estado_pago": ["en_revision", "aprobado", "rechazado"],"estado_reembolso": ["esperando_llave", "pendiente", "reembolsado"],"estado_reporte": ["en_revision", "aceptado", "rechazado"],"estado_solicitud_monitor": ["nueva", "contactada", "evaluada", "descartada"],"modalidad_pago": ["unico", "dividido"],"motivo_cancelacion": ["reserva_expirada", "pago_rechazado", "estudiante", "monitor_no_asistio", "diferencia_no_cubierta"]
           }
         }
 } as const
