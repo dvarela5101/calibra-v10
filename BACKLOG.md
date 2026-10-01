@@ -45,7 +45,6 @@ _Generado automaticamente: 2026-10-01 00:37. No editar a mano; usa `scripts/back
 | [HU-018](backlog/HU-018.md) | [Lead] Pagar por Llave y adjuntar el comprobante | Lista | P0 | L | HU-017, HU-007 |
 | [HU-019](backlog/HU-019.md) | [Lead] Recibir la confirmación de mi cita con un enlace para gestionarla | Lista | P0 | M | HU-018, HU-006 |
 | [HU-020](backlog/HU-020.md) | [Admin] Revisar pagos: aprobar o rechazar | Lista | P0 | L | HU-012, HU-018, HU-006 |
-| [HU-023](backlog/HU-023.md) | [Monitor] Finalizar una sesión | Lista | P0 | S | HU-021 |
 | [HU-024](backlog/HU-024.md) | [Lead] Cancelar mi monitoría individual hasta 12 h antes | Lista | P0 | M | HU-019, HU-003 |
 | [HU-025](backlog/HU-025.md) | [Pagador] Entregar mi llave para recibir un reembolso | Lista | P0 | M | HU-024, HU-006 |
 | [HU-026](backlog/HU-026.md) | [Admin] Gestionar reembolsos | Lista | P0 | M | HU-025, HU-012 |
@@ -53,6 +52,7 @@ _Generado automaticamente: 2026-10-01 00:37. No editar a mano; usa `scripts/back
 | [HU-028](backlog/HU-028.md) | [Admin] Ejecutar desembolsos a monitores | Lista | P0 | M | HU-023, HU-020 |
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | Lista | P0 | M | HU-019 |
 | [HU-005](backlog/HU-005.md) | [Técnica] Banco de preguntas por habilidades: formato, migración, validación y carga | En progreso | P0 | L | HU-002 |
+| [HU-023](backlog/HU-023.md) | [Monitor] Finalizar una sesión | En progreso | P0 | S | HU-021 |
 | [HU-062](backlog/HU-062.md) | [Aspirante a monitor] Pedir la certificación de una materia dejando mis datos | En revision | P1 | M | HU-008, HU-012 |
 | [HU-067](backlog/HU-067.md) | [Técnica] Impedir que un pagador pise su propio comprobante con una URL de subida firmada | En revision | P1 | S | HU-007 |
 | [HU-059](backlog/HU-059.md) | [Técnica] Endurecer los comprobantes: contenido real, huérfanos y cuota por sesión | En revision | P2 | S | HU-007 |
