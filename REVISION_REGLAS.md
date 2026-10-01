@@ -341,6 +341,9 @@ El banco de preguntas ([HU-005](backlog/HU-005.md)) se hace después. Para que e
 |---|---|---|
 | D-11 | El estado del pago que ve el monitor (P-24) agrega los comprobantes de la monitoría: rechazado si alguno lo fue (RN-43 cancela la cita), si no en revisión si alguno lo está, si no aprobado; sin comprobantes, sin pagar. | [HU-021](backlog/HU-021.md) |
 | D-12 | Una reserva pendiente de pago que ya venció (RN-34) se le muestra al monitor entre las pasadas como reserva vencida, aunque HU-027 todavía no la haya cancelado. | [HU-021](backlog/HU-021.md), [HU-027](backlog/HU-027.md) |
+| D-13 | El monitor puede finalizar una monitoría confirmada desde su hora de inicio (con la exacta ya se puede, P-40); antes no. Confirma el supuesto del criterio 2 de HU-023. | [HU-023](backlog/HU-023.md) |
+| D-14 | Una individual confirmada que nadie finalizó se cierra sola 24 h después del fin programado (confirma la propuesta de P-05). Es un plazo más de la sección 6.1 (`cierre_automatico_min`) y un proceso lo revisa cada 15 minutos. | [HU-023](backlog/HU-023.md) |
+| D-15 | El recordatorio de finalizar es en la app: el panel del monitor dice cuántas tiene por finalizar y su agenda las muestra arriba con la hora en que se cierran solas. Sin correo: los avisos al monitor quedan para HU-051 (P-11). | [HU-023](backlog/HU-023.md), [HU-051](backlog/HU-051.md) |
 
 ## 5. Cortes propuestos
 
