@@ -23,7 +23,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(56);
+select plan(57);
 
 -- ---------------------------------------------------------------------------
 -- Estructura y permisos
@@ -247,7 +247,11 @@ insert into public.monitoria (id, id_franja, id_materia, id_lead, fecha, valor_t
    now() - interval '10 minutes'),
   ('50000000-0000-0000-0000-000000002129', '30000000-0000-0000-0000-0000000021e1', '10000000-0000-0000-0000-0000000021a1',
    '40000000-0000-0000-0000-000000002102', '2026-11-30', 987654, 'pendiente_pago', null, null,
-   now() - interval '10 minutes' - interval '1 microsecond');
+   now() - interval '10 minutes' - interval '1 microsecond'),
+  -- 40: por pagar de hace 3 días, pero con un comprobante en revisión (RN-34: no vence la que tiene comprobante).
+  ('50000000-0000-0000-0000-000000002140', '30000000-0000-0000-0000-0000000021e1', '10000000-0000-0000-0000-0000000021a1',
+   '40000000-0000-0000-0000-000000002102', '2026-12-07', 987654, 'pendiente_pago', null, null,
+   timestamptz '2026-10-05 12:00-05' - interval '3 days');
 
 -- Los pagos. Un pago solo apunta a un comprobante que el servidor revisó (HU-059): uno por pago, con su ruta
 -- <uuid>/<uuid>.pdf. Monto, pagador y contacto llevan datos que la agenda no debe mostrar.
@@ -276,7 +280,8 @@ insert into pagos_21 values
   ('60000000-0000-0000-0000-000000002182', '50000000-0000-0000-0000-000000002118', 'en_revision'),
   ('60000000-0000-0000-0000-000000002183', '50000000-0000-0000-0000-000000002118', 'rechazado'),
   ('60000000-0000-0000-0000-000000002191', '50000000-0000-0000-0000-000000002119', 'aprobado'),
-  ('60000000-0000-0000-0000-000000002192', '50000000-0000-0000-0000-000000002119', 'aprobado');
+  ('60000000-0000-0000-0000-000000002192', '50000000-0000-0000-0000-000000002119', 'aprobado'),
+  ('60000000-0000-0000-0000-000000002140', '50000000-0000-0000-0000-000000002140', 'en_revision');
 insert into public.comprobante_revisado (ruta, tipo)
 select 'c0000000-0000-0000-0000-000000002101/' || id || '.pdf', 'application/pdf' from pagos_21;
 insert into public.pago (id, id_monitoria, monto, nombre_pagador, contacto, estado, id_admin, fecha_revision, comprobante)
@@ -505,6 +510,10 @@ select is(
   (select count(*)::int from privado.agenda_del_monitor('2026-10-05 12:00-05')
    where reserva_vencida and right(id_monitoria::text, 2) between '21' and '27'),
   2, 'De las siete monitorías de E fijadas a ese `ahora` (21 a 27), solo dos están vencidas: la de 10 minutos y un microsegundo y la de 3 días');
+
+select is(
+  (select reserva_vencida from privado.agenda_del_monitor('2026-10-05 12:00-05') where id_monitoria = '50000000-0000-0000-0000-000000002140'),
+  false, 'RN-34: una reserva por pagar que ya tiene un comprobante no está vencida, aunque pasaran los 10 minutos');
 
 -- La puerta pública usa la hora real (now() es el mismo durante toda la transacción).
 select is(

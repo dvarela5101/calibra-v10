@@ -8,7 +8,8 @@
 --   D-11: con varios comprobantes, el estado del pago de la monitoría es rechazado si alguno lo fue (RN-43
 --         cancela la cita), si no en revisión si alguno lo está, si no aprobado; sin comprobantes, sin pagar.
 --   D-12: una reserva pendiente de pago que ya venció (RN-34) se muestra entre las pasadas como reserva
---         vencida, aunque HU-027 todavía no la haya cancelado.
+--         vencida, aunque HU-027 todavía no la haya cancelado. Como dice RN-34, vence la que pasó sus 10
+--         minutos sin comprobante: con alguno (HU-018 admite varios, RN-38) no está vencida.
 --
 -- Por qué en la base: el monitor no lee `lead` (tiene el contacto del estudiante) ni `pago` (tiene el del
 -- pagador). La función security definer devuelve solo sus monitorías (auth.uid()) y solo lo que la agenda
@@ -48,7 +49,9 @@ as $$
     l.nombre,
     m.estado,
     m.motivo_cancelacion,
-    m.estado = 'pendiente_pago' and not public.dentro_de_plazo(public.reserva_hasta(m.fecha_creacion), p_ahora),
+    m.estado = 'pendiente_pago'
+      and not pa.con_comprobante
+      and not public.dentro_de_plazo(public.reserva_hasta(m.fecha_creacion), p_ahora),
     pa.estado_pago,
     public.inicio_sesion(m.fecha, f.hora)
   from public.monitoria m
@@ -61,7 +64,8 @@ as $$
       when bool_or(p.estado = 'en_revision') then 'en_revision'
       when bool_or(p.estado = 'aprobado') then 'aprobado'
       else 'sin_pagar'
-    end as estado_pago
+    end as estado_pago,
+    count(*) > 0 as con_comprobante
     from public.pago p
     where p.id_monitoria = m.id
   ) pa
