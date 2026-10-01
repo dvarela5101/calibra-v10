@@ -57,7 +57,14 @@ test.describe("Criterios 1 a 3 y 7 · invitar y registrarse", () => {
       await expect(campoCorreo).toHaveValue(correo, ESPERA);
       await expect(campoCorreo).toHaveAttribute("readonly", "");
 
-      await aspirante.getByLabel("Nombre completo").fill(nombre);
+      // HU-069 (D-6): junto al nombre dice que lo verán los estudiantes, con el aviso en otra pestaña.
+      const campoNombre = aspirante.getByLabel("Nombre completo");
+      await expect(campoNombre).toHaveAccessibleDescription(/Así te verán los estudiantes en la lista de monitores de tus materias/);
+      const aviso = aspirante.getByRole("link", { name: "aviso de privacidad (se abre en otra pestaña)" });
+      await expect(aviso).toHaveAttribute("href", "/privacidad");
+      await expect(aviso).toHaveAttribute("target", "_blank");
+
+      await campoNombre.fill(nombre);
       await aspirante.getByLabel("Teléfono").fill("3109876543");
       await aspirante.getByLabel("Tu llave").fill("llave-e2e@calibra.test");
       await aspirante.getByLabel("Contraseña", { exact: true }).fill(contrasena);

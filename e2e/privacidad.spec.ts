@@ -26,6 +26,7 @@ test.describe("aviso de privacidad (HU-008)", () => {
     for (const titulo of [
       "Responsable del tratamiento",
       "Para qué los usamos",
+      "Si eres monitor",
       "Tus derechos",
       "Canal de consultas",
       "Cuánto tiempo los guardamos",
@@ -35,6 +36,14 @@ test.describe("aviso de privacidad (HU-008)", () => {
 
     await expect(page.getByText("Compartir el resultado de tu diagnóstico con el monitor de tu monitoría")).toBeVisible();
     await expect(page.getByText("Calibra es la responsable del tratamiento")).toBeVisible();
+
+    // HU-069 (D-6): el nombre del monitor se muestra; su contacto y su llave no. Con la fecha del cambio.
+    const monitores = page.locator("section", { has: page.getByRole("heading", { name: "Si eres monitor" }) });
+    await expect(monitores).toContainText(
+      "tu nombre, tal como lo escribiste al crear tu cuenta, se muestra a estudiantes y visitantes en la lista de monitores de esa materia, junto con tus fechas libres y sus precios",
+    );
+    await expect(monitores).toContainText("Tu teléfono, tu correo y tu llave no se muestran a estudiantes ni a visitantes.");
+    await expect(page.getByText("Última actualización: 1 de octubre de 2026.")).toBeVisible();
 
     // El correo depende de CORREO_DATOS_PERSONALES: basta con el enlace o con el aviso de que llegará pronto.
     const canal = page.locator("section", { has: page.getByRole("heading", { name: "Canal de consultas" }) });

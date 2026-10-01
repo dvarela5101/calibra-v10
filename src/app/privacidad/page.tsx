@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Pantalla } from "@/components/Pantalla";
-import { correoConsultasDatos } from "@/lib/privacidad/consentimiento";
+import { formatearDia } from "@/lib/fechas";
+import { AVISO_ACTUALIZADO, correoConsultasDatos } from "@/lib/privacidad/consentimiento";
 import estilos from "./privacidad.module.css";
 
 export const metadata: Metadata = { title: "Aviso de privacidad · Calibra" };
 
 // Fuera del grupo (publico): leer el aviso no crea una sesión anónima.
-// Texto de HU-008 con las decisiones R-1 y P-13 (29-sep-2026). El texto legal final lo valida el equipo.
+// Texto de HU-008 con las decisiones R-1 y P-13 (29-sep-2026), y lo que ven los estudiantes de un monitor (D-6, HU-069).
+// El texto legal final lo valida el equipo. Cada cambio del texto actualiza AVISO_ACTUALIZADO.
 export default async function AvisoPrivacidad() {
   // El correo de consultas se lee al pedir la página: cambiarlo en Vercel no exige otro build.
   await connection();
@@ -20,6 +22,8 @@ export default async function AvisoPrivacidad() {
       subtitulo="Cómo trata Calibra tus datos personales y qué puedes hacer con ellos."
     >
       <div className={estilos.aviso}>
+        <p className={estilos.actualizado}>Última actualización: {formatearDia(AVISO_ACTUALIZADO)}.</p>
+
         <section aria-labelledby="responsable">
           <h2 id="responsable">Responsable del tratamiento</h2>
           <p>Calibra es la responsable del tratamiento de los datos personales que recoge en este sitio.</p>
@@ -34,6 +38,7 @@ export default async function AvisoPrivacidad() {
             <li>
               Si quieres ser monitor: tu nombre, tu teléfono, tu correo y las materias en las que quieres certificarte.
             </li>
+            <li>Si tienes cuenta de monitor: además, tu llave, para pagarte tus monitorías.</li>
           </ul>
         </section>
 
@@ -50,6 +55,15 @@ export default async function AvisoPrivacidad() {
             <li>Si pediste ser monitor, contactarte para agendar y hacer tu evaluación presencial.</li>
             <li>Enviarte novedades y ofertas, solo si lo autorizas aparte. Esa autorización es opcional.</li>
           </ul>
+        </section>
+
+        <section aria-labelledby="monitores">
+          <h2 id="monitores">Si eres monitor</h2>
+          <p>
+            Cuando te certificas en una materia, tu nombre, tal como lo escribiste al crear tu cuenta, se muestra a
+            estudiantes y visitantes en la lista de monitores de esa materia, junto con tus fechas libres y sus precios.
+          </p>
+          <p>Tu teléfono, tu correo y tu llave no se muestran a estudiantes ni a visitantes.</p>
         </section>
 
         <section aria-labelledby="autorizacion">
