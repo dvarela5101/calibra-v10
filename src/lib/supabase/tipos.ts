@@ -18,6 +18,31 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"aviso_monitor": {
+                  Row: {
+                    "creado_en": string,"evento": string,"id": string,"id_monitoria": string,"intentos": number,"procesado_en": string | null
+                  }
+                  Insert: {
+                    "creado_en"?: string,"evento": string,"id"?: string,"id_monitoria": string,"intentos"?: number,"procesado_en"?: string | null
+                  }
+                  Update: {
+                    "creado_en"?: string,"evento"?: string,"id"?: string,"id_monitoria"?: string,"intentos"?: number,"procesado_en"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "aviso_monitor_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: false
+      referencedRelation: "monitoria"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "aviso_monitor_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: false
+      referencedRelation: "monitoria_plazos"
+      referencedColumns: ["id_monitoria"]
+    }
+                  ]
                 },"certificado": {
                   Row: {
                     "fecha_emision": string,"fecha_evaluacion": string,"id": string,"id_admin": string,"id_materia": string,"id_monitor": string
@@ -776,6 +801,9 @@ isOneToOne: true
 "cancelable_hasta":
 { Args: { "p_es_grupal": boolean,"p_inicio": string }; Returns: string
                            },
+"cierre_automatico_desde":
+{ Args: { "p_fin_programado": string }; Returns: string
+                           },
 "comision":
 { Args: { "p_monto_bruto": number }; Returns: number
                            },
@@ -795,6 +823,11 @@ isOneToOne: true
 "cumple_antelacion":
 { Args: { "p_ahora": string,"p_es_grupal": boolean,"p_inicio": string }; Returns: boolean
                            },
+"datos_de_aviso_monitor":
+{ Args: { "p_id_monitoria": string }; Returns: {
+              "correo_monitor": string,"duracion_min": number,"estado": Database["public"]['Enums']["estado_monitoria"],"grupal": boolean,"inicio": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_estudiante": string,"nombre_materia": string,"nombre_monitor": string,"presencial": boolean
+            }[]
+                           },
 "dentro_de_plazo":
 { Args: { "p_ahora": string,"p_limite": string }; Returns: boolean
                            },
@@ -803,6 +836,11 @@ isOneToOne: true
                            },
 "desembolso_ejecutable":
 { Args: { "p_ahora": string,"p_fin_programado": string }; Returns: boolean
+                           },
+"equipo_de_admins":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "activo": boolean,"casos_abiertos": number,"correo": string,"id": string,"nombre": string,"orden_revision": number
+            }[]
                            },
 "fecha_limite_diferencia":
 { Args: { "p_inicio": string }; Returns: string
@@ -817,6 +855,9 @@ isOneToOne: true
                            },
 "fin_programado":
 { Args: { "p_duracion_min": number,"p_inicio": string }; Returns: string
+                           },
+"finalizar_monitoria":
+{ Args: { "p_id_monitoria": string }; Returns: string
                            },
 "inicio_sesion":
 { Args: { "p_fecha": string,"p_hora": string }; Returns: string
@@ -837,6 +878,9 @@ isOneToOne: true
 "monto_neto":
 { Args: { "p_monto_bruto": number }; Returns: number
                            },
+"mover_admin":
+{ Args: { "p_direccion": string,"p_id": string }; Returns: string
+                           },
 "parametros_comision":
 { Args: Record<PropertyKey, never>; Returns: {
               "comision_porcentaje": number,"comision_tope": number
@@ -849,11 +893,14 @@ isOneToOne: true
                            },
 "parametros_negocio":
 { Args: Record<PropertyKey, never>; Returns: {
-              "antelacion_grupal_min": number,"antelacion_individual_min": number,"cancelacion_grupal_min": number,"cancelacion_individual_min": number,"desembolso_min": number,"diferencia_min": number,"pago_integrantes_min": number,"reporte_inasistencia_min": number,"resena_grupal_min": number,"reserva_min": number,"revision_min": number
+              "antelacion_grupal_min": number,"antelacion_individual_min": number,"cancelacion_grupal_min": number,"cancelacion_individual_min": number,"cierre_automatico_min": number,"desembolso_min": number,"diferencia_min": number,"pago_integrantes_min": number,"reporte_inasistencia_min": number,"resena_grupal_min": number,"reserva_min": number,"revision_min": number
             }[]
                            },
 "plazo_alcanzado":
 { Args: { "p_ahora": string,"p_desde": string }; Returns: boolean
+                           },
+"reasignar_casos_de_admin":
+{ Args: { "p_id_admin": string }; Returns: number
                            },
 "registrar_lead":
 { Args: { "p_acepta_contacto": boolean,"p_correo": string,"p_fecha_consentimiento": string,"p_id_sesion": string,"p_nombre": string,"p_numero_telefono": string,"p_origen": string }; Returns: string

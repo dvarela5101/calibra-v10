@@ -10,7 +10,7 @@ Reconstrucción de Calibra sobre el modelo v10 (`calibra_reglas_negocio.md`). St
 - Zona horaria de negocio `America/Bogota` y textos en español (`src/config/regional.ts`). Nunca calcules una fecha con la zona del servidor.
 - Colores solo desde `src/styles/tokens.css`. `--alert`, `--warn` y `--success` son relleno; para texto, `--alert-text`, `--success-text` y `--muted`.
 - Ningún texto por debajo de 14 px, áreas táctiles de 44 px o más, sin degradados, sin emojis decorativos, sin iconos de cerebro, robot o IA. Nunca mostrar cifras de comisión.
-- Ninguna llave secreta en el repo. Las variables nuevas se documentan en `.env.example` sin valor.
+- Ninguna llave secreta en el repo. Las variables nuevas se documentan en `.env.example` sin valor, y toda configuración externa nueva (variable de Vercel, secreto de Vault, ajuste de Auth o de un panel) se anota también en `docs/pendientes-dvarela.md` §C: el corte (HU-057) debe ser solo configurar (D-18).
 - Antes de dejar una HU en revisión: `npm run verificar` (lint, typecheck, Vitest, build y Playwright) y, si tocó la base, `npm run db:verificar`.
 - Un commit por HU, con el id en el asunto (por ejemplo `HU-003: motor de plazos...`). El repo `dvarela5101/calibra-v10` es temporal: en el corte (HU-057) se sube al repo real de Calibra conservando el historial. Nunca hagas push al repo del prototipo antes de eso.
 

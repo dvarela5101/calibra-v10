@@ -21,6 +21,8 @@ export const PLANTILLAS = [
   "escalamiento_pago",
   "invitacion_monitor",
   "verificacion_lead",
+  "aviso_monitor_confirmada",
+  "aviso_monitor_cancelada",
 ] as const;
 
 export type Plantilla = (typeof PLANTILLAS)[number];
@@ -35,6 +37,8 @@ export const NOMBRE_DE_PLANTILLA: Record<Plantilla, string> = {
   escalamiento_pago: "Pago escalado a otro admin",
   invitacion_monitor: "Invitación de monitor",
   verificacion_lead: "Confirmación de correo para agendar",
+  aviso_monitor_confirmada: "Aviso al monitor: monitoría confirmada",
+  aviso_monitor_cancelada: "Aviso al monitor: el estudiante canceló",
 };
 
 export function esPlantilla(valor: string): valor is Plantilla {
@@ -61,6 +65,21 @@ export type DatosPorPlantilla = {
    * es suyo. Al Lead dueño del correo, con su nombre.
    */
   verificacion_lead: { nombre: string; enlace: string; venceEn: string };
+  /**
+   * Una monitoría individual del monitor quedó confirmada (D-16, HU-051). Al monitor. Del estudiante, solo el
+   * nombre (P-37). `inicio` es un instante ISO; `enlace`, su agenda.
+   */
+  aviso_monitor_confirmada: {
+    nombreMonitor: string;
+    nombreEstudiante: string;
+    materia: string;
+    inicio: string;
+    duracionMin: number;
+    presencial: boolean;
+    enlace: string;
+  };
+  /** El estudiante canceló una monitoría confirmada (D-16, HU-051). Al monitor. */
+  aviso_monitor_cancelada: { nombreMonitor: string; nombreEstudiante: string; materia: string; inicio: string; enlace: string };
 };
 
 export type CorreoRenderizado = { asunto: string; html: string; texto: string };
@@ -76,6 +95,13 @@ function linea(valor: string, campo: string): string {
   const limpio = valor.replace(/\s+/g, " ").trim();
   if (!limpio) throw new RangeError(`${campo} no puede estar vacío.`);
   return limpio;
+}
+
+/** Un instante ISO válido, o `RangeError`. */
+function instante(valor: string, campo: string): Date {
+  const fecha = new Date(valor);
+  if (Number.isNaN(fecha.getTime())) throw new RangeError(`${campo} debe ser un instante válido.`);
+  return fecha;
 }
 
 /** Cierra una oración con punto, salvo que el texto ya termine en punto, exclamación, interrogación o puntos suspensivos. */
@@ -216,6 +242,45 @@ function contenidoDe<P extends Plantilla>(plantilla: P, datos: DatosPorPlantilla
           ],
           boton: { texto: "Confirmar mi correo", enlace: d.enlace },
           pie: "Si no fuiste tú, ignora este correo: sin confirmarlo, nadie ve tus datos ni tus citas.",
+        },
+      };
+    }
+    case "aviso_monitor_confirmada": {
+      const d = datos as DatosPorPlantilla["aviso_monitor_confirmada"];
+      const materia = linea(d.materia, "materia");
+      if (!Number.isInteger(d.duracionMin) || d.duracionMin <= 0) throw new RangeError("duracionMin debe ser un entero positivo.");
+      const cuando = formatearFechaHora(instante(d.inicio, "inicio"));
+      return {
+        asunto: `Tienes una monitoría confirmada de ${materia}`,
+        contenido: {
+          titulo: "Tienes una monitoría confirmada",
+          parrafos: [
+            `Hola, ${cerrar(linea(d.nombreMonitor, "nombreMonitor"))}`,
+            `${linea(d.nombreEstudiante, "nombreEstudiante")} tiene una monitoría contigo y ya quedó confirmada.`,
+            `Cuándo: ${cerrar(cuando)}`,
+            `Duración: ${d.duracionMin} minutos.`,
+            `Materia: ${cerrar(materia)}`,
+            `Modalidad: ${d.presencial ? "presencial" : "virtual"}.`,
+          ],
+          boton: { texto: "Ver mi agenda", enlace: d.enlace },
+          pie: "Si no puedes darla, escríbenos cuanto antes.",
+        },
+      };
+    }
+    case "aviso_monitor_cancelada": {
+      const d = datos as DatosPorPlantilla["aviso_monitor_cancelada"];
+      const materia = linea(d.materia, "materia");
+      const cuando = formatearFechaHora(instante(d.inicio, "inicio"));
+      return {
+        asunto: `Se canceló tu monitoría de ${materia}`,
+        contenido: {
+          titulo: "El estudiante canceló la monitoría",
+          parrafos: [
+            `Hola, ${cerrar(linea(d.nombreMonitor, "nombreMonitor"))}`,
+            `${linea(d.nombreEstudiante, "nombreEstudiante")} canceló la monitoría de ${materia} del ${cerrar(cuando)}`,
+            "No tienes que hacer nada: ya no aparece entre tus próximas monitorías.",
+          ],
+          boton: { texto: "Ver mi agenda", enlace: d.enlace },
         },
       };
     }

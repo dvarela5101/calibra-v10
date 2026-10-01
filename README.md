@@ -114,6 +114,15 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 - El tiempo restante de un pago sale del motor de plazos (HU-003) y respeta el borde inclusivo de P-40.
 - Cada sección se vuelve accionable cuando llegan HU-020 (pagos), HU-026 (reembolsos), HU-030 (reportes) y HU-028 (desembolsos).
 
+## Equipo de admins
+
+`/admin/equipo` (HU-054, enlazada desde la bandeja): el equipo de admins en su orden de revisión (RN-07), con quién está activo y cuántos casos abiertos tiene. Un admin sube o baja a otro un puesto y desactiva a otro (RN-23), con confirmación.
+
+- `public.equipo_de_admins()` y `public.mover_admin(id, direccion)` (invoker, con la sesión) sobre funciones definer de `privado` que exigen un admin activo: a cualquier otro, el equipo le llega vacío y mover responde `sin_permiso`. Mover intercambia el orden con el vecino en una sola sentencia (la llave única es diferible).
+- El turno es `privado.siguiente_admin_activo(id)`: el admin activo que sigue en el orden, volviendo al primero, saltándose a los desactivados. Lo deben usar la asignación y el escalamiento de pagos (HU-018, HU-020).
+- Desactivar pasa por `desactivarCuenta()` (`src/lib/auth/cuentas.ts`): primero `public.reasignar_casos_de_admin(id)` (solo `service_role`) pasa sus reembolsos activos y reportes en revisión al siguiente activo (P-44), y después lo banea en Auth. Si la reasignación falla, no se desactiva. Sus certificados y revisiones se conservan.
+- Nadie se desactiva a sí mismo y el equipo nunca se queda sin admins activos (`src/lib/admin/equipo-reglas.ts`). Agregar admins aún no tiene pantalla: [HU-072](backlog/HU-072.md).
+
 ## Certificados de monitor
 
 `/admin/certificados` (HU-014): después de la evaluación presencial (P-19), el admin certifica al monitor en una materia con la fecha de esa evaluación. El certificado no vence, y es uno por monitor y materia (RN-21). El monitor ve sus materias certificadas en `/monitor`, y con al menos una puede abrir franjas.
@@ -166,10 +175,27 @@ Cada fecha libre de `/monitores` lleva a `/agendar?franja=…&fecha=…&materia=
 
 ## Agenda del monitor
 
-`/monitor/agenda` (HU-021, enlazada desde `/monitor`): las monitorías del monitor, próximas (pendientes de pago vigentes y confirmadas, de la más cercana a la más lejana) y pasadas (realizadas, canceladas con su motivo y reservas vencidas, de la más reciente a la más antigua; D-12). Cada una con fecha, hora, duración, materia, modalidad, el nombre de quien agendó y el estado del pago.
+`/monitor/agenda` (HU-021, enlazada desde `/monitor`): las monitorías del monitor, por finalizar (HU-023), próximas (pendientes de pago vigentes y confirmadas, de la más cercana a la más lejana) y pasadas (realizadas, canceladas con su motivo y reservas vencidas, de la más reciente a la más antigua; D-12). Cada una con fecha, hora, duración, materia, modalidad, el nombre de quien agendó y el estado del pago.
 
 - La da `public.mi_agenda()` (invoker, solo con sesión) sobre `privado.agenda_del_monitor(ahora)` (definer): el monitor no lee `lead` ni `pago`, así que la función devuelve solo sus monitorías (`auth.uid()`), el nombre del Lead (nunca su correo ni su teléfono, P-37) y el estado agregado del pago (D-11), sin valor ni comisión (P-24).
 - Estado del pago (D-11): rechazado si algún comprobante lo fue, si no en revisión, si no aprobado; sin comprobantes, sin pagar.
+
+## Finalizar una sesión
+
+`/monitor/agenda` (HU-023) muestra arriba, en "Por finalizar", las confirmadas que ya empezaron, con el botón "Marcar como realizada" y la hora en que se cierran solas. El panel del monitor recuerda cuántas tiene (D-15).
+
+- `public.finalizar_monitoria(id)` (invoker, solo con sesión) sobre `privado.finalizar_monitoria` (definer): con `auth.uid()` y `now()`, la pasa a `realizada` con `fecha_finalizacion` si es del monitor, está confirmada y ya llegó su inicio (D-13, borde incluido).
+- Cierre automático (P-05, D-14): pg_cron corre cada 15 minutos `privado.cerrar_monitorias_sin_finalizar(now())`, que cierra cada individual confirmada que alcanzó `public.cierre_automatico_desde(fin programado)` = fin + `cierre_automatico_min` (24 h, en `parametros_negocio()`). Las grupales no se cierran solas (su monitor entrega el enlace de reseña, HU-046).
+- El desembolso al pasar a `realizada` es de HU-028; el correo de reseña individual, de HU-035.
+
+## Avisos al monitor
+
+HU-051 (D-16): el monitor recibe un correo cuando una monitoría individual suya queda `confirmada` (fecha y hora en Bogotá, duración, materia, modalidad y el nombre del estudiante, nunca su contacto, P-37) y cuando el estudiante cancela una confirmada. Las reservas por pagar y las que vencen sin pago no se avisan. Sale aunque el cambio de estado lo haga otra HU (HU-018 confirma, HU-024 cancela).
+
+- El trigger `monitoria_anota_aviso_monitor` (`privado.anotar_aviso_monitor`, definer) anota el aviso en `public.aviso_monitor` en la misma transacción del cambio de estado. Solo individuales y solo dos transiciones: `pendiente_pago → confirmada` y `confirmada → cancelada` con motivo `estudiante`.
+- El mismo trigger llama `privado.disparar_avisos_monitor()`, que con pg_net hace un `POST` a `/api/procesos/avisar-monitores` (mismo secreto y mismas entradas de Vault que los reintentos de HU-065). pg_net lo envía al confirmarse la transacción, así que el correo sale en segundos. pg_cron repite el pedido cada 5 minutos si quedan avisos sin procesar. Si el pedido falla (Vault o pg_net), el trigger lo deja en un aviso del log y el cambio de estado sigue: nunca tumba una confirmación ni una cancelación.
+- Cada corrida toma hasta 10 avisos y deja de tomar pasados 20 s, como los reintentos. Un aviso que no se puede procesar (error de la base o de los datos) suma un intento en `aviso_monitor.intentos` y se abandona a los 5, para no tapar a los demás.
+- La ruta (`src/lib/avisos/servidor.ts`) lee los datos con `public.datos_de_aviso_monitor(id)` (solo `service_role`) y manda el correo con la entidad = id de la monitoría: la clave única de `correo_envio` impide mandarlo dos veces. Antes de mandarlo comprueba que el aviso siga valiendo: si la monitoría ya se canceló, el de confirmada no sale. Un correo que falla queda para los reintentos de HU-065, que lo reconstruyen desde la monitoría.
 
 ## Franjas del monitor
 
@@ -226,7 +252,7 @@ Los enlaces de los correos se arman con `urlDelSitio()` a partir de `SITIO_URL`.
 
 Si un correo falla por algo temporal (red, un 4xx de SMTP, un 5xx o el límite de ritmo de Resend, o el proveedor sin configurar), queda `fallido` con `reintentable = true`. Cada 10 minutos pg_cron corre `privado.disparar_reintento_correos()`, que con pg_net hace un `POST` a `/api/procesos/reintentar-correos` con `Authorization: Bearer <CRON_SECRETO>`. La ruta (`src/lib/correo/reintentos.ts`) toma los reintentables de las últimas 24 horas, reconstruye cada correo desde su entidad (`src/lib/correo/reconstructores.ts`) y lo vuelve a mandar con la misma clave. Lo definitivo, o lo que siguió fallando 24 horas, aparece en la bandeja del admin como "Correos que no salieron".
 
-- La base toma la dirección del sitio y el secreto de Vault (`calibra_sitio_url` y `calibra_cron_secreto`). Sin ellos no dispara nada, que es lo que pasa en local.
+- La base toma la dirección del sitio y el secreto de Vault (`calibra_sitio_url` y `calibra_cron_secreto`). Sin ellos no dispara nada, que es lo que pasa en local. Los avisos al monitor (HU-051) usan los mismos.
 - Toda plantilla que una HU empiece a disparar necesita su reconstructor: `pruebas/reconstructores.test.ts` falla si falta.
 - Se reintentan los fallidos temporales que llevan al menos 2 minutos quietos y los `pendiente` abandonados (su envío murió hace más de 5 minutos). Cada corrida toma hasta 10 y deja de tomar pasados 20 s, para terminar antes del límite de la función (60 s).
 - La invitación de monitor se reconstruye con un token nuevo, porque el token no se guarda: el enlace que no llegó deja de servir. Si el primer envío sí llegó y solo se perdió la respuesta, ese enlace también deja de servir; es raro y se acepta. Con Resend, además, el reintento repetiría la `Idempotency-Key` con otro contenido y Resend lo rechazaría (409, definitivo): al pasar a Resend hay que revisar este caso.

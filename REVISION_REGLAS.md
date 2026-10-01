@@ -341,6 +341,12 @@ El banco de preguntas ([HU-005](backlog/HU-005.md)) se hace después. Para que e
 |---|---|---|
 | D-11 | El estado del pago que ve el monitor (P-24) agrega los comprobantes de la monitoría: rechazado si alguno lo fue (RN-43 cancela la cita), si no en revisión si alguno lo está, si no aprobado; sin comprobantes, sin pagar. | [HU-021](backlog/HU-021.md) |
 | D-12 | Una reserva pendiente de pago que ya venció (RN-34) se le muestra al monitor entre las pasadas como reserva vencida, aunque HU-027 todavía no la haya cancelado. | [HU-021](backlog/HU-021.md), [HU-027](backlog/HU-027.md) |
+| D-13 | El monitor puede finalizar una monitoría confirmada desde su hora de inicio (con la exacta ya se puede, P-40); antes no. Confirma el supuesto del criterio 2 de HU-023. | [HU-023](backlog/HU-023.md) |
+| D-14 | Una individual confirmada que nadie finalizó se cierra sola 24 h después del fin programado (confirma la propuesta de P-05). Es un plazo más de la sección 6.1 (`cierre_automatico_min`) y un proceso lo revisa cada 15 minutos. | [HU-023](backlog/HU-023.md) |
+| D-15 | El recordatorio de finalizar es en la app: el panel del monitor dice cuántas tiene por finalizar y su agenda las muestra arriba con la hora en que se cierran solas. Sin correo: los avisos al monitor quedan para HU-051 (P-11). | [HU-023](backlog/HU-023.md), [HU-051](backlog/HU-051.md) |
+| D-16 | Resuelve P-11. El monitor recibe un correo cuando una monitoría suya queda `confirmada` y cuando el estudiante la cancela. Las reservas por pagar no se avisan (pueden vencer en 10 minutos). El correo lleva fecha, hora, duración, materia, modalidad y el nombre del estudiante, sin su correo ni su teléfono (P-37). HU-051 pasa al corte 1 (P0): hace falta para la primera salida. | [HU-051](backlog/HU-051.md) |
+| D-17 | Resuelve P-03. La reseña califica de 1 a 5 y el comentario es opcional. | [HU-035](backlog/HU-035.md), [HU-047](backlog/HU-047.md) |
+| D-18 | HU-058 se construye con las llaves de prueba de Cloudflare Turnstile. Cargar las llaves reales es deuda técnica antes del corte (HU-057): el corte debe ser solo poner variables de entorno y configurar los paneles de Vercel y Supabase. Toda HU que agregue configuración externa la anota en `docs/pendientes-dvarela.md` §C y en `.env.example`. | [HU-058](backlog/HU-058.md), [HU-057](backlog/HU-057.md) |
 
 La noche del 30-sep-2026, dvarela5101 y Juzou04 empezaron HU-005 en persona y decidieron cómo migrar el banco del prototipo:
 

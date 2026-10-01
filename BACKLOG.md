@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-01 00:49. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-01 03:07. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -15,7 +15,6 @@ _Generado automaticamente: 2026-10-01 00:49. No editar a mano; usa `scripts/back
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | Backlog | P1 | M | HU-010, HU-004 |
 | [HU-033](backlog/HU-033.md) | [Estudiante] Gestionar mis citas y diagnósticos desde mi cuenta | Backlog | P1 | M | HU-032, HU-019, HU-024 |
 | [HU-034](backlog/HU-034.md) | [Sistema] Escalar al siguiente admin los pagos sin revisar tras 1 hora | Backlog | P1 | M | HU-020, HU-006 |
-| [HU-035](backlog/HU-035.md) | [Lead] Reseñar mi monitoría individual desde el correo | Backlog | P1 | M | HU-023, HU-006 |
 | [HU-036](backlog/HU-036.md) | [Estudiante] Agendar una sesión grupal como organizador | Backlog | P1 | L | HU-033, HU-017, HU-018 |
 | [HU-037](backlog/HU-037.md) | [Estudiante] Compartir el enlace del grupo y ver quién ha pagado | Backlog | P1 | M | HU-036 |
 | [HU-038](backlog/HU-038.md) | [Integrante] Pagar mi cupo desde el enlace del grupo | Backlog | P1 | M | HU-037, HU-018 |
@@ -29,17 +28,12 @@ _Generado automaticamente: 2026-10-01 00:49. No editar a mano; usa `scripts/back
 | [HU-046](backlog/HU-046.md) | [Monitor] Finalizar una grupal y entregar el enlace de reseña | Backlog | P1 | S | HU-023, HU-036 |
 | [HU-047](backlog/HU-047.md) | [Integrante] Reseñar la sesión grupal eligiendo mi nombre | Backlog | P1 | M | HU-046, HU-038, HU-035 |
 | [HU-048](backlog/HU-048.md) | [Técnica] Pruebas de punta a punta de los flujos principales | Backlog | P1 | M | HU-030 |
-| [HU-069](backlog/HU-069.md) | [Monitor] Decir en el aviso de privacidad y en el registro del monitor que su nombre se muestra a los estudiantes | Backlog | P1 | XS | HU-013, HU-016 |
 | [HU-049](backlog/HU-049.md) | [Monitor] Administrar mi perfil | Backlog | P2 | M | HU-013 |
 | [HU-050](backlog/HU-050.md) | [Monitor] Ver mis desembolsos | Backlog | P2 | S | HU-028 |
-| [HU-051](backlog/HU-051.md) | [Monitor] Recibir avisos de nuevas monitorías y cancelaciones | Backlog | P2 | S | HU-021, HU-006 |
 | [HU-052](backlog/HU-052.md) | [Admin] Autorizar una cancelación fuera de plazo en casos extremos | Backlog | P2 | S | HU-024, HU-026 |
 | [HU-053](backlog/HU-053.md) | [Admin] Gestionar leads | Backlog | P2 | M | HU-010, HU-012 |
-| [HU-054](backlog/HU-054.md) | [Admin] Gestionar el equipo de admins y el turno de revisión | Backlog | P2 | S | HU-012 |
 | [HU-055](backlog/HU-055.md) | [Admin] Gestionar materias y evaluaciones | Backlog | P2 | M | HU-005, HU-012 |
-| [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | Backlog | P2 | S | HU-004 |
-| [HU-070](backlog/HU-070.md) | [Técnica] Endurecer esCorreo: dominio solo con letras, dígitos, puntos y guiones | Backlog | P2 | S | HU-006 |
-| [HU-071](backlog/HU-071.md) | [Técnica] Página de no encontrado (404) en español | Backlog | P2 | XS |  |
+| [HU-072](backlog/HU-072.md) | [Admin] Agregar un admin al equipo por invitación | Backlog | P2 | S | HU-054 |
 | [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | Backlog | P3 | S | HU-010 |
 | [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | Lista | P0 | M | HU-009, HU-008, HU-068 |
 | [HU-018](backlog/HU-018.md) | [Lead] Pagar por Llave y adjuntar el comprobante | Lista | P0 | L | HU-017, HU-007 |
@@ -56,6 +50,14 @@ _Generado automaticamente: 2026-10-01 00:49. No editar a mano; usa `scripts/back
 | [HU-062](backlog/HU-062.md) | [Aspirante a monitor] Pedir la certificación de una materia dejando mis datos | En revision | P1 | M | HU-008, HU-012 |
 | [HU-067](backlog/HU-067.md) | [Técnica] Impedir que un pagador pise su propio comprobante con una URL de subida firmada | En revision | P1 | S | HU-007 |
 | [HU-059](backlog/HU-059.md) | [Técnica] Endurecer los comprobantes: contenido real, huérfanos y cuota por sesión | En revision | P2 | S | HU-007 |
+| [HU-035](backlog/HU-035.md) | [Lead] Reseñar mi monitoría individual desde el correo | Lista | P1 | M | HU-023, HU-006 |
+| [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | Lista | P2 | S | HU-004 |
+| [HU-070](backlog/HU-070.md) | [Técnica] Endurecer esCorreo: dominio solo con letras, dígitos, puntos y guiones | Lista | P2 | S | HU-006 |
+| [HU-005](backlog/HU-005.md) | [Técnica] Banco de preguntas por habilidades: formato, migración, validación y carga | En progreso | P0 | L | HU-002 |
+| [HU-051](backlog/HU-051.md) | [Monitor] Recibir avisos de nuevas monitorías y cancelaciones | En revision | P0 | S | HU-021, HU-006 |
+| [HU-069](backlog/HU-069.md) | [Monitor] Decir en el aviso de privacidad y en el registro del monitor que su nombre se muestra a los estudiantes | En revision | P1 | XS | HU-013, HU-016 |
+| [HU-054](backlog/HU-054.md) | [Admin] Gestionar el equipo de admins y el turno de revisión | En revision | P2 | S | HU-012 |
+| [HU-071](backlog/HU-071.md) | [Técnica] Página de no encontrado (404) en español | En revision | P2 | XS |  |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
@@ -70,8 +72,12 @@ _Generado automaticamente: 2026-10-01 00:49. No editar a mano; usa `scripts/back
 | [HU-016](backlog/HU-016.md) | [Lead] Ver los monitores certificados de una materia y sus fechas libres | Hecha | P0 | M | HU-014, HU-015 |
 | [HU-017](backlog/HU-017.md) | [Lead] Agendar una monitoría individual | Hecha | P0 | L | HU-016, HU-068, HU-003 |
 | [HU-021](backlog/HU-021.md) | [Monitor] Ver mi agenda de monitorías | Hecha | P0 | M | HU-015, HU-017 |
+| [HU-023](backlog/HU-023.md) | [Monitor] Finalizar una sesión | Hecha | P0 | S | HU-021 |
 | [HU-066](backlog/HU-066.md) | [Técnica] Enviar los correos desde calibra.monitorias@gmail.com por SMTP de Gmail | Hecha | P0 | S | HU-006 |
 | [HU-068](backlog/HU-068.md) | [Visitante] Dejar mi contacto al agendar y quedar como Lead | Hecha | P0 | M | HU-004, HU-006, HU-008 |
+| [HU-062](backlog/HU-062.md) | [Aspirante a monitor] Pedir la certificación de una materia dejando mis datos | Hecha | P1 | M | HU-008, HU-012 |
 | [HU-063](backlog/HU-063.md) | [Técnica] Ajustes de la revisión de HU-003 y HU-007 | Hecha | P1 | S | HU-003, HU-007 |
 | [HU-064](backlog/HU-064.md) | [Técnica] Ajustes de la revisión de HU-006 y HU-012 | Hecha | P1 | S | HU-006, HU-012 |
 | [HU-065](backlog/HU-065.md) | [Sistema] Reintentar los correos que fallaron | Hecha | P1 | S | HU-006 |
+| [HU-067](backlog/HU-067.md) | [Técnica] Impedir que un pagador pise su propio comprobante con una URL de subida firmada | Hecha | P1 | S | HU-007 |
+| [HU-059](backlog/HU-059.md) | [Técnica] Endurecer los comprobantes: contenido real, huérfanos y cuota por sesión | Hecha | P2 | S | HU-007 |

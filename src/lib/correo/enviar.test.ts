@@ -22,6 +22,22 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
   escalamiento_pago: { nombreAdmin: "Admin", nombrePagador: "Ana", monto: 25_000, enlace: ENLACE },
   invitacion_monitor: { enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
   verificacion_lead: { nombre: "Ana", enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
+  aviso_monitor_confirmada: {
+    nombreMonitor: "Camilo Rojas",
+    nombreEstudiante: "Ana",
+    materia: "Cálculo Integral",
+    inicio: "2020-01-13T15:00:00.000Z",
+    duracionMin: 90,
+    presencial: true,
+    enlace: "https://calibra.example/monitor/agenda",
+  },
+  aviso_monitor_cancelada: {
+    nombreMonitor: "Camilo Rojas",
+    nombreEstudiante: "Ana",
+    materia: "Cálculo Integral",
+    inicio: "2020-01-13T15:00:00.000Z",
+    enlace: "https://calibra.example/monitor/agenda",
+  },
 };
 
 const entrada = (cambios: Partial<EntradaDeEnvio<"solicitud_llave_reembolso">> = {}): EntradaDeEnvio<"solicitud_llave_reembolso"> => ({

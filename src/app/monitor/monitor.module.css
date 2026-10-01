@@ -1,4 +1,4 @@
-/* Panel del monitor: sus materias certificadas (HU-014). */
+/* Panel del monitor: sus materias certificadas (HU-014) y el recordatorio de finalizar (HU-023). */
 
 .seccion {
   display: flex;
@@ -22,4 +22,15 @@
 
 .meta {
   color: var(--muted);
+}
+
+/* D-15: el recordatorio de finalizar. --warn es solo relleno: el texto va en --text. */
+.recordatorio {
+  margin-block-start: var(--e3);
+  padding: var(--e3) var(--e4);
+  font-size: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-inline-start: 6px solid var(--warn);
+  border-radius: var(--r);
 }

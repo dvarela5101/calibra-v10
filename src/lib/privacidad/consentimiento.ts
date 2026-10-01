@@ -16,6 +16,12 @@ export const MARCADA = "si";
 
 export const RUTA_AVISO = "/privacidad";
 
+/**
+ * Día de la última actualización del texto del aviso (`AAAA-MM-DD`). Se cambia con cada cambio del texto:
+ * HU-069 (1-oct-2026) agregó que el nombre del monitor se muestra a los estudiantes.
+ */
+export const AVISO_ACTUALIZADO = "2026-10-01";
+
 export const ERROR_SIN_AUTORIZACION =
   "Para dejar tu contacto o agendar necesitamos tu autorización para tratar tus datos.";
 

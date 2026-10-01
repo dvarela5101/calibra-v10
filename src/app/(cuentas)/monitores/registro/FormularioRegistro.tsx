@@ -1,15 +1,33 @@
 "use client";
 
-import { useActionState } from "react";
+import Link from "next/link";
+import { useActionState, type ReactNode } from "react";
 import formulario from "@/components/formulario.module.css";
+import { RUTA_AVISO } from "@/lib/privacidad/consentimiento";
 import { registrarse, type EstadoRegistro } from "./acciones";
 
 const estadoInicial: EstadoRegistro = { error: null, invitacionNoSirve: false, valores: {} };
 
-type Campo = { nombre: string; etiqueta: string; tipo: string; autocompletar: string; ayuda?: string };
+type Campo = { nombre: string; etiqueta: string; tipo: string; autocompletar: string; ayuda?: ReactNode };
 
 const CAMPOS: Campo[] = [
-  { nombre: "nombre", etiqueta: "Nombre completo", tipo: "text", autocompletar: "name" },
+  {
+    nombre: "nombre",
+    etiqueta: "Nombre completo",
+    tipo: "text",
+    autocompletar: "name",
+    // D-6 (HU-069): la lista de monitores de cada materia muestra este nombre tal cual.
+    ayuda: (
+      <>
+        Así te verán los estudiantes en la lista de monitores de tus materias. Más en el{" "}
+        {/* En otra pestaña, para no perder lo que ya escribió en el formulario. */}
+        <Link href={RUTA_AVISO} target="_blank" rel="noopener" className={formulario.enlaceEnTexto}>
+          aviso de privacidad (se abre en otra pestaña)
+        </Link>
+        .
+      </>
+    ),
+  },
   { nombre: "numero_telefono", etiqueta: "Teléfono", tipo: "tel", autocompletar: "tel" },
   {
     nombre: "llave",
