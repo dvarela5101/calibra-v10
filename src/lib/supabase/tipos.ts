@@ -183,13 +183,13 @@ isOneToOne: true
                   ]
                 },"evaluacion": {
                   Row: {
-                    "acumulativo": boolean,"id": string,"id_materia": string,"nombre": string,"semana": number
+                    "activa": boolean,"acumulativo": boolean,"clave": string | null,"id": string,"id_materia": string,"nombre": string,"semana": number
                   }
                   Insert: {
-                    "acumulativo"?: boolean,"id"?: string,"id_materia": string,"nombre": string,"semana": number
+                    "activa"?: boolean,"acumulativo"?: boolean,"clave"?: string | null,"id"?: string,"id_materia": string,"nombre": string,"semana": number
                   }
                   Update: {
-                    "acumulativo"?: boolean,"id"?: string,"id_materia"?: string,"nombre"?: string,"semana"?: number
+                    "activa"?: boolean,"acumulativo"?: boolean,"clave"?: string | null,"id"?: string,"id_materia"?: string,"nombre"?: string,"semana"?: number
                   }
                   Relationships: [
                     {
@@ -198,6 +198,31 @@ isOneToOne: true
 isOneToOne: false
       referencedRelation: "materia"
       referencedColumns: ["id"]
+    }
+                  ]
+                },"evaluacion_tema": {
+                  Row: {
+                    "id_evaluacion": string,"id_materia": string,"id_tema": string
+                  }
+                  Insert: {
+                    "id_evaluacion": string,"id_materia": string,"id_tema": string
+                  }
+                  Update: {
+                    "id_evaluacion"?: string,"id_materia"?: string,"id_tema"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "evaluacion_tema_evaluacion_fk"
+      columns: ["id_evaluacion","id_materia"]
+isOneToOne: false
+      referencedRelation: "evaluacion"
+      referencedColumns: ["id","id_materia"]
+    },{
+      foreignKeyName: "evaluacion_tema_tema_fk"
+      columns: ["id_tema","id_materia"]
+isOneToOne: false
+      referencedRelation: "tema"
+      referencedColumns: ["id","id_materia"]
     }
                   ]
                 },"franja": {
@@ -216,6 +241,50 @@ isOneToOne: false
       columns: ["id_monitor"]
 isOneToOne: false
       referencedRelation: "monitor"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"habilidad": {
+                  Row: {
+                    "clave": string,"descripcion": string,"id": string,"id_materia": string,"id_tema": string
+                  }
+                  Insert: {
+                    "clave": string,"descripcion": string,"id"?: string,"id_materia": string,"id_tema": string
+                  }
+                  Update: {
+                    "clave"?: string,"descripcion"?: string,"id"?: string,"id_materia"?: string,"id_tema"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "habilidad_tema_fk"
+      columns: ["id_tema","id_materia"]
+isOneToOne: false
+      referencedRelation: "tema"
+      referencedColumns: ["id","id_materia"]
+    }
+                  ]
+                },"habilidad_prerrequisito": {
+                  Row: {
+                    "id_habilidad": string,"id_prerrequisito": string
+                  }
+                  Insert: {
+                    "id_habilidad": string,"id_prerrequisito": string
+                  }
+                  Update: {
+                    "id_habilidad"?: string,"id_prerrequisito"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "habilidad_prerrequisito_id_habilidad_fkey"
+      columns: ["id_habilidad"]
+isOneToOne: false
+      referencedRelation: "habilidad"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "habilidad_prerrequisito_id_prerrequisito_fkey"
+      columns: ["id_prerrequisito"]
+isOneToOne: false
+      referencedRelation: "habilidad"
       referencedColumns: ["id"]
     }
                   ]
@@ -288,6 +357,25 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"misconcepcion": {
+                  Row: {
+                    "clave": string,"descripcion": string,"id": string,"id_habilidad": string,"id_materia": string
+                  }
+                  Insert: {
+                    "clave": string,"descripcion": string,"id"?: string,"id_habilidad": string,"id_materia": string
+                  }
+                  Update: {
+                    "clave"?: string,"descripcion"?: string,"id"?: string,"id_habilidad"?: string,"id_materia"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "misconcepcion_habilidad_fk"
+      columns: ["id_habilidad","id_materia"]
+isOneToOne: false
+      referencedRelation: "habilidad"
+      referencedColumns: ["id","id_materia"]
+    }
                   ]
                 },"monitor": {
                   Row: {
@@ -383,6 +471,31 @@ isOneToOne: true
       referencedColumns: ["id_monitoria"]
     }
                   ]
+                },"opcion": {
+                  Row: {
+                    "correcta": boolean,"error": string | null,"id": string,"id_materia": string,"id_misconcepcion": string | null,"id_pregunta": string,"letra": string,"texto": string
+                  }
+                  Insert: {
+                    "correcta": boolean,"error"?: string | null,"id"?: string,"id_materia": string,"id_misconcepcion"?: string | null,"id_pregunta": string,"letra": string,"texto": string
+                  }
+                  Update: {
+                    "correcta"?: boolean,"error"?: string | null,"id"?: string,"id_materia"?: string,"id_misconcepcion"?: string | null,"id_pregunta"?: string,"letra"?: string,"texto"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "opcion_misconcepcion_fk"
+      columns: ["id_misconcepcion","id_materia"]
+isOneToOne: false
+      referencedRelation: "misconcepcion"
+      referencedColumns: ["id","id_materia"]
+    },{
+      foreignKeyName: "opcion_pregunta_fk"
+      columns: ["id_pregunta","id_materia"]
+isOneToOne: false
+      referencedRelation: "pregunta"
+      referencedColumns: ["id","id_materia"]
+    }
+                  ]
                 },"pago": {
                   Row: {
                     "comprobante": string,"contacto": string,"estado": Database["public"]['Enums']["estado_pago"],"fecha_asignacion": string,"fecha_pago": string,"fecha_revision": string | null,"id": string,"id_admin": string,"id_monitoria": string,"monto": number,"nombre_pagador": string,"referencia_transferencia": string | null
@@ -437,6 +550,50 @@ isOneToOne: false
 isOneToOne: true
       referencedRelation: "monitor"
       referencedColumns: ["id"]
+    }
+                  ]
+                },"pregunta": {
+                  Row: {
+                    "clave": string,"dificultad": number,"enunciado": string,"estado": Database["public"]['Enums']["estado_pregunta"],"id": string,"id_materia": string,"id_tema": string,"origen": string,"revisor": string | null,"solucion": string | null
+                  }
+                  Insert: {
+                    "clave": string,"dificultad": number,"enunciado": string,"estado": Database["public"]['Enums']["estado_pregunta"],"id"?: string,"id_materia": string,"id_tema": string,"origen": string,"revisor"?: string | null,"solucion"?: string | null
+                  }
+                  Update: {
+                    "clave"?: string,"dificultad"?: number,"enunciado"?: string,"estado"?: Database["public"]['Enums']["estado_pregunta"],"id"?: string,"id_materia"?: string,"id_tema"?: string,"origen"?: string,"revisor"?: string | null,"solucion"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "pregunta_tema_fk"
+      columns: ["id_tema","id_materia"]
+isOneToOne: false
+      referencedRelation: "tema"
+      referencedColumns: ["id","id_materia"]
+    }
+                  ]
+                },"pregunta_habilidad": {
+                  Row: {
+                    "id_habilidad": string,"id_materia": string,"id_pregunta": string
+                  }
+                  Insert: {
+                    "id_habilidad": string,"id_materia": string,"id_pregunta": string
+                  }
+                  Update: {
+                    "id_habilidad"?: string,"id_materia"?: string,"id_pregunta"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "pregunta_habilidad_habilidad_fk"
+      columns: ["id_habilidad","id_materia"]
+isOneToOne: false
+      referencedRelation: "habilidad"
+      referencedColumns: ["id","id_materia"]
+    },{
+      foreignKeyName: "pregunta_habilidad_pregunta_fk"
+      columns: ["id_pregunta","id_materia"]
+isOneToOne: false
+      referencedRelation: "pregunta"
+      referencedColumns: ["id","id_materia"]
     }
                   ]
                 },"reembolso": {
@@ -555,6 +712,25 @@ isOneToOne: false
       columns: ["id_solicitud"]
 isOneToOne: false
       referencedRelation: "solicitud_monitor"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"tema": {
+                  Row: {
+                    "clave": string,"id": string,"id_materia": string,"nombre": string,"orden": number
+                  }
+                  Insert: {
+                    "clave": string,"id"?: string,"id_materia": string,"nombre": string,"orden": number
+                  }
+                  Update: {
+                    "clave"?: string,"id"?: string,"id_materia"?: string,"nombre"?: string,"orden"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "tema_id_materia_fkey"
+      columns: ["id_materia"]
+isOneToOne: false
+      referencedRelation: "materia"
       referencedColumns: ["id"]
     }
                   ]
@@ -751,7 +927,7 @@ isOneToOne: true
                            }
           }
           Enums: {
-            "estado_correo": "pendiente"|"enviado"|"fallido","estado_desembolso": "pendiente"|"desembolsado"|"anulado","estado_lead": "nuevo"|"contactado"|"descartado","estado_monitoria": "pendiente_pago"|"confirmada"|"realizada"|"cancelada","estado_pago": "en_revision"|"aprobado"|"rechazado","estado_reembolso": "esperando_llave"|"pendiente"|"reembolsado","estado_reporte": "en_revision"|"aceptado"|"rechazado","estado_solicitud_monitor": "nueva"|"contactada"|"evaluada"|"descartada","modalidad_pago": "unico"|"dividido","motivo_cancelacion": "reserva_expirada"|"pago_rechazado"|"estudiante"|"monitor_no_asistio"|"diferencia_no_cubierta"
+            "estado_correo": "pendiente"|"enviado"|"fallido","estado_desembolso": "pendiente"|"desembolsado"|"anulado","estado_lead": "nuevo"|"contactado"|"descartado","estado_monitoria": "pendiente_pago"|"confirmada"|"realizada"|"cancelada","estado_pago": "en_revision"|"aprobado"|"rechazado","estado_pregunta": "borrador"|"revisada"|"retirada","estado_reembolso": "esperando_llave"|"pendiente"|"reembolsado","estado_reporte": "en_revision"|"aceptado"|"rechazado","estado_solicitud_monitor": "nueva"|"contactada"|"evaluada"|"descartada","modalidad_pago": "unico"|"dividido","motivo_cancelacion": "reserva_expirada"|"pago_rechazado"|"estudiante"|"monitor_no_asistio"|"diferencia_no_cubierta"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -867,7 +1043,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "estado_correo": ["pendiente", "enviado", "fallido"],"estado_desembolso": ["pendiente", "desembolsado", "anulado"],"estado_lead": ["nuevo", "contactado", "descartado"],"estado_monitoria": ["pendiente_pago", "confirmada", "realizada", "cancelada"],"estado_pago": ["en_revision", "aprobado", "rechazado"],"estado_reembolso": ["esperando_llave", "pendiente", "reembolsado"],"estado_reporte": ["en_revision", "aceptado", "rechazado"],"estado_solicitud_monitor": ["nueva", "contactada", "evaluada", "descartada"],"modalidad_pago": ["unico", "dividido"],"motivo_cancelacion": ["reserva_expirada", "pago_rechazado", "estudiante", "monitor_no_asistio", "diferencia_no_cubierta"]
+            "estado_correo": ["pendiente", "enviado", "fallido"],"estado_desembolso": ["pendiente", "desembolsado", "anulado"],"estado_lead": ["nuevo", "contactado", "descartado"],"estado_monitoria": ["pendiente_pago", "confirmada", "realizada", "cancelada"],"estado_pago": ["en_revision", "aprobado", "rechazado"],"estado_pregunta": ["borrador", "revisada", "retirada"],"estado_reembolso": ["esperando_llave", "pendiente", "reembolsado"],"estado_reporte": ["en_revision", "aceptado", "rechazado"],"estado_solicitud_monitor": ["nueva", "contactada", "evaluada", "descartada"],"modalidad_pago": ["unico", "dividido"],"motivo_cancelacion": ["reserva_expirada", "pago_rechazado", "estudiante", "monitor_no_asistio", "diferencia_no_cubierta"]
           }
         }
 } as const

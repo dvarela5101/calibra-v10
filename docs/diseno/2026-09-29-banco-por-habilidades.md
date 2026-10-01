@@ -85,6 +85,14 @@ solución: con u = x, du = dx y v = eˣ: x·eˣ − ∫eˣ dx = x·eˣ − eˣ +
 
 Una Evaluación solo queda activa si todas sus habilidades cumplen la cobertura.
 
+**Ajustes al implementar HU-005 (30 de septiembre de 2026).** Los decidió la persona con Juzou04 (D-13 a D-16 en `REVISION_REGLAS.md`). El formato exacto, con ejemplos, está en [contenido/README.md](../../contenido/README.md).
+
+- La activación usa solo la meta de habilidades. La de misconcepciones se reporta pero no decide (D-13).
+- Una opción incorrecta puede llevar un texto de error propio después de la misconcepción (`· [signo-partes] texto`), porque el prototipo lo tiene en 123 de las 153 opciones incorrectas de Cálculo Integral (D-14).
+- Una pregunta de origen IA necesita `solución:` para pasar a `revisada`; en borrador, que le falte es un aviso (D-15).
+- `materia.md` lista sus temas en `## Temas`, en orden, y sus evaluaciones como `### clave · nombre · semana N [· acumulativa]` seguidas de `temas: ...` (RN-20 exige la semana; D-16). Cada tema empieza con `# Nombre`.
+- El convertidor también rechaza, como el prototipo: una materia sin evaluaciones, una evaluación sin temas, un tema sin habilidades, opciones que no sean A a D y matemática mal escrita entre `$…$`.
+
 ## Motor (HU-060)
 
 Propuesta de reglas. HU-060 las fija con pruebas.
@@ -144,7 +152,7 @@ Por materia, en una rama y un PR:
 
 La IA nunca marca `revisada`.
 
-**Piloto:** Cálculo Integral, que ya tiene 18 habilidades, 56 misconcepciones y 41 borradores. Se mide qué porcentaje de lo generado aprueba el revisor antes de correr las otras 7 materias, cada una con su propia HU.
+**Piloto:** Cálculo Integral, que ya tiene 18 habilidades, 56 misconcepciones y 39 borradores (no 41, como se contó primero). Se mide qué porcentaje de lo generado aprueba el revisor antes de correr las otras 7 materias, cada una con su propia HU.
 
 ## Cambios a las reglas
 

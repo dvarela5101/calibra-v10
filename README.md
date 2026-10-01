@@ -18,7 +18,7 @@ La decisión quedó registrada en `backlog/HU-001.md`. Se recomienda un proyecto
 
 ## Arrancar en local
 
-Requisitos: Node 22 o superior (ver `.nvmrc`) y npm. Después de clonar, un solo comando instala y levanta la app:
+Requisitos: Node 22.18 o superior (ver `.nvmrc`) y npm. Los scripts del banco de preguntas (`scripts/contenido/*.mts`) corren TypeScript directo con Node, que lo admite sin banderas desde la 22.18. Después de clonar, un solo comando instala y levanta la app:
 
 ```bash
 npm run inicio
@@ -56,13 +56,15 @@ npx playwright install --no-shell chromium
 | `npm run test:integracion` | Pruebas de integración (Vitest) contra el Supabase local |
 | `npm run test:e2e` | Pruebas de punta a punta (Playwright). Levanta `npm run dev`, o `npm run start` si `CI` está definido. Necesita el Supabase local |
 | `npm run build` | Build de producción |
-| `npm run verificar` | Todo lo anterior en el orden del pipeline |
+| `npm run verificar` | Lint, tipos, pruebas unitarias, banco de preguntas, build y e2e, en el orden del pipeline |
 | `npm run db:iniciar` | Levanta Supabase local (Postgres, Auth, REST, Storage y Mailpit) con las migraciones |
 | `npm run db:env` | Escribe `.env.local` con las llaves del Supabase local |
 | `npm run db:tipos` | Regenera `src/lib/supabase/tipos.ts` desde el esquema local |
 | `npm run db:reiniciar` | Borra la base local y aplica las migraciones y la semilla desde cero |
 | `npm run db:verificar` | Reaplica las migraciones (idempotencia) y corre las pruebas pgTAP |
 | `npm run db:detener` | Detiene los contenedores locales de Supabase |
+| `npm run contenido:validar` | Valida el banco de preguntas (`contenido/`) sin tocar ninguna base: errores con archivo y línea, conteos y cobertura |
+| `npm run contenido:cargar` | Valida y carga el banco en la base local. Con `-- --borradores` también carga las preguntas en borrador |
 
 Una migración nueva que cambia las columnas de salida de una función tiene que borrarla antes con `drop function`. Desde entonces la migración vieja que la creó ya no se puede reaplicar sobre la base final, y `db:verificar` fallaría al reaplicarla. Sin editar la migración vieja, `scripts/verificar-bd.mjs` lleva una lista de preámbulos (`PREAMBULOS`) que dice qué borrar antes de reaplicar cada una. Hoy tiene una entrada: `parametros_negocio()`, que HU-063 dejó sin la comisión.
 
@@ -259,7 +261,7 @@ Si un correo falla por algo temporal (red, un 4xx de SMTP, un 5xx o el límite d
 
 `.github/workflows/ci.yml` corre en cada push a `main` y en cada PR hacia `main`:
 
-1. **Verificar:** `npm ci`, lint, typecheck y pruebas unitarias; luego levanta Supabase local, reaplica las migraciones y corre pgTAP, las pruebas de integración, el build y las e2e. Si fallan las e2e, sube el reporte de Playwright como artefacto.
+1. **Verificar:** `npm ci`, lint, typecheck, pruebas unitarias y el `--dry-run` del banco de preguntas; luego levanta Supabase local, reaplica las migraciones y corre pgTAP, las pruebas de integración, el build y las e2e. Si fallan las e2e, sube el reporte de Playwright como artefacto.
 2. **Desplegar** (solo si Verificar pasó): con la CLI de Vercel publica en producción desde `main`, o un preview en cada PR, y comenta la URL del preview en el PR.
 
 `vercel.json` apaga los despliegues automáticos de la integración Git de Vercel, para que solo despliegue el pipeline y nunca salga a producción un commit con pruebas rotas.
@@ -289,7 +291,9 @@ src/config/           Configuración regional
 src/lib/              Utilidades compartidas
 src/styles/           Tokens de diseño
 e2e/                  Pruebas de Playwright
-pruebas/              Pruebas del repo (secretos)
+pruebas/              Pruebas del repo (secretos, convertidor y banco de ejemplo)
+contenido/            Banco de preguntas por habilidades, una carpeta por materia (ver contenido/README.md)
+scripts/contenido/    Convertidor del banco: valida, carga y migración del prototipo
 supabase/migrations/  Esquema de la base (migraciones idempotentes)
 supabase/tests/       Pruebas pgTAP de restricciones y políticas
 backlog/              Una HU por archivo (sistema de backlog)

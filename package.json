@@ -13,13 +13,15 @@
     "test:watch": "vitest",
     "test:integracion": "vitest run --config vitest.integracion.config.mts",
     "test:e2e": "playwright test",
-    "verificar": "npm run lint && npm run typecheck && npm test && npm run build && npm run test:e2e",
+    "verificar": "npm run lint && npm run typecheck && npm test && npm run contenido:validar && npm run build && npm run test:e2e",
     "db:iniciar": "supabase start -x realtime,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta",
     "db:reiniciar": "supabase db reset",
     "db:verificar": "node scripts/verificar-bd.mjs",
     "db:detener": "supabase stop",
     "db:env": "node scripts/env-local.mjs",
-    "db:tipos": "supabase gen types typescript --local --schema public > src/lib/supabase/tipos.ts"
+    "db:tipos": "supabase gen types typescript --local --schema public > src/lib/supabase/tipos.ts",
+    "contenido:validar": "node scripts/contenido/convertir.mts --dry-run",
+    "contenido:cargar": "node scripts/contenido/convertir.mts"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
@@ -44,6 +46,6 @@
     "vitest": "^5.0.2"
   },
   "engines": {
-    "node": ">=22"
+    "node": "^22.18.0 || >=23.6.0"
   }
 }
