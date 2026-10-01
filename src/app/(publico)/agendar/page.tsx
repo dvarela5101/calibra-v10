@@ -105,8 +105,8 @@ export default async function Agendar({ searchParams }: PageProps<"/agendar">) {
       ) : lead ? (
         <>
           <p className={estilos.nota}>
-            Al apartarla, la fecha queda a tu nombre por {reservaMin} minutos mientras adjuntas el comprobante de pago. Si no
-            llega, la reserva vence y la fecha se libera.
+            Al apartarla, la fecha queda a tu nombre por {reservaMin} minutos para que adjuntes el comprobante de pago. Si no
+            llega a tiempo, la reserva vence.
           </p>
           <FormularioAgendar pedido={pedido} avisoSinCancelacion={aviso} />
         </>

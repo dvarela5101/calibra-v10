@@ -23,7 +23,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(87);
+select plan(89);
 
 -- ---------------------------------------------------------------------------
 -- Estructura y permisos
@@ -99,6 +99,16 @@ select ok(
 select is(
   (select count(*)::int from pg_policies where schemaname = 'public' and tablename = 'diagnostico' and cmd = 'SELECT'),
   1, 'diagnostico sigue con una sola política de lectura (una permisiva por tabla y acción)');
+
+select ok(
+  not has_column_privilege('authenticated', 'public.diagnostico', 'token_recuperacion', 'select')
+  and not has_column_privilege('anon', 'public.diagnostico', 'token_recuperacion', 'select'),
+  'Ninguna sesión lee el token de recuperación del diagnóstico (RN-12): ni el Lead ni el monitor de la cita (D-7)');
+select ok(
+  has_column_privilege('authenticated', 'public.diagnostico', 'resultado_por_tema', 'select')
+  and has_column_privilege('authenticated', 'public.diagnostico', 'id_lead', 'select')
+  and has_column_privilege('service_role', 'public.diagnostico', 'token_recuperacion', 'select'),
+  'Las sesiones leen el resto del diagnóstico (según la política) y el servidor también el token');
 
 -- ---------------------------------------------------------------------------
 -- Fixtures (como postgres)

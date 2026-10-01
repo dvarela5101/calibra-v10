@@ -83,6 +83,16 @@ create policy "dueno, monitor o admin leen" on public.diagnostico
     or privado.dicta_cita_con_diagnostico(id)
   );
 
+-- Con D-7 el monitor de cada cita individual lee el diagnóstico. token_recuperacion es un secreto portador
+-- (RN-12: el enlace para recuperar los resultados desde otro dispositivo) y solo lo usa el servidor con la
+-- llave secreta: las sesiones leen el diagnóstico por columnas, sin él. Una columna nueva de diagnostico
+-- necesita su grant aquí para que las sesiones la lean.
+revoke select on table public.diagnostico from authenticated;
+grant select (
+  id, id_lead, id_sesion_anonima, id_evaluacion, id_materia, id_monitoria,
+  respuestas, puntaje, resultado_por_tema, fecha_realizacion
+) on table public.diagnostico to authenticated;
+
 -- ---------------------------------------------------------------------------
 -- Agendar
 -- ---------------------------------------------------------------------------
