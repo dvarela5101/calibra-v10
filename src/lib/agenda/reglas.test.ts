@@ -1,5 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { esEstadoPago, separarAgenda, textoDeEstado, textoDePago, type MonitoriaDeAgenda } from "./reglas";
+import type { ParametrosNegocio } from "@/lib/plazos/parametros";
+import {
+  cierreAutomaticoDe,
+  esEstadoPago,
+  esResultadoDeFinalizar,
+  MENSAJES_DE_FINALIZAR,
+  RESULTADOS_DE_FINALIZAR,
+  sePuedeFinalizar,
+  separarAgenda,
+  textoDeEstado,
+  textoDePago,
+  type MonitoriaDeAgenda,
+} from "./reglas";
+
+/** Un "ahora" anterior a todas las fechas de prueba que no dicen otra cosa. */
+const AHORA = new Date("2026-10-01T12:00:00Z");
 
 const monitoria = (id: string, inicio: string, datos: Partial<MonitoriaDeAgenda> = {}): MonitoriaDeAgenda => ({
   idMonitoria: id,
@@ -24,7 +39,7 @@ describe("separarAgenda (HU-021, D-12)", () => {
       monitoria("b", "2026-10-12T15:00:00Z"),
       monitoria("a", "2026-10-05T15:00:00Z", { estado: "pendiente_pago", estadoPago: "sin_pagar" }),
       monitoria("c", "2026-10-19T15:00:00Z"),
-    ]);
+    ], AHORA);
     expect(proximas.map((m) => m.idMonitoria)).toEqual(["a", "b", "c"]);
   });
 
@@ -33,19 +48,65 @@ describe("separarAgenda (HU-021, D-12)", () => {
       monitoria("realizada", "2026-09-01T15:00:00Z", { estado: "realizada" }),
       monitoria("cancelada", "2026-10-20T15:00:00Z", { estado: "cancelada", motivoCancelacion: "estudiante" }),
       monitoria("vencida", "2026-10-10T15:00:00Z", { estado: "pendiente_pago", reservaVencida: true, estadoPago: "sin_pagar" }),
-    ]);
+    ], AHORA);
     expect(proximas).toEqual([]);
     expect(pasadas.map((m) => m.idMonitoria)).toEqual(["cancelada", "vencida", "realizada"]);
   });
 
-  it("una confirmada cuyo inicio ya pasó sigue en próximas hasta que se finaliza (HU-023)", () => {
-    const { proximas } = separarAgenda([monitoria("sin-finalizar", "2020-01-06T15:00:00Z")]);
-    expect(proximas.map((m) => m.idMonitoria)).toEqual(["sin-finalizar"]);
+  it("HU-023: una confirmada que ya empezó va a por finalizar, de la más antigua a la más reciente, hasta que se finaliza", () => {
+    const { porFinalizar, proximas, pasadas } = separarAgenda(
+      [
+        monitoria("ayer", "2026-09-30T15:00:00Z"),
+        monitoria("hace-una-semana", "2026-09-24T15:00:00Z"),
+        monitoria("manana", "2026-10-02T15:00:00Z"),
+        monitoria("realizada", "2026-09-29T15:00:00Z", { estado: "realizada" }),
+      ],
+      AHORA,
+    );
+    expect(porFinalizar.map((m) => m.idMonitoria)).toEqual(["hace-una-semana", "ayer"]);
+    expect(proximas.map((m) => m.idMonitoria)).toEqual(["manana"]);
+    expect(pasadas.map((m) => m.idMonitoria)).toEqual(["realizada"]);
+  });
+
+  it("una pendiente de pago cuyo inicio pasó no es por finalizar: no hay sesión confirmada", () => {
+    const { porFinalizar } = separarAgenda([monitoria("p", "2026-09-30T15:00:00Z", { estado: "pendiente_pago", estadoPago: "sin_pagar" })], AHORA);
+    expect(porFinalizar).toEqual([]);
   });
 
   it("en el mismo instante desempata por id, para que el orden no cambie entre cargas", () => {
-    const { proximas } = separarAgenda([monitoria("y", "2026-10-05T15:00:00Z"), monitoria("x", "2026-10-05T15:00:00Z")]);
+    const { proximas } = separarAgenda([monitoria("y", "2026-10-05T15:00:00Z"), monitoria("x", "2026-10-05T15:00:00Z")], AHORA);
     expect(proximas.map((m) => m.idMonitoria)).toEqual(["x", "y"]);
+  });
+});
+
+describe("sePuedeFinalizar (HU-023, D-13, P-40)", () => {
+  const inicio = new Date("2026-10-05T15:00:00Z");
+  it("desde el inicio exacto, no un instante antes", () => {
+    expect(sePuedeFinalizar({ estado: "confirmada", inicio }, new Date(inicio.getTime() - 1))).toBe(false);
+    expect(sePuedeFinalizar({ estado: "confirmada", inicio }, inicio)).toBe(true);
+    expect(sePuedeFinalizar({ estado: "confirmada", inicio }, new Date(inicio.getTime() + 60_000))).toBe(true);
+  });
+
+  it.each(["pendiente_pago", "realizada", "cancelada"] as const)("una %s no se finaliza", (estado) => {
+    expect(sePuedeFinalizar({ estado, inicio }, new Date(inicio.getTime() + 60_000))).toBe(false);
+  });
+});
+
+describe("cierreAutomaticoDe (P-05, D-14)", () => {
+  it("es el fin programado más el cierre automático", () => {
+    const p = { cierreAutomaticoMin: 1440 } as ParametrosNegocio;
+    const cierre = cierreAutomaticoDe({ inicio: new Date("2026-10-05T15:00:00Z"), duracionMin: 90 }, p);
+    expect(cierre.toISOString()).toBe("2026-10-06T16:30:00.000Z");
+  });
+});
+
+describe("resultados de finalizar", () => {
+  it("reconoce los de public.finalizar_monitoria y cada uno que no finaliza tiene su mensaje", () => {
+    for (const r of RESULTADOS_DE_FINALIZAR) expect(esResultadoDeFinalizar(r)).toBe(true);
+    expect(esResultadoDeFinalizar("otro")).toBe(false);
+    for (const r of RESULTADOS_DE_FINALIZAR.filter((r) => r !== "finalizada" && r !== "ya_finalizada")) {
+      expect(MENSAJES_DE_FINALIZAR[r]).toMatch(/\S/);
+    }
   });
 });
 

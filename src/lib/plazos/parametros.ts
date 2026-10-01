@@ -30,6 +30,8 @@ export type ParametrosNegocio = {
   resenaGrupalMin: number;
   /** El desembolso es ejecutable desde tanto después del fin (RN-83). */
   desembolsoMin: number;
+  /** Una individual confirmada que nadie finalizó se cierra sola desde tanto después del fin (P-05, D-14). */
+  cierreAutomaticoMin: number;
 };
 
 /**
@@ -57,6 +59,7 @@ const COLUMNAS: Record<keyof ParametrosNegocio, string> = {
   reporteInasistenciaMin: "reporte_inasistencia_min",
   resenaGrupalMin: "resena_grupal_min",
   desembolsoMin: "desembolso_min",
+  cierreAutomaticoMin: "cierre_automatico_min",
 };
 
 /** Columna de `parametros_comision()` de cada parámetro de comisión. */

@@ -1,4 +1,4 @@
-/* Agenda del monitor (HU-021). Tarjetas como las de sus franjas. */
+/* Agenda del monitor (HU-021) y finalizar una sesión (HU-023). Tarjetas como las de sus franjas. */
 
 .seccion {
   display: flex;
@@ -43,6 +43,10 @@
 .dato {
   font-size: 15px;
   overflow-wrap: anywhere;
+}
+
+.accion {
+  margin-block-start: var(--e2);
 }
 
 .mas {

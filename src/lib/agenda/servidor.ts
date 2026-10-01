@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/tipos";
-import { esEstadoPago, type MonitoriaDeAgenda } from "./reglas";
+import { esEstadoPago, esResultadoDeFinalizar, type MonitoriaDeAgenda, type ResultadoDeFinalizar } from "./reglas";
 
 /**
  * La agenda del monitor de la sesión (HU-021). Con su propia sesión: `public.mi_agenda()` solo devuelve sus
@@ -28,4 +28,15 @@ export async function cargarAgenda(cliente: SupabaseClient<Database>): Promise<M
       inicio: new Date(f.inicio),
     };
   });
+}
+
+/**
+ * El monitor de la sesión marca como realizada una monitoría (HU-023). La base decide si se puede: que sea
+ * suya, que esté confirmada y que ya haya empezado (D-13), con su propia hora.
+ */
+export async function finalizarMonitoria(cliente: SupabaseClient<Database>, idMonitoria: string): Promise<ResultadoDeFinalizar> {
+  const { data, error } = await cliente.rpc("finalizar_monitoria", { p_id_monitoria: idMonitoria });
+  if (error) throw new Error(`No se pudo finalizar la monitoría: ${error.code ?? ""} ${error.message}`.trim());
+  if (!esResultadoDeFinalizar(data)) throw new Error(`Respuesta inesperada al finalizar: ${JSON.stringify(data)}`);
+  return data;
 }

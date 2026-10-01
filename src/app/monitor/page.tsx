@@ -3,6 +3,8 @@ import Link from "next/link";
 import { BotonSalir } from "@/components/BotonSalir";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
+import { separarAgenda } from "@/lib/agenda/reglas";
+import { cargarAgenda } from "@/lib/agenda/servidor";
 import { exigirRol } from "@/lib/auth/sesion";
 import { formatearDia } from "@/lib/fechas";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
@@ -26,6 +28,13 @@ export default async function PanelMonitor() {
       .order("id", { ascending: true }),
   ]);
   if (errorCertificados) console.error("[monitor] no se pudieron leer los certificados:", errorCertificados.message);
+  // HU-023 (D-15): el recordatorio de finalizar. Si la agenda no carga, el panel sigue sin él.
+  const porFinalizar = await cargarAgenda(supabase!)
+    .then((agenda) => separarAgenda(agenda, new Date()).porFinalizar.length)
+    .catch((error: unknown) => {
+      console.error("[monitor] no se pudo leer la agenda:", error instanceof Error ? error.message : error);
+      return 0;
+    });
   // Si la lectura falló no se sabe si tiene certificados: ni la lista ni "aún no tienes".
   const conCertificados = !errorCertificados && Boolean(certificados?.length);
   const sinCertificados = !errorCertificados && !certificados?.length;
@@ -64,6 +73,12 @@ export default async function PanelMonitor() {
             ))}
           </ul>
         </section>
+      )}
+      {porFinalizar > 0 && (
+        <p role="status" className={estilos.recordatorio}>
+          {porFinalizar === 1 ? "Tienes 1 monitoría por finalizar." : `Tienes ${porFinalizar} monitorías por finalizar.`} Márcalas como realizadas
+          en tu agenda; si no, se cierran solas.
+        </p>
       )}
       {conCertificados && (
         <Link href="/monitor/agenda" className={formulario.enlace}>

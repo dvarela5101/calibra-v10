@@ -18,6 +18,7 @@ export const PARAMETROS_DEL_DOCUMENTO: ParametrosNegocio = {
   reporteInasistenciaMin: 24 * 60, // reporte de inasistencia: hasta 24 h después del fin
   resenaGrupalMin: 60, // reseña grupal: 1 h después de finalizar
   desembolsoMin: 24 * 60, // desembolso ejecutable: desde 24 h después del fin
+  cierreAutomaticoMin: 24 * 60, // una individual sin finalizar se cierra 24 h después del fin (P-05, D-14)
 };
 
 /**

@@ -241,7 +241,7 @@ async function construirEscenario() {
 
 describe("criterio 1 (RN-17, D-12): próximas y pasadas", () => {
   it("las próximas son la pendiente de pago vigente y la confirmada, por inicio ascendente (aunque la pendiente se creó antes)", async () => {
-    const { proximas } = separarAgenda(await cargarAgenda(e.sesionM1));
+    const { proximas } = separarAgenda(await cargarAgenda(e.sesionM1), new Date());
 
     expect(ids(proximas)).toEqual([e.esperadas.confirmada.idMonitoria, e.esperadas.pendiente.idMonitoria]);
     expect(proximas[0].inicio.getTime()).toBeLessThan(proximas[1].inicio.getTime());
@@ -250,7 +250,7 @@ describe("criterio 1 (RN-17, D-12): próximas y pasadas", () => {
   });
 
   it("las pasadas son la cancelada con su motivo, la reserva vencida y la realizada, de la más reciente a la más antigua", async () => {
-    const { pasadas } = separarAgenda(await cargarAgenda(e.sesionM1));
+    const { pasadas } = separarAgenda(await cargarAgenda(e.sesionM1), new Date());
 
     expect(ids(pasadas)).toEqual([e.esperadas.cancelada.idMonitoria, e.esperadas.vencida.idMonitoria, e.esperadas.realizada.idMonitoria]);
     const [cancelada, vencida, realizada] = pasadas;
@@ -267,8 +267,9 @@ describe("criterio 1 (RN-17, D-12): próximas y pasadas", () => {
     const agenda = await cargarAgenda(e.sesionM1);
 
     expect(ids(agenda).sort()).toEqual(Object.values(e.esperadas).map((m) => m.idMonitoria).sort());
-    const { proximas, pasadas } = separarAgenda(agenda);
-    expect(proximas.length + pasadas.length).toBe(5);
+    const { proximas, pasadas } = separarAgenda(agenda, new Date());
+    const { porFinalizar } = separarAgenda(agenda, new Date());
+    expect(porFinalizar.length + proximas.length + pasadas.length).toBe(5);
   });
 
   it("D-12: la reserva pasa a pasadas al cumplirse los 10 minutos (a 9 sigue en próximas, a 11 ya venció) aunque siga pendiente_pago", async () => {
@@ -277,7 +278,7 @@ describe("criterio 1 (RN-17, D-12): próximas y pasadas", () => {
       exito(await fx.admin.from("monitoria").update({ fecha_creacion: hace(minutos * MINUTO) }).eq("id", monitoria.id).select().single(), "envejecer la reserva");
     const dondeEsta = async () => {
       const agenda = await cargarAgenda(e.sesionM2);
-      const { proximas, pasadas } = separarAgenda(agenda);
+      const { proximas, pasadas } = separarAgenda(agenda, new Date());
       return { vencida: porId(agenda, monitoria.id).reservaVencida, enProximas: ids(proximas).includes(monitoria.id), enPasadas: ids(pasadas).includes(monitoria.id) };
     };
 
@@ -347,7 +348,7 @@ describe("criterio 2 (RN-36): cada monitoría trae fecha, hora, duración, mater
         estadoPago: "sin_pagar",
         inicio: inicioDeSesion(fecha, e.franjaVirtual.hora),
       });
-      expect(ids(separarAgenda(agenda).proximas)).toContain(id);
+      expect(ids(separarAgenda(agenda, new Date()).proximas)).toContain(id);
       // Y solo en la de ese monitor.
       expect(ids(await cargarAgenda(e.sesionM2))).not.toContain(id);
     } finally {

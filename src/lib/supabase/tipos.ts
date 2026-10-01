@@ -600,6 +600,9 @@ isOneToOne: true
 "cancelable_hasta":
 { Args: { "p_es_grupal": boolean,"p_inicio": string }; Returns: string
                            },
+"cierre_automatico_desde":
+{ Args: { "p_fin_programado": string }; Returns: string
+                           },
 "comision":
 { Args: { "p_monto_bruto": number }; Returns: number
                            },
@@ -642,6 +645,9 @@ isOneToOne: true
 "fin_programado":
 { Args: { "p_duracion_min": number,"p_inicio": string }; Returns: string
                            },
+"finalizar_monitoria":
+{ Args: { "p_id_monitoria": string }; Returns: string
+                           },
 "inicio_sesion":
 { Args: { "p_fecha": string,"p_hora": string }; Returns: string
                            },
@@ -673,7 +679,7 @@ isOneToOne: true
                            },
 "parametros_negocio":
 { Args: Record<PropertyKey, never>; Returns: {
-              "antelacion_grupal_min": number,"antelacion_individual_min": number,"cancelacion_grupal_min": number,"cancelacion_individual_min": number,"desembolso_min": number,"diferencia_min": number,"pago_integrantes_min": number,"reporte_inasistencia_min": number,"resena_grupal_min": number,"reserva_min": number,"revision_min": number
+              "antelacion_grupal_min": number,"antelacion_individual_min": number,"cancelacion_grupal_min": number,"cancelacion_individual_min": number,"cierre_automatico_min": number,"desembolso_min": number,"diferencia_min": number,"pago_integrantes_min": number,"reporte_inasistencia_min": number,"resena_grupal_min": number,"reserva_min": number,"revision_min": number
             }[]
                            },
 "plazo_alcanzado":
