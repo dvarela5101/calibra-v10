@@ -28,6 +28,11 @@ export type ResultadoDeAgendar = (typeof RESULTADOS)[number];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const LARGO_MAXIMO_CODIGO = 50;
 
+/** Un id de la base (uuid). */
+export function esUuid(valor: string): boolean {
+  return UUID.test(valor);
+}
+
 const primero = (valor: unknown): string => String((Array.isArray(valor) ? valor[0] : valor) ?? "").trim();
 
 /** `AAAA-MM-DD` que existe en el calendario (2026-02-30 no). */
@@ -45,7 +50,7 @@ export function leerPedidoDeAgendar(valores: { franja?: unknown; fecha?: unknown
   const idFranja = primero(valores.franja).toLowerCase();
   const fecha = primero(valores.fecha);
   const codigoMateria = primero(valores.materia);
-  if (!UUID.test(idFranja) || !esFechaDeCalendario(fecha)) return null;
+  if (!esUuid(idFranja) || !esFechaDeCalendario(fecha)) return null;
   if (!codigoMateria || codigoMateria.length > LARGO_MAXIMO_CODIGO || /[\u0000-\u001f\u007f]/.test(codigoMateria)) return null;
   return { idFranja, fecha, codigoMateria };
 }

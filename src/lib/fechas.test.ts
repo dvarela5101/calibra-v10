@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ZONA_HORARIA_NEGOCIO, IDIOMA, LOCALE } from "@/config/regional";
-import { diaDelNegocio, formatearDia, formatearDiaConSemana, formatearFechaHora } from "./fechas";
+import { diaDelNegocio, formatearDia, formatearDiaConSemana, formatearFechaHora, formatearHora } from "./fechas";
 
 describe("configuración regional", () => {
   it("fija la zona de negocio y el idioma", () => {
@@ -76,6 +76,14 @@ describe("formatearDiaConSemana (HU-016)", () => {
 
   it("rechaza lo que no es un día", () => {
     expect(() => formatearDiaConSemana("2026-02-30")).toThrow(RangeError);
+  });
+});
+
+describe("formatearHora (HU-017)", () => {
+  it("da solo la hora de Bogotá, con espacios duros", () => {
+    expect(formatearHora(new Date("2020-01-07T16:00:00Z"))).toBe("11:00\xa0a.\xa0m.");
+    // 02:30 UTC son las 9:30 p. m. del día anterior en Bogotá.
+    expect(formatearHora(new Date("2026-10-01T02:30:00Z"))).toBe("9:30\xa0p.\xa0m.");
   });
 });
 

@@ -15,6 +15,13 @@ export function formatearFechaHora(instante: Date): string {
   return formatoFechaHora.format(instante).replace(/(\d)\s([ap])\.\s([mM])\./, "$1\xa0$2.\xa0$3.");
 }
 
+const formatoHora = new Intl.DateTimeFormat(LOCALE, { timeZone: ZONA_HORARIA_NEGOCIO, timeStyle: "short" });
+
+/** Solo la hora de un instante, en la zona del negocio: `10:42 a. m.`, con espacios duros como `formatearFechaHora`. */
+export function formatearHora(instante: Date): string {
+  return formatoHora.format(instante).replace(/(\d)\s([ap])\.\s([mM])\./, "$1\xa0$2.\xa0$3.");
+}
+
 // Un día de calendario no tiene zona: se formatea en UTC sobre el mediodía para que ninguna zona lo corra de día.
 const formatoDia = new Intl.DateTimeFormat(LOCALE, { timeZone: "UTC", dateStyle: "long" });
 

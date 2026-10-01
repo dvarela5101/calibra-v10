@@ -12,6 +12,7 @@ import {
   type MonitorConFechas,
 } from "@/lib/disponibilidad/reglas";
 import { cargarFechasLibres, cargarMaterias, type MateriaDeLaLista } from "@/lib/disponibilidad/servidor";
+import { rutaDeAgendar } from "@/lib/agendar/reglas";
 import { formatearDiaConSemana } from "@/lib/fechas";
 import { horaCorta, horaDeFin } from "@/lib/franjas/reglas";
 import { formatearPesos } from "@/lib/moneda";
@@ -25,8 +26,7 @@ const EYEBROW = "Monitores certificados";
 /**
  * HU-016 (RN-22, RN-30, RN-33, RN-35, D-3, D-4, D-5): los monitores certificados en una materia y sus
  * fechas libres de las próximas semanas. La materia llega en el enlace (`?materia=CODIGO`, desde el
- * diagnóstico o un enlace directo); sin ella, el visitante la elige. Las fechas todavía no se agendan
- * desde aquí: eso llega con HU-017.
+ * diagnóstico o un enlace directo); sin ella, el visitante la elige. Cada fecha lleva a agendarla (HU-017).
  */
 export default async function Monitores({ searchParams }: PageProps<"/monitores">) {
   const pedido = (await searchParams).materia;
@@ -79,7 +79,7 @@ export default async function Monitores({ searchParams }: PageProps<"/monitores"
         <ul className={estilos.monitores}>
           {monitores.map((monitor) => (
             <li key={monitor.idMonitor}>
-              <TarjetaDeMonitor monitor={monitor} />
+              <TarjetaDeMonitor monitor={monitor} codigoMateria={elegida.codigo} />
             </li>
           ))}
         </ul>
@@ -124,7 +124,7 @@ function ElegirMateria({ materias, noEncontrada }: { materias: MateriaDeLaLista[
   );
 }
 
-function TarjetaDeMonitor({ monitor }: { monitor: MonitorConFechas }) {
+function TarjetaDeMonitor({ monitor, codigoMateria }: { monitor: MonitorConFechas; codigoMateria: string }) {
   const titulo = `monitor-${monitor.idMonitor}`;
   const aLaVista = monitor.fechas.slice(0, FECHAS_A_LA_VISTA);
   const resto = monitor.fechas.slice(FECHAS_A_LA_VISTA);
@@ -133,29 +133,34 @@ function TarjetaDeMonitor({ monitor }: { monitor: MonitorConFechas }) {
       <h2 id={titulo} className={estilos.nombre}>
         {monitor.nombre}
       </h2>
-      <ListaDeFechas fechas={aLaVista} />
+      <ListaDeFechas fechas={aLaVista} codigoMateria={codigoMateria} />
       {resto.length > 0 && (
         <details className={estilos.mas}>
           <summary className={estilos.resumen}>Ver {resto.length === 1 ? "1 fecha más" : `${resto.length} fechas más`}</summary>
-          <ListaDeFechas fechas={resto} />
+          <ListaDeFechas fechas={resto} codigoMateria={codigoMateria} />
         </details>
       )}
     </section>
   );
 }
 
-function ListaDeFechas({ fechas }: { fechas: FechaLibre[] }) {
+function ListaDeFechas({ fechas, codigoMateria }: { fechas: FechaLibre[]; codigoMateria: string }) {
   return (
     <ul className={estilos.fechas}>
       {fechas.map((f) => (
-        <li key={`${f.idFranja}-${f.fecha}`} className={estilos.fecha}>
-          <time dateTime={f.fecha} className={estilos.dia}>
-            {formatearDiaConSemana(f.fecha)}
-          </time>
-          <span className={estilos.detalle}>
-            {horaCorta(f.hora)} a {horaDeFin(f.hora, f.duracionMin)} ({f.duracionMin} min) · {f.presencial ? "Presencial" : "Virtual"} ·{" "}
-            {formatearPesos(f.precio)}
-          </span>
+        <li key={`${f.idFranja}-${f.fecha}`}>
+          <Link href={rutaDeAgendar({ idFranja: f.idFranja, fecha: f.fecha, codigoMateria })} className={estilos.fecha}>
+            <span className={estilos.datos}>
+              <time dateTime={f.fecha} className={estilos.dia}>
+                {formatearDiaConSemana(f.fecha)}
+              </time>
+              <span className={estilos.detalle}>
+                {horaCorta(f.hora)} a {horaDeFin(f.hora, f.duracionMin)} ({f.duracionMin} min) · {f.presencial ? "Presencial" : "Virtual"} ·{" "}
+                {formatearPesos(f.precio)}
+              </span>
+            </span>
+            <span className={estilos.agendar}>Agendar</span>
+          </Link>
         </li>
       ))}
     </ul>

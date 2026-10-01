@@ -46,9 +46,36 @@
   overflow-wrap: anywhere;
 }
 
+/* Cada fecha es un enlace para agendarla (HU-017). */
 .fecha {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  min-block-size: var(--toque-min);
+  padding: var(--e2) var(--e3);
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .fecha:hover {
+    border-color: var(--primary);
+  }
+}
+
+.datos {
+  display: flex;
   flex-direction: column;
+}
+
+.agendar {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary);
 }
 
 .dia {
