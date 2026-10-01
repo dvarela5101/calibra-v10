@@ -50,8 +50,8 @@ _Generado automaticamente: 2026-10-01 02:11. No editar a mano; usa `scripts/back
 | [HU-070](backlog/HU-070.md) | [Técnica] Endurecer esCorreo: dominio solo con letras, dígitos, puntos y guiones | Lista | P2 | S | HU-006 |
 | [HU-005](backlog/HU-005.md) | [Técnica] Banco de preguntas por habilidades: formato, migración, validación y carga | En progreso | P0 | L | HU-002 |
 | [HU-051](backlog/HU-051.md) | [Monitor] Recibir avisos de nuevas monitorías y cancelaciones | En progreso | P0 | S | HU-021, HU-006 |
-| [HU-071](backlog/HU-071.md) | [Técnica] Página de no encontrado (404) en español | En progreso | P2 | XS |  |
 | [HU-069](backlog/HU-069.md) | [Monitor] Decir en el aviso de privacidad y en el registro del monitor que su nombre se muestra a los estudiantes | En revision | P1 | XS | HU-013, HU-016 |
+| [HU-071](backlog/HU-071.md) | [Técnica] Página de no encontrado (404) en español | En revision | P2 | XS |  |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
