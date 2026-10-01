@@ -92,3 +92,8 @@
   font-size: 14px;
   color: var(--muted);
 }
+
+/* Un enlace dentro de un texto de ayuda: va en el renglón, sin la altura de un enlace suelto. */
+.enlaceEnTexto {
+  color: var(--primary);
+}

@@ -27,6 +27,11 @@
   padding-inline-start: 22px;
 }
 
+.actualizado {
+  font-size: 15px;
+  color: var(--muted);
+}
+
 .enlace {
   color: var(--primary);
 }
