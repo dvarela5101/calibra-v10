@@ -162,6 +162,13 @@ Cada fecha libre de `/monitores` lleva a `/agendar?franja=…&fecha=…&materia=
 - D-7: la cita individual apunta a su diagnóstico (`monitoria.id_diagnostico`) y varias citas pueden compartirlo; el monitor de cada una lo lee por la política de `diagnostico`. `diagnostico.id_monitoria` queda para la grupal.
 - Una reserva `pendiente_pago` ocupa la fecha hasta que se cancela; pasarla a `cancelada` a los 10 minutos sin comprobante es de HU-027. Para D-8 solo cuenta mientras está vigente (`reserva_hasta`).
 
+## Agenda del monitor
+
+`/monitor/agenda` (HU-021, enlazada desde `/monitor`): las monitorías del monitor, próximas (pendientes de pago vigentes y confirmadas, de la más cercana a la más lejana) y pasadas (realizadas, canceladas con su motivo y reservas vencidas, de la más reciente a la más antigua; D-12). Cada una con fecha, hora, duración, materia, modalidad, el nombre de quien agendó y el estado del pago.
+
+- La da `public.mi_agenda()` (invoker, solo con sesión) sobre `privado.agenda_del_monitor(ahora)` (definer): el monitor no lee `lead` ni `pago`, así que la función devuelve solo sus monitorías (`auth.uid()`), el nombre del Lead (nunca su correo ni su teléfono, P-37) y el estado agregado del pago (D-11), sin valor ni comisión (P-24).
+- Estado del pago (D-11): rechazado si algún comprobante lo fue, si no en revisión, si no aprobado; sin comprobantes, sin pagar.
+
 ## Franjas del monitor
 
 `/monitor/franjas` (HU-015): el monitor certificado abre franjas semanales (día, hora, duración, precio y modalidad, con lugar o enlace de videollamada), las edita y las cierra desde una fecha. Las reglas (P-30, P-31) las aplica el trigger `privado.validar_franja_del_monitor` a toda escritura que no sea de confianza, y `src/lib/franjas/reglas.ts` da los mismos mensajes antes de ir a la base.

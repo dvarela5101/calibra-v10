@@ -335,6 +335,13 @@ El banco de preguntas ([HU-005](backlog/HU-005.md)) se hace después. Para que e
 | D-9 | Solo se agenda dentro de las 4 semanas que muestra la lista (D-4): lo que se agenda es lo que se muestra. | [HU-017](backlog/HU-017.md) |
 | D-10 | Con menos de 12 h, el aviso de RN-37 va con la casilla "Entiendo que no podré cancelarla", que hay que marcar para confirmar. | [HU-017](backlog/HU-017.md) |
 
+### Decisiones del 1-oct-2026
+
+| # | Decisión | HUs |
+|---|---|---|
+| D-11 | El estado del pago que ve el monitor (P-24) agrega los comprobantes de la monitoría: rechazado si alguno lo fue (RN-43 cancela la cita), si no en revisión si alguno lo está, si no aprobado; sin comprobantes, sin pagar. | [HU-021](backlog/HU-021.md) |
+| D-12 | Una reserva pendiente de pago que ya venció (RN-34) se le muestra al monitor entre las pasadas como reserva vencida, aunque HU-027 todavía no la haya cancelado. | [HU-021](backlog/HU-021.md), [HU-027](backlog/HU-027.md) |
+
 ## 5. Cortes propuestos
 
 | Corte | Prioridad | HUs | Tallas | Qué cubre |
