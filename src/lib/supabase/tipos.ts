@@ -298,13 +298,13 @@ isOneToOne: true
                   ]
                 },"monitoria": {
                   Row: {
-                    "estado": Database["public"]['Enums']["estado_monitoria"],"fecha": string,"fecha_creacion": string,"fecha_finalizacion": string | null,"id": string,"id_franja": string,"id_lead": string,"id_materia": string,"id_monitor": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"] | null,"valor_total": number
+                    "estado": Database["public"]['Enums']["estado_monitoria"],"fecha": string,"fecha_creacion": string,"fecha_finalizacion": string | null,"id": string,"id_diagnostico": string | null,"id_franja": string,"id_lead": string,"id_materia": string,"id_monitor": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"] | null,"valor_total": number
                   }
                   Insert: {
-                    "estado"?: Database["public"]['Enums']["estado_monitoria"],"fecha": string,"fecha_creacion"?: string,"fecha_finalizacion"?: string | null,"id"?: string,"id_franja": string,"id_lead": string,"id_materia": string,"id_monitor": string,"motivo_cancelacion"?: Database["public"]['Enums']["motivo_cancelacion"] | null,"valor_total": number
+                    "estado"?: Database["public"]['Enums']["estado_monitoria"],"fecha": string,"fecha_creacion"?: string,"fecha_finalizacion"?: string | null,"id"?: string,"id_diagnostico"?: string | null,"id_franja": string,"id_lead": string,"id_materia": string,"id_monitor": string,"motivo_cancelacion"?: Database["public"]['Enums']["motivo_cancelacion"] | null,"valor_total": number
                   }
                   Update: {
-                    "estado"?: Database["public"]['Enums']["estado_monitoria"],"fecha"?: string,"fecha_creacion"?: string,"fecha_finalizacion"?: string | null,"id"?: string,"id_franja"?: string,"id_lead"?: string,"id_materia"?: string,"id_monitor"?: string,"motivo_cancelacion"?: Database["public"]['Enums']["motivo_cancelacion"] | null,"valor_total"?: number
+                    "estado"?: Database["public"]['Enums']["estado_monitoria"],"fecha"?: string,"fecha_creacion"?: string,"fecha_finalizacion"?: string | null,"id"?: string,"id_diagnostico"?: string | null,"id_franja"?: string,"id_lead"?: string,"id_materia"?: string,"id_monitor"?: string,"motivo_cancelacion"?: Database["public"]['Enums']["motivo_cancelacion"] | null,"valor_total"?: number
                   }
                   Relationships: [
                     {
@@ -313,6 +313,12 @@ isOneToOne: true
 isOneToOne: false
       referencedRelation: "certificado"
       referencedColumns: ["id_monitor","id_materia"]
+    },{
+      foreignKeyName: "monitoria_diagnostico_fk"
+      columns: ["id_diagnostico","id_materia"]
+isOneToOne: false
+      referencedRelation: "diagnostico"
+      referencedColumns: ["id","id_materia"]
     },{
       foreignKeyName: "monitoria_franja_fk"
       columns: ["id_franja","id_monitor"]
@@ -581,6 +587,11 @@ isOneToOne: true
             "acceso_a_mis_franjas":
 { Args: Record<PropertyKey, never>; Returns: {
               "enlace": string,"id_franja": string,"lugar": string
+            }[]
+                           },
+"agendar_monitoria":
+{ Args: { "p_acepta_sin_cancelacion"?: boolean,"p_codigo_materia": string,"p_fecha": string,"p_id_franja": string }; Returns: {
+              "id_monitoria": string,"resultado": string
             }[]
                            },
 "anotar_comprobante_revisado":

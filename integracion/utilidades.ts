@@ -189,6 +189,29 @@ export class Fixtures {
     return lead;
   }
 
+  /**
+   * Lead ligado a una sesión anónima: así la sesión "ya es Lead" (HU-068), como cuando dejó su contacto al
+   * agendar. Lo borra `limpiar()` antes que la sesión.
+   */
+  async crearLeadDeSesion(idSesion: string) {
+    const lead = exito(
+      await this.admin
+        .from("lead")
+        .insert({
+          id_sesion_anonima: idSesion,
+          nombre: "Lead de prueba",
+          correo: correoUnico(),
+          acepta_tratamiento_datos: true,
+          fecha_consentimiento: new Date().toISOString(),
+        })
+        .select()
+        .single(),
+      "insertar lead de la sesión",
+    );
+    this.leads.push(lead.id);
+    return lead;
+  }
+
   async crearEstudiante() {
     const usuario = await this.crearUsuario();
     const lead = await this.crearLead();
@@ -346,6 +369,14 @@ export class Fixtures {
     );
     this.monitorias.push(monitoria.id);
     return monitoria;
+  }
+
+  /**
+   * Anota una monitoría que no creó `crearMonitoria` (la creó, por ejemplo, la función de agendar de HU-017)
+   * para que `limpiar()` la borre antes que la franja, el diagnóstico y el Lead.
+   */
+  registrarMonitoria(id: string): void {
+    this.monitorias.push(id);
   }
 
   /**

@@ -15,9 +15,9 @@ export default function Inicio() {
         <h2 id="aviso-titulo" className={styles.avisoTitulo}>
           Estamos preparando esta versión
         </h2>
-        <p>Muy pronto podrás tomar el diagnóstico y agendar tu monitoría desde aquí.</p>
+        <p>Muy pronto podrás tomar el diagnóstico desde aquí. Mientras tanto, ya puedes elegir un monitor certificado y apartar tu monitoría.</p>
       </section>
-      {/* HU-016 (D-4): la lista de monitores ya existe, aunque todavía no se agende desde ella. */}
+      {/* HU-016 (D-4) y HU-017: desde la lista de monitores se agenda. */}
       <Link href={rutaDeMonitores()} className={formulario.enlace}>
         Ver monitores certificados
       </Link>

@@ -330,6 +330,10 @@ El banco de preguntas ([HU-005](backlog/HU-005.md)) se hace después. Para que e
 | D-4 | La lista de monitores de una materia muestra las fechas libres de las próximas 4 semanas. Un monitor sin fechas libres, o con la cuenta desactivada, no aparece. Se ordenan por su fecha libre más próxima y luego por nombre (todavía no hay reseñas). El inicio enlaza a la lista. | [HU-016](backlog/HU-016.md) |
 | D-5 | Antes de agendar, una franja presencial solo dice "Presencial": el lugar llega con la cita confirmada (HU-019), como el enlace de una virtual. | [HU-016](backlog/HU-016.md), [HU-019](backlog/HU-019.md) |
 | D-6 | El nombre del monitor se muestra como lo escribió al registrarse. Que los estudiantes lo vean se dirá en el aviso de privacidad y en el registro del monitor, en una HU aparte. | [HU-016](backlog/HU-016.md), [HU-069](backlog/HU-069.md) |
+| D-7 | Al agendar se liga el diagnóstico más reciente de la materia aunque ya esté ligado a otra cita: el monitor de cada cita lo ve (precisa P-35). La cita individual apunta a su diagnóstico (`monitoria.id_diagnostico`) y varias citas pueden compartirlo; `diagnostico.id_monitoria` queda para el que se hace dentro de una grupal (RN-15). | [HU-017](backlog/HU-017.md), [HU-022](backlog/HU-022.md) |
+| D-8 | Un Lead tiene como máximo una reserva por pagar vigente a la vez. Para apartar otra fecha, primero adjunta el comprobante de la que tiene o deja que venza. | [HU-017](backlog/HU-017.md) |
+| D-9 | Solo se agenda dentro de las 4 semanas que muestra la lista (D-4): lo que se agenda es lo que se muestra. | [HU-017](backlog/HU-017.md) |
+| D-10 | Con menos de 12 h, el aviso de RN-37 va con la casilla "Entiendo que no podré cancelarla", que hay que marcar para confirmar. | [HU-017](backlog/HU-017.md) |
 
 ## 5. Cortes propuestos
 

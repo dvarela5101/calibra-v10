@@ -145,8 +145,22 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 `/monitores?materia=CODIGO` (HU-016, D-4, D-5): los monitores certificados en la materia y sus fechas libres de las próximas 4 semanas (`SEMANAS_DEL_HORIZONTE`), con hora, duración, modalidad y precio. Sin materia, o con un código que no existe, el visitante la elige. Los enlaces a esta lista se arman con `rutaDeMonitores(codigo)`.
 
 - Las fechas las calcula la base: `public.fechas_libres_de_materia(codigo, semanas)` (security invoker) llama a `privado.fechas_libres_de_materia`, que es security definer porque nadie fuera del servidor lee `monitoria` y la primera página de un visitante corre sin sesión (rol `anon`). Devuelve solo lo público: nunca el contacto ni la llave del monitor, ni el lugar o el enlace de la franja.
-- `privado.fecha_libre(franja, fecha, ahora)` es la regla única de "esta fecha se puede agendar": el día de la franja, abierta en esa fecha (HU-015), la antelación de 3 h del motor de plazos (P-40, borde incluido), sin monitoría que no esté cancelada (RN-33) y con el monitor activo. La reserva (HU-017) debe usar la misma.
-- Se ordena por la fecha libre más próxima de cada monitor y luego por nombre. Las fechas todavía no se agendan desde aquí: eso llega con HU-017.
+- `privado.fecha_libre(franja, fecha, ahora)` es la regla única de "esta fecha se puede agendar": el día de la franja, abierta en esa fecha (HU-015), la antelación de 3 h del motor de plazos (P-40, borde incluido), sin monitoría que no esté cancelada (RN-33) y con el monitor activo. La reserva (HU-017) usa la misma.
+- Se ordena por la fecha libre más próxima de cada monitor y luego por nombre. Cada fecha lleva a agendarla (HU-017).
+
+## Agendar una monitoría individual
+
+Cada fecha libre de `/monitores` lleva a `/agendar?franja=…&fecha=…&materia=…` (HU-017). La página confirma lo mismo que mostró la lista (lo vuelve a leer de `public.fechas_libres_de_materia`). Quien todavía no es Lead deja su contacto en `/agendar/contacto` (HU-068) y vuelve. Al apartar, la base crea la monitoría en `pendiente_pago` y lleva a `/agendar/reserva/<id>`, donde HU-018 pondrá el pago.
+
+- La reserva la hace `public.agendar_monitoria(franja, fecha, materia, acepta_sin_cancelacion)` (security invoker, solo con sesión) sobre `privado.agendar_monitoria` (definer). Toma la identidad de `auth.uid()` y la hora de `now()`: nadie agenda a nombre de otro ni elige la hora con que se mide la antelación.
+- En una transacción:
+  - pone en fila al Lead (una reserva por pagar vigente a la vez, D-8) y a la franja (`for update`);
+  - revisa el certificado en la materia, las 4 semanas de la lista (D-9, `privado.semanas_para_agendar()`) y `privado.fecha_libre` (HU-016);
+  - pide la casilla de RN-37 con menos de 12 h (D-10);
+  - copia el precio de la franja en `valor_total` (RN-32) y liga el diagnóstico más reciente de la materia (P-35, D-7).
+- Si dos personas confirman la misma fecha a la vez, el índice `monitoria_franja_fecha_activa_key` deja pasar a una y la otra recibe `ocupada` (RN-33).
+- D-7: la cita individual apunta a su diagnóstico (`monitoria.id_diagnostico`) y varias citas pueden compartirlo; el monitor de cada una lo lee por la política de `diagnostico`. `diagnostico.id_monitoria` queda para la grupal.
+- Una reserva `pendiente_pago` ocupa la fecha hasta que se cancela; pasarla a `cancelada` a los 10 minutos sin comprobante es de HU-027. Para D-8 solo cuenta mientras está vigente (`reserva_hasta`).
 
 ## Franjas del monitor
 
