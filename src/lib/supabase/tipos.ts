@@ -645,6 +645,11 @@ isOneToOne: true
 "inicio_sesion":
 { Args: { "p_fecha": string,"p_hora": string }; Returns: string
                            },
+"mi_agenda":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "codigo_materia": string,"duracion_min": number,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"fecha": string,"hora": string,"id_monitoria": string,"inicio": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_estudiante": string,"nombre_materia": string,"presencial": boolean,"reserva_vencida": boolean
+            }[]
+                           },
 "mi_cuota_de_comprobantes":
 { Args: Record<PropertyKey, never>; Returns: {
               "libre_desde": string,"maximo": number,"usados": number
