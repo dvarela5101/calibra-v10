@@ -1,0 +1,116 @@
+/* Reseña individual (HU-035): resumen de la sesión y calificación de 1 a 5. */
+
+.resumen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin: 0;
+  margin-block-start: var(--e3);
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+.dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+}
+
+.rotulo {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.valor {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.opciones {
+  display: flex;
+  gap: var(--e2);
+}
+
+.opcion {
+  position: relative;
+  flex: 1;
+  min-inline-size: var(--toque-min);
+  min-block-size: 56px;
+  cursor: pointer;
+}
+
+/* El radio real cubre toda la opción (invisible) para conservar teclado y lector de pantalla. */
+.radio {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.numero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 56px;
+  font-size: 20px;
+  font-weight: 600;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  transition: background var(--transicion), color var(--transicion), border-color var(--transicion);
+}
+
+.radio:checked + .numero {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.radio:focus-visible + .numero {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.comentario {
+  min-block-size: 112px;
+  padding: 12px 14px;
+  font-size: 16px; /* 16 px evita el zoom automático de iOS */
+  line-height: 1.4;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  resize: vertical;
+}
+
+.comentario:focus-visible {
+  border-color: var(--primary);
+}
+
+.resultado {
+  margin-block-start: var(--e3);
+  font-size: 16px;
+}
+
+.tituloResultado {
+  margin: 0 0 var(--e2);
+  font-size: 20px;
+}

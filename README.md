@@ -186,7 +186,7 @@ Cada fecha libre de `/monitores` lleva a `/agendar?franja=…&fecha=…&materia=
 
 - `public.finalizar_monitoria(id)` (invoker, solo con sesión) sobre `privado.finalizar_monitoria` (definer): con `auth.uid()` y `now()`, la pasa a `realizada` con `fecha_finalizacion` si es del monitor, está confirmada y ya llegó su inicio (D-13, borde incluido).
 - Cierre automático (P-05, D-14): pg_cron corre cada 15 minutos `privado.cerrar_monitorias_sin_finalizar(now())`, que cierra cada individual confirmada que alcanzó `public.cierre_automatico_desde(fin programado)` = fin + `cierre_automatico_min` (24 h, en `parametros_negocio()`). Las grupales no se cierran solas (su monitor entrega el enlace de reseña, HU-046).
-- El desembolso al pasar a `realizada` es de HU-028; el correo de reseña individual, de HU-035.
+- El desembolso al pasar a `realizada` es de HU-028. El correo de reseña individual sale con HU-035 (ver "Reseña individual").
 
 ## Avisos al monitor
 
@@ -196,6 +196,16 @@ HU-051 (D-16): el monitor recibe un correo cuando una monitoría individual suya
 - El mismo trigger llama `privado.disparar_avisos_monitor()`, que con pg_net hace un `POST` a `/api/procesos/avisar-monitores` (mismo secreto y mismas entradas de Vault que los reintentos de HU-065). pg_net lo envía al confirmarse la transacción, así que el correo sale en segundos. pg_cron repite el pedido cada 5 minutos si quedan avisos sin procesar. Si el pedido falla (Vault o pg_net), el trigger lo deja en un aviso del log y el cambio de estado sigue: nunca tumba una confirmación ni una cancelación.
 - Cada corrida toma hasta 10 avisos y deja de tomar pasados 20 s, como los reintentos. Un aviso que no se puede procesar (error de la base o de los datos) suma un intento en `aviso_monitor.intentos` y se abandona a los 5, para no tapar a los demás.
 - La ruta (`src/lib/avisos/servidor.ts`) lee los datos con `public.datos_de_aviso_monitor(id)` (solo `service_role`) y manda el correo con la entidad = id de la monitoría: la clave única de `correo_envio` impide mandarlo dos veces. Antes de mandarlo comprueba que el aviso siga valiendo: si la monitoría ya se canceló, el de confirmada no sale. Un correo que falla queda para los reintentos de HU-065, que lo reconstruyen desde la monitoría.
+
+## Reseña individual
+
+HU-035 (RN-70, RN-72, D-17): cuando una monitoría individual pasa a `realizada`, sea porque la finaliza el monitor o por el cierre automático, el Lead recibe un correo con el enlace a la reseña de su pago. En `/resena?token=…` califica de 1 a 5, con un comentario opcional de hasta 1000 caracteres. Un pago tiene como máximo una reseña, y un pago rechazado no se reseña. El enlace no vence.
+
+- El trigger `monitoria_anota_invitacion_resena` (`privado.anotar_invitacion_resena`, definer) anota en `public.invitacion_resena` una invitación por cada pago no rechazado y sin reseña, en la misma transacción del paso a `realizada`. Las grupales no reciben invitación: su reseña es por enlace del monitor (RN-71, HU-046 y HU-047).
+- Se mandan como los avisos al monitor: `privado.disparar_invitaciones_resena()` hace un `POST` con pg_net a `/api/procesos/invitar-resenas` (mismos `calibra_sitio_url` y `calibra_cron_secreto` de Vault), y pg_cron lo repite cada 5 minutos si quedan pendientes. El pedido nunca tumba el cambio de estado. Cada corrida procesa hasta 10 invitaciones durante 20 s como máximo, y una que falla 5 veces se abandona.
+- El correo usa la plantilla `resena_individual`, con la entidad = id del pago: la clave única de `correo_envio` impide mandarlo dos veces. Si falla, HU-065 lo reconstruye con el mismo enlace.
+- El token se guarda en claro en `invitacion_resena`, y la tabla solo la lee `service_role`. Así el reintento puede mandar el mismo enlace sin rotarlo. Solo sirve para dejar una reseña.
+- La página lee con `public.resena_por_token` y guarda con `public.registrar_resena`, las dos solo para `service_role`. `registrar_resena` bloquea el pago y vuelve a revisar todo, así que dos envíos a la vez dejan una sola reseña. `resena` tiene los `check` de D-17.
 
 ## Franjas del monitor
 

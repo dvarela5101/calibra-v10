@@ -29,6 +29,7 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   - [HU-071](../backlog/HU-071.md): abre cualquier ruta que no exista, por ejemplo `/algo`.
   - [HU-051](../backlog/HU-051.md): `npm run test:integracion -- avisos` y mira los correos en http://127.0.0.1:54324. En la nube necesita la sección C (Vault y `CRON_SECRETO`). Tiene un supuesto técnico en su registro.
   - [HU-054](../backlog/HU-054.md): entra como admin a `/admin/equipo` (enlace "Equipo de admins" en la bandeja). Tiene cuatro supuestos de seguridad en su registro para que los confirmes.
+  - [HU-035](../backlog/HU-035.md): `npm run test:integracion -- resenas` y mira el correo de reseña en http://127.0.0.1:54324; abre su enlace (`/resena?token=…`), califica y vuelve a abrirlo. En la nube sale con lo mismo que HU-051 (sección C). Sus decisiones están en A2.
 - [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
 ### A2. Decisiones de las HUs recientes
@@ -51,6 +52,12 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [ ] **Contacto al agendar (HU-068): teléfono sin indicativo.** Si alguien escribe el teléfono sin "+", se guarda con el de Colombia (+57). Recomendación: dejarlo así.
 - [ ] **Contacto al agendar (HU-068): origen del contacto.** Si alguien llega por un enlace de campaña (`?utm_campaign=...`), el contacto guarda la última campaña con la que llegó en los últimos 30 días. Recomendación: dejarlo así. Para tus campañas, usa enlaces con `utm_campaign`.
 - [x] **Monitores y fechas libres (HU-016).** Decidido el 30-sep (D-4 a D-6 en `REVISION_REGLAS.md` §4): todo como se recomendó. 4 semanas; sin fechas libres o desactivado no aparece; orden por la fecha más próxima y luego por nombre; enlace desde el inicio; solo "Presencial", sin lugar; el nombre como lo registró, y el aviso de privacidad lo cubre [HU-069](../backlog/HU-069.md).
+- [ ] **Reseña individual (HU-035).** Recomendación para cada punto:
+  - el comentario admite hasta 1000 caracteres;
+  - la reseña la deja quien tenga el enlace del correo, sin iniciar sesión (RN-72), y el enlace no vence;
+  - el aviso de privacidad todavía no menciona las reseñas: queda en [HU-073](../backlog/HU-073.md) (Backlog), con el texto que te propongo.
+
+  Confirma o dime qué cambiar.
 - [ ] **Correo que ya tiene cuenta (HU-013).** Si invitas a un correo que ya tiene cuenta de Calibra (por ejemplo, de estudiante), hoy el registro no la convierte en monitor y le pide escribir al equipo. Confirma que así está bien, o pide que se pueda convertir.
 
 ### A3. Preparar la cuenta de Gmail (para HU-066)

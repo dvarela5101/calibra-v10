@@ -313,6 +313,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"invitacion_resena": {
+                  Row: {
+                    "creada_en": string,"id": string,"id_pago": string,"intentos": number,"procesado_en": string | null,"token": string
+                  }
+                  Insert: {
+                    "creada_en"?: string,"id"?: string,"id_pago": string,"intentos"?: number,"procesado_en"?: string | null,"token"?: string
+                  }
+                  Update: {
+                    "creada_en"?: string,"id"?: string,"id_pago"?: string,"intentos"?: number,"procesado_en"?: string | null,"token"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "invitacion_resena_id_pago_fkey"
+      columns: ["id_pago"]
+isOneToOne: true
+      referencedRelation: "pago"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"lead": {
                   Row: {
                     "acepta_contacto": boolean,"acepta_tratamiento_datos": boolean,"correo": string | null,"estado": Database["public"]['Enums']["estado_lead"],"fecha_consentimiento": string,"fecha_creacion": string,"id": string,"id_sesion_anonima": string | null,"nombre": string,"numero_telefono": string | null,"origen": string | null
@@ -828,6 +847,11 @@ isOneToOne: true
               "correo_monitor": string,"duracion_min": number,"estado": Database["public"]['Enums']["estado_monitoria"],"grupal": boolean,"inicio": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_estudiante": string,"nombre_materia": string,"nombre_monitor": string,"presencial": boolean
             }[]
                            },
+"datos_de_invitacion_resena":
+{ Args: { "p_id_pago": string }; Returns: {
+              "correo_lead": string,"disponible": boolean,"nombre_lead": string,"nombre_monitor": string,"token": string
+            }[]
+                           },
 "dentro_de_plazo":
 { Args: { "p_ahora": string,"p_limite": string }; Returns: boolean
                            },
@@ -908,8 +932,16 @@ isOneToOne: true
 "registrar_monitor":
 { Args: { "p_correo": string,"p_id_usuario": string,"p_llave": string,"p_nombre": string,"p_numero_telefono": string,"p_token_hash": string }; Returns: boolean
                            },
+"registrar_resena":
+{ Args: { "p_calificacion": number,"p_comentario": string,"p_token": string }; Returns: string
+                           },
 "reporte_inasistencia_hasta":
 { Args: { "p_fin_programado": string }; Returns: string
+                           },
+"resena_por_token":
+{ Args: { "p_token": string }; Returns: {
+              "estado": string,"inicio": string,"nombre_materia": string,"nombre_monitor": string
+            }[]
                            },
 "reserva_hasta":
 { Args: { "p_fecha_creacion": string }; Returns: string

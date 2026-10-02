@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-01 18:26. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-01 19:13. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -34,6 +34,7 @@ _Generado automaticamente: 2026-10-01 18:26. No editar a mano; usa `scripts/back
 | [HU-053](backlog/HU-053.md) | [Admin] Gestionar leads | Backlog | P2 | M | HU-010, HU-012 |
 | [HU-055](backlog/HU-055.md) | [Admin] Gestionar materias y evaluaciones | Backlog | P2 | M | HU-005, HU-012 |
 | [HU-072](backlog/HU-072.md) | [Admin] Agregar un admin al equipo por invitación | Backlog | P2 | S | HU-054 |
+| [HU-073](backlog/HU-073.md) | [Lead] Decir en el aviso de privacidad que guardamos la calificación y el comentario de cada monitoría | Backlog | P2 | XS | HU-035, HU-008 |
 | [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | Backlog | P3 | S | HU-010 |
 | [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | Lista | P0 | M | HU-009, HU-008, HU-068 |
 | [HU-019](backlog/HU-019.md) | [Lead] Recibir la confirmación de mi cita con un enlace para gestionarla | Lista | P0 | M | HU-018, HU-006 |
@@ -47,9 +48,9 @@ _Generado automaticamente: 2026-10-01 18:26. No editar a mano; usa `scripts/back
 | [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | Lista | P2 | S | HU-004 |
 | [HU-070](backlog/HU-070.md) | [Técnica] Endurecer esCorreo: dominio solo con letras, dígitos, puntos y guiones | Lista | P2 | S | HU-006 |
 | [HU-018](backlog/HU-018.md) | [Lead] Pagar por Llave y adjuntar el comprobante | En progreso | P0 | L | HU-017, HU-007 |
-| [HU-035](backlog/HU-035.md) | [Lead] Reseñar mi monitoría individual desde el correo | En progreso | P1 | M | HU-023, HU-006 |
 | [HU-005](backlog/HU-005.md) | [Técnica] Banco de preguntas por habilidades: formato, migración, validación y carga | En revision | P0 | L | HU-002 |
 | [HU-051](backlog/HU-051.md) | [Monitor] Recibir avisos de nuevas monitorías y cancelaciones | En revision | P0 | S | HU-021, HU-006 |
+| [HU-035](backlog/HU-035.md) | [Lead] Reseñar mi monitoría individual desde el correo | En revision | P1 | M | HU-023, HU-006 |
 | [HU-069](backlog/HU-069.md) | [Monitor] Decir en el aviso de privacidad y en el registro del monitor que su nombre se muestra a los estudiantes | En revision | P1 | XS | HU-013, HU-016 |
 | [HU-054](backlog/HU-054.md) | [Admin] Gestionar el equipo de admins y el turno de revisión | En revision | P2 | S | HU-012 |
 | [HU-071](backlog/HU-071.md) | [Técnica] Página de no encontrado (404) en español | En revision | P2 | XS |  |
