@@ -27,7 +27,7 @@ type Props = {
  */
 export function PagoPorLlave({ idMonitoria, valorTotal, reservaHasta, ahora, idUsuario, pagador }: Props) {
   if (!dentroDePlazo(reservaHasta, ahora)) {
-    return <p className={estilos.nota}>La reserva expiró: ya no puedes adjuntar el comprobante.</p>;
+    return <ReservaExpirada />;
   }
 
   const proveedor = identidadDelProveedor();
@@ -90,4 +90,12 @@ export function PagoPorLlave({ idMonitoria, valorTotal, reservaHasta, ahora, idU
       )}
     </section>
   );
+}
+
+/**
+ * Lo que ve el Lead en lugar del pago cuando su reserva venció (criterio 4): siga por pagar fuera de plazo o la
+ * haya cancelado ya HU-027 por `reserva_expirada`, dice lo mismo.
+ */
+export function ReservaExpirada() {
+  return <p className={estilos.nota}>La reserva expiró: ya no puedes adjuntar el comprobante.</p>;
 }

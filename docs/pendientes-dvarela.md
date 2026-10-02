@@ -28,6 +28,7 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [x] **HU-070, correo seguro**: aprobada el 2-oct.
 - [x] **HU-018, pagar por Llave** (de Juzou04, [PR #28](https://github.com/dvarela5101/calibra-v10/pull/28)): aprobada el 2-oct tras la revisión. Sus supuestos siguen abiertos en A2.
 - [x] **HU-005, HU-051, HU-054, HU-069 y HU-071**: aprobadas el 2-oct.
+- [ ] **HU-073, aviso de privacidad:** abre `/privacidad` y mira el punto de las reseñas en "Qué datos recogemos" y "Para qué los usamos", la sección nueva "Seguridad del sitio" (Cloudflare Turnstile, con el enlace a su adenda) y la fecha del 2 de octubre.
 - [ ] **HU-019, confirmación de la cita:** `npm run test:integracion -- citas` y mira en http://127.0.0.1:54324 el correo "Tu monitoría de … está confirmada". Abre su enlace (`/cita?token=…`) y prueba "Mis citas" en el pie de página. En la nube sale con lo mismo que HU-051 (sección C). Sus textos para revisar están en A2.
 - [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
