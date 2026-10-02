@@ -108,6 +108,19 @@
   box-shadow: var(--sombra-carta);
 }
 
+/* Un pago por revisar: toda la tarjeta lleva a su revisión (HU-020). */
+.filaEnlace {
+  composes: fila;
+  color: var(--text);
+  text-decoration: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .filaEnlace:hover {
+    border-color: var(--primary);
+  }
+}
+
 .nombre {
   font-size: 16px;
   font-weight: 600;

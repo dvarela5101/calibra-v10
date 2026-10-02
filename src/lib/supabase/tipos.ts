@@ -542,13 +542,13 @@ isOneToOne: false
                   ]
                 },"pago": {
                   Row: {
-                    "comprobante": string,"contacto": string,"estado": Database["public"]['Enums']["estado_pago"],"fecha_asignacion": string,"fecha_pago": string,"fecha_revision": string | null,"id": string,"id_admin": string,"id_monitoria": string,"monto": number,"nombre_pagador": string,"referencia_transferencia": string | null
+                    "comprobante": string,"contacto": string,"estado": Database["public"]['Enums']["estado_pago"],"fecha_asignacion": string,"fecha_pago": string,"fecha_revision": string | null,"id": string,"id_admin": string,"id_monitoria": string,"monto": number,"nombre_pagador": string,"observaciones": string | null,"referencia_transferencia": string | null
                   }
                   Insert: {
-                    "comprobante": string,"contacto": string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin": string,"id_monitoria": string,"monto": number,"nombre_pagador": string,"referencia_transferencia"?: string | null
+                    "comprobante": string,"contacto": string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin": string,"id_monitoria": string,"monto": number,"nombre_pagador": string,"observaciones"?: string | null,"referencia_transferencia"?: string | null
                   }
                   Update: {
-                    "comprobante"?: string,"contacto"?: string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin"?: string,"id_monitoria"?: string,"monto"?: number,"nombre_pagador"?: string,"referencia_transferencia"?: string | null
+                    "comprobante"?: string,"contacto"?: string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin"?: string,"id_monitoria"?: string,"monto"?: number,"nombre_pagador"?: string,"observaciones"?: string | null,"referencia_transferencia"?: string | null
                   }
                   Relationships: [
                     {
@@ -995,6 +995,11 @@ isOneToOne: true
                            },
 "reserva_hasta":
 { Args: { "p_fecha_creacion": string }; Returns: string
+                           },
+"revisar_pago":
+{ Args: { "p_decision": string,"p_id_pago": string,"p_observaciones"?: string }; Returns: {
+              "cancelo_monitoria": boolean,"resultado": string
+            }[]
                            },
 "revision_hasta":
 { Args: { "p_fecha_asignacion": string }; Returns: string
