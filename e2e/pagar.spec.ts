@@ -347,6 +347,46 @@ test.describe("Criterios 2, 3, 6 y 7 · adjuntar el comprobante", () => {
       expect(await escenario.estadoDe(idReserva)).toBe("confirmada");
     });
   });
+
+  test("si la llamada al servidor falla (la red, un despliegue), el formulario sigue en pie y el reintento usa el comprobante ya subido", async ({
+    page,
+    escenario,
+  }) => {
+    const { fecha, materia, monitor, franja } = await montar(escenario);
+    const { lead } = await entrarComoLead(page, escenario);
+    const idReserva = await escenario.apartar(franja, monitor.id, materia.id, fecha, lead.id);
+    await abrir(page, `/agendar/reserva/${idReserva}`);
+    await expect(titulo(page, "Apartamos tu fecha")).toBeVisible(ESPERA);
+
+    // Cuántas veces sube el navegador un comprobante al Storage (cada subida gasta una de las 5 del día).
+    let subidas = 0;
+    page.on("request", (pedido) => {
+      if (pedido.method() === "POST" && pedido.url().includes("/storage/v1/object/comprobantes/")) subidas += 1;
+    });
+    // La acción del servidor es un POST a la misma página con el encabezado next-action: se corta la red.
+    const ruta = `**/agendar/reserva/${idReserva}`;
+    await page.route(ruta, (pedido) =>
+      pedido.request().method() === "POST" && pedido.request().headers()["next-action"] ? pedido.abort("internetdisconnected") : pedido.continue(),
+    );
+
+    await test.step("sin respuesta del servidor: lo dice, no tumba la página y no hay pago", async () => {
+      await campoComprobante(page).setInputFiles({ name: "comprobante.png", mimeType: "image/png", buffer: PNG });
+      await botonEnviar(page).click();
+      await expect(alerta(page, "No pudimos comunicarnos con Calibra")).toBeVisible(ESPERA);
+      await expect(titulo(page, "Apartamos tu fecha")).toBeVisible();
+      await expect(botonEnviar(page)).toBeEnabled();
+      expect(subidas).toBe(1);
+      expect(await escenario.pagosDe(idReserva)).toEqual([]);
+    });
+
+    await test.step("vuelve la red: el reintento confirma sin subir otra vez el comprobante", async () => {
+      await page.unroute(ruta);
+      await botonEnviar(page).click();
+      await expect(titulo(page, "Tu monitoría está confirmada")).toBeVisible(ESPERA);
+      expect(subidas).toBe(1);
+      expect(await escenario.pagosDe(idReserva)).toHaveLength(1);
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
