@@ -76,7 +76,7 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   - sin ningún admin activo, el pago se rechaza con un mensaje (la pantalla del equipo no deja desactivar al último);
   - quien transfirió pero llegó tarde solo ve «tu reserva expiró». Falta decidir qué se le dice y cómo se le devuelve el dinero;
   - con cualquier comprobante válido la cita se confirma y se avisa al monitor antes de que un admin lo revise (RN-38). Hasta HU-020, la revisión es solo posterior.
-- [ ] **Revisar pagos (HU-020): lo que dejó Juzou04.** Las recomendaciones son las suyas:
+- [x] **Revisar pagos (HU-020): lo que dejó Juzou04.** **Decidido el 2-oct (D-38):** se aceptan, salvo dos que van en HUs nuevas: el monitor sí recibe un correo cuando el rechazo cancela su cita ([HU-076](../backlog/HU-076.md)), y un pago que el asignado no revisó a tiempo lo puede revisar cualquier admin activo ([HU-077](../backlog/HU-077.md)). Las recomendaciones eran:
   - solo revisa el admin asignado, aunque se le haya pasado la hora. Los demás admins ven el pago sin botones. Pasarlo a otro admin es de HU-034 (escalamiento) y HU-074 (admin desactivado);
   - si la sesión ya empezó, rechazar el pago no cancela la cita: cuenta como realizada (P-24);
   - en ese caso el admin tiene que escribir qué se hará con el cobro, cobrarlo por fuera o asumirlo. Queda en una columna nueva del pago, `observaciones`;
