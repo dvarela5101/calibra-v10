@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-01 22:45. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-01 22:53. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -46,8 +46,8 @@ _Generado automaticamente: 2026-10-01 22:45. No editar a mano; usa `scripts/back
 | [HU-028](backlog/HU-028.md) | [Admin] Ejecutar desembolsos a monitores | Lista | P0 | M | HU-023, HU-020 |
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | Lista | P0 | M | HU-019 |
 | [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | Lista | P2 | S | HU-004 |
-| [HU-070](backlog/HU-070.md) | [Técnica] Endurecer esCorreo: dominio solo con letras, dígitos, puntos y guiones | Lista | P2 | S | HU-006 |
 | [HU-018](backlog/HU-018.md) | [Lead] Pagar por Llave y adjuntar el comprobante | En progreso | P0 | L | HU-017, HU-007 |
+| [HU-070](backlog/HU-070.md) | [Técnica] Endurecer esCorreo: dominio solo con letras, dígitos, puntos y guiones | En progreso | P2 | S | HU-006 |
 | [HU-005](backlog/HU-005.md) | [Técnica] Banco de preguntas por habilidades: formato, migración, validación y carga | En revision | P0 | L | HU-002 |
 | [HU-051](backlog/HU-051.md) | [Monitor] Recibir avisos de nuevas monitorías y cancelaciones | En revision | P0 | S | HU-021, HU-006 |
 | [HU-069](backlog/HU-069.md) | [Monitor] Decir en el aviso de privacidad y en el registro del monitor que su nombre se muestra a los estudiantes | En revision | P1 | XS | HU-013, HU-016 |
