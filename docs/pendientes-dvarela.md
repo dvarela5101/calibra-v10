@@ -29,6 +29,7 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [x] **HU-018, pagar por Llave** (de Juzou04, [PR #28](https://github.com/dvarela5101/calibra-v10/pull/28)): aprobada el 2-oct tras la revisión. Sus supuestos siguen abiertos en A2.
 - [x] **HU-005, HU-051, HU-054, HU-069 y HU-071**: aprobadas el 2-oct.
 - [ ] **HU-073, aviso de privacidad:** abre `/privacidad` y mira el punto de las reseñas en "Qué datos recogemos" y "Para qué los usamos", la sección nueva "Seguridad del sitio" (Cloudflare Turnstile, con el enlace a su adenda) y la fecha del 2 de octubre.
+- [ ] **HU-074, pagos de un admin que se desactiva** (de Juzou04, rama `hu-074-reasignar-pagos`): agenda y paga una monitoría como en HU-018, y el pago le queda a `admin1@calibra.test`. Entra con `admin2@calibra.test` (contraseña `calibra-admin-local`) a `/admin/equipo`. La tarjeta de Admin Uno dice "1 caso abierto". Desactívalo: el aviso dice a quién pasaron sus casos, y en `/admin` de admin2 aparece el pago con una hora nueva para revisarlo. Reactivar todavía no tiene pantalla (HU-072): para volver a tener a Admin Uno, `npm run db:reiniciar`.
 - [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
 ### A2. Decisiones de las HUs recientes
@@ -71,6 +72,11 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   - sin ningún admin activo, el pago se rechaza con un mensaje (la pantalla del equipo no deja desactivar al último);
   - quien transfirió pero llegó tarde solo ve «tu reserva expiró». Falta decidir qué se le dice y cómo se le devuelve el dinero;
   - con cualquier comprobante válido la cita se confirma y se avisa al monitor antes de que un admin lo revise (RN-38). Hasta HU-020, la revisión es solo posterior.
+- [ ] **Pagos de un admin que se desactiva (HU-074): lo que dejó Juzou04.** Las recomendaciones son las suyas:
+  - nadie recibe correo por la reasignación: quien desactiva ve a quién pasaron los casos, y quien los recibe los ve en su bandeja;
+  - el pago reasignado empieza una hora nueva para revisarlo, y en la bandeja de quien lo recibe queda detrás de los que ya tenía;
+  - "casos abiertos" sigue siendo un solo número, que ahora suma los pagos en revisión;
+  - los pagos ya aprobados o rechazados se quedan con el admin desactivado (RN-23).
 - [ ] **Correo que ya tiene cuenta (HU-013).** Si invitas a un correo que ya tiene cuenta de Calibra (por ejemplo, de estudiante), hoy el registro no la convierte en monitor y le pide escribir al equipo. Confirma que así está bien, o pide que se pueda convertir.
 
 ### A3. Preparar la cuenta de Gmail (para HU-066)

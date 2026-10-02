@@ -116,11 +116,12 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 
 ## Equipo de admins
 
-`/admin/equipo` (HU-054, enlazada desde la bandeja): el equipo de admins en su orden de revisión (RN-07), con quién está activo y cuántos casos abiertos tiene. Un admin sube o baja a otro un puesto y desactiva a otro (RN-23), con confirmación.
+`/admin/equipo` (HU-054, enlazada desde la bandeja): el equipo de admins en su orden de revisión (RN-07), con quién está activo y cuántos casos abiertos tiene (pagos en revisión, reembolsos activos y reportes en revisión, en un solo número). Un admin sube o baja a otro un puesto y desactiva a otro (RN-23), con confirmación.
 
 - `public.equipo_de_admins()` y `public.mover_admin(id, direccion)` (invoker, con la sesión) sobre funciones definer de `privado` que exigen un admin activo: a cualquier otro, el equipo le llega vacío y mover responde `sin_permiso`. Mover intercambia el orden con el vecino en una sola sentencia (la llave única es diferible).
-- El turno es `privado.siguiente_admin_activo(id)`: el admin activo que sigue en el orden, volviendo al primero, saltándose a los desactivados. Lo deben usar la asignación y el escalamiento de pagos (HU-018, HU-020).
-- Desactivar pasa por `desactivarCuenta()` (`src/lib/auth/cuentas.ts`): primero `public.reasignar_casos_de_admin(id)` (solo `service_role`) pasa sus reembolsos activos y reportes en revisión al siguiente activo (P-44), y después lo banea en Auth. Si la reasignación falla, no se desactiva. Sus certificados y revisiones se conservan.
+- El turno es `privado.siguiente_admin_activo(id)`: el admin activo que sigue en el orden, volviendo al primero, saltándose a los desactivados. Lo usan la asignación de pagos (HU-018) y la reasignación al desactivar (HU-074), y lo usará el escalamiento de pagos (HU-034).
+- Desactivar pasa por `desactivarCuenta()` (`src/lib/auth/cuentas.ts`): primero `public.reasignar_casos_de_admin(id)` (solo `service_role`) pasa sus reembolsos activos, reportes en revisión y pagos en revisión al siguiente activo (P-44, HU-074), después lo banea en Auth y al final reasigna otra vez. Los pagos pasan con `fecha_asignacion` nueva: quien los recibe tiene su hora entera (RN-42). Si la primera reasignación falla, no se desactiva. Sus certificados, sus revisiones y sus pagos aprobados o rechazados se conservan.
+- Por qué reasigna dos veces: el baneo va por la API de Auth, en otra transacción, y hasta entonces el admin sigue activo y `registrar_pago` lo puede elegir. La segunda vuelta pasa esos pagos. Para un pago que se está creando justo cuando se reasigna, `reasignar_casos_de_admin` toma en exclusivo el candado de transacción `hashtextextended('turno_de_admins', 0)` y `registrar_pago` lo toma compartido antes de elegir admin (`*_reasignar_pagos.sql`): uno espera al otro. Lo que elija un admin con el turno debe tomar el mismo candado.
 - Nadie se desactiva a sí mismo y el equipo nunca se queda sin admins activos (`src/lib/admin/equipo-reglas.ts`). Agregar admins aún no tiene pantalla: [HU-072](backlog/HU-072.md).
 
 ## Certificados de monitor
