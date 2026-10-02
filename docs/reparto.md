@@ -1,6 +1,23 @@
 # Reparto de trabajo
 
-**Actualizado:** 2 de octubre de 2026 (ver "Actualización del 2-oct-2026"; después vienen la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+**Actualizado:** 2 de octubre de 2026, tarde (ver "Ajuste del 2-oct-2026, tarde"; después vienen la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+
+## Ajuste del 2-oct-2026, tarde
+
+- **Hecha:** HU-019 y HU-073. **En revision:** HU-027 (Juzou04). **Por fusionar:** HU-020 (Juzou04, [PR #32](https://github.com/dvarela5101/calibra-v10/pull/32), CI en verde, en conflicto con `main` desde que entró HU-019).
+- D-36 pasa HU-075 a Lista. D-37 resuelve lo que faltaba de HU-030, que pasa a Lista.
+- Juzou04 se queda con la cadena del admin, sobre su propio código (pagos, comprobantes y bandeja). dvarela5101 sigue con la cadena del estudiante. Confirmado por dvarela5101.
+
+| Persona | Siguiente, en orden |
+|---|---|
+| dvarela5101 | [HU-024](../backlog/HU-024.md) (cancelar), [HU-025](../backlog/HU-025.md) (llave del reembolso), [HU-029](../backlog/HU-029.md) (reportar inasistencia). En paralelo, [HU-058](../backlog/HU-058.md) (CAPTCHA) |
+| Juzou04 | Fusionar [HU-020](../backlog/HU-020.md) y terminar [HU-074](../backlog/HU-074.md); después [HU-028](../backlog/HU-028.md) (desembolsos), [HU-026](../backlog/HU-026.md) (gestionar reembolsos, espera a HU-025) y [HU-030](../backlog/HU-030.md) (resolver inasistencias, espera a HU-029, HU-026 y HU-028). En el hueco mientras espera HU-025: [HU-075](../backlog/HU-075.md) (tope de correos, S) |
+
+Posibles choques:
+- **HU-025 y HU-026:** HU-025 crea la página de la llave y el pedido por correo; HU-026 es la bandeja donde el admin ejecuta el reembolso. Se tocan en `reembolso` (la llave y el paso a `pendiente`): HU-026 parte de lo que deje HU-025.
+- **HU-028 y HU-030:** HU-030 deja el desembolso `anulado` (P-28); HU-028 no debe ejecutar un `anulado` ni uno con un reporte `en_revision` o `aceptado` (RN-83).
+- **HU-029 y HU-030:** HU-029 agrega a la página de la cita (HU-019) el estado del reporte y las observaciones; HU-030 las escribe.
+- **HU-075:** toca la función que registra el contacto (HU-068, de dvarela5101). Si dvarela5101 hace HU-058 a la vez, las dos tocan el formulario de contacto: el PR que llegue segundo integra al otro.
 
 ## Actualización del 2-oct-2026
 

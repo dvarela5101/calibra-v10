@@ -8,6 +8,7 @@ import { esUuid } from "@/lib/agendar/reglas";
 import { cargarReserva, type Reserva } from "@/lib/agendar/servidor";
 import { tienePanel } from "@/lib/auth/roles";
 import { obtenerSesion } from "@/lib/auth/sesion";
+import { rutaDeMiCita } from "@/lib/citas/reglas";
 import { rutaDeMonitores } from "@/lib/disponibilidad/reglas";
 import { formatearHora } from "@/lib/fechas";
 import { leadDeLaSesion, type LeadDeSesion } from "@/lib/leads/servidor";
@@ -24,8 +25,8 @@ const EYEBROW = "Tu reserva";
 /**
  * HU-017: la reserva recién apartada, solo para la sesión del Lead que la hizo (y su monitor o un admin,
  * por las políticas de `monitoria`). Dice hasta cuándo queda apartada (RN-34) y si ya no se podrá cancelar
- * (RN-37). Aquí mismo su Lead paga por Llave y adjunta el comprobante (HU-018, `PagoPorLlave`); la
- * confirmación llega con HU-019.
+ * (RN-37). Aquí mismo su Lead paga por Llave y adjunta el comprobante (HU-018, `PagoPorLlave`); ya
+ * confirmada, la gestiona desde "Ver y gestionar mi cita" (HU-019, D-24).
  */
 export default async function ReservaApartada({ params }: PageProps<"/agendar/reserva/[id]">) {
   const { id } = await params;
@@ -89,6 +90,11 @@ export default async function ReservaApartada({ params }: PageProps<"/agendar/re
       )}
       {quienPaga && canceladaPorVencer(reserva) && <ReservaExpirada />}
       <div className={estilos.acciones}>
+        {quienPaga && reserva.estado === "confirmada" && (
+          <Link href={rutaDeMiCita(reserva.id)} className={formulario.enlace}>
+            Ver y gestionar mi cita
+          </Link>
+        )}
         <Link href={rutaDeMonitores(reserva.codigoMateria)} className={formulario.enlace}>
           Ver monitores de {reserva.nombreMateria}
         </Link>

@@ -28,8 +28,8 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [x] **HU-070, correo seguro**: aprobada el 2-oct.
 - [x] **HU-018, pagar por Llave** (de Juzou04, [PR #28](https://github.com/dvarela5101/calibra-v10/pull/28)): aprobada el 2-oct tras la revisión. Sus supuestos siguen abiertos en A2.
 - [x] **HU-005, HU-051, HU-054, HU-069 y HU-071**: aprobadas el 2-oct.
-- [ ] **HU-073, aviso de privacidad:** abre `/privacidad` y mira el punto de las reseñas en "Qué datos recogemos" y "Para qué los usamos", la sección nueva "Seguridad del sitio" (Cloudflare Turnstile, con el enlace a su adenda) y la fecha del 2 de octubre.
-- [ ] **HU-027, expirar reservas** (de Juzou04, [PR #31](https://github.com/dvarela5101/calibra-v10/pull/31)): agenda una monitoría y no adjuntes el comprobante. Pasados 10 minutos, la página de la reserva dice que venció y la fecha vuelve a la lista del monitor. El proceso `calibra-expirar-reservas` corre cada minuto, pero la fecha queda libre en cuanto la reserva vence, sin esperarlo. Trae también los dos ajustes que pediste al revisar HU-018 sobre `registrar_pago`.
+- [x] **HU-019 y HU-073**: aprobadas el 2-oct. Los textos de HU-019 siguen en A2.
+- [x] **HU-027, expirar reservas** (de Juzou04, [PR #31](https://github.com/dvarela5101/calibra-v10/pull/31)): aprobada el 2-oct.
 - [ ] **HU-020, revisar pagos** (de Juzou04, [PR #32](https://github.com/dvarela5101/calibra-v10/pull/32)): agenda y paga dos monitorías como en HU-018. Los pagos le quedan a `admin1@calibra.test` (contraseña `calibra-admin-local`), que va primero en el orden. Entra con esa cuenta a `/admin` y abre un pago desde la bandeja:
   - "Ver comprobante" abre la imagen con un enlace que dura 60 segundos;
   - "Aprobar pago" lo saca de la bandeja;
@@ -66,10 +66,8 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   Confirma o dime qué cambiar.
 - [x] **Correo seguro (HU-070): qué correos se rechazan.** Antes de la arroba solo se aceptan letras, dígitos y `. _ % + ' -`. Quedan fuera direcciones válidas pero raras, con `!`, `&`, `*` o `/`, y las de dominio con tildes o ñ. Recomendación: dejarlo así; nadie en una universidad colombiana usa esas direcciones. **Aceptado el 2-oct.**
 - [x] **Agendar, confirmar, cancelar y CAPTCHA (HU-019, HU-024, HU-058, HU-073, HU-074).** Decidido el 2-oct en la hoja de decisiones: D-19 a D-35 en `REVISION_REGLAS.md` §4.
-- [ ] **Cancelar (HU-024): el correo de cancelación (D-27).** Pediste que el Lead reciba un correo al cancelar, que pida la llave si hay reembolso y que, si no, explique por qué. Faltan dos cosas:
-  - quién lo construye. Recomendación: HU-024, con el enlace a la página de la llave que hace HU-025 justo después;
-  - cuándo aplica «no hay reembolso». Hoy el Lead no puede cancelar fuera de plazo (RN-60; los casos extremos los resuelve un admin, HU-052). Dentro del plazo, el único caso sin reembolso inmediato es el pago aún en revisión: el reembolso se crea si el admin lo aprueba (P-07). Recomendación: mantener RN-60. Dejar cancelar fuera de plazo sin reembolso cambiaría esa regla.
-- [ ] **Tope de correos por sesión (HU-075).** Para pasarla a Lista falta el tope y la ventana. Recomendación: 5 correos distintos por sesión cada hora.
+- [x] **Cancelar (HU-024): el correo de cancelación (D-27).** Decidido el 2-oct: lo manda HU-024 con el enlace a la página de la llave de HU-025, y se mantiene RN-60 (fuera de plazo no se cancela).
+- [x] **Tope de correos por sesión (HU-075).** Decidido el 2-oct (D-36): 5 correos distintos por sesión cada hora; cuentan todos; al pasarse se pide esperar.
 - [ ] **Pagar por Llave (HU-018): lo que dejó Juzou04.** Las recomendaciones son las suyas:
   - la llave, su titular y la imagen del QR van como variables de Vercel (sección C). Tendrás que subir la imagen del QR a una dirección pública;
   - la página muestra el nombre, el documento y el correo del proveedor. El art. 50 de la Ley 1480 pide también dirección y teléfono, que no tienen variable: validarlo con asesoría legal;
@@ -87,6 +85,12 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   - aprobar o rechazar no se deshace (§5.2), y rechazar pide confirmación;
   - los pagos de las grupales no se revisan todavía: llegan con HU-038.
 - [ ] **Revisar pagos (HU-020): la referencia de la transferencia.** HU-007 y HU-059 dicen que marcar como posible duplicado una referencia ya usada va con HU-020. Pero hoy nadie escribe la referencia (HU-018 no la pide), así que la revisión muestra "Sin referencia" y no tiene con qué comparar. Lo que sí está cubierto es que un mismo comprobante no respalda dos pagos. Recomendación: una HU aparte que pida la referencia al pagar y que marque las repetidas en la revisión.
+- [ ] **Confirmación de la cita (HU-019): textos que puso Claude.** Recomendación: dejarlos así.
+  - En la página, el texto del pago dice «…te avisamos por correo.» (en el correo, «…a este correo», D-22), porque quien abre el enlace desde otro dispositivo no está «en este correo».
+  - Con el pago aprobado: «Tu pago está aprobado.»; con el pago rechazado y la cita aún confirmada: «No pudimos verificar tu pago.», sin lugar ni enlace.
+  - Si alguien agenda cuando ya pasó el plazo para cancelar, el correo dice «No podrás cancelarla: cuando la agendaste ya había pasado el plazo para hacerlo.» No nombra las 12 horas: los plazos no se escriben fijos en los correos (viven en la base).
+  - El enlace de la videollamada se muestra como «Abrir la videollamada», no la dirección completa.
+  - Los motivos de cancelación y el estado del reembolso en palabras (por ejemplo, «Vamos a devolverte el dinero. Te escribimos al correo del pago para pedirte la llave.») son una primera versión; HU-024 y HU-025 los ajustan.
 - [ ] **Correo que ya tiene cuenta (HU-013).** Si invitas a un correo que ya tiene cuenta de Calibra (por ejemplo, de estudiante), hoy el registro no la convierte en monitor y le pide escribir al equipo. Confirma que así está bien, o pide que se pueda convertir.
 
 ### A3. Preparar la cuenta de Gmail (para HU-066)
