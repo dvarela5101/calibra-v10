@@ -31,13 +31,6 @@ export const CAMPO_TRAMPA = "sitio_web";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-/**
- * Además de ser un correo, solo letras, dígitos y . _ % + ' - antes de la arroba y un dominio de letras,
- * dígitos, guiones y puntos. Así nada como ?, & o = se lee como parámetros en el enlace mailto: del panel
- * del admin. La base exige lo mismo (`solicitud_monitor_correo`).
- */
-const CORREO_SEGURO = /^[a-z0-9._%+'-]+@[a-z0-9-]+(\.[a-z0-9-]+)+$/;
-
 /** Texto de una sola línea, sin espacios de sobra. */
 const linea = (valor: FormDataEntryValue | null | undefined) => String(valor ?? "").replace(/\s+/g, " ").trim();
 
@@ -47,8 +40,11 @@ export function leerSolicitud(formulario: FormData): Lectura<DatosDeSolicitud> {
   if (!nombre) return { ok: false, error: "Escribe tu nombre." };
   if (nombre.length > LARGO_MAXIMO_NOMBRE) return { ok: false, error: "Tu nombre es demasiado largo." };
 
+  // normalizarCorreo ya aplica la regla compartida (esCorreo, HU-070): solo letras, dígitos y . _ % + ' - antes de la
+  // arroba y un dominio de letras, dígitos, guiones y puntos. Así nada como ?, & o = se lee como parámetros en el
+  // enlace mailto: del panel del admin. La base exige lo mismo (`solicitud_monitor_correo`).
   const correo = normalizarCorreo(formulario.get("correo"));
-  if (!correo || !CORREO_SEGURO.test(correo)) return { ok: false, error: "Escribe un correo válido, por ejemplo ana@uniandes.edu.co." };
+  if (!correo) return { ok: false, error: "Escribe un correo válido, por ejemplo ana@uniandes.edu.co." };
 
   const numeroTelefono = normalizarTelefono(formulario.get("numero_telefono"));
   if (numeroTelefono === null) return { ok: false, error: "Escribe tu teléfono: lo necesitamos para agendar tu evaluación." };

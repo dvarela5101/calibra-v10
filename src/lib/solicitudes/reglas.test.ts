@@ -79,6 +79,7 @@ describe("leerSolicitud: lo que deja el aspirante (HU-062)", () => {
   });
 
   // Un ?, & o = en el correo se leería como parámetros (copia oculta, cuerpo) en el enlace mailto: del admin.
+  // La regla es la compartida de esCorreo (HU-070): aquí solo se comprueba que el formulario la aplica.
   it.each([
     ["con parámetros de mailto", "ana@uniandes.edu.co?bcc=otro@example.com"],
     ["con & en el dominio", "ana@uniandes.edu.co&cc=otro"],
@@ -87,6 +88,9 @@ describe("leerSolicitud: lo que deja el aspirante (HU-062)", () => {
     ["con # en el dominio", "ana@uniandes.edu.co#x"],
     ["con guion bajo en el dominio", "ana@uni_andes.edu.co"],
     ["con dos arrobas", "ana@x@uniandes.edu.co"],
+    ["con / en el dominio", "ana@uniandes.edu.co/x"],
+    ["con % en el dominio", "ana@uniandes.edu.co%3Fbcc%3Dx"],
+    ["con una etiqueta vacía en el dominio", "ana@uniandes..edu.co"],
   ])("rechaza un correo %s", (_nombre, correo) => {
     expect(leerSolicitud(formulario({ ...BASE, correo }))).toEqual({ ok: false, error: "Escribe un correo válido, por ejemplo ana@uniandes.edu.co." });
   });
