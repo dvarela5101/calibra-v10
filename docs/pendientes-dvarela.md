@@ -30,7 +30,7 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [x] **HU-005, HU-051, HU-054, HU-069 y HU-071**: aprobadas el 2-oct.
 - [x] **HU-019 y HU-073**: aprobadas el 2-oct. Los textos de HU-019 siguen en A2.
 - [x] **HU-027, expirar reservas** (de Juzou04, [PR #31](https://github.com/dvarela5101/calibra-v10/pull/31)): aprobada el 2-oct.
-- [ ] **HU-020, revisar pagos** (de Juzou04, [PR #32](https://github.com/dvarela5101/calibra-v10/pull/32)): agenda y paga dos monitorías como en HU-018. Los pagos le quedan a `admin1@calibra.test` (contraseña `calibra-admin-local`), que va primero en el orden. Entra con esa cuenta a `/admin` y abre un pago desde la bandeja:
+- [x] **HU-020, revisar pagos** (de Juzou04, [PR #32](https://github.com/dvarela5101/calibra-v10/pull/32)): aprobada el 2-oct. Para verla: agenda y paga dos monitorías como en HU-018. Los pagos le quedan a `admin1@calibra.test` (contraseña `calibra-admin-local`), que va primero en el orden. Entra con esa cuenta a `/admin` y abre un pago desde la bandeja:
   - "Ver comprobante" abre la imagen con un enlace que dura 60 segundos;
   - "Aprobar pago" lo saca de la bandeja;
   - en el otro pago, "Rechazar el pago" te muestra qué va a pasar antes de confirmar. La cita se cancela, la fecha vuelve a la lista y el correo al pagador llega a Mailpit (http://127.0.0.1:54324).
@@ -85,7 +85,8 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   - al monitor no se le avisa del rechazo: ve el estado del pago en su agenda (D-11);
   - aprobar o rechazar no se deshace (§5.2), y rechazar pide confirmación;
   - los pagos de las grupales no se revisan todavía: llegan con HU-038.
-- [ ] **Revisar pagos (HU-020): la referencia de la transferencia.** HU-007 y HU-059 dicen que marcar como posible duplicado una referencia ya usada va con HU-020. Pero hoy nadie escribe la referencia (HU-018 no la pide), así que la revisión muestra "Sin referencia" y no tiene con qué comparar. Lo que sí está cubierto es que un mismo comprobante no respalda dos pagos. Recomendación: una HU aparte que pida la referencia al pagar y que marque las repetidas en la revisión.
+- [x] **Revisar pagos (HU-020): lo que encontró la revisión del PR #32.** **Decidido el 2-oct (D-39):** los casos P-24 se ven en la bandeja y se cierran como cobrados o asumidos, y en los dos casos el monto cuenta en el desembolso ([HU-078](../backlog/HU-078.md)); un desembolso espera a que se revisen los pagos de su monitoría ([HU-028](../backlog/HU-028.md)); el correo del rechazo al pagador se anota en la misma transacción, y si la cita ya estaba cancelada le llega uno corto sin reembolso ([HU-076](../backlog/HU-076.md)); se aceptan las observaciones obligatorias solo en P-24 y las grupales con HU-038.
+- [x] **Revisar pagos (HU-020): la referencia de la transferencia.** **Decidido el 2-oct (D-38):** se deja así, sin HU para marcar referencias repetidas por ahora. HU-007 y HU-059 dicen que marcar como posible duplicado una referencia ya usada va con HU-020. Pero hoy nadie escribe la referencia (HU-018 no la pide), así que la revisión muestra "Sin referencia" y no tiene con qué comparar. Lo que sí está cubierto es que un mismo comprobante no respalda dos pagos. Recomendación: una HU aparte que pida la referencia al pagar y que marque las repetidas en la revisión.
 - [ ] **Pagos de un admin que se desactiva (HU-074): lo que dejó Juzou04.** Las recomendaciones son las suyas:
   - nadie recibe correo por la reasignación: quien desactiva ve a quién pasaron los casos, y quien los recibe los ve en su bandeja;
   - el pago reasignado empieza una hora nueva para revisarlo, y en la bandeja de quien lo recibe queda detrás de los que ya tenía;
