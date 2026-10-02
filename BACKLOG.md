@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-01 23:50. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-02 00:31. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -51,7 +51,6 @@ _Generado automaticamente: 2026-10-01 23:50. No editar a mano; usa `scripts/back
 | [HU-051](backlog/HU-051.md) | [Monitor] Recibir avisos de nuevas monitorías y cancelaciones | En revision | P0 | S | HU-021, HU-006 |
 | [HU-069](backlog/HU-069.md) | [Monitor] Decir en el aviso de privacidad y en el registro del monitor que su nombre se muestra a los estudiantes | En revision | P1 | XS | HU-013, HU-016 |
 | [HU-054](backlog/HU-054.md) | [Admin] Gestionar el equipo de admins y el turno de revisión | En revision | P2 | S | HU-012 |
-| [HU-070](backlog/HU-070.md) | [Técnica] Endurecer esCorreo: dominio solo con letras, dígitos, puntos y guiones | En revision | P2 | S | HU-006 |
 | [HU-071](backlog/HU-071.md) | [Técnica] Página de no encontrado (404) en español | En revision | P2 | XS |  |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
@@ -77,3 +76,4 @@ _Generado automaticamente: 2026-10-01 23:50. No editar a mano; usa `scripts/back
 | [HU-065](backlog/HU-065.md) | [Sistema] Reintentar los correos que fallaron | Hecha | P1 | S | HU-006 |
 | [HU-067](backlog/HU-067.md) | [Técnica] Impedir que un pagador pise su propio comprobante con una URL de subida firmada | Hecha | P1 | S | HU-007 |
 | [HU-059](backlog/HU-059.md) | [Técnica] Endurecer los comprobantes: contenido real, huérfanos y cuota por sesión | Hecha | P2 | S | HU-007 |
+| [HU-070](backlog/HU-070.md) | [Técnica] Endurecer esCorreo: dominio solo con letras, dígitos, puntos y guiones | Hecha | P2 | S | HU-006 |

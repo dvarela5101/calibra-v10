@@ -25,12 +25,12 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [x] **HU-068, contacto al agendar.** Aprobada el 30-sep. Las decisiones que quedaron abiertas están en A2.
 - [x] **HU-016, HU-017, HU-021, HU-023, HU-059, HU-062 y HU-067**: aprobadas entre el 30-sep y el 1-oct.
 - [x] **HU-035, reseña desde el correo**: aprobada el 2-oct. Sus decisiones siguen en A2.
+- [x] **HU-070, correo seguro**: aprobada el 2-oct.
 - [ ] **Por aprobar (sacadas el 1-oct en la noche):**
   - [HU-069](../backlog/HU-069.md): abre `/privacidad` (sección "Si eres monitor" y la fecha de actualización) y un enlace de invitación de monitor (ayuda junto al nombre).
   - [HU-071](../backlog/HU-071.md): abre cualquier ruta que no exista, por ejemplo `/algo`.
   - [HU-051](../backlog/HU-051.md): `npm run test:integracion -- avisos` y mira los correos en http://127.0.0.1:54324. En la nube necesita la sección C (Vault y `CRON_SECRETO`). Tiene un supuesto técnico en su registro.
   - [HU-054](../backlog/HU-054.md): entra como admin a `/admin/equipo` (enlace "Equipo de admins" en la bandeja). Tiene cuatro supuestos de seguridad en su registro para que los confirmes.
-- [ ] **HU-070, correo seguro:** prueba `/agendar/contacto` con `ana@x.co?bcc=otro@y.co` (debe decir que el correo no es válido) y con `ana.perez+monitor@uniandes.edu.co` (debe pasar). En el corte (HU-057), la migración se detiene si la base real tiene correos que no cumplan la regla, y dice en qué tabla. Su decisión está en A2.
 - [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
 ### A2. Decisiones de las HUs recientes
@@ -59,7 +59,7 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   - el aviso de privacidad todavía no menciona las reseñas: queda en [HU-073](../backlog/HU-073.md) (Backlog), con el texto que te propongo.
 
   Confirma o dime qué cambiar.
-- [ ] **Correo seguro (HU-070): qué correos se rechazan.** Antes de la arroba solo se aceptan letras, dígitos y `. _ % + ' -`. Quedan fuera direcciones válidas pero raras, con `!`, `&`, `*` o `/`, y las de dominio con tildes o ñ. Recomendación: dejarlo así; nadie en una universidad colombiana usa esas direcciones.
+- [x] **Correo seguro (HU-070): qué correos se rechazan.** Antes de la arroba solo se aceptan letras, dígitos y `. _ % + ' -`. Quedan fuera direcciones válidas pero raras, con `!`, `&`, `*` o `/`, y las de dominio con tildes o ñ. Recomendación: dejarlo así; nadie en una universidad colombiana usa esas direcciones. **Aceptado el 2-oct.**
 - [ ] **Correo que ya tiene cuenta (HU-013).** Si invitas a un correo que ya tiene cuenta de Calibra (por ejemplo, de estudiante), hoy el registro no la convierte en monitor y le pide escribir al equipo. Confirma que así está bien, o pide que se pueda convertir.
 
 ### A3. Preparar la cuenta de Gmail (para HU-066)
