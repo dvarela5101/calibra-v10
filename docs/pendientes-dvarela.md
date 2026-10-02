@@ -36,7 +36,7 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   - en el otro pago, "Rechazar el pago" te muestra qué va a pasar antes de confirmar. La cita se cancela, la fecha vuelve a la lista y el correo al pagador llega a Mailpit (http://127.0.0.1:54324).
 
   Si abres la misma dirección con `admin2@calibra.test`, ves el pago sin botones. Los supuestos que te tocan están en A2.
-- [ ] **HU-074, pagos de un admin que se desactiva** (de Juzou04, rama `hu-074-reasignar-pagos`): agenda y paga una monitoría como en HU-018, y el pago le queda a `admin1@calibra.test`. Entra con `admin2@calibra.test` (contraseña `calibra-admin-local`) a `/admin/equipo`. La tarjeta de Admin Uno dice "1 caso abierto". Desactívalo: el aviso dice a quién pasaron sus casos, y en `/admin` de admin2 aparece el pago con una hora nueva para revisarlo. Reactivar todavía no tiene pantalla (HU-072): para volver a tener a Admin Uno, `npm run db:reiniciar`.
+- [ ] **HU-074, pagos de un admin que se desactiva** (de Juzou04, [PR #34](https://github.com/dvarela5101/calibra-v10/pull/34)): agenda y paga una monitoría como en HU-018, y el pago le queda a `admin1@calibra.test`. Entra con `admin2@calibra.test` (contraseña `calibra-admin-local`) a `/admin/equipo`. La tarjeta de Admin Uno dice "1 caso abierto". Desactívalo: el aviso dice a quién pasaron sus casos, y en `/admin` de admin2 aparece el pago con una hora nueva para revisarlo. Reactivar todavía no tiene pantalla (HU-072): para volver a tener a Admin Uno, `npm run db:reiniciar`.
 - [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
 ### A2. Decisiones de las HUs recientes
