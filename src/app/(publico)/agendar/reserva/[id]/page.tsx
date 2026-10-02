@@ -15,7 +15,7 @@ import { dentroDePlazo } from "@/lib/plazos/motor";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import estilos from "../../agendar.module.css";
 import { ResumenDeCita } from "../../ResumenDeCita";
-import { PagoPorLlave } from "./PagoPorLlave";
+import { PagoPorLlave, ReservaExpirada } from "./PagoPorLlave";
 
 export const metadata: Metadata = { title: "Tu reserva · Calibra" };
 
@@ -87,6 +87,7 @@ export default async function ReservaApartada({ params }: PageProps<"/agendar/re
           pagador={{ nombre: quienPaga.nombre, correo: quienPaga.correo ?? "" }}
         />
       )}
+      {quienPaga && canceladaPorVencer(reserva) && <ReservaExpirada />}
       <div className={estilos.acciones}>
         <Link href={rutaDeMonitores(reserva.codigoMateria)} className={formulario.enlace}>
           Ver monitores de {reserva.nombreMateria}
@@ -96,6 +97,15 @@ export default async function ReservaApartada({ params }: PageProps<"/agendar/re
   );
 }
 
+/**
+ * HU-027: la reserva que el proceso de cada minuto (o el agendamiento de otra persona) canceló por vencer sin
+ * comprobante. Se ve igual que la vencida que todavía no se ha cancelado (criterio 4 de HU-018), sin depender
+ * de la hora de este servidor.
+ */
+function canceladaPorVencer(reserva: Reserva): boolean {
+  return reserva.estado === "cancelada" && reserva.motivoCancelacion === "reserva_expirada";
+}
+
 /** Qué se dice arriba según el estado de la monitoría y si la reserva sigue vigente (RN-34). */
 function encabezado(reserva: Reserva, ahora: Date): { titulo: string; estado: ReactNode } {
   const estado = (texto: string) => (
@@ -103,6 +113,7 @@ function encabezado(reserva: Reserva, ahora: Date): { titulo: string; estado: Re
       {texto}
     </p>
   );
+  const vencida = { titulo: "Tu reserva venció", estado: estado("Pasó el tiempo para adjuntar el comprobante de pago. Puedes elegir otra fecha.") };
   switch (reserva.estado) {
     case "pendiente_pago":
       return dentroDePlazo(reserva.reservaHasta, ahora)
@@ -112,12 +123,13 @@ function encabezado(reserva: Reserva, ahora: Date): { titulo: string; estado: Re
               `La fecha queda a tu nombre hasta las ${formatearHora(reserva.reservaHasta)}. Si para entonces no llega el comprobante de pago, la reserva vence.`,
             ),
           }
-        : { titulo: "Tu reserva venció", estado: estado("Pasó el tiempo para adjuntar el comprobante de pago. Puedes elegir otra fecha.") };
+        : vencida;
     case "confirmada":
       return { titulo: "Tu monitoría está confirmada", estado: null };
     case "realizada":
       return { titulo: "Tu monitoría ya se realizó", estado: null };
     case "cancelada":
+      if (canceladaPorVencer(reserva)) return vencida;
       return { titulo: "Esta reserva se canceló", estado: null };
   }
 }

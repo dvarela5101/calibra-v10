@@ -594,14 +594,18 @@ describe("D-8: un Lead tiene como máximo una reserva por pagar vigente a la vez
     await envejecer(9);
     expect(await agendar(sesion.cliente, segunda)).toEqual({ resultado: "reserva_pendiente", idMonitoria: primera.idMonitoria });
 
-    // A 11 minutos ya venció (aunque HU-027 todavía no la haya cancelado): se puede apartar otra fecha.
+    // A 11 minutos ya venció (la haya cancelado ya o no el proceso de HU-027): se puede apartar otra fecha.
     await envejecer(11);
     const conVencida = await agendar(sesion.cliente, segunda);
     expect(conVencida.resultado).toBe("agendada");
 
-    // Cancelada o confirmada (pagada) tampoco impide: solo cuenta la que sigue por pagar.
+    // Cancelada o confirmada (pagada) tampoco impide: solo cuenta la que sigue por pagar. Si el proceso de HU-027
+    // ya canceló la primera, confirmarla también le quita el motivo (la base exige motivo solo en las canceladas).
     await expirarReserva(conVencida.idMonitoria!);
-    exito(await fx.admin.from("monitoria").update({ estado: "confirmada" }).eq("id", primera.idMonitoria!).select().single(), "confirmar la primera");
+    exito(
+      await fx.admin.from("monitoria").update({ estado: "confirmada", motivo_cancelacion: null }).eq("id", primera.idMonitoria!).select().single(),
+      "confirmar la primera",
+    );
     const tercera = await agendar(sesion.cliente, e.pedido(sumarDias(e.primera, 14)));
     expect(tercera.resultado).toBe("agendada");
   });

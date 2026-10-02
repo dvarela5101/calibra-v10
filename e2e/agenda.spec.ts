@@ -212,9 +212,9 @@ const subtitulo = (page: Page, nombre: string) => page.getByRole("heading", { le
 
 /**
  * La tarjeta de la monitoría de ese Lead (el nombre lleva un sufijo único) y sus cuatro renglones, en orden:
- * día y hora, materia · duración · modalidad, quién agendó, y estado · pago.
+ * día y hora, materia · duración · modalidad, quién agendó, y estado · pago (este, también con una expresión).
  */
-async function expectTarjeta(zona: Locator, lead: Lead, renglones: [string, string, string, string]): Promise<Locator> {
+async function expectTarjeta(zona: Locator, lead: Lead, renglones: [string, string, string, string | RegExp]): Promise<Locator> {
   const tarjeta = zona.getByRole("listitem").filter({ hasText: lead.nombre });
   await expect(tarjeta).toHaveCount(1);
   await expect(tarjeta.locator(":scope > span")).toHaveText(renglones);
@@ -259,7 +259,9 @@ test.describe("Criterios 1, 2 y 4 · próximas y pasadas, cada tarjeta con su de
     const idConfirmada = await escenario.monitoria(monitor, materia, presencial, confirmada, enSemanas(1), { estado: "confirmada" });
     await escenario.pago(idConfirmada, "aprobado");
     await escenario.monitoria(monitor, materia, virtual, vigente, enSemanas(2), { estado: "pendiente_pago" });
-    // Pasadas: una realizada, una cancelada por el estudiante y una reserva que venció sin pago (D-12).
+    // Pasadas: una realizada, una cancelada por el estudiante y una reserva que venció sin pago (D-12). El proceso
+    // de cada minuto de HU-027 puede cancelarla por reserva_expirada antes de que se lea la agenda: sigue entre las
+    // pasadas y en el mismo lugar, con el texto de ese estado.
     const idRealizada = await escenario.monitoria(monitor, materia, presencial, realizada, enSemanas(-1), { estado: "realizada" });
     await escenario.pago(idRealizada, "aprobado");
     await escenario.monitoria(monitor, materia, virtual, cancelada, enSemanas(-2), { estado: "cancelada", motivo: "estudiante" });
@@ -310,7 +312,7 @@ test.describe("Criterios 1, 2 y 4 · próximas y pasadas, cada tarjeta con su de
         `${formatearDiaConSemana(enSemanas(3))}, 14:30 a 16:00`,
         `${materia.nombre} · 90 min · Presencial`,
         `Agendó: ${vencida.nombre}`,
-        "Reserva vencida: no llegó el pago a tiempo · Sin pagar",
+        /^(Reserva vencida: no llegó el pago a tiempo|Cancelada: la reserva venció sin pago) · Sin pagar$/,
       ]);
       await expectTarjeta(pasadas, realizada, [
         `${formatearDiaConSemana(enSemanas(-1))}, 14:30 a 16:00`,

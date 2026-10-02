@@ -156,7 +156,7 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 `/monitores?materia=CODIGO` (HU-016, D-4, D-5): los monitores certificados en la materia y sus fechas libres de las próximas 4 semanas (`SEMANAS_DEL_HORIZONTE`), con hora, duración, modalidad y precio. Sin materia, o con un código que no existe, el visitante la elige. Los enlaces a esta lista se arman con `rutaDeMonitores(codigo)`.
 
 - Las fechas las calcula la base: `public.fechas_libres_de_materia(codigo, semanas)` (security invoker) llama a `privado.fechas_libres_de_materia`, que es security definer porque nadie fuera del servidor lee `monitoria` y la primera página de un visitante corre sin sesión (rol `anon`). Devuelve solo lo público: nunca el contacto ni la llave del monitor, ni el lugar o el enlace de la franja.
-- `privado.fecha_libre(franja, fecha, ahora)` es la regla única de "esta fecha se puede agendar": el día de la franja, abierta en esa fecha (HU-015), la antelación de 3 h del motor de plazos (P-40, borde incluido), sin monitoría que no esté cancelada (RN-33) y con el monitor activo. La reserva (HU-017) usa la misma.
+- `privado.fecha_libre(franja, fecha, ahora)` es la regla única de "esta fecha se puede agendar": el día de la franja, abierta en esa fecha (HU-015), la antelación de 3 h del motor de plazos (P-40, borde incluido), sin monitoría que no esté cancelada ni sea una reserva vencida (RN-33; HU-027, `privado.reserva_vencida`) y con el monitor activo. La reserva (HU-017) usa la misma.
 - Se ordena por la fecha libre más próxima de cada monitor y luego por nombre. Cada fecha lleva a agendarla (HU-017).
 
 ## Agendar una monitoría individual
@@ -171,7 +171,10 @@ Cada fecha libre de `/monitores` lleva a `/agendar?franja=…&fecha=…&materia=
   - copia el precio de la franja en `valor_total` (RN-32) y liga el diagnóstico más reciente de la materia (P-35, D-7).
 - Si dos personas confirman la misma fecha a la vez, el índice `monitoria_franja_fecha_activa_key` deja pasar a una y la otra recibe `ocupada` (RN-33).
 - D-7: la cita individual apunta a su diagnóstico (`monitoria.id_diagnostico`) y varias citas pueden compartirlo; el monitor de cada una lo lee por la política de `diagnostico`. `diagnostico.id_monitoria` queda para la grupal.
-- Una reserva `pendiente_pago` ocupa la fecha hasta que se cancela; pasarla a `cancelada` a los 10 minutos sin comprobante es de HU-027. Para D-8 solo cuenta mientras está vigente (`reserva_hasta`).
+- Una reserva `pendiente_pago` ocupa la fecha mientras está vigente (`reserva_hasta`, 10 minutos desde que se creó). Para D-8 también cuenta solo en ese lapso.
+- Reserva vencida (RN-34, HU-027): la que pasó su `reserva_hasta` sin ningún pago, ni siquiera uno rechazado. Con el borde incluido (P-40), vence cuando la hora es posterior a `reserva_hasta`. La define `privado.reserva_vencida`, el mismo predicado de la agenda del monitor (D-12). Cada minuto pg_cron corre `privado.expirar_reservas(now())` (trabajo `calibra-expirar-reservas`), que la pasa a `cancelada` con motivo `reserva_expirada`. No se avisa a nadie (D-16).
+- La disponibilidad no espera al proceso: `privado.fecha_libre` ya no cuenta la vencida, y si alguien pide esa fecha, `agendar_monitoria` la cancela en ese momento, porque el índice único no puede mirar la hora.
+- Si el comprobante llega justo cuando vence la reserva, solo uno gana, porque el proceso y `registrar_pago` bloquean la misma fila. Gane quien gane, el pago tardío recibe `vencida`, y la página de la reserva dice "Tu reserva venció" esté cancelada o no.
 
 ## Agenda del monitor
 

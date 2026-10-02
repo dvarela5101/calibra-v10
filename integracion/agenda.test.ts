@@ -77,6 +77,24 @@ function porId(agenda: MonitoriaDeAgenda[], id: string): MonitoriaDeAgenda {
   return fila;
 }
 
+/**
+ * HU-027: una reserva que se envejece a 11 minutos se lee de una de dos formas, según si el proceso de cada minuto
+ * alcanzó a correr antes: la vencida de D-12, que sigue pendiente_pago, o ya cancelada por `reserva_expirada`. Cada
+ * forma con el texto de su estado; las dos van entre las pasadas. D-12 con la hora fija lo prueba
+ * `supabase/tests/agenda_del_monitor.test.sql`.
+ */
+const VENCIDA_SIN_CANCELAR = { estado: "pendiente_pago", motivoCancelacion: null, reservaVencida: true } as const;
+const VENCIDA_CANCELADA = { estado: "cancelada", motivoCancelacion: "reserva_expirada", reservaVencida: false } as const;
+const FORMAS_DE_LA_VENCIDA = [
+  { ...VENCIDA_SIN_CANCELAR, texto: "Reserva vencida: no llegó el pago a tiempo" },
+  { ...VENCIDA_CANCELADA, texto: "Cancelada: la reserva venció sin pago" },
+];
+const formaDe = (m: MonitoriaDeAgenda) => ({ estado: m.estado, motivoCancelacion: m.motivoCancelacion, reservaVencida: m.reservaVencida, texto: textoDeEstado(m) });
+
+/** La vencida que ya canceló HU-027, escrita como la de D-12 que era: el resto de la fila no cambia. */
+const comoVencidaSinCancelar = (m: MonitoriaDeAgenda): MonitoriaDeAgenda =>
+  m.estado === VENCIDA_CANCELADA.estado && m.motivoCancelacion === VENCIDA_CANCELADA.motivoCancelacion ? { ...m, ...VENCIDA_SIN_CANCELAR } : m;
+
 /** Sin filas: la tabla se lee con RLS (vacío) o el permiso se niega (error); en ningún caso llegan datos. */
 function sinFilas(resultado: { data: unknown[] | null; error: { message: string } | null }) {
   expect(resultado.error ? [] : resultado.data).toEqual([]);
@@ -159,7 +177,8 @@ async function construirEscenario() {
     await fx.admin.from("monitoria").update({ motivo_cancelacion: "pago_rechazado" }).eq("id", cancelada.id).select().single(),
     "darle a la cancelada su motivo",
   );
-  // Pendiente de pago con la reserva de 10 minutos vencida desde hace uno (RN-34); HU-027 todavía no la cancela.
+  // Pendiente de pago con la reserva de 10 minutos vencida desde hace uno (RN-34). El proceso de HU-027 la cancela
+  // en cuanto corre: las pruebas aceptan sus dos formas (`FORMAS_DE_LA_VENCIDA`).
   const vencida = await fx.crearMonitoria({ ...presencial, lead: elena }, { fecha: fechaVencida, estado: "pendiente_pago" });
   exito(
     await fx.admin.from("monitoria").update({ fecha_creacion: hace(11 * MINUTO) }).eq("id", vencida.id).select().single(),
@@ -258,9 +277,9 @@ describe("criterio 1 (RN-17, D-12): próximas y pasadas", () => {
     expect(textoDeEstado(cancelada)).toMatch(/Cancelada.*pago.*rechazado/i);
     expect(realizada).toMatchObject({ estado: "realizada", motivoCancelacion: null });
     expect(textoDeEstado(realizada)).toBe("Realizada");
-    // D-12: la vencida sigue pendiente_pago en la base (nadie la ha cancelado), pero se muestra entre las pasadas.
-    expect(vencida).toMatchObject({ estado: "pendiente_pago", motivoCancelacion: null, reservaVencida: true });
-    expect(textoDeEstado(vencida)).toMatch(/vencida/i);
+    // D-12: la vencida se muestra entre las pasadas aunque siga pendiente_pago en la base; si el proceso de HU-027 ya
+    // la canceló, va en el mismo lugar con su motivo.
+    expect(FORMAS_DE_LA_VENCIDA).toContainEqual(formaDe(vencida));
   });
 
   it("la agenda trae exactamente las cinco monitorías del monitor, ninguna de más ni repetida", async () => {
@@ -271,23 +290,26 @@ describe("criterio 1 (RN-17, D-12): próximas y pasadas", () => {
     expect(porFinalizar.length + proximas.length + pasadas.length).toBe(5);
   });
 
-  it("D-12: la reserva pasa a pasadas al cumplirse los 10 minutos (a 9 sigue en próximas, a 11 ya venció) aunque siga pendiente_pago", async () => {
+  it("D-12: la reserva pasa a pasadas al cumplirse los 10 minutos (a 9 sigue en próximas, a 11 ya venció) aunque siga pendiente_pago (o ya la haya cancelado HU-027)", async () => {
     const monitoria = await fx.crearMonitoria({ ...e.contexto2, lead: e.gabriela }, { fecha: e.fechaLibreDelMonitor2, estado: "pendiente_pago" });
     const envejecer = async (minutos: number) =>
       exito(await fx.admin.from("monitoria").update({ fecha_creacion: hace(minutos * MINUTO) }).eq("id", monitoria.id).select().single(), "envejecer la reserva");
     const dondeEsta = async () => {
       const agenda = await cargarAgenda(e.sesionM2);
       const { proximas, pasadas } = separarAgenda(agenda, new Date());
-      return { vencida: porId(agenda, monitoria.id).reservaVencida, enProximas: ids(proximas).includes(monitoria.id), enPasadas: ids(pasadas).includes(monitoria.id) };
+      const fila = porId(agenda, monitoria.id);
+      return { vencida: fila.reservaVencida, enProximas: ids(proximas).includes(monitoria.id), enPasadas: ids(pasadas).includes(monitoria.id), forma: formaDe(fila) };
     };
 
     try {
       await envejecer(9);
-      expect(await dondeEsta()).toEqual({ vencida: false, enProximas: true, enPasadas: false });
+      expect(await dondeEsta()).toMatchObject({ vencida: false, enProximas: true, enPasadas: false });
 
       await envejecer(11);
-      expect(await dondeEsta()).toEqual({ vencida: true, enProximas: false, enPasadas: true });
-      expect(porId(await cargarAgenda(e.sesionM2), monitoria.id).estado).toBe("pendiente_pago");
+      // Sigue pendiente_pago y la agenda la marca vencida (D-12), o el proceso de HU-027 ya la canceló: las dos, en pasadas.
+      const vencida = await dondeEsta();
+      expect(vencida).toMatchObject({ enProximas: false, enPasadas: true });
+      expect(FORMAS_DE_LA_VENCIDA).toContainEqual(vencida.forma);
     } finally {
       // Las demás pruebas cuentan con las ocho monitorías del monitor 2.
       exito(await fx.admin.from("monitoria").delete().eq("id", monitoria.id).select(), "borrar la reserva de la prueba");
@@ -303,7 +325,9 @@ describe("criterio 2 (RN-36): cada monitoría trae fecha, hora, duración, mater
 
       const agenda = await cargarAgenda(e.sesionM1);
 
-      expect(porId(agenda, esperada.idMonitoria)).toEqual(esperada);
+      // La vencida pudo quedar ya cancelada por HU-027 (sus dos formas se prueban en el criterio 1): lo demás no cambia.
+      const fila = porId(agenda, esperada.idMonitoria);
+      expect(clave === "vencida" ? comoVencidaSinCancelar(fila) : fila).toEqual(esperada);
     },
   );
 

@@ -53,8 +53,10 @@ select ok(
   'Sin sesión (anon) no se paga: ni la puerta pública ni la de privado');
 select ok(
   has_function_privilege('authenticated', 'public.registrar_pago(uuid, text, text, text)', 'execute')
-  and has_function_privilege('authenticated', 'privado.registrar_pago(uuid, text, text, text, timestamptz)', 'execute'),
-  'Con sesión sí (también la anónima del Lead, que es authenticated): la puerta llega a la de privado');
+  and has_function_privilege('authenticated', 'privado.registrar_pago_de_la_sesion(uuid, text, text, text)', 'execute')
+  -- Revisión de HU-018 (HU-027): la versión con p_ahora es interna; ninguna sesión elige la hora.
+  and not has_function_privilege('authenticated', 'privado.registrar_pago(uuid, text, text, text, timestamptz)', 'execute'),
+  'Con sesión sí (también la anónima del Lead, que es authenticated), por la que usa now(); la que recibe la hora, no');
 select ok(
   not has_function_privilege('service_role', 'public.registrar_pago(uuid, text, text, text)', 'execute')
   and not has_function_privilege('service_role', 'privado.registrar_pago(uuid, text, text, text, timestamptz)', 'execute'),
@@ -367,7 +369,8 @@ select throws_ok(
 -- El borde de los 10 minutos con la hora fija (P-40)
 -- ---------------------------------------------------------------------------
 -- La 06 se creó el 1-sep-2026 a las 12:00 en Bogotá: su reserva llega hasta las 12:10 exactas, inclusive.
-set local role authenticated;
+-- La versión con p_ahora es interna (revisión de HU-018, HU-027): se llama como postgres, con el token del Lead
+-- puesto (auth.uid() lo lee sin importar el rol).
 select is(
   (select resultado from privado.registrar_pago('50000000-0000-0000-0000-000000001806',
      'c0000000-0000-0000-0000-000000001801/e1800000-0000-0000-0000-000000000006.png', 'Ana', 'ana@calibra.test',
