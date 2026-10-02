@@ -27,6 +27,7 @@ test.describe("aviso de privacidad (HU-008)", () => {
       "Responsable del tratamiento",
       "Para qué los usamos",
       "Si eres monitor",
+      "Seguridad del sitio",
       "Tus derechos",
       "Canal de consultas",
       "Cuánto tiempo los guardamos",
@@ -43,7 +44,28 @@ test.describe("aviso de privacidad (HU-008)", () => {
       "tu nombre, tal como lo escribiste al crear tu cuenta, se muestra a estudiantes y visitantes en la lista de monitores de esa materia, junto con tus fechas libres y sus precios",
     );
     await expect(monitores).toContainText("Tu teléfono, tu correo y tu llave no se muestran a estudiantes ni a visitantes.");
-    await expect(page.getByText("Última actualización: 1 de octubre de 2026.")).toBeVisible();
+
+    // HU-073 (D-31): las reseñas, en lo que recogemos y en para qué se usan, sin prometer dónde se muestran.
+    const datos = page.locator("section", { has: page.getByRole("heading", { name: "Qué datos recogemos" }) });
+    await expect(datos).toContainText("La calificación y el comentario de cada monitoría que reseñes.");
+    const finalidades = page.locator("section", { has: page.getByRole("heading", { name: "Para qué los usamos" }) });
+    await expect(finalidades).toContainText(
+      "Tu calificación y tu comentario de cada monitoría, para que otros escojan monitor y para mejorar el servicio.",
+    );
+
+    // HU-073 (D-31): Cloudflare Turnstile verifica que el visitante es una persona; enlace a su adenda en otra pestaña.
+    const seguridad = page.locator("section", { has: page.getByRole("heading", { name: "Seguridad del sitio" }) });
+    await expect(seguridad).toContainText(
+      "Calibra usa Cloudflare Turnstile para verificar que quien visita el sitio es una persona y no un programa automático.",
+    );
+    await expect(seguridad).toContainText("Cloudflare ve datos técnicos de tu navegador y de tu conexión.");
+    const adenda = seguridad.getByRole("link", { name: "adenda de privacidad de Cloudflare Turnstile (se abre en otra pestaña)" });
+    await expect(adenda).toHaveAttribute("href", "https://www.cloudflare.com/turnstile-privacy-policy/");
+    await expect(adenda).toHaveAttribute("target", "_blank");
+    await expect(adenda).toHaveAttribute("rel", "noopener noreferrer");
+
+    // Fecha del último cambio del texto (HU-073).
+    await expect(page.getByText("Última actualización: 2 de octubre de 2026.")).toBeVisible();
 
     // El correo depende de CORREO_DATOS_PERSONALES: basta con el enlace o con el aviso de que llegará pronto.
     const canal = page.locator("section", { has: page.getByRole("heading", { name: "Canal de consultas" }) });
