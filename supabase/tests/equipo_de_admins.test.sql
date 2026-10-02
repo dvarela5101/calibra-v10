@@ -1,5 +1,5 @@
 -- Pruebas pgTAP del equipo de admins (HU-054): turno de revisión (RN-07), desactivar sin borrar (RN-23) y
--- reasignación de los casos abiertos al siguiente admin activo (P-44).
+-- reasignación de los casos abiertos al siguiente admin activo (P-44; los pagos en revisión, desde HU-074).
 -- Corre con: npx supabase test db
 -- Todo ocurre en una transacción que termina en rollback: no deja datos.
 --
@@ -13,7 +13,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(133);
+select plan(146);
 
 -- ---------------------------------------------------------------------------
 -- 1. Fixtures (como postgres)
@@ -110,12 +110,13 @@ as $$
   where id in ('a0000000-0000-0000-0000-00000000540a', 'a0000000-0000-0000-0000-00000000540b', 'a0000000-0000-0000-0000-00000000540c',
                'a0000000-0000-0000-0000-00000000540d', 'a0000000-0000-0000-0000-00000000540e');
 $$;
--- abiertos(id): casos abiertos de un admin (reembolsos activos + reportes en revisión).
+-- abiertos(id): casos abiertos de un admin (reembolsos activos + reportes en revisión + pagos en revisión, HU-074).
 create function pg_temp.abiertos(p_id uuid) returns integer
 language sql stable security definer set search_path = ''
 as $$
   select ((select count(*) from public.reembolso where id_admin = p_id and estado in ('esperando_llave', 'pendiente'))
-        + (select count(*) from public.reporte_inasistencia where id_admin = p_id and estado = 'en_revision'))::integer;
+        + (select count(*) from public.reporte_inasistencia where id_admin = p_id and estado = 'en_revision')
+        + (select count(*) from public.pago where id_admin = p_id and estado = 'en_revision'))::integer;
 $$;
 -- aislar(): vuelve a desactivar a cualquier admin que no sea de la prueba. La base local la pueden estar usando otras
 -- pruebas a la vez (integración, e2e) y crear admins confirmados mientras esta corre; el turno los vería. Se llama
@@ -136,7 +137,7 @@ as $$
   select privado.siguiente_admin_activo(p_despues_de);
 $$;
 -- duenos(): la última letra del id del admin dueño de cada caso, para ver adónde fue cada uno.
--- Orden: r1, r2, r3, r4, ri1, ri2, ri3, ri4.
+-- Orden: r1, r2, r3, r4, ri1, ri2, ri3, ri4, p4 (el pago en revisión, HU-074).
 create function pg_temp.duenos() returns text[]
 language sql stable security definer set search_path = ''
 as $$
@@ -148,7 +149,8 @@ as $$
     (select right(id_admin::text, 1) from public.reporte_inasistencia where id = '80000000-0000-0000-0000-000000005401'),
     (select right(id_admin::text, 1) from public.reporte_inasistencia where id = '80000000-0000-0000-0000-000000005402'),
     (select right(id_admin::text, 1) from public.reporte_inasistencia where id = '80000000-0000-0000-0000-000000005403'),
-    (select right(id_admin::text, 1) from public.reporte_inasistencia where id = '80000000-0000-0000-0000-000000005404')
+    (select right(id_admin::text, 1) from public.reporte_inasistencia where id = '80000000-0000-0000-0000-000000005404'),
+    (select right(id_admin::text, 1) from public.pago where id = '60000000-0000-0000-0000-000000005404')
   ];
 $$;
 
@@ -156,8 +158,8 @@ select is(pg_temp.orden(),
   array['a0000000-0000-0000-0000-00000000540a', 'a0000000-0000-0000-0000-00000000540b', 'a0000000-0000-0000-0000-00000000540c',
         'a0000000-0000-0000-0000-00000000540d', 'a0000000-0000-0000-0000-00000000540e']::uuid[],
   'Punto de partida: el orden de revisión es A, B, C, D, E');
-select is(pg_temp.duenos(), array['b', 'b', 'b', 'a', 'b', 'b', 'b', 'a'],
-  'Punto de partida: B tiene tres casos abiertos y tres cerrados; A tiene dos abiertos');
+select is(pg_temp.duenos(), array['b', 'b', 'b', 'a', 'b', 'b', 'b', 'a', 'a'],
+  'Punto de partida: B tiene tres casos abiertos y tres cerrados; A tiene tres abiertos (un reembolso, un reporte y el pago 4)');
 
 -- Estructura de las funciones.
 select has_function('privado', 'admin_activo', array['uuid'], 'Existe privado.admin_activo(uuid)');
@@ -254,12 +256,12 @@ select results_eq(
     where id in ('a0000000-0000-0000-0000-00000000540a', 'a0000000-0000-0000-0000-00000000540b', 'a0000000-0000-0000-0000-00000000540c',
                  'a0000000-0000-0000-0000-00000000540d', 'a0000000-0000-0000-0000-00000000540e')$$,
   $$values
-    ('a0000000-0000-0000-0000-00000000540a', 'Admin A', 'admin-a-hu054@calibra.test', -1000, true, 2),
+    ('a0000000-0000-0000-0000-00000000540a', 'Admin A', 'admin-a-hu054@calibra.test', -1000, true, 3),
     ('a0000000-0000-0000-0000-00000000540b', 'Admin B', 'admin-b-hu054@calibra.test', -999, true, 3),
     ('a0000000-0000-0000-0000-00000000540c', 'Admin C', 'admin-c-hu054@calibra.test', -998, true, 0),
     ('a0000000-0000-0000-0000-00000000540d', 'Admin D', 'admin-d-hu054@calibra.test', -997, false, 0),
     ('a0000000-0000-0000-0000-00000000540e', 'Admin E', 'admin-e-hu054@calibra.test', -996, true, 0)$$,
-  'Un admin activo ve al equipo en su orden: quién está activo y cuántos casos abiertos tiene cada uno');
+  'Un admin activo ve al equipo en su orden: quién está activo y cuántos casos abiertos tiene cada uno (el pago en revisión de A cuenta, HU-074)');
 
 select is(
   (select array_agg(orden_revision) from public.equipo_de_admins()),
@@ -420,18 +422,18 @@ reset role;
 call pg_temp.aislar();
 -- Un admin sin casos abiertos: no hay nada que mover.
 select is(privado.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540c'), 0, 'C no tiene casos abiertos: devuelve 0');
-select is(pg_temp.duenos(), array['b', 'b', 'b', 'a', 'b', 'b', 'b', 'a'], 'Y no mueve nada');
+select is(pg_temp.duenos(), array['b', 'b', 'b', 'a', 'b', 'b', 'b', 'a', 'a'], 'Y no mueve nada');
 
 call pg_temp.aislar();
 -- B tiene 3 abiertos (2 reembolsos y 1 reporte) y 3 cerrados. El siguiente activo después de B es C.
 select is(pg_temp.abiertos('a0000000-0000-0000-0000-00000000540b'), 3, 'B tiene tres casos abiertos');
 select is(privado.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540b'), 3,
   'Reasignar a B mueve sus tres casos abiertos y devuelve 3');
-select is(pg_temp.duenos(), array['c', 'c', 'b', 'a', 'c', 'b', 'b', 'a'],
+select is(pg_temp.duenos(), array['c', 'c', 'b', 'a', 'c', 'b', 'b', 'a', 'a'],
   'Los reembolsos esperando_llave y pendiente y el reporte en revisión pasan a C; los cerrados (reembolsado, aceptado, rechazado) se quedan con B; lo de A no se toca');
 select is(pg_temp.abiertos('a0000000-0000-0000-0000-00000000540b'), 0, 'B ya no tiene casos abiertos');
 select is(privado.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540b'), 0, 'Repetirlo no mueve nada más: devuelve 0');
-select is(pg_temp.duenos(), array['c', 'c', 'b', 'a', 'c', 'b', 'b', 'a'], 'Y todo sigue donde estaba');
+select is(pg_temp.duenos(), array['c', 'c', 'b', 'a', 'c', 'b', 'b', 'a', 'a'], 'Y todo sigue donde estaba');
 
 -- Se desactiva a B (como hace desactivarCuenta tras reasignar): su fila, certificados y pagos revisados se conservan (RN-23).
 update auth.users set banned_until = now() + interval '100 years' where id = 'a0000000-0000-0000-0000-00000000540b';
@@ -454,7 +456,7 @@ select results_eq(
   $$select id::text, activo, casos_abiertos from public.equipo_de_admins()
     where id in ('a0000000-0000-0000-0000-00000000540a', 'a0000000-0000-0000-0000-00000000540b', 'a0000000-0000-0000-0000-00000000540c')$$,
   $$values
-    ('a0000000-0000-0000-0000-00000000540a', true, 2),
+    ('a0000000-0000-0000-0000-00000000540a', true, 3),
     ('a0000000-0000-0000-0000-00000000540b', false, 0),
     ('a0000000-0000-0000-0000-00000000540c', true, 3)$$,
   'La pantalla del equipo muestra a B inactivo y sin casos abiertos, y a C con los tres que recibió');
@@ -465,16 +467,16 @@ call pg_temp.aislar();
 update auth.users set banned_until = now() + interval '100 years' where id = 'a0000000-0000-0000-0000-00000000540c';
 select is(privado.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540c'), 3,
   'Reasignar a C mueve sus tres casos abiertos y devuelve 3');
-select is(pg_temp.duenos(), array['e', 'e', 'b', 'a', 'e', 'b', 'b', 'a'],
+select is(pg_temp.duenos(), array['e', 'e', 'b', 'a', 'e', 'b', 'b', 'a', 'a'],
   'Pasan a E (se salta a D, desactivado); los cerrados de B siguen con B');
 
 call pg_temp.aislar();
 -- E es el último: sus casos dan la vuelta y pasan al primer activo, A.
 select is(privado.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540e'), 3,
   'Reasignar a E, el último, mueve sus tres casos y devuelve 3');
-select is(pg_temp.duenos(), array['a', 'a', 'b', 'a', 'a', 'b', 'b', 'a'],
+select is(pg_temp.duenos(), array['a', 'a', 'b', 'a', 'a', 'b', 'b', 'a', 'a'],
   'Dan la vuelta y pasan a A; los cerrados de B siguen con B');
-select is(pg_temp.abiertos('a0000000-0000-0000-0000-00000000540a'), 5, 'A acumula cinco casos abiertos (dos propios y tres recibidos)');
+select is(pg_temp.abiertos('a0000000-0000-0000-0000-00000000540a'), 6, 'A acumula seis casos abiertos (tres propios y tres recibidos)');
 
 call pg_temp.aislar();
 -- Con casos abiertos y ningún otro admin activo, falla y no deja nada a medias.
@@ -483,8 +485,8 @@ select throws_ok(
   $$select privado.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540a')$$,
   'P0001', 'No hay otro admin activo que reciba los casos abiertos.',
   'Si A tiene casos abiertos y es el único admin activo, no se puede reasignar: error P0001');
-select is(pg_temp.duenos(), array['a', 'a', 'b', 'a', 'a', 'b', 'b', 'a'], 'Y los casos de A siguen siendo de A');
-select is(pg_temp.abiertos('a0000000-0000-0000-0000-00000000540a'), 5, 'A conserva sus cinco casos abiertos');
+select is(pg_temp.duenos(), array['a', 'a', 'b', 'a', 'a', 'b', 'b', 'a', 'a'], 'Y los casos de A siguen siendo de A');
+select is(pg_temp.abiertos('a0000000-0000-0000-0000-00000000540a'), 6, 'A conserva sus seis casos abiertos');
 
 -- Sin casos abiertos no hace falta nadie que los reciba: devuelve 0 aunque no haya ningún admin activo.
 select is(privado.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540b'), 0,
@@ -496,7 +498,7 @@ select is(privado.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540b
   'B solo tiene casos cerrados: devuelve 0 aunque no haya ningún admin activo');
 select is(privado.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540c'), 0,
   'C ya no tiene casos abiertos: devuelve 0 aunque no haya ningún admin activo');
-select is(pg_temp.duenos(), array['a', 'a', 'b', 'a', 'a', 'b', 'b', 'a'], 'Y nada se movió');
+select is(pg_temp.duenos(), array['a', 'a', 'b', 'a', 'a', 'b', 'b', 'a', 'a'], 'Y nada se movió');
 
 -- Un admin con casos abiertos y sin ningún admin activo tampoco puede reasignar.
 select throws_ok(
@@ -517,10 +519,93 @@ update public.reembolso set id_admin = 'a0000000-0000-0000-0000-00000000540c'
 update public.reporte_inasistencia set id_admin = 'a0000000-0000-0000-0000-00000000540c'
   where id = '80000000-0000-0000-0000-000000005401';
 -- C (desactivado) queda con cuatro abiertos: tres reembolsos (esperando_llave y pendientes) y un reporte en revisión.
--- El reporte de A (ri4) sigue con A.
+-- El reporte de A (ri4) y su pago en revisión (p4) siguen con A.
 select is(privado.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540c'), 4,
   'Cuenta reembolsos (esperando_llave y pendiente) y reportes en revisión: 4 casos y devuelve 4');
-select is(pg_temp.duenos(), array['a', 'a', 'b', 'a', 'a', 'b', 'b', 'a'], 'Todos al único activo, A');
+select is(pg_temp.duenos(), array['a', 'a', 'b', 'a', 'a', 'b', 'b', 'a', 'a'], 'Todos al único activo, A');
+
+-- ---------------------------------------------------------------------------
+-- 6b. Los pagos en revisión también pasan, con una hora nueva (HU-074, RN-42)
+--     Los ya revisados (aprobado, rechazado) se quedan con el desactivado (RN-23).
+-- ---------------------------------------------------------------------------
+call pg_temp.aislar();
+-- C (desactivado) tiene tres pagos de 2020: el 6 en revisión, asignado hace años; el 7 aprobado y el 8 rechazado.
+-- E vuelve a estar activo (su baneo de partida, ya vencido): después de C el turno se salta a D y le toca a E, no a A.
+update auth.users set banned_until = '2020-01-01' where id = 'a0000000-0000-0000-0000-00000000540e';
+insert into public.comprobante_revisado (ruta, tipo) values
+  ('c0000000-0000-0000-0000-000000005401/60000000-0000-0000-0000-000000005406.png', 'image/png'),
+  ('c0000000-0000-0000-0000-000000005401/60000000-0000-0000-0000-000000005407.png', 'image/png'),
+  ('c0000000-0000-0000-0000-000000005401/60000000-0000-0000-0000-000000005408.png', 'image/png');
+insert into public.pago (id, id_monitoria, monto, nombre_pagador, contacto, estado, fecha_pago, fecha_asignacion, fecha_revision, id_admin, comprobante) values
+  ('60000000-0000-0000-0000-000000005406', '50000000-0000-0000-0000-000000005402', 25000, 'Pagador Seis', 'p6@example.com', 'en_revision',
+   '2020-01-10 15:00:00+00', '2020-01-10 15:00:00+00', null,
+   'a0000000-0000-0000-0000-00000000540c', 'c0000000-0000-0000-0000-000000005401/60000000-0000-0000-0000-000000005406.png'),
+  ('60000000-0000-0000-0000-000000005407', '50000000-0000-0000-0000-000000005402', 25000, 'Pagador Siete', 'p7@example.com', 'aprobado',
+   '2020-01-10 15:00:00+00', '2020-01-10 15:00:00+00', '2020-01-10 15:30:00+00',
+   'a0000000-0000-0000-0000-00000000540c', 'c0000000-0000-0000-0000-000000005401/60000000-0000-0000-0000-000000005407.png'),
+  ('60000000-0000-0000-0000-000000005408', '50000000-0000-0000-0000-000000005403', 25000, 'Pagador Ocho', 'p8@example.com', 'rechazado',
+   '2020-01-10 15:00:00+00', '2020-01-10 15:00:00+00', '2020-01-10 15:30:00+00',
+   'a0000000-0000-0000-0000-00000000540c', 'c0000000-0000-0000-0000-000000005401/60000000-0000-0000-0000-000000005408.png');
+select is(pg_temp.abiertos('a0000000-0000-0000-0000-00000000540c'), 1,
+  'C tiene un caso abierto: el pago en revisión (el aprobado y el rechazado no cuentan)');
+
+-- Criterio 2: la pantalla del equipo cuenta los pagos en revisión.
+set local role authenticated;
+set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-00000000540a","role":"authenticated"}';
+select results_eq(
+  $$select id::text, activo, casos_abiertos from public.equipo_de_admins()
+    where id in ('a0000000-0000-0000-0000-00000000540a', 'a0000000-0000-0000-0000-00000000540c', 'a0000000-0000-0000-0000-00000000540e')$$,
+  $$values
+    ('a0000000-0000-0000-0000-00000000540a', true, 6),
+    ('a0000000-0000-0000-0000-00000000540c', false, 1),
+    ('a0000000-0000-0000-0000-00000000540e', true, 0)$$,
+  'casos_abiertos cuenta los pagos en revisión: C tiene uno (sus pagos revisados no cuentan) y A seis, con su pago 4');
+reset role;
+
+-- Criterio 1: el pago en revisión pasa al siguiente activo con una hora nueva.
+select is(privado.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540c'), 1,
+  'Reasignar a C mueve su pago en revisión y devuelve 1');
+select is((select right(id_admin::text, 1) from public.pago where id = '60000000-0000-0000-0000-000000005406'), 'e',
+  'El pago en revisión pasa a E, el siguiente activo después de C (se salta a D, desactivado)');
+select is((select fecha_asignacion from public.pago where id = '60000000-0000-0000-0000-000000005406'), now(),
+  'Con fecha_asignacion nueva: E tiene su hora completa para revisarlo (RN-42)');
+select is((select fecha_pago from public.pago where id = '60000000-0000-0000-0000-000000005406'), '2020-01-10 15:00:00+00'::timestamptz,
+  'fecha_pago no cambia: sigue diciendo cuándo llegó el comprobante');
+select results_eq(
+  $$select right(id_admin::text, 1), fecha_asignacion from public.pago
+    where id in ('60000000-0000-0000-0000-000000005407', '60000000-0000-0000-0000-000000005408') order by id$$,
+  $$values ('c', '2020-01-10 15:00:00+00'::timestamptz), ('c', '2020-01-10 15:00:00+00'::timestamptz)$$,
+  'El aprobado y el rechazado se quedan con C, sin tocar (RN-23)');
+select is(pg_temp.abiertos('a0000000-0000-0000-0000-00000000540c'), 0, 'C ya no tiene casos abiertos');
+select is(privado.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540c'), 0, 'Repetirlo no mueve nada más: devuelve 0');
+
+set local role authenticated;
+set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-00000000540a","role":"authenticated"}';
+select results_eq(
+  $$select id::text, casos_abiertos from public.equipo_de_admins()
+    where id in ('a0000000-0000-0000-0000-00000000540c', 'a0000000-0000-0000-0000-00000000540e')$$,
+  $$values ('a0000000-0000-0000-0000-00000000540c', 0), ('a0000000-0000-0000-0000-00000000540e', 1)$$,
+  'La pantalla del equipo muestra a C sin casos abiertos y a E con el pago que recibió');
+reset role;
+
+call pg_temp.aislar();
+-- Un admin cuyo único caso es un pago en revisión tampoco se reasigna si no hay otro activo. El pago de E vuelve a su
+-- hora vieja, para ver que el error no lo toca.
+update public.pago set fecha_asignacion = '2020-01-10 15:00:00+00' where id = '60000000-0000-0000-0000-000000005406';
+update auth.users set banned_until = now() + interval '100 years' where id = 'a0000000-0000-0000-0000-00000000540a';
+select is(pg_temp.abiertos('a0000000-0000-0000-0000-00000000540e'), 1, 'El único caso abierto de E es ese pago en revisión');
+select throws_ok(
+  $$select privado.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540e')$$,
+  'P0001', 'No hay otro admin activo que reciba los casos abiertos.',
+  'Si E es el único activo y su único caso es un pago en revisión, no se puede reasignar: error P0001 (sin_otro_admin)');
+select results_eq(
+  $$select right(id_admin::text, 1), fecha_asignacion from public.pago where id = '60000000-0000-0000-0000-000000005406'$$,
+  $$values ('e', '2020-01-10 15:00:00+00'::timestamptz)$$,
+  'Y el pago sigue con E, con su fecha_asignacion de antes');
+
+-- Se deja a A como el único activo, como lo espera lo que sigue.
+update auth.users set banned_until = null where id = 'a0000000-0000-0000-0000-00000000540a';
+update auth.users set banned_until = now() + interval '100 years' where id = 'a0000000-0000-0000-0000-00000000540e';
 
 -- ---------------------------------------------------------------------------
 -- 7. Permisos
@@ -608,7 +693,7 @@ set local role service_role;
 select is(public.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540c'), 3,
   'service_role reasigna a C por la puerta pública: devuelve 3');
 reset role;
-select is(pg_temp.duenos(), array['a', 'a', 'b', 'a', 'a', 'b', 'b', 'a'], 'Los tres pasaron a A, el único activo; los cerrados siguen con B');
+select is(pg_temp.duenos(), array['a', 'a', 'b', 'a', 'a', 'b', 'b', 'a', 'a'], 'Los tres pasaron a A, el único activo; los cerrados siguen con B');
 
 set local role service_role;
 select is(public.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540c'), 0, 'Por la puerta pública, sin casos abiertos devuelve 0');
@@ -617,7 +702,7 @@ select throws_ok(
   'P0001', 'No hay otro admin activo que reciba los casos abiertos.',
   'Por la puerta pública, con casos abiertos y ningún otro admin activo, falla con P0001');
 reset role;
-select is(pg_temp.duenos(), array['a', 'a', 'b', 'a', 'a', 'b', 'b', 'a'], 'Y no deja nada a medias');
+select is(pg_temp.duenos(), array['a', 'a', 'b', 'a', 'a', 'b', 'b', 'a', 'a'], 'Y no deja nada a medias');
 
 -- ---------------------------------------------------------------------------
 -- 8. Una dirección nula se rechaza (hallazgo de esta prueba, corregido en la migración)
