@@ -1,13 +1,21 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { enlaceAbsoluto, esCorreo, urlDelSitio } from "./contacto";
+import { enlaceAbsoluto, esCorreo, LARGO_MAXIMO, PATRON_DE_CORREO, urlDelSitio } from "./contacto";
 
 describe("esCorreo", () => {
   it.each([
     "ana@uniandes.edu.co",
     "ana.perez+calibra@uniandes.edu.co",
+    "ana.perez+monitor@uniandes.edu.co",
+    "o'neil@example.com",
     "a@b.co",
     "ANA@Uniandes.EDU.CO",
     "primer_apellido-2@sub.dominio.com",
+    "ana_p%1@sub.uniandes.edu.co",
+    "ana@uni-andes.co",
+    "a-b.c@x-y.z-w.org",
+    "a@1.co",
   ])("acepta %s", (correo) => {
     expect(esCorreo(correo)).toBe(true);
   });
@@ -20,6 +28,8 @@ describe("esCorreo", () => {
     ["dominio sin punto", "ana@uniandes"],
     ["dos arrobas", "ana@@uniandes.edu.co"],
     ["con espacio", "ana perez@uniandes.edu.co"],
+    ["con espacio al final", "ana@uniandes.edu.co "],
+    ["con tabulación", "ana@uniandes.edu.co\t"],
     ["con salto de línea al final", "ana@uniandes.edu.co\n"],
     ["con un salto de línea y otra cabecera", "ana@uniandes.edu.co\nBcc: otro@dominio.co"],
     ["dos destinatarios con coma", "ana@uniandes.edu.co,otro@dominio.co"],
@@ -33,11 +43,73 @@ describe("esCorreo", () => {
     expect(esCorreo(valor)).toBe(false);
   });
 
+  // HU-070: en un enlace mailto: estos caracteres se leen como parámetros (copia oculta, cuerpo del mensaje).
+  it.each([
+    ["con parámetros de mailto", "ana@x.co?bcc=otro@y.co"],
+    ["con ? en el dominio", "ana@x.co?"],
+    ["con & en el dominio", "ana@x.co&cc=otro"],
+    ["con = en el dominio", "ana@x.co=1"],
+    ["con # en el dominio", "ana@x.co#ancla"],
+    ["con / en el dominio", "ana@x.co/ruta"],
+    ["con % en el dominio", "ana@x.co%3Fbcc%3Dotro"],
+    ["con guion bajo en el dominio", "ana@uni_andes.edu.co"],
+    ["con una tilde en el dominio", "ana@uniandés.edu.co"],
+    ["con una ñ en el dominio", "ana@año.co"],
+    ["con ? antes de la arroba", "ana?cc=x@uniandes.edu.co"],
+    ["con & antes de la arroba", "ana&cc=x@uniandes.edu.co"],
+    ["con = antes de la arroba", "ana=x@uniandes.edu.co"],
+    ["con # antes de la arroba", "ana#x@uniandes.edu.co"],
+    ["con / antes de la arroba", "ana/x@uniandes.edu.co"],
+    ["con ! antes de la arroba", "ana!x@uniandes.edu.co"],
+    ["con * antes de la arroba", "ana*x@uniandes.edu.co"],
+    ["con $ antes de la arroba", "ana$x@uniandes.edu.co"],
+    ["con { antes de la arroba", "ana{x@uniandes.edu.co"],
+    ["con | antes de la arroba", "ana|x@uniandes.edu.co"],
+    ["con ^ antes de la arroba", "ana^x@uniandes.edu.co"],
+    ["con ~ antes de la arroba", "ana~x@uniandes.edu.co"],
+    ["con una tilde antes de la arroba", "ánã@uniandes.edu.co"],
+    ["con dos arrobas, la segunda en el dominio", "ana@x@uniandes.edu.co"],
+  ])("rechaza un correo %s", (_nombre, valor) => {
+    expect(esCorreo(valor)).toBe(false);
+  });
+
+  it.each([
+    ["una etiqueta vacía entre dos puntos", "a@x..co"],
+    ["un punto al inicio del dominio", "a@.x.co"],
+    ["un punto al final del dominio", "a@x.co."],
+    ["solo un punto como dominio", "a@."],
+    ["un punto al final y nada después", "a@x."],
+    ["dos puntos seguidos y nada más", "a@.."],
+    ["un dominio sin punto", "a@x"],
+    ["un dominio de un solo guion", "a@-"],
+  ])("rechaza %s", (_nombre, valor) => {
+    expect(esCorreo(valor)).toBe(false);
+  });
+
   it("rechaza uno de más de 254 caracteres y acepta uno de exactamente 254", () => {
     const relleno = (n: number) => "a".repeat(n);
     const largo = (total: number) => `${relleno(total - "@b.co".length)}@b.co`;
+    expect(LARGO_MAXIMO).toBe(254);
     expect(esCorreo(largo(254))).toBe(true);
     expect(esCorreo(largo(255))).toBe(false);
+  });
+});
+
+describe("la base exige la misma regla (HU-070)", () => {
+  const carpeta = fileURLToPath(new URL("../../../supabase/migrations/", import.meta.url));
+  const archivo = readdirSync(carpeta).find((nombre) => nombre.endsWith("_correo_seguro.sql"));
+  const sql = archivo ? readFileSync(`${carpeta}${archivo}`, "utf8") : "";
+
+  it("existe la migración que define privado.es_correo_seguro", () => {
+    expect(archivo).toBeDefined();
+    expect(sql).toContain("function privado.es_correo_seguro(p_correo text)");
+  });
+
+  it("su expresión es la de PATRON_DE_CORREO y su largo, el de LARGO_MAXIMO", () => {
+    // En SQL, la comilla simple del patrón va doblada.
+    const patron = /p_correo ~ '((?:[^']|'')*)'/.exec(sql)?.[1]?.replaceAll("''", "'");
+    expect(patron).toBe(PATRON_DE_CORREO.source);
+    expect(sql).toContain(`char_length(p_correo) <= ${LARGO_MAXIMO}`);
   });
 });
 
