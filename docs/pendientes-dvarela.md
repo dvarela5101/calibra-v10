@@ -29,6 +29,13 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [x] **HU-018, pagar por Llave** (de Juzou04, [PR #28](https://github.com/dvarela5101/calibra-v10/pull/28)): aprobada el 2-oct tras la revisión. Sus supuestos siguen abiertos en A2.
 - [x] **HU-005, HU-051, HU-054, HU-069 y HU-071**: aprobadas el 2-oct.
 - [x] **HU-019 y HU-073**: aprobadas el 2-oct. Los textos de HU-019 siguen en A2.
+- [x] **HU-027, expirar reservas** (de Juzou04, [PR #31](https://github.com/dvarela5101/calibra-v10/pull/31)): aprobada el 2-oct.
+- [ ] **HU-020, revisar pagos** (de Juzou04, [PR #32](https://github.com/dvarela5101/calibra-v10/pull/32)): agenda y paga dos monitorías como en HU-018. Los pagos le quedan a `admin1@calibra.test` (contraseña `calibra-admin-local`), que va primero en el orden. Entra con esa cuenta a `/admin` y abre un pago desde la bandeja:
+  - "Ver comprobante" abre la imagen con un enlace que dura 60 segundos;
+  - "Aprobar pago" lo saca de la bandeja;
+  - en el otro pago, "Rechazar el pago" te muestra qué va a pasar antes de confirmar. La cita se cancela, la fecha vuelve a la lista y el correo al pagador llega a Mailpit (http://127.0.0.1:54324).
+
+  Si abres la misma dirección con `admin2@calibra.test`, ves el pago sin botones. Los supuestos que te tocan están en A2.
 - [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
 ### A2. Decisiones de las HUs recientes
@@ -69,6 +76,15 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   - sin ningún admin activo, el pago se rechaza con un mensaje (la pantalla del equipo no deja desactivar al último);
   - quien transfirió pero llegó tarde solo ve «tu reserva expiró». Falta decidir qué se le dice y cómo se le devuelve el dinero;
   - con cualquier comprobante válido la cita se confirma y se avisa al monitor antes de que un admin lo revise (RN-38). Hasta HU-020, la revisión es solo posterior.
+- [x] **Revisar pagos (HU-020): lo que dejó Juzou04.** **Decidido el 2-oct (D-38):** se aceptan, salvo dos que van en HUs nuevas: el monitor sí recibe un correo cuando el rechazo cancela su cita ([HU-076](../backlog/HU-076.md)), y un pago que el asignado no revisó a tiempo lo puede revisar cualquier admin activo ([HU-077](../backlog/HU-077.md)). Las recomendaciones eran:
+  - solo revisa el admin asignado, aunque se le haya pasado la hora. Los demás admins ven el pago sin botones. Pasarlo a otro admin es de HU-034 (escalamiento) y HU-074 (admin desactivado);
+  - si la sesión ya empezó, rechazar el pago no cancela la cita: cuenta como realizada (P-24);
+  - en ese caso el admin tiene que escribir qué se hará con el cobro, cobrarlo por fuera o asumirlo. Queda en una columna nueva del pago, `observaciones`;
+  - al pagador solo se le escribe cuando el rechazo cancela la cita. Si la sesión ya empezó o el estudiante ya había cancelado, no le llega correo;
+  - al monitor no se le avisa del rechazo: ve el estado del pago en su agenda (D-11);
+  - aprobar o rechazar no se deshace (§5.2), y rechazar pide confirmación;
+  - los pagos de las grupales no se revisan todavía: llegan con HU-038.
+- [ ] **Revisar pagos (HU-020): la referencia de la transferencia.** HU-007 y HU-059 dicen que marcar como posible duplicado una referencia ya usada va con HU-020. Pero hoy nadie escribe la referencia (HU-018 no la pide), así que la revisión muestra "Sin referencia" y no tiene con qué comparar. Lo que sí está cubierto es que un mismo comprobante no respalda dos pagos. Recomendación: una HU aparte que pida la referencia al pagar y que marque las repetidas en la revisión.
 - [ ] **Confirmación de la cita (HU-019): textos que puso Claude.** Recomendación: dejarlos así.
   - En la página, el texto del pago dice «…te avisamos por correo.» (en el correo, «…a este correo», D-22), porque quien abre el enlace desde otro dispositivo no está «en este correo».
   - Con el pago aprobado: «Tu pago está aprobado.»; con el pago rechazado y la cita aún confirmada: «No pudimos verificar tu pago.», sin lugar ni enlace.

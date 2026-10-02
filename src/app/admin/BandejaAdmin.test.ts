@@ -134,6 +134,17 @@ describe("BandejaAdmin: lo que se ve en cada ítem", () => {
     expect(html).toContain('<time dateTime="2026-10-05T15:00:00.000Z">Vencido hace 30 min</time>');
   });
 
+  it("cada pago lleva a su revisión, con el pagador, el monto y el tiempo dentro del enlace (HU-020)", () => {
+    const html = pintar({ ...VACIA, pagos: [pago(1), pago(2)], contadores: { ...VACIA.contadores, pagos: 2 } });
+    for (const n of [1, 2]) {
+      const enlace = html.match(new RegExp(`<a href="/admin/pagos/pago-${n}"[^>]*>(.*?)</a>`))?.[1] ?? "";
+      expect(texto(enlace)).toContain(`Pagador ${n} · $ 25.000`);
+      expect(enlace).toContain("<time");
+    }
+    // Un enlace por pago y ninguno más dentro de la lista de pagos.
+    expect(html.match(/href="\/admin\/pagos\//g)).toHaveLength(2);
+  });
+
   it("muestra el monto en pesos", () => {
     const t = texto(pintar({ ...VACIA, pagos: [pago(1, { monto: 150_000 })], contadores: { ...VACIA.contadores, pagos: 1 } }));
     expect(t).toContain("Pagador 1 · $ 150.000");
