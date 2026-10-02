@@ -28,26 +28,26 @@ _Generado automaticamente: 2026-10-02 02:39. No editar a mano; usa `scripts/back
 | [HU-046](backlog/HU-046.md) | [Monitor] Finalizar una grupal y entregar el enlace de reseña | Backlog | P1 | S | HU-023, HU-036 |
 | [HU-047](backlog/HU-047.md) | [Integrante] Reseñar la sesión grupal eligiendo mi nombre | Backlog | P1 | M | HU-046, HU-038, HU-035 |
 | [HU-048](backlog/HU-048.md) | [Técnica] Pruebas de punta a punta de los flujos principales | Backlog | P1 | M | HU-030 |
-| [HU-074](backlog/HU-074.md) | [Técnica] Reasignar los pagos en revisión de un admin que se desactiva | Backlog | P1 | S | HU-054, HU-018 |
+| [HU-075](backlog/HU-075.md) | [Técnica] Limitar los intentos de correo por sesión al dejar el contacto | Backlog | P1 | S | HU-068 |
 | [HU-049](backlog/HU-049.md) | [Monitor] Administrar mi perfil | Backlog | P2 | M | HU-013 |
 | [HU-050](backlog/HU-050.md) | [Monitor] Ver mis desembolsos | Backlog | P2 | S | HU-028 |
 | [HU-052](backlog/HU-052.md) | [Admin] Autorizar una cancelación fuera de plazo en casos extremos | Backlog | P2 | S | HU-024, HU-026 |
 | [HU-053](backlog/HU-053.md) | [Admin] Gestionar leads | Backlog | P2 | M | HU-010, HU-012 |
 | [HU-055](backlog/HU-055.md) | [Admin] Gestionar materias y evaluaciones | Backlog | P2 | M | HU-005, HU-012 |
 | [HU-072](backlog/HU-072.md) | [Admin] Agregar un admin al equipo por invitación | Backlog | P2 | S | HU-054 |
-| [HU-073](backlog/HU-073.md) | [Lead] Decir en el aviso de privacidad que guardamos la calificación y el comentario de cada monitoría | Backlog | P2 | XS | HU-035, HU-008 |
 | [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | Backlog | P3 | S | HU-010 |
 | [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | Lista | P0 | M | HU-009, HU-008, HU-068 |
-| [HU-019](backlog/HU-019.md) | [Lead] Recibir la confirmación de mi cita con un enlace para gestionarla | Lista | P0 | M | HU-018, HU-006 |
 | [HU-020](backlog/HU-020.md) | [Admin] Revisar pagos: aprobar o rechazar | Lista | P0 | L | HU-012, HU-018, HU-006 |
 | [HU-024](backlog/HU-024.md) | [Lead] Cancelar mi monitoría individual hasta 12 h antes | Lista | P0 | M | HU-019, HU-003 |
 | [HU-025](backlog/HU-025.md) | [Pagador] Entregar mi llave para recibir un reembolso | Lista | P0 | M | HU-024, HU-006 |
 | [HU-026](backlog/HU-026.md) | [Admin] Gestionar reembolsos | Lista | P0 | M | HU-025, HU-012 |
 | [HU-028](backlog/HU-028.md) | [Admin] Ejecutar desembolsos a monitores | Lista | P0 | M | HU-023, HU-020 |
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | Lista | P0 | M | HU-019 |
+| [HU-074](backlog/HU-074.md) | [Técnica] Reasignar los pagos en revisión de un admin que se desactiva | Lista | P1 | S | HU-054, HU-018 |
 | [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | Lista | P2 | S | HU-004 |
-| [HU-018](backlog/HU-018.md) | [Lead] Pagar por Llave y adjuntar el comprobante | En revision | P0 | L | HU-017, HU-007 |
+| [HU-019](backlog/HU-019.md) | [Lead] Recibir la confirmación de mi cita con un enlace para gestionarla | En progreso | P0 | M | HU-018, HU-006 |
 | [HU-027](backlog/HU-027.md) | [Sistema] Expirar reservas sin comprobante a los 10 minutos | En revision | P0 | S | HU-017 |
+| [HU-073](backlog/HU-073.md) | [Lead] Decir en el aviso de privacidad que guardamos la calificación y el comentario de cada monitoría | En revision | P2 | XS | HU-035, HU-008 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
@@ -62,6 +62,7 @@ _Generado automaticamente: 2026-10-02 02:39. No editar a mano; usa `scripts/back
 | [HU-015](backlog/HU-015.md) | [Monitor] Abrir, editar y cerrar mis franjas semanales | Hecha | P0 | M | HU-013, HU-003 |
 | [HU-016](backlog/HU-016.md) | [Lead] Ver los monitores certificados de una materia y sus fechas libres | Hecha | P0 | M | HU-014, HU-015 |
 | [HU-017](backlog/HU-017.md) | [Lead] Agendar una monitoría individual | Hecha | P0 | L | HU-016, HU-068, HU-003 |
+| [HU-018](backlog/HU-018.md) | [Lead] Pagar por Llave y adjuntar el comprobante | Hecha | P0 | L | HU-017, HU-007 |
 | [HU-021](backlog/HU-021.md) | [Monitor] Ver mi agenda de monitorías | Hecha | P0 | M | HU-015, HU-017 |
 | [HU-023](backlog/HU-023.md) | [Monitor] Finalizar una sesión | Hecha | P0 | S | HU-021 |
 | [HU-051](backlog/HU-051.md) | [Monitor] Recibir avisos de nuevas monitorías y cancelaciones | Hecha | P0 | S | HU-021, HU-006 |
