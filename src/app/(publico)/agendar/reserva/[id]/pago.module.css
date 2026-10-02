@@ -1,0 +1,48 @@
+/* El pago por Llave en la reserva (HU-018). Colores solo por token; textos de 14 px o más. */
+
+.pago {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-block-start: var(--e4);
+  padding: var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+.titulo {
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.tiempo {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* La imagen del QR la da el banco: se muestra entera, centrada y sin pasar del ancho de la tarjeta. */
+.qr {
+  display: block;
+  align-self: center;
+  inline-size: 220px;
+  max-inline-size: 100%;
+  block-size: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-chico);
+}
+
+/* La llave se lee cifra por cifra: mismo ancho para todos los dígitos. */
+.llave {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.nota {
+  font-size: 15px;
+  color: var(--muted);
+}

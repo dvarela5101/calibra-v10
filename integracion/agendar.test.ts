@@ -205,6 +205,7 @@ describe("criterio 1 y RN-32: agendar una fecha libre de una materia certificada
       nombreMonitor: "Monitor de prueba",
       nombreMateria: "Materia de prueba",
       codigoMateria: e.materia.codigo,
+      idLead: sesion.lead.id,
       inicio,
       reservaHasta: reservaHasta(fechaCreacion, parametros),
       cancelableHasta: cancelableHasta(inicio, false, parametros),

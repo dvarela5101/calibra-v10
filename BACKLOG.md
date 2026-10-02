@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-02 01:08. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-02 01:21. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -28,6 +28,7 @@ _Generado automaticamente: 2026-10-02 01:08. No editar a mano; usa `scripts/back
 | [HU-046](backlog/HU-046.md) | [Monitor] Finalizar una grupal y entregar el enlace de reseña | Backlog | P1 | S | HU-023, HU-036 |
 | [HU-047](backlog/HU-047.md) | [Integrante] Reseñar la sesión grupal eligiendo mi nombre | Backlog | P1 | M | HU-046, HU-038, HU-035 |
 | [HU-048](backlog/HU-048.md) | [Técnica] Pruebas de punta a punta de los flujos principales | Backlog | P1 | M | HU-030 |
+| [HU-074](backlog/HU-074.md) | [Técnica] Reasignar los pagos en revisión de un admin que se desactiva | Backlog | P1 | S | HU-054, HU-018 |
 | [HU-049](backlog/HU-049.md) | [Monitor] Administrar mi perfil | Backlog | P2 | M | HU-013 |
 | [HU-050](backlog/HU-050.md) | [Monitor] Ver mis desembolsos | Backlog | P2 | S | HU-028 |
 | [HU-052](backlog/HU-052.md) | [Admin] Autorizar una cancelación fuera de plazo en casos extremos | Backlog | P2 | S | HU-024, HU-026 |
@@ -46,7 +47,7 @@ _Generado automaticamente: 2026-10-02 01:08. No editar a mano; usa `scripts/back
 | [HU-028](backlog/HU-028.md) | [Admin] Ejecutar desembolsos a monitores | Lista | P0 | M | HU-023, HU-020 |
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | Lista | P0 | M | HU-019 |
 | [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | Lista | P2 | S | HU-004 |
-| [HU-018](backlog/HU-018.md) | [Lead] Pagar por Llave y adjuntar el comprobante | En progreso | P0 | L | HU-017, HU-007 |
+| [HU-018](backlog/HU-018.md) | [Lead] Pagar por Llave y adjuntar el comprobante | En revision | P0 | L | HU-017, HU-007 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
