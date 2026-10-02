@@ -1,13 +1,12 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-02 11:47. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-02 12:07. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
 | [HU-009](backlog/HU-009.md) | [Visitante] Tomar el diagnóstico sin iniciar sesión | Backlog | P0 | L | HU-004, HU-005, HU-060 |
 | [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | Backlog | P0 | S | HU-009 |
 | [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | Backlog | P0 | L | HU-021, HU-009 |
-| [HU-030](backlog/HU-030.md) | [Admin] Resolver reportes de inasistencia | Backlog | P0 | M | HU-029, HU-026, HU-028 |
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | Backlog | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-040, HU-043, HU-044, HU-045, HU-047, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056 |
 | [HU-060](backlog/HU-060.md) | [Técnica] Motor del diagnóstico adaptativo con nivel por habilidad | Backlog | P0 | L | HU-005 |
 | [HU-061](backlog/HU-061.md) | [Técnica] Instructivo y skill para reprocesar el banco de una materia con IA | Backlog | P0 | M | HU-005 |
@@ -41,6 +40,7 @@ _Generado automaticamente: 2026-10-02 11:47. No editar a mano; usa `scripts/back
 | [HU-026](backlog/HU-026.md) | [Admin] Gestionar reembolsos | Lista | P0 | M | HU-025, HU-012 |
 | [HU-028](backlog/HU-028.md) | [Admin] Ejecutar desembolsos a monitores | Lista | P0 | M | HU-023, HU-020 |
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | Lista | P0 | M | HU-019 |
+| [HU-030](backlog/HU-030.md) | [Admin] Resolver reportes de inasistencia | Lista | P0 | M | HU-029, HU-026, HU-028 |
 | [HU-075](backlog/HU-075.md) | [Técnica] Limitar los intentos de correo por sesión al dejar el contacto | Lista | P1 | S | HU-068 |
 | [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | Lista | P2 | S | HU-004 |
 | [HU-020](backlog/HU-020.md) | [Admin] Revisar pagos: aprobar o rechazar | En progreso | P0 | L | HU-012, HU-018, HU-006 |
