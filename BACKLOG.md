@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-02 12:11. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-02 12:29. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -10,6 +10,7 @@ _Generado automaticamente: 2026-10-02 12:11. No editar a mano; usa `scripts/back
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | Backlog | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-040, HU-043, HU-044, HU-045, HU-047, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056 |
 | [HU-060](backlog/HU-060.md) | [Técnica] Motor del diagnóstico adaptativo con nivel por habilidad | Backlog | P0 | L | HU-005 |
 | [HU-061](backlog/HU-061.md) | [Técnica] Instructivo y skill para reprocesar el banco de una materia con IA | Backlog | P0 | M | HU-005 |
+| [HU-076](backlog/HU-076.md) | [Monitor] Recibir un correo cuando una monitoría mía se cancela por pago rechazado | Backlog | P0 | S | HU-020, HU-051 |
 | [HU-031](backlog/HU-031.md) | [Lead] Recuperar mis resultados desde otro dispositivo con un enlace | Backlog | P1 | M | HU-010, HU-006 |
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | Backlog | P1 | M | HU-010, HU-004 |
 | [HU-033](backlog/HU-033.md) | [Estudiante] Gestionar mis citas y diagnósticos desde mi cuenta | Backlog | P1 | M | HU-032, HU-019, HU-024 |
@@ -27,6 +28,7 @@ _Generado automaticamente: 2026-10-02 12:11. No editar a mano; usa `scripts/back
 | [HU-046](backlog/HU-046.md) | [Monitor] Finalizar una grupal y entregar el enlace de reseña | Backlog | P1 | S | HU-023, HU-036 |
 | [HU-047](backlog/HU-047.md) | [Integrante] Reseñar la sesión grupal eligiendo mi nombre | Backlog | P1 | M | HU-046, HU-038, HU-035 |
 | [HU-048](backlog/HU-048.md) | [Técnica] Pruebas de punta a punta de los flujos principales | Backlog | P1 | M | HU-030 |
+| [HU-077](backlog/HU-077.md) | [Admin] Revisar un pago que el admin asignado no revisó a tiempo | Backlog | P1 | S | HU-020 |
 | [HU-049](backlog/HU-049.md) | [Monitor] Administrar mi perfil | Backlog | P2 | M | HU-013 |
 | [HU-050](backlog/HU-050.md) | [Monitor] Ver mis desembolsos | Backlog | P2 | S | HU-028 |
 | [HU-052](backlog/HU-052.md) | [Admin] Autorizar una cancelación fuera de plazo en casos extremos | Backlog | P2 | S | HU-024, HU-026 |
@@ -35,15 +37,15 @@ _Generado automaticamente: 2026-10-02 12:11. No editar a mano; usa `scripts/back
 | [HU-072](backlog/HU-072.md) | [Admin] Agregar un admin al equipo por invitación | Backlog | P2 | S | HU-054 |
 | [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | Backlog | P3 | S | HU-010 |
 | [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | Lista | P0 | M | HU-009, HU-008, HU-068 |
-| [HU-024](backlog/HU-024.md) | [Lead] Cancelar mi monitoría individual hasta 12 h antes | Lista | P0 | M | HU-019, HU-003 |
 | [HU-025](backlog/HU-025.md) | [Pagador] Entregar mi llave para recibir un reembolso | Lista | P0 | M | HU-024, HU-006 |
 | [HU-026](backlog/HU-026.md) | [Admin] Gestionar reembolsos | Lista | P0 | M | HU-025, HU-012 |
 | [HU-028](backlog/HU-028.md) | [Admin] Ejecutar desembolsos a monitores | Lista | P0 | M | HU-023, HU-020 |
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | Lista | P0 | M | HU-019 |
 | [HU-030](backlog/HU-030.md) | [Admin] Resolver reportes de inasistencia | Lista | P0 | M | HU-029, HU-026, HU-028 |
 | [HU-075](backlog/HU-075.md) | [Técnica] Limitar los intentos de correo por sesión al dejar el contacto | Lista | P1 | S | HU-068 |
-| [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | Lista | P2 | S | HU-004 |
+| [HU-024](backlog/HU-024.md) | [Lead] Cancelar mi monitoría individual hasta 12 h antes | En progreso | P0 | M | HU-019, HU-003 |
 | [HU-074](backlog/HU-074.md) | [Técnica] Reasignar los pagos en revisión de un admin que se desactiva | En progreso | P1 | S | HU-054, HU-018 |
+| [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | En progreso | P2 | S | HU-004 |
 | [HU-020](backlog/HU-020.md) | [Admin] Revisar pagos: aprobar o rechazar | En revision | P0 | L | HU-012, HU-018, HU-006 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
