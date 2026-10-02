@@ -380,6 +380,7 @@ dvarela5101 resolvió las preguntas de los planes de HU-019, HU-024 y HU-058 (ho
 | D-33 | HU-058 la hace dvarela5101 después de HU-018. | [HU-058](backlog/HU-058.md) |
 | D-34 | Antes de publicar, un tope de intentos por sesión al escribir correos al agendar (completa lo aceptado para el aviso «Ese correo ya está en Calibra» de HU-068): HU nueva en Backlog. | [HU-068](backlog/HU-068.md), [HU-075](backlog/HU-075.md) |
 | D-35 | HU-074 (los pagos en revisión de un admin que se desactiva pasan al siguiente activo) pasa a Lista, P1. | [HU-074](backlog/HU-074.md) |
+| D-36 | Tope de correos al dejar el contacto (HU-075): una misma sesión puede escribir hasta 5 correos distintos por hora. Cuentan todos los distintos, existan o no, para que el tope no revele nada. Al pasarse, no se guarda el contacto ni se dice si el correo existe, y se le pide esperar: «Probaste varios correos seguidos. Espera un rato y vuelve a intentarlo.» | [HU-075](backlog/HU-075.md), [HU-068](backlog/HU-068.md) |
 
 ## 5. Cortes propuestos
 
