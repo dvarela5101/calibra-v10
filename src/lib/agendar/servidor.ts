@@ -29,6 +29,8 @@ export async function agendarMonitoria(cliente: Cliente, pedido: PedidoDeAgendar
 
 export type Reserva = {
   id: string;
+  /** El Lead que la apartó: solo él paga (HU-018). */
+  idLead: string;
   estado: Database["public"]["Enums"]["estado_monitoria"];
   motivoCancelacion: Database["public"]["Enums"]["motivo_cancelacion"] | null;
   /** Día de calendario, `AAAA-MM-DD`. */
@@ -53,7 +55,7 @@ export type Reserva = {
 export async function cargarReserva(cliente: Cliente, idMonitoria: string): Promise<Reserva | null> {
   const { data: monitoria, error } = await cliente
     .from("monitoria")
-    .select("id, estado, motivo_cancelacion, fecha, valor_total, id_franja, id_monitor, id_materia")
+    .select("id, id_lead, estado, motivo_cancelacion, fecha, valor_total, id_franja, id_monitor, id_materia")
     .eq("id", idMonitoria)
     .maybeSingle();
   if (error) throw new Error(`No se pudo leer la reserva: ${error.message}`);
@@ -74,6 +76,7 @@ export async function cargarReserva(cliente: Cliente, idMonitoria: string): Prom
 
   return {
     id: monitoria.id,
+    idLead: monitoria.id_lead,
     estado: monitoria.estado,
     motivoCancelacion: monitoria.motivo_cancelacion,
     fecha: monitoria.fecha,

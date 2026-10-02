@@ -13,6 +13,14 @@ if (faltan.length > 0) {
   process.exit(1);
 }
 
+// HU-018: un QR de prueba que dice que lo es, como URL data: (nada en public/ que se confunda con el QR del
+// banco). encodeURIComponent no deja # ni $, que el lector de .env cortaría o expandiría.
+const QR_DE_PRUEBA = `data:image/svg+xml,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">' +
+    '<rect x="4" y="4" width="232" height="232" fill="white" stroke="black" stroke-width="8"/>' +
+    '<text x="120" y="128" font-family="sans-serif" font-size="24" text-anchor="middle">QR de prueba</text></svg>',
+)}`;
+
 const contenido = [
   "# Generado por scripts/env-local.mjs desde `supabase status`. Solo para el Supabase local.",
   `NEXT_PUBLIC_SUPABASE_URL=${estado.API_URL}`,
@@ -21,6 +29,13 @@ const contenido = [
   `MAILPIT_URL=${estado.MAILPIT_URL ?? "http://127.0.0.1:54324"}`,
   // El build de producción (`npm run start`, el que prueba CI) exige SITIO_URL para los enlaces de los correos.
   "SITIO_URL=http://localhost:3000",
+  // Pago por Llave (HU-018): valores de prueba para el build, la integración y la e2e. Los reales van en
+  // Vercel en el corte (docs/pendientes-dvarela.md §C).
+  "LLAVE_PLATAFORMA=3001234567",
+  "LLAVE_PLATAFORMA_TITULAR=Calibra (prueba)",
+  `LLAVE_PLATAFORMA_QR_URL=${QR_DE_PRUEBA}`,
+  "PROVEEDOR_NOMBRE=Calibra (prueba)",
+  "PROVEEDOR_DOCUMENTO=000000000",
   "",
 ].join("\n");
 

@@ -6,13 +6,16 @@ import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { esUuid } from "@/lib/agendar/reglas";
 import { cargarReserva, type Reserva } from "@/lib/agendar/servidor";
+import { tienePanel } from "@/lib/auth/roles";
 import { obtenerSesion } from "@/lib/auth/sesion";
 import { rutaDeMonitores } from "@/lib/disponibilidad/reglas";
 import { formatearHora } from "@/lib/fechas";
+import { leadDeLaSesion, type LeadDeSesion } from "@/lib/leads/servidor";
 import { dentroDePlazo } from "@/lib/plazos/motor";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import estilos from "../../agendar.module.css";
 import { ResumenDeCita } from "../../ResumenDeCita";
+import { PagoPorLlave } from "./PagoPorLlave";
 
 export const metadata: Metadata = { title: "Tu reserva · Calibra" };
 
@@ -21,7 +24,8 @@ const EYEBROW = "Tu reserva";
 /**
  * HU-017: la reserva recién apartada, solo para la sesión del Lead que la hizo (y su monitor o un admin,
  * por las políticas de `monitoria`). Dice hasta cuándo queda apartada (RN-34) y si ya no se podrá cancelar
- * (RN-37). El pago por Llave y el comprobante llegan aquí mismo con HU-018; la confirmación, con HU-019.
+ * (RN-37). Aquí mismo su Lead paga por Llave y adjunta el comprobante (HU-018, `PagoPorLlave`); la
+ * confirmación llega con HU-019.
  */
 export default async function ReservaApartada({ params }: PageProps<"/agendar/reserva/[id]">) {
   const { id } = await params;
@@ -31,8 +35,11 @@ export default async function ReservaApartada({ params }: PageProps<"/agendar/re
   if (!sesion || !supabase) notFound();
 
   let reserva: Reserva | null;
+  let lead: LeadDeSesion | null = null;
   try {
     reserva = await cargarReserva(supabase, id);
+    // HU-018: solo el Lead de la reserva paga; su monitor o un admin la ven como antes y no tienen Lead que buscar.
+    if (reserva && !tienePanel(sesion.rol)) lead = await leadDeLaSesion(sesion.idUsuario);
   } catch (error) {
     console.error("[agendar] no se pudo cargar la reserva:", error instanceof Error ? error.message : error);
     return (
@@ -47,9 +54,15 @@ export default async function ReservaApartada({ params }: PageProps<"/agendar/re
 
   const ahora = new Date();
   const { titulo, estado } = encabezado(reserva, ahora);
+  const quienPaga = lead?.id === reserva.idLead ? lead : null;
   return (
     <Pantalla eyebrow={EYEBROW} titulo={titulo}>
       {estado}
+      {quienPaga && reserva.estado === "confirmada" && (
+        <p role="status" className={formulario.ayuda}>
+          Recibimos tu comprobante de pago.
+        </p>
+      )}
       <ResumenDeCita
         cita={{
           nombreMateria: reserva.nombreMateria,
@@ -63,6 +76,16 @@ export default async function ReservaApartada({ params }: PageProps<"/agendar/re
       />
       {reserva.estado !== "cancelada" && reserva.estado !== "realizada" && !dentroDePlazo(reserva.cancelableHasta, ahora) && (
         <p className={estilos.nota}>Faltan menos de 12 horas: esta monitoría no se puede cancelar.</p>
+      )}
+      {quienPaga && reserva.estado === "pendiente_pago" && (
+        <PagoPorLlave
+          idMonitoria={reserva.id}
+          valorTotal={reserva.valorTotal}
+          reservaHasta={reserva.reservaHasta}
+          ahora={ahora}
+          idUsuario={sesion.idUsuario}
+          pagador={{ nombre: quienPaga.nombre, correo: quienPaga.correo ?? "" }}
+        />
       )}
       <div className={estilos.acciones}>
         <Link href={rutaDeMonitores(reserva.codigoMateria)} className={formulario.enlace}>

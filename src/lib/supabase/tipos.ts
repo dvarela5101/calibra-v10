@@ -908,6 +908,11 @@ isOneToOne: true
 "registrar_monitor":
 { Args: { "p_correo": string,"p_id_usuario": string,"p_llave": string,"p_nombre": string,"p_numero_telefono": string,"p_token_hash": string }; Returns: boolean
                            },
+"registrar_pago":
+{ Args: { "p_comprobante": string,"p_contacto": string,"p_id_monitoria": string,"p_nombre": string }; Returns: {
+              "id_pago": string,"resultado": string
+            }[]
+                           },
 "reporte_inasistencia_hasta":
 { Args: { "p_fin_programado": string }; Returns: string
                            },

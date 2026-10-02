@@ -426,6 +426,14 @@ export class Fixtures {
     return pago;
   }
 
+  /**
+   * Anota un pago que no creó `crearPagoDe` (lo creó `registrar_pago` de HU-018 con la sesión del Lead) para que
+   * `limpiar()` lo borre antes que su monitoría y su comprobante revisado.
+   */
+  registrarPago(id: string): void {
+    this.pagos.push(id);
+  }
+
   /** Un reembolso de un pago, con lo que cada estado exige (llave, referencia y fecha). */
   async crearReembolso(datos: { idPago: string; idAdmin: string; estado: "esperando_llave" | "pendiente" | "reembolsado" }) {
     const reembolso = exito(
