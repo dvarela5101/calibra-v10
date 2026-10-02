@@ -28,6 +28,7 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [x] **HU-070, correo seguro**: aprobada el 2-oct.
 - [x] **HU-018, pagar por Llave** (de Juzou04, [PR #28](https://github.com/dvarela5101/calibra-v10/pull/28)): aprobada el 2-oct tras la revisión. Sus supuestos siguen abiertos en A2.
 - [x] **HU-005, HU-051, HU-054, HU-069 y HU-071**: aprobadas el 2-oct.
+- [ ] **HU-019, confirmación de la cita:** `npm run test:integracion -- citas` y mira en http://127.0.0.1:54324 el correo "Tu monitoría de … está confirmada". Abre su enlace (`/cita?token=…`) y prueba "Mis citas" en el pie de página. En la nube sale con lo mismo que HU-051 (sección C). Sus textos para revisar están en A2.
 - [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
 ### A2. Decisiones de las HUs recientes
@@ -70,6 +71,12 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   - sin ningún admin activo, el pago se rechaza con un mensaje (la pantalla del equipo no deja desactivar al último);
   - quien transfirió pero llegó tarde solo ve «tu reserva expiró». Falta decidir qué se le dice y cómo se le devuelve el dinero;
   - con cualquier comprobante válido la cita se confirma y se avisa al monitor antes de que un admin lo revise (RN-38). Hasta HU-020, la revisión es solo posterior.
+- [ ] **Confirmación de la cita (HU-019): textos que puso Claude.** Recomendación: dejarlos así.
+  - En la página, el texto del pago dice «…te avisamos por correo.» (en el correo, «…a este correo», D-22), porque quien abre el enlace desde otro dispositivo no está «en este correo».
+  - Con el pago aprobado: «Tu pago está aprobado.»; con el pago rechazado y la cita aún confirmada: «No pudimos verificar tu pago.», sin lugar ni enlace.
+  - Si alguien agenda cuando ya pasó el plazo para cancelar, el correo dice «No podrás cancelarla: cuando la agendaste ya había pasado el plazo para hacerlo.» No nombra las 12 horas: los plazos no se escriben fijos en los correos (viven en la base).
+  - El enlace de la videollamada se muestra como «Abrir la videollamada», no la dirección completa.
+  - Los motivos de cancelación y el estado del reembolso en palabras (por ejemplo, «Vamos a devolverte el dinero. Te escribimos al correo del pago para pedirte la llave.») son una primera versión; HU-024 y HU-025 los ajustan.
 - [ ] **Correo que ya tiene cuenta (HU-013).** Si invitas a un correo que ya tiene cuenta de Calibra (por ejemplo, de estudiante), hoy el registro no la convierte en monitor y le pide escribir al equipo. Confirma que así está bien, o pide que se pueda convertir.
 
 ### A3. Preparar la cuenta de Gmail (para HU-066)

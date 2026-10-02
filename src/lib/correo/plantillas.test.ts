@@ -32,15 +32,28 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
     inicio: "2020-01-13T15:00:00.000Z",
     enlace: "https://calibra.example/monitor/agenda",
   },
+  confirmacion_cita: {
+    nombre: "Ana",
+    nombreMonitor: "Camilo Rojas",
+    materia: "Cálculo Integral",
+    inicio: "2020-01-13T15:00:00.000Z",
+    duracionMin: 90,
+    presencial: true,
+    valorTotal: 25_000,
+    lugar: "Edificio Principal, salón 301",
+    enlaceSesion: null,
+    cancelableHasta: "2020-01-13T03:00:00.000Z",
+    enlace: "https://calibra.example/cita?token=abc123",
+  },
 };
 
 const render = <P extends Plantilla>(plantilla: P, cambios: Partial<DatosPorPlantilla[P]> = {}) =>
   renderizar(plantilla, { ...EJEMPLOS[plantilla], ...cambios });
 
 describe("las plantillas de correo", () => {
-  it("son las que salen por correo: diagnóstico, reseña, llave, dos rechazos, escalamiento, invitación de monitor, verificación del correo del Lead y dos avisos al monitor", () => {
+  it("son las que salen por correo: diagnóstico, reseña, llave, dos rechazos, escalamiento, invitación de monitor, verificación del correo del Lead, dos avisos al monitor y la confirmación de la cita", () => {
     expect([...PLANTILLAS].sort()).toEqual(Object.keys(EJEMPLOS).sort());
-    expect(PLANTILLAS).toHaveLength(10);
+    expect(PLANTILLAS).toHaveLength(11);
   });
 
   it.each(PLANTILLAS)("%s sale en español con HTML y texto plano", (plantilla) => {
@@ -179,6 +192,126 @@ describe("avisos al monitor (HU-051, D-16)", () => {
     expect(() => render("aviso_monitor_cancelada", { inicio: "" })).toThrow(RangeError);
     expect(() => render("aviso_monitor_confirmada", { duracionMin: 0 })).toThrow(RangeError);
     expect(() => render("aviso_monitor_confirmada", { duracionMin: 1.5 })).toThrow(RangeError);
+  });
+});
+
+describe("confirmación de la cita (HU-019, P-04, D-19 a D-23)", () => {
+  const plano = (plantilla: Plantilla, cambios: Partial<DatosPorPlantilla[typeof plantilla]> = {}) =>
+    render(plantilla, cambios).texto.replace(/[  ]/g, " ");
+
+  it("dice qué monitoría es: asunto con la materia, el monitor, la fecha y hora en Bogotá, duración, materia, modalidad y valor", () => {
+    const { asunto } = render("confirmacion_cita");
+    expect(asunto).toBe("Tu monitoría de Cálculo Integral está confirmada");
+    const texto = plano("confirmacion_cita");
+    expect(texto).toContain("Hola, Ana.");
+    expect(texto).toContain("Tu monitoría con Camilo Rojas quedó confirmada.");
+    // 15:00 UTC son las 10:00 a. m. en Bogotá.
+    expect(texto).toContain("Cuándo: lunes, 13 de enero de 2020, 10:00 a. m.");
+    expect(texto).toContain("Duración: 90 minutos.");
+    expect(texto).toContain("Materia: Cálculo Integral.");
+    expect(texto).toContain("Modalidad: presencial.");
+    expect(texto).toContain("Valor: $ 25.000.");
+  });
+
+  it("lleva el enlace de gestión en el botón y como texto para copiar, y dice que es solo del Lead", () => {
+    const { html, texto } = render("confirmacion_cita");
+    expect(html).toContain('href="https://calibra.example/cita?token=abc123"');
+    expect(texto).toContain("Ver o gestionar mi cita: https://calibra.example/cita?token=abc123");
+    expect(texto).toContain("Este enlace es solo tuyo. No lo compartas.");
+  });
+
+  it("una presencial trae el lugar (D-5) y no el enlace de la videollamada", () => {
+    const texto = plano("confirmacion_cita");
+    expect(texto).toContain("Lugar: Edificio Principal, salón 301.");
+    expect(texto).not.toContain("videollamada");
+    // Aunque el dato traiga un enlace, una presencial no lo muestra.
+    expect(plano("confirmacion_cita", { enlaceSesion: "https://meet.example/abc" })).not.toContain("meet.example");
+  });
+
+  it("una virtual trae el enlace de la videollamada y no el lugar", () => {
+    const texto = plano("confirmacion_cita", { presencial: false, lugar: null, enlaceSesion: "https://meet.example/abc-def" });
+    expect(texto).toContain("Modalidad: virtual.");
+    expect(texto).toContain("Enlace de la videollamada: https://meet.example/abc-def");
+    expect(texto).not.toContain("Lugar:");
+    expect(plano("confirmacion_cita", { presencial: false, lugar: "Edificio Principal", enlaceSesion: null })).not.toContain("Edificio Principal");
+  });
+
+  it("sin lugar o sin enlace no inventa la línea: el dato puede faltar", () => {
+    expect(plano("confirmacion_cita", { lugar: null })).not.toContain("Lugar:");
+    expect(plano("confirmacion_cita", { presencial: false, enlaceSesion: null })).not.toContain("videollamada");
+  });
+
+  it("dice hasta cuándo se puede cancelar, y si ya no se podía al confirmar lo dice sin escribir un plazo", () => {
+    // 03:00 UTC son las 10:00 p. m. del día anterior en Bogotá.
+    expect(plano("confirmacion_cita")).toContain("Puedes cancelarla hasta el domingo, 12 de enero de 2020, 10:00 p. m.");
+    const sin = plano("confirmacion_cita", { cancelableHasta: null });
+    expect(sin).toContain("No podrás cancelarla: cuando la agendaste ya había pasado el plazo para hacerlo.");
+    expect(sin).not.toContain("Puedes cancelarla");
+  });
+
+  it("del pago dice lo que fija D-22: se recibió el comprobante y un admin lo revisa, sin prometer que está aprobado", () => {
+    const texto = plano("confirmacion_cita");
+    expect(texto).toContain("Recibimos tu comprobante. Un admin lo revisa y, si hay algún problema, te avisamos a este correo.");
+    expect(texto).not.toMatch(/aprobad/i);
+  });
+
+  it("dice que la página siempre muestra el lugar o el enlace actual (D-23)", () => {
+    expect(plano("confirmacion_cita")).toContain("Si el lugar o el enlace cambian, la página de tu monitoría siempre muestra el dato actual.");
+  });
+
+  it("no lleva comisión ni el contacto del monitor ni del Lead: sus datos no los incluyen (P-37, P-32)", () => {
+    expect(Object.keys(EJEMPLOS.confirmacion_cita).filter((campo) => /comisi|correo|telefono|contacto|neto/i.test(campo))).toEqual([]);
+    const { asunto, html, texto } = render("confirmacion_cita");
+    for (const contenido of [asunto, html, texto]) expect(contenido).not.toMatch(/comisi|neto/i);
+  });
+
+  it("no lee el reloj: el mismo dato da el mismo cuerpo hoy y dentro de un año (la Idempotency-Key lo exige)", () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2020-01-01T00:00:00Z"));
+      const antes = render("confirmacion_cita");
+      vi.setSystemTime(new Date("2021-01-01T00:00:00Z"));
+      expect(render("confirmacion_cita")).toEqual(antes);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("escapa en el HTML lo que viene de fuera: nombres, materia y lugar", () => {
+    const nombre = '<img src=x onerror="alert(1)">';
+    const { html, texto } = render("confirmacion_cita", { nombre, nombreMonitor: "<b>Camilo</b>", lugar: "Salón <script>" });
+    expect(html).not.toContain("<img");
+    expect(html).not.toContain("<b>");
+    expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;img src=x onerror=&quot;alert(1)&quot;&gt;");
+    expect(texto).toContain(`Hola, ${nombre}.`);
+  });
+
+  it("un salto de línea en la materia no parte el asunto ni cuela una cabecera", () => {
+    const salto = String.fromCharCode(13, 10);
+    const { asunto } = render("confirmacion_cita", { materia: `Cálculo${salto}Bcc: alguien@otro.co` });
+    expect(asunto).not.toMatch(/[\r\n]/);
+    expect(asunto).toBe("Tu monitoría de Cálculo Bcc: alguien@otro.co está confirmada");
+  });
+
+  it("un enlace de videollamada que no es https o un enlace de gestión peligroso fallan en vez de armar el correo", () => {
+    expect(() => render("confirmacion_cita", { presencial: false, enlaceSesion: "javascript:alert(1)" })).toThrow(RangeError);
+    expect(() => render("confirmacion_cita", { enlace: "javascript:alert(1)" })).toThrow(RangeError);
+  });
+
+  it.each([
+    ["nombre", { nombre: "  " }],
+    ["nombreMonitor", { nombreMonitor: "" }],
+    ["materia", { materia: " \n " }],
+    ["lugar", { lugar: "   " }],
+    ["inicio", { inicio: "mañana" }],
+    ["cancelableHasta", { cancelableHasta: "pronto" }],
+    ["duracionMin", { duracionMin: 0 }],
+    ["duracionMin", { duracionMin: 1.5 }],
+    ["valorTotal", { valorTotal: -1 }],
+    ["valorTotal", { valorTotal: 25_000.5 }],
+  ] as const)("%s inválido es un error de quien llama, no un correo con hueco", (_campo, cambios) => {
+    expect(() => render("confirmacion_cita", cambios)).toThrow(RangeError);
   });
 });
 

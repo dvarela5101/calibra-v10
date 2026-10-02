@@ -207,6 +207,18 @@ HU-035 (RN-70, RN-72, D-17): cuando una monitoría individual pasa a `realizada`
 - El token se guarda en claro en `invitacion_resena`, y la tabla solo la lee `service_role`. Así el reintento puede mandar el mismo enlace sin rotarlo. Solo sirve para dejar una reseña.
 - La página lee con `public.resena_por_token` y guarda con `public.registrar_resena`, las dos solo para `service_role`. `registrar_resena` bloquea el pago y vuelve a revisar todo, así que dos envíos a la vez dejan una sola reseña. `resena` tiene los `check` de D-17.
 
+## Cita confirmada y enlace de gestión
+
+HU-019 (P-04, D-19 a D-25): cuando una monitoría individual pasa de `pendiente_pago` a `confirmada` (al subir el comprobante, HU-018), el Lead recibe un correo con el resumen de la cita y un enlace para verla y gestionarla. El correo va al Lead; si no tiene correo, al contacto del primer pago (D-19).
+
+- El trigger `monitoria_anota_confirmacion_cita` (`privado.anotar_confirmacion_cita`, definer) anota la confirmación en `public.confirmacion_cita`, una por monitoría, con su token. Solo individuales y solo esa transición. Una monitoría insertada ya `confirmada` no dispara nada: las pruebas la crean `pendiente_pago` y la confirman con un `UPDATE`.
+- Se manda como los avisos al monitor y la reseña: `privado.disparar_confirmaciones_cita()` hace un `POST` con pg_net a `/api/procesos/confirmar-citas` (mismos secretos de Vault), y pg_cron lo repite cada 5 minutos si quedan pendientes. El correo no sale si la cita ya no está confirmada o ya empezó. Plantilla `confirmacion_cita`, entidad = id de la monitoría; HU-065 lo reintenta con el mismo enlace.
+- El token se guarda tal cual y no vence mientras exista la cita (D-20): sirve para ver la cita y, con HU-024 y HU-029, para cancelarla y reportar inasistencia. Abrirlo no liga el navegador al Lead.
+- `/cita?token=…` muestra la cita (`public.cita_por_token`, solo `service_role`). Sin token, `/cita` lista las citas del navegador (`public.mis_citas`) y `/cita/[id]` abre una (`public.mi_cita`), las dos con la sesión del Lead (`privado.es_mi_lead`). Las rutas van fuera de `(publico)`: abrir el enlace no crea una sesión anónima. Llevan `noindex` y `no-referrer`.
+- El lugar de la presencial o el enlace de la virtual solo salen con la cita confirmada, aunque el pago siga en revisión (D-21). Si el pago se rechaza, o la cita terminó, se cancela o se realiza, dejan de mostrarse.
+- La página dice hasta cuándo se puede cancelar, sin botón: cancelar llega con HU-024 (D-25). `src/lib/citas/reglas.ts` (`vistaDeCita`) decide los textos de cada estado.
+- "Mis citas" está en el pie de página y en la reserva confirmada ("Ver y gestionar mi cita").
+
 ## Franjas del monitor
 
 `/monitor/franjas` (HU-015): el monitor certificado abre franjas semanales (día, hora, duración, precio y modalidad, con lugar o enlace de videollamada), las edita y las cierra desde una fecha. Las reglas (P-30, P-31) las aplica el trigger `privado.validar_franja_del_monitor` a toda escritura que no sea de confianza, y `src/lib/franjas/reglas.ts` da los mismos mensajes antes de ir a la base.
@@ -236,6 +248,7 @@ Los comprobantes van en el bucket privado `comprobantes` de Supabase Storage (HU
 | --- | --- | --- |
 | `recuperacion_diagnostico` | Diagnóstico completado: enlace con token para recuperar los resultados | Lead |
 | `resena_individual` | Monitoría individual realizada: enlace a la reseña, sin límite de tiempo | Lead |
+| `confirmacion_cita` | Monitoría individual confirmada: resumen y enlace para gestionar la cita (HU-019) | Lead |
 | `solicitud_llave_reembolso` | Reembolso creado: se pide la llave para devolver el dinero | Pagador |
 | `pago_rechazado_individual` | Pago rechazado en una individual: la cita se cancela | Pagador |
 | `pago_rechazado_grupal` | Pago rechazado en una grupal: se anula ese cupo | Pagador |

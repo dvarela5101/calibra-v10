@@ -206,6 +206,7 @@ function reconstructoresCon(cambios: Partial<Reconstructores> = {}): Reconstruct
     aviso_monitor_cancelada: null,
     invitacion_monitor: null,
     verificacion_lead: null,
+    confirmacion_cita: null,
     ...cambios,
   };
 }
