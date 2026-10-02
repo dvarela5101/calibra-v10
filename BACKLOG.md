@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-02 11:25. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-02 11:40. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -45,9 +45,7 @@ _Generado automaticamente: 2026-10-02 11:25. No editar a mano; usa `scripts/back
 | [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | Lista | P2 | S | HU-004 |
 | [HU-020](backlog/HU-020.md) | [Admin] Revisar pagos: aprobar o rechazar | En progreso | P0 | L | HU-012, HU-018, HU-006 |
 | [HU-074](backlog/HU-074.md) | [Técnica] Reasignar los pagos en revisión de un admin que se desactiva | En progreso | P1 | S | HU-054, HU-018 |
-| [HU-019](backlog/HU-019.md) | [Lead] Recibir la confirmación de mi cita con un enlace para gestionarla | En revision | P0 | M | HU-018, HU-006 |
 | [HU-027](backlog/HU-027.md) | [Sistema] Expirar reservas sin comprobante a los 10 minutos | En revision | P0 | S | HU-017 |
-| [HU-073](backlog/HU-073.md) | [Lead] Decir en el aviso de privacidad que guardamos la calificación y el comentario de cada monitoría | En revision | P2 | XS | HU-035, HU-008 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
@@ -63,6 +61,7 @@ _Generado automaticamente: 2026-10-02 11:25. No editar a mano; usa `scripts/back
 | [HU-016](backlog/HU-016.md) | [Lead] Ver los monitores certificados de una materia y sus fechas libres | Hecha | P0 | M | HU-014, HU-015 |
 | [HU-017](backlog/HU-017.md) | [Lead] Agendar una monitoría individual | Hecha | P0 | L | HU-016, HU-068, HU-003 |
 | [HU-018](backlog/HU-018.md) | [Lead] Pagar por Llave y adjuntar el comprobante | Hecha | P0 | L | HU-017, HU-007 |
+| [HU-019](backlog/HU-019.md) | [Lead] Recibir la confirmación de mi cita con un enlace para gestionarla | Hecha | P0 | M | HU-018, HU-006 |
 | [HU-021](backlog/HU-021.md) | [Monitor] Ver mi agenda de monitorías | Hecha | P0 | M | HU-015, HU-017 |
 | [HU-023](backlog/HU-023.md) | [Monitor] Finalizar una sesión | Hecha | P0 | S | HU-021 |
 | [HU-051](backlog/HU-051.md) | [Monitor] Recibir avisos de nuevas monitorías y cancelaciones | Hecha | P0 | S | HU-021, HU-006 |
@@ -79,3 +78,4 @@ _Generado automaticamente: 2026-10-02 11:25. No editar a mano; usa `scripts/back
 | [HU-059](backlog/HU-059.md) | [Técnica] Endurecer los comprobantes: contenido real, huérfanos y cuota por sesión | Hecha | P2 | S | HU-007 |
 | [HU-070](backlog/HU-070.md) | [Técnica] Endurecer esCorreo: dominio solo con letras, dígitos, puntos y guiones | Hecha | P2 | S | HU-006 |
 | [HU-071](backlog/HU-071.md) | [Técnica] Página de no encontrado (404) en español | Hecha | P2 | XS |  |
+| [HU-073](backlog/HU-073.md) | [Lead] Decir en el aviso de privacidad que guardamos la calificación y el comentario de cada monitoría | Hecha | P2 | XS | HU-035, HU-008 |
