@@ -1,17 +1,29 @@
 import { protocoloAdmitido } from "./html";
 
 /**
- * ¿Es esto un correo? Sirve para decidir si un contacto (que puede ser un correo o un teléfono,
- * RN-44) admite un mensaje por correo. Es deliberadamente simple: una sola arroba, sin espacios,
- * saltos de línea, comas, comillas ni paréntesis (nada que abra la puerta a inyectar destinatarios
- * o cabeceras) y un punto en el dominio. La entrega real la confirma el proveedor.
+ * La regla de correo de todo Calibra (HU-070). Antes de la arroba, solo letras, dígitos y `. _ % + ' -`; después,
+ * etiquetas de letras, dígitos y guiones separadas por puntos, con al menos un punto y ninguna vacía (`a@x..co` y
+ * `a@.x.co` no valen). Es estricta a propósito: un `?`, `&`, `=`, `#` o `/` en un correo, puesto en un enlace
+ * `mailto:`, se lee como copia oculta, cuerpo del mensaje u otro destinatario, y en una cabecera abre la puerta a
+ * inyectar destinatarios. Quedan fuera las direcciones válidas pero raras (con `!`, `&`, `*`...) y las de dominio
+ * con tildes o ñ. La base exige lo mismo con `privado.es_correo_seguro()`, la misma expresión: `contacto.test.ts`
+ * comprueba que no se separen.
+ *
+ * Mayúsculas y minúsculas valen igual: quien guarda un correo (Leads, invitaciones, solicitudes) lo pasa antes a
+ * minúsculas y la base lo exige aparte en esas tablas, pero `enviarCorreo` y `CORREO_DATOS_PERSONALES` validan el
+ * texto tal como llega, y `ANA@Uniandes.EDU.CO` es una dirección real.
  */
-const CORREO = /^[^\s@<>()[\]\\,;:"]+@[^\s@<>()[\]\\,;:"]+\.[^\s@<>()[\]\\,;:"]+$/;
+export const PATRON_DE_CORREO = /^[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$/;
 
-const LARGO_MAXIMO = 254;
+export const LARGO_MAXIMO = 254;
 
+/**
+ * ¿Es esto un correo? Sirve para decidir si un contacto (que puede ser un correo o un teléfono, RN-44) admite un
+ * mensaje por correo. No recorta nada: un espacio o un salto de línea de más lo vuelve inválido. La entrega real la
+ * confirma el proveedor.
+ */
 export function esCorreo(valor: string): boolean {
-  return valor.length <= LARGO_MAXIMO && CORREO.test(valor);
+  return valor.length <= LARGO_MAXIMO && PATRON_DE_CORREO.test(valor);
 }
 
 /**

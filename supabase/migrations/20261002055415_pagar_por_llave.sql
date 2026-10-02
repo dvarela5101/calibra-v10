@@ -122,12 +122,11 @@ begin
   end if;
 
   -- RN-44 y supuesto 3: el nombre con el largo de solicitud_monitor (1 a 120) y el contacto, un correo que el
-  -- servidor ya normalizó (minúsculas, sin espacios), con la misma forma y largo que solicitud_monitor_correo.
+  -- servidor ya normalizó (minúsculas, sin espacios) y que cumple la regla de correo de todo Calibra (HU-070).
   if v_nombre is null
      or char_length(v_nombre) not between 1 and 120
-     or p_contacto is null
-     or char_length(p_contacto) > 254
-     or p_contacto !~ '^[a-z0-9._%+''-]+@[a-z0-9-]+(\.[a-z0-9-]+)+$' then
+     or not privado.es_correo_seguro(p_contacto)
+     or p_contacto <> lower(p_contacto) then
     resultado := 'datos_invalidos';
     return next;
     return;

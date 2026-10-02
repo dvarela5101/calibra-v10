@@ -24,6 +24,8 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [x] **HU-014, certificar monitores** ([PR #13](https://github.com/dvarela5101/calibra-v10/pull/13)): aprobada el 30-sep.
 - [x] **HU-068, contacto al agendar.** Aprobada el 30-sep. Las decisiones que quedaron abiertas están en A2.
 - [x] **HU-016, HU-017, HU-021, HU-023, HU-059, HU-062 y HU-067**: aprobadas entre el 30-sep y el 1-oct.
+- [x] **HU-035, reseña desde el correo**: aprobada el 2-oct. Sus decisiones siguen en A2.
+- [x] **HU-070, correo seguro**: aprobada el 2-oct.
 - [ ] **Por aprobar (sacadas el 1-oct en la noche):**
   - [HU-069](../backlog/HU-069.md): abre `/privacidad` (sección "Si eres monitor" y la fecha de actualización) y un enlace de invitación de monitor (ayuda junto al nombre).
   - [HU-071](../backlog/HU-071.md): abre cualquier ruta que no exista, por ejemplo `/algo`.
@@ -51,6 +53,13 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [ ] **Contacto al agendar (HU-068): teléfono sin indicativo.** Si alguien escribe el teléfono sin "+", se guarda con el de Colombia (+57). Recomendación: dejarlo así.
 - [ ] **Contacto al agendar (HU-068): origen del contacto.** Si alguien llega por un enlace de campaña (`?utm_campaign=...`), el contacto guarda la última campaña con la que llegó en los últimos 30 días. Recomendación: dejarlo así. Para tus campañas, usa enlaces con `utm_campaign`.
 - [x] **Monitores y fechas libres (HU-016).** Decidido el 30-sep (D-4 a D-6 en `REVISION_REGLAS.md` §4): todo como se recomendó. 4 semanas; sin fechas libres o desactivado no aparece; orden por la fecha más próxima y luego por nombre; enlace desde el inicio; solo "Presencial", sin lugar; el nombre como lo registró, y el aviso de privacidad lo cubre [HU-069](../backlog/HU-069.md).
+- [ ] **Reseña individual (HU-035).** Recomendación para cada punto:
+  - el comentario admite hasta 1000 caracteres;
+  - la reseña la deja quien tenga el enlace del correo, sin iniciar sesión (RN-72), y el enlace no vence;
+  - el aviso de privacidad todavía no menciona las reseñas: queda en [HU-073](../backlog/HU-073.md) (Backlog), con el texto que te propongo.
+
+  Confirma o dime qué cambiar.
+- [x] **Correo seguro (HU-070): qué correos se rechazan.** Antes de la arroba solo se aceptan letras, dígitos y `. _ % + ' -`. Quedan fuera direcciones válidas pero raras, con `!`, `&`, `*` o `/`, y las de dominio con tildes o ñ. Recomendación: dejarlo así; nadie en una universidad colombiana usa esas direcciones. **Aceptado el 2-oct.**
 - [ ] **Correo que ya tiene cuenta (HU-013).** Si invitas a un correo que ya tiene cuenta de Calibra (por ejemplo, de estudiante), hoy el registro no la convierte en monitor y le pide escribir al equipo. Confirma que así está bien, o pide que se pueda convertir.
 
 ### A3. Preparar la cuenta de Gmail (para HU-066)

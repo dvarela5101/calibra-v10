@@ -1,3 +1,4 @@
+import { esCorreo } from "@/lib/correo/contacto";
 import { normalizarCorreo } from "@/lib/leads/reglas";
 
 /**
@@ -59,14 +60,6 @@ export function mensajeDeRegistroPago(resultado: ResultadoRegistroPago, correoDe
 
 export const LARGO_MAXIMO_NOMBRE_PAGADOR = 120;
 
-/**
- * Además de ser un correo (`normalizarCorreo`), solo letras, dígitos y . _ % + ' - antes de la arroba y un
- * dominio de letras, dígitos, guiones y puntos: es lo que exige `registrar_pago` al contacto (la misma regla
- * que `solicitud_monitor_correo`, para que el enlace mailto: del admin no lea parámetros). Si aquí se
- * aceptara algo más, la base respondería `datos_invalidos` con un mensaje menos claro.
- */
-const CORREO_SEGURO = /^[a-z0-9._%+'-]+@[a-z0-9-]+(\.[a-z0-9-]+)+$/;
-
 const MENSAJE_CORREO = "Escribe un correo válido, por ejemplo ana@uniandes.edu.co.";
 
 /** Texto de una sola línea, sin espacios de sobra. */
@@ -84,8 +77,10 @@ export function validarPagador(valores: { nombre: unknown; correo: unknown }): L
   if (!nombre) return { ok: false, mensaje: "Escribe tu nombre." };
   if (nombre.length > LARGO_MAXIMO_NOMBRE_PAGADOR) return { ok: false, mensaje: "Tu nombre es demasiado largo." };
 
+  // La regla de correo de todo Calibra (HU-070, `esCorreo`), la misma que exige `registrar_pago` con
+  // `privado.es_correo_seguro()`: si aquí se aceptara algo más, la base respondería `datos_invalidos`.
   const correo = normalizarCorreo(typeof valores.correo === "string" ? valores.correo : "");
-  if (!correo || !CORREO_SEGURO.test(correo)) return { ok: false, mensaje: MENSAJE_CORREO };
+  if (!correo || !esCorreo(correo)) return { ok: false, mensaje: MENSAJE_CORREO };
 
   return { ok: true, nombre, correo };
 }
