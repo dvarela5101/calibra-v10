@@ -37,7 +37,6 @@ _Generado automaticamente: 2026-10-02 01:36. No editar a mano; usa `scripts/back
 | [HU-072](backlog/HU-072.md) | [Admin] Agregar un admin al equipo por invitación | Backlog | P2 | S | HU-054 |
 | [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | Backlog | P3 | S | HU-010 |
 | [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | Lista | P0 | M | HU-009, HU-008, HU-068 |
-| [HU-019](backlog/HU-019.md) | [Lead] Recibir la confirmación de mi cita con un enlace para gestionarla | Lista | P0 | M | HU-018, HU-006 |
 | [HU-020](backlog/HU-020.md) | [Admin] Revisar pagos: aprobar o rechazar | Lista | P0 | L | HU-012, HU-018, HU-006 |
 | [HU-024](backlog/HU-024.md) | [Lead] Cancelar mi monitoría individual hasta 12 h antes | Lista | P0 | M | HU-019, HU-003 |
 | [HU-025](backlog/HU-025.md) | [Pagador] Entregar mi llave para recibir un reembolso | Lista | P0 | M | HU-024, HU-006 |
@@ -46,8 +45,9 @@ _Generado automaticamente: 2026-10-02 01:36. No editar a mano; usa `scripts/back
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | Lista | P0 | M | HU-019 |
 | [HU-074](backlog/HU-074.md) | [Técnica] Reasignar los pagos en revisión de un admin que se desactiva | Lista | P1 | S | HU-054, HU-018 |
 | [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | Lista | P2 | S | HU-004 |
-| [HU-073](backlog/HU-073.md) | [Lead] Decir en el aviso de privacidad que guardamos la calificación y el comentario de cada monitoría | Lista | P2 | XS | HU-035, HU-008 |
+| [HU-019](backlog/HU-019.md) | [Lead] Recibir la confirmación de mi cita con un enlace para gestionarla | En progreso | P0 | M | HU-018, HU-006 |
 | [HU-027](backlog/HU-027.md) | [Sistema] Expirar reservas sin comprobante a los 10 minutos | En progreso | P0 | S | HU-017 |
+| [HU-073](backlog/HU-073.md) | [Lead] Decir en el aviso de privacidad que guardamos la calificación y el comentario de cada monitoría | En progreso | P2 | XS | HU-035, HU-008 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
