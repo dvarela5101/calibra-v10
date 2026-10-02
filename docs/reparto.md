@@ -1,6 +1,21 @@
 # Reparto de trabajo
 
-**Actualizado:** 1 de octubre de 2026 (ver "Actualización del 1-oct-2026"; lo de abajo es el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+**Actualizado:** 2 de octubre de 2026 (ver "Actualización del 2-oct-2026"; después vienen la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+
+## Actualización del 2-oct-2026
+
+- **Hecha:** HU-018 (Juzou04), HU-035, HU-070, HU-005, HU-051, HU-054, HU-069 y HU-071. Con HU-018 se desbloquean HU-019, HU-020 y HU-027.
+- Las decisiones D-19 a D-35 (`REVISION_REGLAS.md` §4) resuelven las preguntas de HU-019, HU-024 y HU-058, pasan HU-073 y HU-074 a Lista y crean HU-075 (Backlog).
+
+| Persona | Siguiente, en orden |
+|---|---|
+| dvarela5101 | [HU-073](../backlog/HU-073.md) (aviso de privacidad: reseñas y Cloudflare, XS), [HU-019](../backlog/HU-019.md) (confirmación de la cita), [HU-024](../backlog/HU-024.md) (cancelar), [HU-025](../backlog/HU-025.md) (llave del reembolso), [HU-029](../backlog/HU-029.md) (reportar inasistencia) y [HU-058](../backlog/HU-058.md) (CAPTCHA, D-33) |
+| Juzou04 | [HU-027](../backlog/HU-027.md) (expirar reservas), [HU-020](../backlog/HU-020.md) (revisar pagos) y después [HU-074](../backlog/HU-074.md) (pagos de un admin desactivado). Propuesta: confirmar con Juzou04 |
+
+Posibles choques:
+- **HU-019 y HU-020:** rechazar un pago cancela la cita (RN-43) y puede pasar después de que salió la confirmación. HU-020 debe aprobar y rechazar sin error una cita que el estudiante ya canceló (HU-024), y solo cambiar el estado y la fecha de revisión del pago.
+- **HU-024 y HU-020:** el reembolso de una cancelación con el pago aún en revisión se crea cuando el admin lo aprueba (P-07). HU-024 lo hace con un trigger sobre `pago`.
+- **HU-058:** cambia la sesión anónima, los formularios de cuentas y las utilidades de prueba. Al fusionarla, cada persona reinicia su Supabase local (`npm run db:detener` y `npm run db:iniciar`).
 
 ## Actualización del 1-oct-2026
 

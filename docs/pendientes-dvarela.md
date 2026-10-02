@@ -26,6 +26,7 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [x] **HU-016, HU-017, HU-021, HU-023, HU-059, HU-062 y HU-067**: aprobadas entre el 30-sep y el 1-oct.
 - [x] **HU-035, reseña desde el correo**: aprobada el 2-oct. Sus decisiones siguen en A2.
 - [x] **HU-070, correo seguro**: aprobada el 2-oct.
+- [x] **HU-018, pagar por Llave** (de Juzou04, [PR #28](https://github.com/dvarela5101/calibra-v10/pull/28)): aprobada el 2-oct tras la revisión. Sus supuestos siguen abiertos en A2.
 - [x] **HU-005, HU-051, HU-054, HU-069 y HU-071**: aprobadas el 2-oct.
 - [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
@@ -34,7 +35,7 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [ ] **Texto del aviso de privacidad (HU-008).** Además de lo que pide la HU, el aviso menciona los datos del pagador y el comprobante, el uso para revisar pagos y tramitar reembolsos, y los correos sobre citas y pagos. Salen del modelo de datos, pero no estaban escritos como regla. Confirma que quedan o dime qué quitar.
 - [ ] **Franjas (HU-015): certificado para abrir franjas.** Un monitor sin certificado no puede abrir franjas: nadie podría agendarle, porque la monitoría exige una materia certificada. Sale del orden del flujo F2, no de una regla escrita. Recomendación: dejarlo así.
 - [ ] **Franjas (HU-015): cambiar el horario.** P-30 dice que no se cambian día, hora ni duración con reservas **futuras**. Hoy tampoco se cambian si la franja tiene monitorías **pasadas** (no canceladas): los plazos de cada monitoría (inicio, fin, ventana de reporte, desembolso) se calculan con el horario actual de la franja, y cambiarlo reescribiría el historial. Para otro horario se cierra la franja y se abre otra. Recomendación: dejarlo así. La otra opción es guardar hora y duración en cada monitoría, como el precio.
-- [ ] **Franjas (HU-015): cambiar entre presencial y virtual.** Con monitorías futuras no se puede (el estudiante agendó una modalidad). El lugar y el enlace sí se corrigen, pero hoy nadie avisa al estudiante del cambio. Recomendación: dejarlo así y avisar cuando exista el correo de la cita (HU-019).
+- [x] **Franjas (HU-015): cambiar entre presencial y virtual.** Con monitorías futuras no se puede (el estudiante agendó una modalidad). El lugar y el enlace sí se corrigen, pero hoy nadie avisa al estudiante del cambio. Recomendación: dejarlo así y avisar cuando exista el correo de la cita (HU-019). **Decidido el 2-oct (D-23):** sin aviso por correo por ahora; la página de la cita (HU-019) siempre muestra el dato actual.
 - [ ] **Franjas (HU-015): una franja cerrada es definitiva.** Cuando llega su fecha de cierre ya no se edita ni se reabre; para volver a ofrecer ese horario se abre otra. Un cierre programado para más adelante sí se puede mover. Recomendación: dejarlo así.
 - [x] **Franjas (HU-015): cuándo ve el estudiante el lugar y el enlace.** Hoy nadie fuera del monitor los ve: con el enlace a la vista, cualquiera entraría a una sesión pagada. Recomendación: el enlace solo en la cita confirmada (HU-019). El lugar de una presencial se podría mostrar antes, al elegir la franja (HU-016), porque ayuda a decidir. Dime si el lugar se muestra al agendar. **Decidido el 30-sep (D-5):** el lugar tampoco se muestra antes de agendar; llega con la cita confirmada.
 - [ ] **Contacto al agendar (HU-068): detalles del enlace para confirmar el correo.** Cuando alguien escribe un correo que ya es de otro contacto, le mandamos un enlace a ese correo (P-23). Recomendación para cada punto:
@@ -56,6 +57,19 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 
   Confirma o dime qué cambiar.
 - [x] **Correo seguro (HU-070): qué correos se rechazan.** Antes de la arroba solo se aceptan letras, dígitos y `. _ % + ' -`. Quedan fuera direcciones válidas pero raras, con `!`, `&`, `*` o `/`, y las de dominio con tildes o ñ. Recomendación: dejarlo así; nadie en una universidad colombiana usa esas direcciones. **Aceptado el 2-oct.**
+- [x] **Agendar, confirmar, cancelar y CAPTCHA (HU-019, HU-024, HU-058, HU-073, HU-074).** Decidido el 2-oct en la hoja de decisiones: D-19 a D-35 en `REVISION_REGLAS.md` §4.
+- [ ] **Cancelar (HU-024): el correo de cancelación (D-27).** Pediste que el Lead reciba un correo al cancelar, que pida la llave si hay reembolso y que, si no, explique por qué. Faltan dos cosas:
+  - quién lo construye. Recomendación: HU-024, con el enlace a la página de la llave que hace HU-025 justo después;
+  - cuándo aplica «no hay reembolso». Hoy el Lead no puede cancelar fuera de plazo (RN-60; los casos extremos los resuelve un admin, HU-052). Dentro del plazo, el único caso sin reembolso inmediato es el pago aún en revisión: el reembolso se crea si el admin lo aprueba (P-07). Recomendación: mantener RN-60. Dejar cancelar fuera de plazo sin reembolso cambiaría esa regla.
+- [ ] **Tope de correos por sesión (HU-075).** Para pasarla a Lista falta el tope y la ventana. Recomendación: 5 correos distintos por sesión cada hora.
+- [ ] **Pagar por Llave (HU-018): lo que dejó Juzou04.** Las recomendaciones son las suyas:
+  - la llave, su titular y la imagen del QR van como variables de Vercel (sección C). Tendrás que subir la imagen del QR a una dirección pública;
+  - la página muestra el nombre, el documento y el correo del proveedor. El art. 50 de la Ley 1480 pide también dirección y teléfono, que no tienen variable: validarlo con asesoría legal;
+  - el pagador es el Lead, con su nombre y correo prellenados y editables, y el contacto es siempre un correo;
+  - un comprobante respalda un solo pago en todo el sistema. Afectará a las grupales si una transferencia cubre varias citas;
+  - sin ningún admin activo, el pago se rechaza con un mensaje (la pantalla del equipo no deja desactivar al último);
+  - quien transfirió pero llegó tarde solo ve «tu reserva expiró». Falta decidir qué se le dice y cómo se le devuelve el dinero;
+  - con cualquier comprobante válido la cita se confirma y se avisa al monitor antes de que un admin lo revise (RN-38). Hasta HU-020, la revisión es solo posterior.
 - [ ] **Correo que ya tiene cuenta (HU-013).** Si invitas a un correo que ya tiene cuenta de Calibra (por ejemplo, de estudiante), hoy el registro no la convierte en monitor y le pide escribir al equipo. Confirma que así está bien, o pide que se pueda convertir.
 
 ### A3. Preparar la cuenta de Gmail (para HU-066)
@@ -106,7 +120,7 @@ Todavía no. Se hace una sola vez, cuando el flujo principal esté listo, y lo g
   - en Vault, también la dirección del sitio con el nombre `calibra_sitio_url`: la de producción, con `https://` y sin barra al final (por ejemplo `https://calibra.vercel.app`). Tiene que ser la dirección final, sin redirecciones ni protección de despliegue de Vercel, o la llamada fallaría.
   Desde ahí, cada 10 minutos la base le pide a la app que reintente los correos que fallaron por algo temporal, durante 24 horas. Con lo mismo salen los avisos al monitor de HU-051 (cita confirmada y cancelación del estudiante): sin esto, no salen. Sin esto no se reintentan solos. Los que fallan de forma definitiva, o agotan las 24 horas, el admin los ve en su bandeja en "Correos que no salieron".
 - [ ] **Admins reales:** la lista de admins y su orden de revisión. Hoy se crean con SQL; después el orden se cambia y se desactiva desde `/admin/equipo` (HU-054). Invitar admins desde la app es [HU-072](../backlog/HU-072.md), en Backlog con tres preguntas para ti.
-- [ ] **CAPTCHA (HU-058), deuda técnica (D-18):** HU-058 se construye con las llaves de prueba de Cloudflare Turnstile. Antes de salir hay que crear las llaves reales (gratis, en el panel de Cloudflare) y cargarlas: la del sitio y la secreta en Vercel, y la secreta en Supabase Auth (**Authentication**, **Attack Protection**, CAPTCHA). Con las de prueba en producción, el CAPTCHA no protege nada.
+- [ ] **CAPTCHA (HU-058), deuda técnica (D-18):** HU-058 se construye con las llaves de prueba de Cloudflare Turnstile. Antes de salir hay que crear las llaves reales (gratis, en el panel de Cloudflare, modo «Managed», D-32) y cargarlas: la del sitio en Vercel como `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, y la secreta solo en Supabase Auth (**Authentication**, **Attack Protection**, CAPTCHA). La app nunca valida el token: lo hace Supabase. Con las de prueba en producción, el CAPTCHA no protege nada.
 - [ ] **Pago por Llave (HU-018), deuda técnica (D-18):** en local y en CI la reserva muestra una llave, un titular y un QR de prueba (los escribe `npm run db:env`). Antes de salir, carga estas variables en Vercel (**Production** y **Preview**). Sin las tres primeras, la página dice que el pago por Llave no está disponible y nadie puede adjuntar el comprobante.
   - `LLAVE_PLATAFORMA`: la llave real de Calibra en el banco (el celular, correo o documento con que está registrada).
   - `LLAVE_PLATAFORMA_TITULAR`: el nombre del titular, tal como lo muestra el banco al transferir.
