@@ -1,6 +1,6 @@
 import { formatearDia, formatearFechaHora } from "@/lib/fechas";
 import { formatearPesos } from "@/lib/moneda";
-import { armarHtml, armarTexto, type Contenido } from "./html";
+import { armarHtml, armarTexto, enlaceSeguro, type Contenido } from "./html";
 
 /**
  * Las plantillas de correo de la sección 8 de `calibra_reglas_negocio.md`: las que salen por correo.
@@ -23,6 +23,7 @@ export const PLANTILLAS = [
   "verificacion_lead",
   "aviso_monitor_confirmada",
   "aviso_monitor_cancelada",
+  "confirmacion_cita",
 ] as const;
 
 export type Plantilla = (typeof PLANTILLAS)[number];
@@ -39,6 +40,7 @@ export const NOMBRE_DE_PLANTILLA: Record<Plantilla, string> = {
   verificacion_lead: "Confirmación de correo para agendar",
   aviso_monitor_confirmada: "Aviso al monitor: monitoría confirmada",
   aviso_monitor_cancelada: "Aviso al monitor: el estudiante canceló",
+  confirmacion_cita: "Confirmación de la cita",
 };
 
 export function esPlantilla(valor: string): valor is Plantilla {
@@ -80,6 +82,26 @@ export type DatosPorPlantilla = {
   };
   /** El estudiante canceló una monitoría confirmada (D-16, HU-051). Al monitor. */
   aviso_monitor_cancelada: { nombreMonitor: string; nombreEstudiante: string; materia: string; inicio: string; enlace: string };
+  /**
+   * Una monitoría individual quedó confirmada (P-04, D-19, HU-019). Al Lead, con el enlace con token para ver y
+   * gestionar la cita. Nunca lleva comisión ni el contacto del monitor (P-37). `inicio` y `cancelableHasta` son
+   * instantes ISO; `cancelableHasta` es `null` si el plazo ya había pasado al confirmar la cita (RN-37), un dato fijo
+   * y no la hora del envío, para que un reintento dé el mismo cuerpo. `lugar` va solo en una presencial y
+   * `enlaceSesion` (https) solo en una virtual (D-5, D-21).
+   */
+  confirmacion_cita: {
+    nombre: string;
+    nombreMonitor: string;
+    materia: string;
+    inicio: string;
+    duracionMin: number;
+    presencial: boolean;
+    valorTotal: number;
+    lugar: string | null;
+    enlaceSesion: string | null;
+    cancelableHasta: string | null;
+    enlace: string;
+  };
 };
 
 export type CorreoRenderizado = { asunto: string; html: string; texto: string };
@@ -281,6 +303,43 @@ function contenidoDe<P extends Plantilla>(plantilla: P, datos: DatosPorPlantilla
             "No tienes que hacer nada: ya no aparece entre tus próximas monitorías.",
           ],
           boton: { texto: "Ver mi agenda", enlace: d.enlace },
+        },
+      };
+    }
+    case "confirmacion_cita": {
+      const d = datos as DatosPorPlantilla["confirmacion_cita"];
+      const materia = linea(d.materia, "materia");
+      if (!Number.isInteger(d.duracionMin) || d.duracionMin <= 0) throw new RangeError("duracionMin debe ser un entero positivo.");
+      if (!Number.isInteger(d.valorTotal) || d.valorTotal < 0) throw new RangeError("valorTotal debe ser un entero de pesos, cero o más.");
+      const cuando = formatearFechaHora(instante(d.inicio, "inicio"));
+      const parrafos = [
+        `Hola, ${cerrar(linea(d.nombre, "nombre"))}`,
+        `Tu monitoría con ${linea(d.nombreMonitor, "nombreMonitor")} quedó confirmada.`,
+        `Cuándo: ${cerrar(cuando)}`,
+        `Duración: ${d.duracionMin} minutos.`,
+        `Materia: ${cerrar(materia)}`,
+        `Modalidad: ${d.presencial ? "presencial" : "virtual"}.`,
+      ];
+      // D-5 y D-21: el lugar de la presencial o el enlace de la virtual llegan con la cita confirmada.
+      if (d.presencial && d.lugar != null) parrafos.push(`Lugar: ${cerrar(linea(d.lugar, "lugar"))}`);
+      if (!d.presencial && d.enlaceSesion != null) parrafos.push(`Enlace de la videollamada: ${enlaceSeguro(d.enlaceSesion)}`);
+      parrafos.push(`Valor: ${cerrar(formatearPesos(d.valorTotal))}`);
+      parrafos.push(
+        d.cancelableHasta == null
+          ? "No podrás cancelarla: cuando la agendaste ya había pasado el plazo para hacerlo."
+          : `Puedes cancelarla hasta el ${cerrar(formatearFechaHora(instante(d.cancelableHasta, "cancelableHasta")))}`,
+      );
+      // D-22: el pago puede estar todavía en revisión (RN-38), así que el correo no promete que está aprobado.
+      parrafos.push("Recibimos tu comprobante. Un admin lo revisa y, si hay algún problema, te avisamos a este correo.");
+      // D-23: no se avisa si el monitor cambia el lugar o el enlace; la página siempre muestra el dato actual.
+      parrafos.push("Si el lugar o el enlace cambian, la página de tu monitoría siempre muestra el dato actual.");
+      return {
+        asunto: `Tu monitoría de ${materia} está confirmada`,
+        contenido: {
+          titulo: "Tu monitoría está confirmada",
+          parrafos,
+          boton: { texto: "Ver o gestionar mi cita", enlace: d.enlace },
+          pie: "Este enlace es solo tuyo. No lo compartas.",
         },
       };
     }
