@@ -86,6 +86,19 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
     inicio: "2020-01-13T15:00:00.000Z",
     enlace: "https://calibra.example/monitor/agenda",
   },
+  confirmacion_cita: {
+    nombre: "Ana",
+    nombreMonitor: "Camilo Rojas",
+    materia: "Cálculo Integral",
+    inicio: "2020-01-13T15:00:00.000Z",
+    duracionMin: 90,
+    presencial: true,
+    valorTotal: 25_000,
+    lugar: "Edificio Principal, salón 301",
+    enlaceSesion: null,
+    cancelableHasta: "2020-01-13T03:00:00.000Z",
+    enlace: "https://calibra.example/cita?token=abc123",
+  },
 };
 
 const REMITENTE = "Calibra <no-responder@calibra.test>";
