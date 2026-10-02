@@ -110,13 +110,16 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
       >
         <ul className={estilos.lista}>
           {bandeja.pagos.map((pago) => (
-            <li key={pago.id} className={estilos.fila}>
-              <span className={estilos.nombre}>
-                {pago.nombrePagador} · {formatearPesos(pago.monto)}
-              </span>
-              <span className={pago.restante.vencido ? estilos.vencido : estilos.meta}>
-                <time dateTime={pago.revisionHasta.toISOString()}>{pago.restante.texto}</time>
-              </span>
+            <li key={pago.id}>
+              {/* HU-020: cada pago abre su revisión. Un <a>, como los contadores: la bandeja no necesita JavaScript. */}
+              <a href={`/admin/pagos/${pago.id}`} className={estilos.filaEnlace}>
+                <span className={estilos.nombre}>
+                  {pago.nombrePagador} · {formatearPesos(pago.monto)}
+                </span>
+                <span className={pago.restante.vencido ? estilos.vencido : estilos.meta}>
+                  <time dateTime={pago.revisionHasta.toISOString()}>{pago.restante.texto}</time>
+                </span>
+              </a>
             </li>
           ))}
         </ul>
