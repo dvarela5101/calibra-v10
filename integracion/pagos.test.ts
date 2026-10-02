@@ -246,7 +246,7 @@ describe("criterios 2, 3 y 6: el Lead adjunta el comprobante y queda un pago en 
 });
 
 describe("criterio 4 (RN-34, P-40): vencida la reserva de 10 minutos, no se adjunta el comprobante", () => {
-  it("con la reserva apartada hace 11 minutos, y todavía sin cancelar, da vencida: no hay pago y la monitoría sigue pendiente_pago para HU-027", async () => {
+  it("con la reserva apartada hace 11 minutos da vencida, la haya cancelado ya o no el proceso de HU-027: no hay pago, no se confirma y no se avisa", async () => {
     const e = await escenario();
     const lead = await sesionLead();
     const id = await apartar(lead.cliente, e.pedido());
@@ -260,7 +260,16 @@ describe("criterio 4 (RN-34, P-40): vencida la reserva de 10 minutos, no se adju
 
     expect(await pagosDe(id)).toEqual([]);
     expect(await usosDe(ruta)).toEqual([]);
-    expect((await monitoriaDe(id)).estado).toBe("pendiente_pago");
+    // El proceso de cada minuto (HU-027) la cancela si corre después de envejecerla; si no, sigue por pagar. El
+    // resultado es vencida en los dos casos: no depende de quién llegó primero.
+    const { estado, motivo_cancelacion } = exito(
+      await fx.admin.from("monitoria").select("estado, motivo_cancelacion").eq("id", id).single(),
+      "leer la monitoría",
+    );
+    expect([
+      { estado: "pendiente_pago", motivo_cancelacion: null },
+      { estado: "cancelada", motivo_cancelacion: "reserva_expirada" },
+    ]).toContainEqual({ estado, motivo_cancelacion });
     expect(await avisosDe(id)).toEqual([]);
   });
 });

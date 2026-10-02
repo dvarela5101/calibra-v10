@@ -118,6 +118,10 @@ insert into public.monitoria (id, id_franja, id_materia, id_lead, fecha, valor_t
    '40000000-0000-0000-0000-000000001601', '2026-10-07', 30000, 'cancelada', 'estudiante', null),
   ('50000000-0000-0000-0000-000000001604', '30000000-0000-0000-0000-0000000016a3', '10000000-0000-0000-0000-0000000016a1',
    '40000000-0000-0000-0000-000000001601', '2026-09-30', 30000, 'realizada', null, '2026-09-30 19:30-05');
+-- HU-027: una reserva vencida ya no ocupa la fecha. La por pagar se crea 1 minuto antes del `ahora` fijo, no con now(),
+-- para que su reserva siga vigente frente a él el día en que corra la prueba.
+update public.monitoria set fecha_creacion = timestamptz '2026-10-05 12:00-05' - interval '1 minute'
+where id = '50000000-0000-0000-0000-000000001602';
 
 -- ---------------------------------------------------------------------------
 -- RN-22: solo los certificados en la materia

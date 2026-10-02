@@ -72,6 +72,8 @@ type Escenario = {
   lead(idSesion: string | null): Promise<FilaDeLead>;
   /** Una reserva `pendiente_pago` de ese Lead, creada con la llave secreta; `haceMs` corre su `fecha_creacion` hacia atrás. */
   apartar(franja: Franja, idMonitor: string, idMateria: string, fecha: string, idLead: string, haceMs?: number): Promise<string>;
+  /** Lo que hace con una reserva vencida el proceso de cada minuto (HU-027): la cancela por `reserva_expirada`. */
+  expirar(idMonitoria: string): Promise<void>;
   estadoDe(idMonitoria: string): Promise<string>;
   pagosDe(idMonitoria: string): Promise<FilaDePago[]>;
   esAdmin(id: string): Promise<boolean>;
@@ -154,6 +156,11 @@ const test = base.extend<{ escenario: Escenario }>({
           .single();
         if (error) throw new Error(`insertar monitoria: ${error.message}`);
         return data.id as string;
+      },
+      async expirar(idMonitoria) {
+        // Si el proceso ya la canceló, queda igual.
+        const { error } = await cliente.from("monitoria").update({ estado: "cancelada", motivo_cancelacion: "reserva_expirada" }).eq("id", idMonitoria);
+        if (error) throw new Error(`cancelar la reserva vencida: ${error.message}`);
       },
       async estadoDe(idMonitoria) {
         const [fila] = await leer<{ estado: string }>(cliente.from("monitoria").select("estado").eq("id", idMonitoria), "leer monitoría");
@@ -392,13 +399,20 @@ test.describe("Criterios 2, 3, 6 y 7 · adjuntar el comprobante", () => {
 // ---------------------------------------------------------------------------
 // Criterio 4 (RN-34): la reserva vencida ya no recibe el comprobante
 // ---------------------------------------------------------------------------
+// El proceso de cada minuto (HU-027) cancela por reserva_expirada la reserva vencida en cualquier momento de la
+// prueba: la página dice lo mismo en los dos estados, así que lo que se afirma de la vencida vale para ambos. Un paso
+// la cancela a propósito para probar ese estado sin esperar al proceso.
 test.describe("Criterio 4 · la reserva vencida", () => {
-  test("una reserva de hace 11 minutos dice que expiró y no trae formulario; una que vence con la página abierta deja de ofrecerlo", async ({ page, escenario }) => {
+  test("una reserva de hace 11 minutos dice que expiró y no trae formulario, también ya cancelada por HU-027; una que vence con la página abierta deja de ofrecerlo", async ({
+    page,
+    escenario,
+  }) => {
     const { fecha, materia, monitor, franja } = await montar(escenario);
     const { lead } = await entrarComoLead(page, escenario);
+    const idVencida = await escenario.apartar(franja, monitor.id, materia.id, fecha, lead.id, 11 * MINUTO_MS);
+    let loQueDice = "";
 
     await test.step("apartada hace 11 minutos", async () => {
-      const idVencida = await escenario.apartar(franja, monitor.id, materia.id, fecha, lead.id, 11 * MINUTO_MS);
       await abrir(page, `/agendar/reserva/${idVencida}`);
       await expect(titulo(page, "Tu reserva venció")).toBeVisible(ESPERA);
       await expect(page.getByText(EXPIRO)).toBeVisible();
@@ -407,10 +421,24 @@ test.describe("Criterio 4 · la reserva vencida", () => {
       await expect(pago(page)).toHaveCount(0);
       expect(await page.content()).not.toContain(variable("LLAVE_PLATAFORMA"));
       await expectReglasDelProducto(page, "la reserva vencida");
+      loQueDice = await page.getByRole("main").innerText();
+    });
+
+    await test.step("ya cancelada por reserva_expirada (HU-027): la página dice lo mismo y tampoco trae el formulario", async () => {
+      await escenario.expirar(idVencida);
+      expect(await escenario.estadoDe(idVencida)).toBe("cancelada");
+      await abrir(page, `/agendar/reserva/${idVencida}`);
+      await expect(titulo(page, "Tu reserva venció")).toBeVisible(ESPERA);
+      await expect(page.getByText(EXPIRO)).toBeVisible();
+      await expect(botonEnviar(page)).toHaveCount(0);
+      await expect(pago(page)).toHaveCount(0);
+      await expect(page.getByText("Esta reserva se canceló")).toHaveCount(0);
+      expect(await page.getByRole("main").innerText()).toBe(loQueDice);
+      expect(await escenario.pagosDe(idVencida)).toEqual([]);
     });
 
     await test.step("le quedan 25 segundos: el contador llega a cero y la página ya no trae el formulario", async () => {
-      // Otra fecha de la misma franja: la vencida sigue ocupando la suya hasta que HU-027 la cancele.
+      // Otra fecha de la misma franja: cada paso aparta la suya y no depende de cuándo se cancela la anterior.
       const idCasiVencida = await escenario.apartar(franja, monitor.id, materia.id, sumarDias(fecha, 7), lead.id, 10 * MINUTO_MS - 25_000);
       await abrir(page, `/agendar/reserva/${idCasiVencida}`);
       await expect(titulo(page, "Apartamos tu fecha")).toBeVisible(ESPERA);
