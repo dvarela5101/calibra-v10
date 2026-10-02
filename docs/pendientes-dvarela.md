@@ -24,12 +24,12 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 - [x] **HU-014, certificar monitores** ([PR #13](https://github.com/dvarela5101/calibra-v10/pull/13)): aprobada el 30-sep.
 - [x] **HU-068, contacto al agendar.** Aprobada el 30-sep. Las decisiones que quedaron abiertas están en A2.
 - [x] **HU-016, HU-017, HU-021, HU-023, HU-059, HU-062 y HU-067**: aprobadas entre el 30-sep y el 1-oct.
+- [x] **HU-035, reseña desde el correo**: aprobada el 2-oct. Sus decisiones siguen en A2.
 - [ ] **Por aprobar (sacadas el 1-oct en la noche):**
   - [HU-069](../backlog/HU-069.md): abre `/privacidad` (sección "Si eres monitor" y la fecha de actualización) y un enlace de invitación de monitor (ayuda junto al nombre).
   - [HU-071](../backlog/HU-071.md): abre cualquier ruta que no exista, por ejemplo `/algo`.
   - [HU-051](../backlog/HU-051.md): `npm run test:integracion -- avisos` y mira los correos en http://127.0.0.1:54324. En la nube necesita la sección C (Vault y `CRON_SECRETO`). Tiene un supuesto técnico en su registro.
   - [HU-054](../backlog/HU-054.md): entra como admin a `/admin/equipo` (enlace "Equipo de admins" en la bandeja). Tiene cuatro supuestos de seguridad en su registro para que los confirmes.
-  - [HU-035](../backlog/HU-035.md): `npm run test:integracion -- resenas` y mira el correo de reseña en http://127.0.0.1:54324; abre su enlace (`/resena?token=…`), califica y vuelve a abrirlo. En la nube sale con lo mismo que HU-051 (sección C). Sus decisiones están en A2.
 - [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
 ### A2. Decisiones de las HUs recientes
