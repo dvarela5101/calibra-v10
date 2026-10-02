@@ -60,9 +60,7 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   Confirma o dime qué cambiar.
 - [x] **Correo seguro (HU-070): qué correos se rechazan.** Antes de la arroba solo se aceptan letras, dígitos y `. _ % + ' -`. Quedan fuera direcciones válidas pero raras, con `!`, `&`, `*` o `/`, y las de dominio con tildes o ñ. Recomendación: dejarlo así; nadie en una universidad colombiana usa esas direcciones. **Aceptado el 2-oct.**
 - [x] **Agendar, confirmar, cancelar y CAPTCHA (HU-019, HU-024, HU-058, HU-073, HU-074).** Decidido el 2-oct en la hoja de decisiones: D-19 a D-35 en `REVISION_REGLAS.md` §4.
-- [ ] **Cancelar (HU-024): el correo de cancelación (D-27).** Pediste que el Lead reciba un correo al cancelar, que pida la llave si hay reembolso y que, si no, explique por qué. Faltan dos cosas:
-  - quién lo construye. Recomendación: HU-024, con el enlace a la página de la llave que hace HU-025 justo después;
-  - cuándo aplica «no hay reembolso». Hoy el Lead no puede cancelar fuera de plazo (RN-60; los casos extremos los resuelve un admin, HU-052). Dentro del plazo, el único caso sin reembolso inmediato es el pago aún en revisión: el reembolso se crea si el admin lo aprueba (P-07). Recomendación: mantener RN-60. Dejar cancelar fuera de plazo sin reembolso cambiaría esa regla.
+- [x] **Cancelar (HU-024): el correo de cancelación (D-27).** Decidido el 2-oct: lo manda HU-024 con el enlace a la página de la llave de HU-025, y se mantiene RN-60 (fuera de plazo no se cancela).
 - [ ] **Tope de correos por sesión (HU-075).** Para pasarla a Lista falta el tope y la ventana. Recomendación: 5 correos distintos por sesión cada hora.
 - [ ] **Pagar por Llave (HU-018): lo que dejó Juzou04.** Las recomendaciones son las suyas:
   - la llave, su titular y la imagen del QR van como variables de Vercel (sección C). Tendrás que subir la imagen del QR a una dirección pública;
