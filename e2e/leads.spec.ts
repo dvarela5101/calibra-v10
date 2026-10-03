@@ -327,6 +327,68 @@ test.describe("Criterio 3 (P-23) · el correo de otro Lead no se liga hasta conf
 });
 
 // ---------------------------------------------------------------------------
+// HU-075 (D-36): tope de correos distintos por sesión
+// ---------------------------------------------------------------------------
+test.describe("HU-075 (D-36) · tope de correos al dejar el contacto", () => {
+  test("quien ya es Lead prueba correos distintos al cambiar sus datos: al sexto se le pide esperar y su Lead no cambia", async ({
+    page,
+    context,
+    contactos,
+  }) => {
+    const AVISO_DEL_TOPE = "Probaste varios correos seguidos. Espera un rato y vuelve a intentarlo.";
+    const nombre = "Ana Pérez";
+    const correos = Array.from({ length: 6 }, () => contactos.correo());
+
+    await abrir(page, FORMULARIO);
+    const sesion = await contactos.sesion(context);
+    await expect(page.getByRole("heading", { level: 1, name: "Tus datos para agendar" })).toBeVisible(ESPERA);
+
+    await test.step("deja su contacto con un primer correo y queda como Lead", async () => {
+      await campo(page, "Tu nombre").fill(nombre);
+      await campo(page, "Tu correo").fill(correos[0]);
+      await page.getByLabel(AUTORIZO).check();
+      await seguir(page).click();
+
+      await expect(page).toHaveURL(SIGUIENTE, ESPERA);
+      expect(await contactos.leadsDeSesion(sesion.id)).toEqual([expect.objectContaining({ correo: correos[0] })]);
+    });
+
+    await test.step("con editar=1 cambia su correo cuatro veces, y cada uno se guarda", async () => {
+      for (const correo of correos.slice(1, 5)) {
+        await abrir(page, `${FORMULARIO}&editar=1`);
+        await expect(page.getByRole("heading", { level: 1, name: "Cambia tus datos" })).toBeVisible(ESPERA);
+        await campo(page, "Tu correo").fill(correo);
+        // La autorización no se conserva entre envíos: se vuelve a marcar cada vez.
+        await page.getByLabel(AUTORIZO).check();
+        await seguir(page).click();
+
+        await expect(page).toHaveURL(SIGUIENTE, ESPERA);
+        expect(await contactos.leadsDeSesion(sesion.id), correo).toEqual([expect.objectContaining({ correo })]);
+      }
+    });
+
+    await test.step("el sexto correo distinto no se guarda: ve el aviso de D-36 y lo escrito se conserva", async () => {
+      await abrir(page, `${FORMULARIO}&editar=1`);
+      await expect(page.getByRole("heading", { level: 1, name: "Cambia tus datos" })).toBeVisible(ESPERA);
+      await campo(page, "Tu nombre").fill("Ana Cambiada");
+      await campo(page, "Tu correo").fill(correos[5]);
+      await page.getByLabel(AUTORIZO).check();
+      await seguir(page).click();
+
+      await expect(alerta(page, AVISO_DEL_TOPE)).toHaveText(AVISO_DEL_TOPE, ESPERA);
+      await expect(page).toHaveURL(/\/agendar\/contacto\?siguiente=.*editar=1/);
+      await expect(campo(page, "Tu nombre")).toHaveValue("Ana Cambiada");
+      await expect(campo(page, "Tu correo")).toHaveValue(correos[5]);
+      await expectReglasDelProducto(page, "el formulario con el aviso del tope");
+
+      // Su Lead sigue con el nombre y el último correo que sí se guardaron, y el sexto no quedó en ningún Lead.
+      expect(await contactos.leadsDeSesion(sesion.id)).toEqual([expect.objectContaining({ nombre, correo: correos[4] })]);
+      expect(await contactos.leadsConCorreo(correos[5])).toEqual([]);
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Accesibilidad del producto
 // ---------------------------------------------------------------------------
 test.describe("Accesibilidad", () => {

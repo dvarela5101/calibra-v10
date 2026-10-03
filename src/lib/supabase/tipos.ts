@@ -886,6 +886,9 @@ isOneToOne: true
 "anotar_comprobante_revisado":
 { Args: { "p_ruta": string,"p_tipo": string }; Returns: string
                            },
+"anotar_correo_de_contacto":
+{ Args: { "p_correo": string,"p_id_sesion": string }; Returns: boolean
+                           },
 "cancelable_hasta":
 { Args: { "p_es_grupal": boolean,"p_inicio": string }; Returns: string
                            },
@@ -1018,6 +1021,11 @@ isOneToOne: true
 "parametros_comprobantes":
 { Args: Record<PropertyKey, never>; Returns: {
               "cuota_subidas": number,"cuota_ventana_min": number,"huerfano_tras_min": number
+            }[]
+                           },
+"parametros_contacto":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "tope_correos": number,"tope_ventana_min": number
             }[]
                            },
 "parametros_negocio":
