@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import type { BrowserContext, Locator, Page } from "@playwright/test";
 import { diaDelNegocio, formatearDiaConSemana, formatearFechaHora } from "../src/lib/fechas";
 import { formatearPesos } from "../src/lib/moneda";
-import { esperarSesion, leerSesion, test as base, expect, type SesionEnCookie } from "./utilidades";
+import { borrarDesembolsosDeMonitores, esperarSesion, leerSesion, test as base, expect, type SesionEnCookie } from "./utilidades";
 
 // HU-019 (P-04, D-19 a D-25): la cita confirmada y su enlace de gestión. El Lead abre el enlace del correo
 // (`/cita?token=...`) sin sesión, o vuelve con el mismo navegador con el que agendó (`/cita` y `/cita/[id]`). Corre
@@ -252,6 +252,8 @@ const test = base.extend<{ escenario: Escenario }>({
     if (pagos.length) await borrar("pagos", cliente.from("pago").delete().in("id", pagos));
     if (comprobantes.length) await borrar("comprobantes revisados", cliente.from("comprobante_revisado").delete().in("ruta", comprobantes));
     if (monitores.length) {
+      // HU-028: la que pasó a realizada (la prueba o pg_cron) tiene su desembolso, que no cae con la monitoría.
+      await borrar("desembolsos", borrarDesembolsosDeMonitores(cliente, monitores));
       await borrar("monitorías", cliente.from("monitoria").delete().in("id_monitor", monitores));
       await borrar("franjas", cliente.from("franja").delete().in("id_monitor", monitores));
       await borrar("certificados", cliente.from("certificado").delete().in("id_monitor", monitores));

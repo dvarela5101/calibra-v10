@@ -905,9 +905,17 @@ isOneToOne: true
 "desembolso_ejecutable":
 { Args: { "p_ahora": string,"p_fin_programado": string }; Returns: boolean
                            },
+"ejecutar_desembolso":
+{ Args: { "p_fecha": string,"p_id_desembolso": string,"p_neto_esperado": number,"p_referencia": string }; Returns: string
+                           },
 "equipo_de_admins":
 { Args: Record<PropertyKey, never>; Returns: {
               "activo": boolean,"casos_abiertos": number,"correo": string,"id": string,"nombre": string,"orden_revision": number
+            }[]
+                           },
+"estado_para_ejecutar":
+{ Args: { "p_id_desembolso": string }; Returns: {
+              "monto_neto": number,"motivo": string
             }[]
                            },
 "fecha_limite_diferencia":

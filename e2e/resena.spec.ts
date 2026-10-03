@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import type { Page } from "@playwright/test";
 import { diaDelNegocio, formatearFechaHora } from "../src/lib/fechas";
-import { test as base, expect } from "./utilidades";
+import { borrarDesembolsosDeMonitores, test as base, expect } from "./utilidades";
 
 // HU-035 (RN-70, RN-72, D-17): el Lead califica su monitoría individual desde el enlace del correo. Corre contra el
 // Supabase local con monitores, materias, Leads, monitorías, pagos e invitaciones que crea y borra cada prueba (nombres
@@ -168,6 +168,8 @@ const test = base.extend<{ escenario: Escenario }>({
     }
     if (comprobantes.length) await borrar("comprobantes revisados", cliente.from("comprobante_revisado").delete().in("ruta", comprobantes));
     if (monitores.length) {
+      // HU-028: la que pasó a realizada tiene su desembolso, que no cae con la monitoría.
+      await borrar("desembolsos", borrarDesembolsosDeMonitores(cliente, monitores));
       await borrar("monitorías", cliente.from("monitoria").delete().in("id_monitor", monitores));
       await borrar("franjas", cliente.from("franja").delete().in("id_monitor", monitores));
       await borrar("certificados", cliente.from("certificado").delete().in("id_monitor", monitores));

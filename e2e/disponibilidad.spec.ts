@@ -58,10 +58,11 @@ const test = base.extend<{ escenario: Escenario }>({
         const monitor = await cuentas.crearMonitor();
         creados.monitores.push(monitor.id);
         const contacto = { telefono: `300${Math.floor(1_000_000 + Math.random() * 8_999_999)}`, llave: `llave-${randomUUID()}` };
+        // La fixture ya le crea `monitor_privado`: se cambia por este contacto, único en la prueba.
         const { error } = await cliente
           .from("monitor_privado")
-          .insert({ id_monitor: monitor.id, numero_telefono: contacto.telefono, correo: monitor.correo, llave: contacto.llave });
-        if (error) throw new Error(`insertar monitor_privado: ${error.message}`);
+          .upsert({ id_monitor: monitor.id, numero_telefono: contacto.telefono, correo: monitor.correo, llave: contacto.llave });
+        if (error) throw new Error(`guardar monitor_privado: ${error.message}`);
         return { ...monitor, ...contacto };
       },
       async certificar(idMonitor, idMateria) {

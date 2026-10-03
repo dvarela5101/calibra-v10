@@ -80,6 +80,11 @@ async function armarMundo() {
   const mYaDesembolsada = await pasada("2020-02-03");
   const mReporteDeB = await pasada("2020-02-10");
   const mAnulada = await pasada("2020-02-17");
+  const mPagoEnRevision = await pasada("2020-02-24");
+  const mSinPagosAprobados = await pasada("2020-03-02");
+  // La de 2030 tiene pagos en revisión: el desembolso que todavía no cumple 24 h va en otra, con solo su pago aprobado,
+  // tan lejos que la prueba no dependa del día en que corra.
+  const futuraConDesembolso = await fx.crearMonitoria(contexto, { fecha: "2099-01-05" });
 
   // Pagos en revisión de A, insertados a propósito fuera de orden.
   const p3 = await fx.crearPagoDe(futura.id, { idAdmin: a.id, fechaAsignacion: hace(10), nombrePagador: "Tercera", monto: 30_000 });
@@ -102,16 +107,25 @@ async function armarMundo() {
   await fx.crearReporte({ idMonitoria: mReporteRechazado.id, idAdmin: a.id, estado: "rechazado" });
   await fx.crearReporte({ idMonitoria: mReporteDeB.id, idAdmin: b.id, estado: "en_revision" });
 
-  // Desembolsos: ejecutable si la ventana venció y no hay reporte en revisión ni aceptado.
+  // Desembolsos: ejecutable si la ventana venció, no hay reporte en revisión ni aceptado, ningún pago sigue en revisión
+  // y hay al menos uno aprobado (HU-028). Cada monitoría con desembolso tiene su pago aprobado, para que solo la excluya
+  // lo que dice su caso. El pago en revisión es de un tercer admin: no cambia lo que A y B tienen por revisar.
+  const conPagoAprobado = [mEjecutable, mReporteEnRevision, mReporteAceptado, mReporteRechazado, mYaDesembolsada, mAnulada, mPagoEnRevision, futuraConDesembolso];
+  for (const monitoria of conPagoAprobado) await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, estado: "aprobado" });
+  const c = await fx.crearAdmin();
+  await fx.crearPagoDe(mPagoEnRevision.id, { idAdmin: c.id });
+  await fx.crearPagoDe(mSinPagosAprobados.id, { idAdmin: a.id, estado: "rechazado" });
   const dEjecutable = await fx.crearDesembolso({ idMonitoria: mEjecutable.id });
   await fx.crearDesembolso({ idMonitoria: mReporteEnRevision.id }); // bloqueado: reporte en revisión
   await fx.crearDesembolso({ idMonitoria: mReporteAceptado.id }); // bloqueado: reporte aceptado
   const dRechazado = await fx.crearDesembolso({ idMonitoria: mReporteRechazado.id }); // ejecutable: el reporte se rechazó
   await fx.crearDesembolso({ idMonitoria: mYaDesembolsada.id, estado: "desembolsado", idAdmin: a.id }); // ya salió
   await fx.crearDesembolso({ idMonitoria: mAnulada.id, estado: "anulado" });
-  await fx.crearDesembolso({ idMonitoria: futura.id }); // la ventana de 24 h no ha vencido
+  await fx.crearDesembolso({ idMonitoria: futuraConDesembolso.id }); // la ventana de 24 h no ha vencido
+  const dPagoEnRevision = await fx.crearDesembolso({ idMonitoria: mPagoEnRevision.id }); // bloqueado: un pago en revisión (D-39)
+  const dSinPagosAprobados = await fx.crearDesembolso({ idMonitoria: mSinPagosAprobados.id }); // bloqueado: el único pago se rechazó
 
-  return { a, b, p1, p2, p3, pAprobadoDeA, pDeB, r1, r2, r3, reporteEnRevision, dEjecutable, dRechazado };
+  return { a, b, p1, p2, p3, pAprobadoDeA, pDeB, r1, r2, r3, reporteEnRevision, dEjecutable, dRechazado, dPagoEnRevision, dSinPagosAprobados };
 }
 
 describe("criterio 1: el admin ve contadores y listas de lo que tiene asignado", () => {
@@ -158,9 +172,13 @@ describe("criterio 1: el admin ve contadores y listas de lo que tiene asignado",
     expect(nuestros.map((d) => d.fechaSesion)).toEqual(["2020-01-06", "2020-01-27"]);
     // Los bloqueados, el ya desembolsado, el anulado y el que aún no cumple 24 h no aparecen.
     expect(bandeja.desembolsos.filter((d) => d.fechaSesion.startsWith("2020-01-13") || d.fechaSesion.startsWith("2020-01-20"))).toEqual([]);
-    expect(bandeja.desembolsos.map((d) => d.fechaSesion)).not.toContain("2030-01-14");
+    expect(bandeja.desembolsos.map((d) => d.fechaSesion)).not.toContain("2099-01-05");
     expect(bandeja.desembolsos.map((d) => d.fechaSesion)).not.toContain("2020-02-03");
     expect(bandeja.desembolsos.map((d) => d.fechaSesion)).not.toContain("2020-02-17");
+    // HU-028: ni el que tiene un pago en revisión (D-39) ni el que no tiene pagos aprobados (supuesto 2): la página no
+    // dejaría ejecutarlos.
+    expect(bandeja.desembolsos.map((d) => d.id)).not.toContain(m.dPagoEnRevision.id);
+    expect(bandeja.desembolsos.map((d) => d.id)).not.toContain(m.dSinPagosAprobados.id);
     // La bandeja no recibe el bruto ni la comisión (P-32).
     expect(Object.keys(bandeja.desembolsos[0]).sort()).toEqual(["desembolsableDesde", "fechaSesion", "id", "montoNeto"]);
     // El contador cuenta lo que hay (al menos los dos de este mundo) y coincide con la lista, que aquí no se corta.

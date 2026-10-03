@@ -11,10 +11,11 @@ type Props = {
 };
 
 /**
- * Copia la llave de Calibra al portapapeles (HU-018, RN-40). El portapapeles solo existe con https o en
- * localhost, y el navegador puede negarlo: entonces la llave queda seleccionada en su campo para que la persona
- * la copie con el menú o el teclado. El resultado se anuncia en un `role="status"` que está en la página desde
- * el principio (si apareciera junto con el texto, un lector de pantalla podría no leerlo).
+ * Copia una llave al portapapeles: la de Calibra al pagar una reserva (HU-018, RN-40) y la del monitor al ejecutar
+ * su desembolso (HU-028). El portapapeles solo existe con https o en localhost, y el navegador puede negarlo:
+ * entonces la llave queda seleccionada en su campo para que la persona la copie con el menú o el teclado. El
+ * resultado se anuncia en un `role="status"` que está en la página desde el principio (si apareciera junto con el
+ * texto, un lector de pantalla podría no leerlo).
  */
 export function BotonCopiar({ texto, idCampo }: Props) {
   const [aviso, setAviso] = useState<{ texto: string; copiada: boolean } | null>(null);

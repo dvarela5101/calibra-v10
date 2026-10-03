@@ -155,10 +155,15 @@ export class Fixtures {
     return usuario;
   }
 
+  /**
+   * Monitor como lo deja `registrar_monitor` (HU-013): con su contacto y su llave en `monitor_privado`. Sin la llave, su
+   * monitoría no puede pasar a `realizada`, porque el desembolso la copia (HU-028). `conContacto: false` deja solo la
+   * fila de `monitor`.
+   */
   async crearMonitor(opciones: { conContacto?: boolean } = {}) {
     const usuario = await this.crearUsuario();
     exito(await this.admin.from("monitor").insert({ id: usuario.id, nombre: "Monitor de prueba" }).select().single(), "insertar monitor");
-    if (opciones.conContacto) {
+    if (opciones.conContacto ?? true) {
       exito(
         await this.admin
           .from("monitor_privado")
@@ -541,6 +546,11 @@ export class Fixtures {
     if (reembolsos.length) await intentar("borrar reembolso", this.admin.from("reembolso").delete().in("id", reembolsos));
     if (reportes.length) await intentar("borrar reporte", this.admin.from("reporte_inasistencia").delete().in("id", reportes));
     if (desembolsos.length) await intentar("borrar desembolso", this.admin.from("desembolso").delete().in("id", desembolsos));
+    // HU-028: la monitoría que pasa a realizada (la finaliza su monitor, la cambia la prueba o la cierra pg_cron) crea su
+    // desembolso, que nadie anota aquí; desembolso.id_monitoria no cae en cascada.
+    if (monitorias.length) {
+      await intentar("borrar desembolso de las monitorías", this.admin.from("desembolso").delete().in("id_monitoria", monitorias));
+    }
     if (pagos.length) await intentar("borrar pago", this.admin.from("pago").delete().in("id", pagos));
     // Después de los pagos: la llave foránea pago.comprobante impide borrar antes un revisado en uso. Además de
     // los anotados con marcarRevisado(), los de cualquier archivo borrado arriba (una revisión que lo anotó).
