@@ -6,9 +6,10 @@
 --   * public.aviso_monitor, la bandeja de salida de los avisos: RLS sin políticas y permisos mínimos. Nadie con sesión
 --     (anon, authenticated) la toca; service_role (la llave secreta de la app) solo lee y marca `procesado_en` e `intentos`.
 --   * El trigger monitoria_anota_aviso_monitor (privado.anotar_aviso_monitor): anota el aviso en la misma transacción
---     del cambio de estado, solo para las individuales y solo en dos transiciones:
+--     del cambio de estado, solo para las individuales y solo en tres transiciones:
 --       pendiente_pago -> confirmada                           aviso 'confirmada'
 --       confirmada -> cancelada con motivo `estudiante`        aviso 'cancelada'
+--       confirmada -> cancelada con motivo `pago_rechazado`    aviso 'pago_rechazado' (D-38, HU-076)
 --     Nada para las grupales, para las otras transiciones, para otros motivos ni cuando el estado no cambia. Un
 --     mismo aviso no se anota dos veces (on conflict do nothing sobre id_monitoria + evento).
 --   * privado.disparar_avisos_monitor: le pide a la app que procese los avisos solo si hay pendientes y Vault trae
@@ -26,7 +27,7 @@
 --   Leads: 01 (Lucía) y 02 (Mateo), cada uno con su sesión anónima y datos de contacto que el aviso no debe traer.
 --   Monitorías (cada una con su franja; las insertadas como confirmada no disparan nada: el trigger es de UPDATE):
 --     01 por pagar: se confirma y luego la cancela el estudiante   02 confirmada: la cancela el estudiante
---     03, 04 y 05 confirmadas: se cancelan por pago_rechazado, monitor_no_asistio y diferencia_no_cubierta
+--     03, 04 y 05 confirmadas: se cancelan por pago_rechazado (avisa), monitor_no_asistio y diferencia_no_cubierta
 --     06, 07 y 08 por pagar: se cancelan por reserva_expirada, pago_rechazado y estudiante
 --     09 confirmada: se realiza   10 grupal por pagar: se confirma   11 grupal confirmada: la cancela el estudiante
 --     12 confirmada: updates que no cambian el estado   13 por pagar: se confirma, vuelve atrás y se confirma otra vez
@@ -309,9 +310,10 @@ select results_eq(
 -- ---------------------------------------------------------------------------
 update public.monitoria set estado = 'cancelada', motivo_cancelacion = 'pago_rechazado'
 where id = '50000000-0000-0000-0000-000000005103';
-select is(
-  (select count(*)::int from public.aviso_monitor where id_monitoria = '50000000-0000-0000-0000-000000005103'),
-  0, 'confirmada -> cancelada por pago_rechazado no anota nada: solo avisa lo que cancela el estudiante');
+select results_eq(
+  $$select evento, procesado_en is null from public.aviso_monitor where id_monitoria = '50000000-0000-0000-0000-000000005103'$$,
+  $$values ('pago_rechazado'::text, true)$$,
+  'confirmada -> cancelada por pago_rechazado anota el aviso pago_rechazado (HU-076, D-38); los demás motivos de abajo siguen sin avisar');
 update public.monitoria set estado = 'cancelada', motivo_cancelacion = 'monitor_no_asistio'
 where id = '50000000-0000-0000-0000-000000005104';
 select is(
@@ -377,12 +379,13 @@ select results_eq(
   $$values ('confirmada'::text, timestamptz '2027-03-01 08:00-05')$$,
   'Confirmarla otra vez no duplica el aviso (on conflict do nothing) ni le borra su procesado_en');
 
--- Resumen: de todo lo anterior solo quedaron cuatro avisos.
+-- Resumen: de todo lo anterior solo quedaron cinco avisos.
 select set_eq(
   $$select right(id_monitoria::text, 2), evento from public.aviso_monitor
     where id_monitoria::text like '50000000-0000-0000-0000-0000000051%'$$,
-  $$values ('01'::text, 'confirmada'::text), ('01', 'cancelada'), ('02', 'cancelada'), ('13', 'confirmada')$$,
-  'En total solo hay cuatro avisos: 01 confirmada y cancelada, 02 cancelada y 13 confirmada');
+  $$values ('01'::text, 'confirmada'::text), ('01', 'cancelada'), ('02', 'cancelada'), ('03', 'pago_rechazado'),
+           ('13', 'confirmada')$$,
+  'En total solo hay cinco avisos: 01 confirmada y cancelada, 02 cancelada, 03 pago_rechazado y 13 confirmada');
 
 -- Las restricciones de la tabla.
 select throws_ok(
@@ -390,7 +393,7 @@ select throws_ok(
   '23505', null, 'Un mismo evento no se repite para la misma monitoría (unique id_monitoria + evento)');
 select throws_ok(
   $$insert into public.aviso_monitor (id_monitoria, evento) values ('50000000-0000-0000-0000-000000005103', 'realizada')$$,
-  '23514', null, 'El evento solo puede ser confirmada o cancelada');
+  '23514', null, 'El evento solo puede ser confirmada, cancelada o pago_rechazado (realizada no)');
 select throws_ok(
   $$insert into public.aviso_monitor (id_monitoria, evento) values ('50000000-0000-0000-0000-000000005199', 'confirmada')$$,
   '23503', null, 'El aviso apunta a una monitoría que existe');
@@ -401,11 +404,11 @@ select throws_ok(
 set local role service_role;
 select is(
   (select count(*)::int from public.aviso_monitor where id_monitoria::text like '50000000-0000-0000-0000-0000000051%'),
-  4, 'service_role lee los avisos (RLS sin políticas no le estorba)');
+  5, 'service_role lee los avisos (RLS sin políticas no le estorba)');
 select is(
   (select count(*)::int from public.aviso_monitor
    where id_monitoria::text like '50000000-0000-0000-0000-0000000051%' and procesado_en is null),
-  3, 'Y encuentra los pendientes: tres (el de la 13 ya estaba procesado)');
+  4, 'Y encuentra los pendientes: cuatro (el de la 13 ya estaba procesado)');
 select lives_ok(
   $$update public.aviso_monitor set procesado_en = timestamptz '2027-03-01 09:00-05'
     where id_monitoria = '50000000-0000-0000-0000-000000005101' and evento = 'confirmada'$$,
