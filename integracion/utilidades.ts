@@ -546,6 +546,9 @@ export class Fixtures {
     if (reembolsos.length) await intentar("borrar reembolso", this.admin.from("reembolso").delete().in("id", reembolsos));
     if (reportes.length) await intentar("borrar reporte", this.admin.from("reporte_inasistencia").delete().in("id", reportes));
     if (desembolsos.length) await intentar("borrar desembolso", this.admin.from("desembolso").delete().in("id", desembolsos));
+    // Los reembolsos de los pagos anotados: los crean los triggers y la cancelación (HU-024), no `crearReembolso`, y la
+    // llave foránea impide borrar el pago antes. Su solicitud de llave se va en cascada.
+    if (pagos.length) await intentar("borrar reembolso de los pagos", this.admin.from("reembolso").delete().in("id_pago", pagos));
     // HU-028: la monitoría que pasa a realizada (la finaliza su monitor, la cambia la prueba o la cierra pg_cron) crea su
     // desembolso, que nadie anota aquí; desembolso.id_monitoria no cae en cascada.
     if (monitorias.length) {

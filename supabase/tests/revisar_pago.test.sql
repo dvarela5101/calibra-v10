@@ -25,7 +25,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(65);
+select plan(66);
 
 -- ---------------------------------------------------------------------------
 -- Estructura y permisos
@@ -424,7 +424,7 @@ select results_eq(
     from public.pago p join public.monitoria m on m.id = p.id_monitoria
     where p.id = '60000000-0000-0000-0000-000000002007'$$,
   $$values ('aprobado'::text, now(), 'cancelada'::text, 'estudiante'::text)$$,
-  'El pago aprobado tampoco toca la monitoría (el reembolso de P-07 es del trigger de HU-024)');
+  'El pago aprobado tampoco toca la monitoría (su reembolso lo crea el trigger de P-07 de HU-024, aquí abajo)');
 
 -- ---------------------------------------------------------------------------
 -- Defensivo: una por pagar con pago se cancela al rechazarlo
@@ -443,9 +443,16 @@ select results_eq(
 -- ---------------------------------------------------------------------------
 -- Sin reembolsos ni desembolsos (criterio 5, RN-43, RN-45)
 -- ---------------------------------------------------------------------------
-select is(
-  (select count(*)::int from public.reembolso where id_pago::text like '60000000-0000-0000-0000-0000000020%'),
-  0, 'Criterio 5: ningún pago revisado tiene reembolso (los rechazados nunca; el de P-07 es de HU-024)');
+select results_eq(
+  $$select id_pago, monto, estado::text, motivo from public.reembolso where id_pago::text like '60000000-0000-0000-0000-0000000020%'$$,
+  $$values ('60000000-0000-0000-0000-000000002007'::uuid, 25000, 'esperando_llave'::text, 'Cancelaste la monitoría dentro del plazo.'::text)$$,
+  'Criterio 5: el único reembolso es el del pago aprobado de la cita ya cancelada por el estudiante (P-07, trigger de HU-024); los rechazados nunca tienen, ni los demás aprobados');
+select results_eq(
+  $$select s.en_correo_de_cancelacion from public.solicitud_llave s
+    join public.reembolso r on r.id = s.id_reembolso
+    where r.id_pago = '60000000-0000-0000-0000-000000002007'$$,
+  $$values (false)$$,
+  'Ese reembolso tiene su solicitud de llave, sin marcar: el correo de cancelación ya salió sin ella');
 select is(
   (select count(*)::int from public.desembolso where id_monitoria::text like '50000000-0000-0000-0000-0000000020%'),
   0, 'La revisión no crea desembolsos (RN-45 la aplica HU-028)');
