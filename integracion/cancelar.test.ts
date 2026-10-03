@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import pg from "pg";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/procesos/avisar-cancelaciones/route";
+import { revisarPago } from "@/lib/admin/pagos";
 import { cancelarCitaPorToken, cancelarMiCita, procesarCancelacionesDeCita, reconstruirCancelacionCita } from "@/lib/citas/cancelar";
 import { rutaDeCita } from "@/lib/citas/reglas";
 import { MAXIMO_DE_INTENTOS } from "@/lib/citas/servidor";
@@ -35,6 +36,8 @@ const URL_BD = process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@12
 
 const MINUTO = 60_000;
 const PRECIO = 25_000;
+/** Cuánto se espera, como máximo, a que una conexión quede bloqueada por la otra. */
+const ESPERA_MAXIMA = 10_000;
 const MOTIVO_DE_OTRO_CONTACTO = "Le escribimos a quien pagó, a su correo, para pedirle la llave y devolverle el dinero.";
 
 type Lead = Awaited<ReturnType<Fixtures["crearLeadDeSesion"]>>;
@@ -45,6 +48,8 @@ let bd: pg.Client;
 let mailpit: string;
 let e: Awaited<ReturnType<typeof construirEscenario>>;
 let sesionMonitor: Cliente;
+/** La sesión del admin del escenario: el que tiene asignados los pagos de la prueba y los revisa (HU-020). */
+let sesionAdmin: Cliente;
 /** La sesión anónima que es Lead (la que agendó) y otra sin Lead. */
 let ancla: Awaited<ReturnType<Fixtures["crearAnonimo"]>>;
 let leadDeAncla: Lead;
@@ -63,6 +68,7 @@ beforeAll(async () => {
   try {
     e = await construirEscenario();
     sesionMonitor = await fx.iniciarSesion(e.monitor);
+    sesionAdmin = await fx.iniciarSesion(e.admin);
     ancla = await fx.crearAnonimo();
     leadDeAncla = await fx.crearLeadDeSesion(ancla.id);
     correos.add(leadDeAncla.correo!);
@@ -252,6 +258,69 @@ async function procesarHasta(idMonitoria: string) {
 /** El correo de cancelación de una cita: el que lleva ese texto (un enlace único de la prueba). */
 async function correoCon(destino: string, enlace: string): Promise<Mensaje | undefined> {
   return (await correosA(destino)).find((c) => c.Text.includes(enlace));
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Con `pg`: dos conexiones a la vez (la cancelación y la revisión del pago), como en `integracion/revisar-pagos.test.ts`
+
+/** Una conexión propia para una de las dos partes de la carrera, con su número de proceso en la base. */
+async function conexion() {
+  const cliente = new pg.Client({ connectionString: URL_BD });
+  await cliente.connect();
+  // Si algo no bloquea (o no suelta) como se espera, la consulta falla en vez de colgar la prueba.
+  await cliente.query("set lock_timeout = '15s'");
+  const { rows } = await cliente.query<{ pid: number }>("select pg_backend_pid() as pid");
+  return { cliente, pid: rows[0].pid };
+}
+
+type Conexion = Awaited<ReturnType<typeof conexion>>;
+
+/** Cierra las conexiones aunque tengan una consulta esperando: la base revierte su transacción y suelta los bloqueos. */
+async function cerrar(...conexiones: Conexion[]) {
+  await Promise.allSettled(conexiones.map((c) => c.cliente.end()));
+}
+
+/** Una consulta que se deja corriendo: se sabe si ya terminó sin esperarla, y su error no queda sin atender. */
+function enCurso<T>(promesa: Promise<T>) {
+  const consulta = { terminada: false, promesa };
+  promesa.then(
+    () => (consulta.terminada = true),
+    () => (consulta.terminada = true),
+  );
+  return consulta;
+}
+
+/** Espera a que la conexión `pid` quede bloqueada por la conexión `porPid` (pg_blocking_pids). */
+async function esperarBloqueo(pid: number, porPid: number, consulta: { terminada: boolean }) {
+  const hasta = Date.now() + ESPERA_MAXIMA;
+  while (Date.now() < hasta) {
+    if (consulta.terminada) throw new Error(`La consulta de la conexión ${pid} terminó sin esperar a la conexión ${porPid}.`);
+    const { rows } = await bd.query<{ bloqueada: boolean }>("select $2::integer = any(pg_blocking_pids($1::integer)) as bloqueada", [pid, porPid]);
+    if (rows[0].bloqueada) return;
+    await new Promise((resolver) => setTimeout(resolver, 50));
+  }
+  throw new Error(`La conexión ${pid} no quedó esperando a la conexión ${porPid} en ${ESPERA_MAXIMA} ms.`);
+}
+
+/** Dentro de una transacción de `cliente`: lo que sigue corre con el rol `authenticated` y el token del admin del escenario. */
+async function comoAdmin(cliente: pg.Client) {
+  await cliente.query("set local role authenticated");
+  await cliente.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: e.admin.id, role: "authenticated" })]);
+}
+
+/** El corazón de la cancelación, que nadie ejecuta desde la Data API (la prueba lo corre como dueño de la base). */
+async function cancelarEn(cliente: pg.Client, idMonitoria: string) {
+  const { rows } = await cliente.query<{ r: string }>("select privado.cancelar_cita($1::uuid, now()) as r", [idMonitoria]);
+  return rows[0].r;
+}
+
+/** `public.revisar_pago` (la puerta de HU-020), desde una conexión que ya corre como el admin. */
+async function aprobarEn(cliente: pg.Client, idPago: string) {
+  const { rows } = await cliente.query<{ resultado: string; cancelo_monitoria: boolean }>(
+    "select resultado, cancelo_monitoria from public.revisar_pago($1::uuid, 'aprobar', null)",
+    [idPago],
+  );
+  return rows[0];
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -794,6 +863,83 @@ describe("P-07: el pago que se aprueba después de cancelar también se reembols
     expect(correo).toBeDefined();
     expect(correo!.Text).not.toContain("/reembolso?token=");
   });
+
+  it("con la puerta real de HU-020: cancelar con el pago en revisión y luego aprobarlo (el admin asignado, con su sesión) crea un solo reembolso, con su solicitud sin marcar", async () => {
+    const monitoria = await confirmada();
+    const pago = await pagoDe(monitoria.id, "en_revision", e.lead.correo!);
+    expect(await cancelarCitaPorToken(await tokenDe(monitoria.id))).toBe("cancelada");
+    expect(await reembolsosDe(monitoria.id)).toEqual([]);
+    const turno = await primerAdminActivo();
+
+    expect(await revisarPago(sesionAdmin, { idPago: pago.id, decision: "aprobar", observaciones: null })).toEqual({ resultado: "aprobado", canceloMonitoria: false });
+
+    expect(await estadoDe(monitoria.id)).toEqual({ estado: "cancelada", motivo_cancelacion: "estudiante" });
+    const reembolsos = await reembolsosDe(monitoria.id);
+    expect(reembolsos).toHaveLength(1);
+    expect(reembolsos[0]).toMatchObject({ id_pago: pago.id, monto: PRECIO, motivo: MOTIVO_CANCELACION_A_TIEMPO, estado: "esperando_llave", id_admin: turno });
+    expect((await solicitudDe(reembolsos[0].id)).en_correo_de_cancelacion).toBe(false);
+
+    // Una segunda aprobación ya no pasa por el trigger: el pago está revisado y no se duplica nada.
+    expect(await revisarPago(sesionAdmin, { idPago: pago.id, decision: "aprobar", observaciones: null })).toEqual({ resultado: "ya_revisado", canceloMonitoria: false });
+    expect(await reembolsosDe(monitoria.id)).toHaveLength(1);
+  });
+
+  // Dos conexiones, cada una en su transacción: la primera se queda con los bloqueos de la monitoría y del pago (las dos
+  // operaciones toman primero la monitoría y después los pagos); la segunda espera. Salga quien salga primero, hay un
+  // solo reembolso.
+  async function carreraCancelarYAprobar(primera: "cancelar" | "aprobar") {
+    const monitoria = await confirmada();
+    const pago = await pagoDe(monitoria.id, "en_revision", e.lead.correo!);
+    const a = await conexion();
+    const b = await conexion();
+    try {
+      const ejecutar = async (conn: Conexion, quien: "cancelar" | "aprobar") => {
+        await conn.cliente.query("begin");
+        if (quien === "aprobar") await comoAdmin(conn.cliente);
+        return quien === "cancelar" ? cancelarEn(conn.cliente, monitoria.id) : aprobarEn(conn.cliente, pago.id);
+      };
+      const segunda = primera === "cancelar" ? "aprobar" : "cancelar";
+      const ganadora = await ejecutar(a, primera);
+      const perdedora = enCurso(ejecutar(b, segunda));
+      await esperarBloqueo(b.pid, a.pid, perdedora);
+      await a.cliente.query("commit");
+      const resultadoPerdedora = await perdedora.promesa;
+      await b.cliente.query("commit");
+      return { ganadora, perdedora: resultadoPerdedora, monitoria: monitoria.id, pago: pago.id };
+    } finally {
+      await cerrar(a, b);
+    }
+  }
+
+  it(
+    "carrera: la cancelación llega primero y la aprobación espera; al soltarse, el trigger crea el único reembolso, sin marcar en el correo",
+    async () => {
+      const r = await carreraCancelarYAprobar("cancelar");
+
+      expect(r.ganadora).toBe("cancelada");
+      expect(r.perdedora).toEqual({ resultado: "aprobado", cancelo_monitoria: false });
+      const reembolsos = await reembolsosDe(r.monitoria);
+      expect(reembolsos).toHaveLength(1);
+      expect(reembolsos[0]).toMatchObject({ id_pago: r.pago, monto: PRECIO, motivo: MOTIVO_CANCELACION_A_TIEMPO, estado: "esperando_llave" });
+      expect((await solicitudDe(reembolsos[0].id)).en_correo_de_cancelacion).toBe(false);
+    },
+    60_000,
+  );
+
+  it(
+    "carrera: la aprobación llega primero y la cancelación espera; al soltarse, ve el pago aprobado y crea el único reembolso, ya en el correo",
+    async () => {
+      const r = await carreraCancelarYAprobar("aprobar");
+
+      expect(r.ganadora).toEqual({ resultado: "aprobado", cancelo_monitoria: false });
+      expect(r.perdedora).toBe("cancelada");
+      const reembolsos = await reembolsosDe(r.monitoria);
+      expect(reembolsos).toHaveLength(1);
+      expect(reembolsos[0]).toMatchObject({ id_pago: r.pago, monto: PRECIO, motivo: MOTIVO_CANCELACION_A_TIEMPO, estado: "esperando_llave" });
+      expect((await solicitudDe(reembolsos[0].id)).en_correo_de_cancelacion).toBe(true);
+    },
+    60_000,
+  );
 
   it("aprobar un pago de una cita que sigue confirmada, o cancelada por otro motivo, no crea reembolso", async () => {
     const confirmadaAun = await confirmada();
