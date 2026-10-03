@@ -567,13 +567,13 @@ isOneToOne: false
                   ]
                 },"pago": {
                   Row: {
-                    "comprobante": string,"contacto": string,"estado": Database["public"]['Enums']["estado_pago"],"fecha_asignacion": string,"fecha_pago": string,"fecha_revision": string | null,"id": string,"id_admin": string,"id_admin_revisor": string | null,"id_monitoria": string,"monto": number,"nombre_pagador": string,"observaciones": string | null,"referencia_transferencia": string | null
+                    "cierre_rechazo": string | null,"comprobante": string,"contacto": string,"estado": Database["public"]['Enums']["estado_pago"],"fecha_asignacion": string,"fecha_cierre": string | null,"fecha_pago": string,"fecha_revision": string | null,"id": string,"id_admin": string,"id_admin_cierre": string | null,"id_admin_revisor": string | null,"id_monitoria": string,"monto": number,"nombre_pagador": string,"nota_cierre": string | null,"observaciones": string | null,"referencia_transferencia": string | null
                   }
                   Insert: {
-                    "comprobante": string,"contacto": string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin": string,"id_admin_revisor"?: string | null,"id_monitoria": string,"monto": number,"nombre_pagador": string,"observaciones"?: string | null,"referencia_transferencia"?: string | null
+                    "cierre_rechazo"?: string | null,"comprobante": string,"contacto": string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_cierre"?: string | null,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin": string,"id_admin_cierre"?: string | null,"id_admin_revisor"?: string | null,"id_monitoria": string,"monto": number,"nombre_pagador": string,"nota_cierre"?: string | null,"observaciones"?: string | null,"referencia_transferencia"?: string | null
                   }
                   Update: {
-                    "comprobante"?: string,"contacto"?: string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin"?: string,"id_admin_revisor"?: string | null,"id_monitoria"?: string,"monto"?: number,"nombre_pagador"?: string,"observaciones"?: string | null,"referencia_transferencia"?: string | null
+                    "cierre_rechazo"?: string | null,"comprobante"?: string,"contacto"?: string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_cierre"?: string | null,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin"?: string,"id_admin_cierre"?: string | null,"id_admin_revisor"?: string | null,"id_monitoria"?: string,"monto"?: number,"nombre_pagador"?: string,"nota_cierre"?: string | null,"observaciones"?: string | null,"referencia_transferencia"?: string | null
                   }
                   Relationships: [
                     {
@@ -582,6 +582,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "comprobante_revisado"
       referencedColumns: ["ruta"]
+    },{
+      foreignKeyName: "pago_id_admin_cierre_fkey"
+      columns: ["id_admin_cierre"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
     },{
       foreignKeyName: "pago_id_admin_fkey"
       columns: ["id_admin"]
@@ -903,6 +909,9 @@ isOneToOne: true
                            },
 "cancelar_mi_cita":
 { Args: { "p_id_monitoria": string }; Returns: string
+                           },
+"cerrar_caso_p24":
+{ Args: { "p_cierre": string,"p_id_pago": string,"p_nota"?: string }; Returns: string
                            },
 "cierre_automatico_desde":
 { Args: { "p_fin_programado": string }; Returns: string

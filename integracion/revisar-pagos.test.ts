@@ -350,6 +350,8 @@ describe("criterio 1: el admin abre un pago asignado y ve lo que necesita para r
       idAdminRevisor: null,
       nombreAdminRevisor: null,
       observaciones: null,
+      // HU-078: en revisión no es un caso P-24, así que no tiene cierre.
+      cierre: null,
       monitoria: {
         estado: "confirmada",
         motivoCancelacion: null,

@@ -23,6 +23,7 @@ export const MOTIVOS_PARA_NO_EJECUTAR = [
   "antes_de_plazo",
   "con_reporte",
   "pagos_en_revision",
+  "caso_abierto",
   "sin_pagos_aprobados",
 ] as const;
 export type MotivoParaNoEjecutar = (typeof MOTIVOS_PARA_NO_EJECUTAR)[number];
@@ -41,6 +42,7 @@ export const RESULTADOS_DE_EJECUCION = [
   "antes_de_plazo",
   "con_reporte",
   "pagos_en_revision",
+  "caso_abierto",
   "sin_pagos_aprobados",
   "fecha_invalida",
   "referencia_invalida",
@@ -67,6 +69,8 @@ export const MENSAJES_DE_MOTIVO: Record<MotivoParaNoEjecutar, string> = {
   con_reporte: "La monitoría tiene un reporte de inasistencia en revisión o aceptado, así que no se transfiere mientras no se resuelva.",
   pagos_en_revision:
     "Espera la revisión de un pago de esta monitoría: hasta que se apruebe o se rechace no se transfiere, para que el desembolso cuente lo que de verdad llegó.",
+  // HU-078 (D-39 (c)): un pago rechazado en P-24 cuyo caso nadie ha cerrado. Cuando se cierre, su monto cuenta.
+  caso_abierto: "Espera a que se cierre el caso del pago rechazado en «Pagos por cobrar o asumir».",
   sin_pagos_aprobados: "La monitoría no tiene pagos aprobados, así que no hay nada que transferir. El desembolso sigue pendiente.",
 };
 
@@ -79,6 +83,7 @@ export const MENSAJES_DE_EJECUCION: Record<Exclude<ResultadoDeEjecucion, "desemb
   antes_de_plazo: MENSAJES_DE_MOTIVO.antes_de_plazo,
   con_reporte: MENSAJES_DE_MOTIVO.con_reporte,
   pagos_en_revision: MENSAJES_DE_MOTIVO.pagos_en_revision,
+  caso_abierto: MENSAJES_DE_MOTIVO.caso_abierto,
   sin_pagos_aprobados: MENSAJES_DE_MOTIVO.sin_pagos_aprobados,
   fecha_invalida: "La fecha de la transferencia no puede ser posterior a hoy ni anterior al día de la sesión.",
   referencia_invalida: "Escribe la referencia de la transferencia, de hasta 100 caracteres.",
@@ -160,6 +165,7 @@ export const CAMBIOS_DEL_DESEMBOLSO = [
   "antes_de_plazo",
   "con_reporte",
   "pagos_en_revision",
+  "caso_abierto",
   "sin_pagos_aprobados",
 ] as const satisfies readonly ResultadoDeEjecucion[];
 

@@ -26,6 +26,27 @@ export type PagoPorRevisar = {
  */
 export type PagoVencidoDeOtro = PagoPorRevisar & { nombreAdmin: string };
 
+/**
+ * Un caso P-24 abierto (HU-078): un pago rechazado cuando la sesión ya había empezado, que alguien tiene que cerrar como
+ * cobrado o asumido. Lo ven todos los admins activos (supuesto 2), como los desembolsos ejecutables.
+ */
+export type PagoPorCobrarOAsumir = {
+  id: string;
+  nombrePagador: string;
+  contacto: string;
+  monto: number;
+  /** Lo que anotó el admin al rechazarlo: en P-24 es obligatorio, pero un pago insertado ya rechazado puede no tenerlo. */
+  observaciones: string | null;
+  /** Cuándo se rechazó: el más antiguo va arriba. */
+  rechazadoEn: Date;
+  monitoria: {
+    /** Día de calendario, `AAAA-MM-DD`. */
+    fecha: string;
+    nombreMateria: string;
+    nombreMonitor: string;
+  };
+};
+
 export type ReembolsoActivo = { id: string; monto: number; motivo: string };
 
 export type ReporteEnRevision = { id: string; fechaReporte: Date; fechaSesion: string | null };
@@ -53,6 +74,8 @@ export type Bandeja = {
   pagos: PagoPorRevisar[];
   /** HU-077: los de otros admins con la hora vencida, en su propia lista y con su propio corte. */
   pagosVencidosDeOtros: PagoVencidoDeOtro[];
+  /** HU-078: los casos P-24 abiertos. Los ven todos los admins. */
+  pagosPorCobrarOAsumir: PagoPorCobrarOAsumir[];
   /** Cada estado activo tiene su propia lista y su propio corte: una larga no tapa a la otra. */
   reembolsos: { esperandoLlave: ReembolsoActivo[]; pendientes: ReembolsoActivo[] };
   reportes: ReporteEnRevision[];
@@ -63,6 +86,7 @@ export type Bandeja = {
   contadores: {
     pagos: number;
     pagosVencidosDeOtros: number;
+    pagosPorCobrarOAsumir: number;
     reembolsos: number;
     reembolsosEsperandoLlave: number;
     reembolsosPendientes: number;
@@ -86,9 +110,61 @@ function exigir<T extends unknown[]>(
 }
 
 /**
+ * HU-078: los casos P-24 abiertos, del más antiguo al más reciente, con la materia y el monitor de su monitoría. La
+ * condición es la de `privado.estado_caso_p24` (y `estadoDelCaso`), que la Data API no expone: pago rechazado, sin
+ * cierre y con la monitoría no cancelada. monitoria no tiene llave directa a monitor ni a materia, así que sus nombres se
+ * piden aparte, una vez por lista.
+ */
+async function cargarPagosPorCobrarOAsumir(cliente: Cliente, maxFilas: number) {
+  const seccion = "los pagos por cobrar o asumir";
+  const casos = exigir(
+    seccion,
+    await cliente
+      .from("pago")
+      .select("id, nombre_pagador, contacto, monto, observaciones, fecha_revision, monitoria!inner(estado, fecha, id_monitor, id_materia)", {
+        count: "exact",
+      })
+      .eq("estado", "rechazado")
+      .is("cierre_rechazo", null)
+      .neq("monitoria.estado", "cancelada")
+      // Un rechazado siempre tiene fecha de revisión (pago_revision_con_fecha).
+      .order("fecha_revision", { ascending: true })
+      .limit(maxFilas),
+  );
+  if (casos.filas.length === 0) return { filas: [], total: casos.total };
+
+  const unicos = (ids: string[]) => [...new Set(ids)];
+  const [monitores, materias] = await Promise.all([
+    cliente.from("monitor").select("id, nombre").in("id", unicos(casos.filas.map((fila) => fila.monitoria.id_monitor))),
+    cliente.from("materia").select("id, nombre").in("id", unicos(casos.filas.map((fila) => fila.monitoria.id_materia))),
+  ]);
+  const nombreDeMonitor = new Map(exigir(seccion, monitores).filas.map((fila) => [fila.id, fila.nombre]));
+  const nombreDeMateria = new Map(exigir(seccion, materias).filas.map((fila) => [fila.id, fila.nombre]));
+
+  const filas = casos.filas.map((fila): PagoPorCobrarOAsumir => {
+    const nombreMonitor = nombreDeMonitor.get(fila.monitoria.id_monitor);
+    const nombreMateria = nombreDeMateria.get(fila.monitoria.id_materia);
+    if (nombreMonitor === undefined || nombreMateria === undefined || !fila.fecha_revision) {
+      throw new Error(`No se pudo cargar ${seccion}: el pago ${fila.id} está incompleto`);
+    }
+    return {
+      id: fila.id,
+      nombrePagador: fila.nombre_pagador,
+      contacto: fila.contacto,
+      monto: fila.monto,
+      observaciones: fila.observaciones,
+      rechazadoEn: new Date(fila.fecha_revision),
+      monitoria: { fecha: fila.monitoria.fecha, nombreMateria, nombreMonitor },
+    };
+  });
+  return { filas, total: casos.total };
+}
+
+/**
  * Lo que tiene asignado un admin (RN-07): pagos en revisión por vencimiento, reembolsos activos por
  * estado, reportes en revisión y desembolsos ejecutables. Los desembolsos no tienen admin hasta que
- * se ejecutan (RN-80), así que todos ven los mismos ejecutables. Lo que tienen asignado otros admins
+ * se ejecutan (RN-80), así que todos ven los mismos ejecutables; lo mismo pasa con los pagos por cobrar o asumir
+ * (HU-078, supuesto 2), que cierra cualquier admin activo. Lo que tienen asignado otros admins
  * no entra, salvo los pagos en revisión a los que ya se les pasó la hora (HU-077, supuesto 2): van
  * aparte, después de los propios. Las políticas de la base ya dejan leer estas tablas solo a los
  * admins: con la sesión de cualquier otro rol las listas salen vacías.
@@ -118,7 +194,7 @@ export async function cargarBandeja(
   // los parámetros; las demás no.
   const parametrosLeidos = cargarParametros(cliente);
 
-  const [parametros, pagos, vencidosDeOtros, esperandoLlave, pendientes, reportes, desembolsos, correos] = await Promise.all([
+  const [parametros, pagos, vencidosDeOtros, porCobrar, esperandoLlave, pendientes, reportes, desembolsos, correos] = await Promise.all([
     parametrosLeidos,
     cliente
       .from("pago")
@@ -143,6 +219,7 @@ export async function cargarBandeja(
         .order("fecha_asignacion", { ascending: true })
         .limit(maxFilas),
     ),
+    cargarPagosPorCobrarOAsumir(cliente, maxFilas),
     reembolsosDe("esperando_llave"),
     reembolsosDe("pendiente"),
     cliente
@@ -199,6 +276,7 @@ export async function cargarBandeja(
   return {
     pagos: p.filas.map(pagoPorRevisar),
     pagosVencidosDeOtros: v.filas.map((fila) => ({ ...pagoPorRevisar(fila), nombreAdmin: fila.admin.nombre })),
+    pagosPorCobrarOAsumir: porCobrar.filas,
     reembolsos: { esperandoLlave: e.filas.map(reembolso), pendientes: r.filas.map(reembolso) },
     reportes: i.filas.map((fila) => ({
       id: fila.id,
@@ -228,6 +306,7 @@ export async function cargarBandeja(
     contadores: {
       pagos: p.total,
       pagosVencidosDeOtros: v.total,
+      pagosPorCobrarOAsumir: porCobrar.total,
       reembolsos: e.total + r.total,
       reembolsosEsperandoLlave: e.total,
       reembolsosPendientes: r.total,
