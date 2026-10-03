@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-03 18:16. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-03 18:18. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -27,7 +27,6 @@ _Generado automaticamente: 2026-10-03 18:16. No editar a mano; usa `scripts/back
 | [HU-046](backlog/HU-046.md) | [Monitor] Finalizar una grupal y entregar el enlace de reseña | Backlog | P1 | S | HU-023, HU-036 |
 | [HU-047](backlog/HU-047.md) | [Integrante] Reseñar la sesión grupal eligiendo mi nombre | Backlog | P1 | M | HU-046, HU-038, HU-035 |
 | [HU-048](backlog/HU-048.md) | [Técnica] Pruebas de punta a punta de los flujos principales | Backlog | P1 | M | HU-030 |
-| [HU-080](backlog/HU-080.md) | [Lead] No invitar a reseñar a quien reportó que el monitor no llegó | Backlog | P1 | S | HU-029, HU-035 |
 | [HU-049](backlog/HU-049.md) | [Monitor] Administrar mi perfil | Backlog | P2 | M | HU-013 |
 | [HU-050](backlog/HU-050.md) | [Monitor] Ver mis desembolsos | Backlog | P2 | S | HU-028 |
 | [HU-052](backlog/HU-052.md) | [Admin] Autorizar una cancelación fuera de plazo en casos extremos | Backlog | P2 | S | HU-024, HU-026 |
@@ -40,6 +39,7 @@ _Generado automaticamente: 2026-10-03 18:16. No editar a mano; usa `scripts/back
 | [HU-026](backlog/HU-026.md) | [Admin] Gestionar reembolsos | Lista | P0 | M | HU-025, HU-012 |
 | [HU-030](backlog/HU-030.md) | [Admin] Resolver reportes de inasistencia | Lista | P0 | M | HU-029, HU-026, HU-028 |
 | [HU-076](backlog/HU-076.md) | [Sistema] Correos del rechazo de un pago: al monitor y al pagador, sin que se pierdan | Lista | P0 | M | HU-020, HU-051, HU-024 |
+| [HU-080](backlog/HU-080.md) | [Lead] No invitar a reseñar a quien reportó que el monitor no llegó | Lista | P1 | S | HU-029, HU-035 |
 | [HU-025](backlog/HU-025.md) | [Pagador] Entregar mi llave para recibir un reembolso | En progreso | P0 | M | HU-024, HU-006 |
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | En progreso | P0 | M | HU-019 |
 | [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | En progreso | P2 | S | HU-004 |
