@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Bandeja, ReembolsoActivo } from "@/lib/admin/bandeja";
+import type { Bandeja, PagoPorRevisar, ReembolsoActivo } from "@/lib/admin/bandeja";
 import { formatearDia, formatearFechaHora } from "@/lib/fechas";
 import { formatearPesos } from "@/lib/moneda";
 import estilos from "./bandeja.module.css";
@@ -21,6 +21,7 @@ function Seccion({
   ayuda,
   vacio,
   children,
+  despues,
 }: {
   id: string;
   titulo: string;
@@ -28,6 +29,8 @@ function Seccion({
   ayuda: string;
   vacio: string;
   children: ReactNode;
+  /** Lo que va al final de la sección aunque su lista esté vacía. */
+  despues?: ReactNode;
 }) {
   return (
     <section id={id} aria-labelledby={`${id}-titulo`} className={estilos.seccion}>
@@ -36,7 +39,62 @@ function Seccion({
       </h2>
       <p className={estilos.ayuda}>{ayuda}</p>
       {total === 0 ? <p className={estilos.vacio}>{vacio}</p> : children}
+      {despues}
     </section>
+  );
+}
+
+/**
+ * HU-020: cada pago abre su revisión. Un <a>, como los contadores: la bandeja no necesita JavaScript. Con
+ * `asignadoA` (HU-077) dice de quién es el pago antes del tiempo.
+ */
+function EnlaceAlPago({ pago, asignadoA }: { pago: PagoPorRevisar; asignadoA?: string }) {
+  const tiempo = (
+    <span className={pago.restante.vencido ? estilos.vencido : estilos.meta}>
+      <time dateTime={pago.revisionHasta.toISOString()}>{pago.restante.texto}</time>
+    </span>
+  );
+  return (
+    <a href={`/admin/pagos/${pago.id}`} className={estilos.filaEnlace}>
+      <span className={estilos.nombre}>
+        {pago.nombrePagador} · {formatearPesos(pago.monto)}
+      </span>
+      {asignadoA ? (
+        <span className={estilos.meta}>
+          De {asignadoA} · {tiempo}
+        </span>
+      ) : (
+        tiempo
+      )}
+    </a>
+  );
+}
+
+/**
+ * HU-077 (supuesto 2): los pagos de otros admins a los que ya se les pasó la hora, después de los propios, con de
+ * quién son y desde cuándo están vencidos. Si no hay ninguno, no se muestra nada.
+ */
+function PagosVencidosDeOtros({ bandeja }: { bandeja: Bandeja }) {
+  const total = bandeja.contadores.pagosVencidosDeOtros;
+  if (total === 0) return null;
+  return (
+    <>
+      <h3 id="pagos-de-otros-titulo" className={estilos.subtitulo}>
+        Vencidos de otros admins <span className={estilos.cuenta}>({total})</span>
+      </h3>
+      <p className={estilos.ayuda}>
+        Al admin asignado se le pasó la hora para revisarlos: ya puedes aprobarlos o rechazarlos tú. El que lleva más tiempo
+        vencido va arriba.
+      </p>
+      <ul aria-labelledby="pagos-de-otros-titulo" className={estilos.lista}>
+        {bandeja.pagosVencidosDeOtros.map((pago) => (
+          <li key={pago.id}>
+            <EnlaceAlPago pago={pago} asignadoA={pago.nombreAdmin} />
+          </li>
+        ))}
+      </ul>
+      <AvisoDeCorte mostrados={bandeja.pagosVencidosDeOtros.length} total={total} />
+    </>
   );
 }
 
@@ -107,19 +165,13 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
         total={contadores.pagos}
         ayuda="Cada pago tiene un plazo para revisarse: el que vence primero va arriba y en cada fila ves cuánto le queda."
         vacio="No tienes pagos por revisar."
+        despues={<PagosVencidosDeOtros bandeja={bandeja} />}
       >
-        <ul className={estilos.lista}>
+        {/* Con nombre: la lista de otros admins (HU-077) puede ir debajo, en la misma sección. */}
+        <ul aria-label="Asignados a ti" className={estilos.lista}>
           {bandeja.pagos.map((pago) => (
             <li key={pago.id}>
-              {/* HU-020: cada pago abre su revisión. Un <a>, como los contadores: la bandeja no necesita JavaScript. */}
-              <a href={`/admin/pagos/${pago.id}`} className={estilos.filaEnlace}>
-                <span className={estilos.nombre}>
-                  {pago.nombrePagador} · {formatearPesos(pago.monto)}
-                </span>
-                <span className={pago.restante.vencido ? estilos.vencido : estilos.meta}>
-                  <time dateTime={pago.revisionHasta.toISOString()}>{pago.restante.texto}</time>
-                </span>
-              </a>
+              <EnlaceAlPago pago={pago} />
             </li>
           ))}
         </ul>

@@ -3,8 +3,8 @@ import pg from "pg";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { ZONA_HORARIA_NEGOCIO } from "@/config/regional";
 import { cargarBandeja } from "@/lib/admin/bandeja";
-import { avisarRechazoAlPagador, cargarPagoParaRevisar, revisarPago } from "@/lib/admin/pagos";
-import { casoDeRechazo, pideObservaciones, type CasoDeRechazo, type Decision } from "@/lib/admin/pagos-reglas";
+import { avisarRechazoAlPagador, cargarAsignacion, cargarPagoParaRevisar, revisarPago } from "@/lib/admin/pagos";
+import { casoDeRechazo, pideObservaciones, puedeRevisar, type CasoDeRechazo, type Decision } from "@/lib/admin/pagos-reglas";
 import { claveDeCorreo } from "@/lib/correo/enviar";
 import { renderizar } from "@/lib/correo/plantillas";
 import { reintentarCorreosDesdeServidor } from "@/lib/correo/procesos";
@@ -32,6 +32,11 @@ import { crearCliente, exigirSupabaseLocal, exito, Fixtures, type Cliente, type 
  *
  * Dos revisiones a la vez van con dos conexiones `pg` reales, cada una en su transacción y con el rol y el token del
  * admin, como en `integracion/expirar.test.ts`: la segunda espera el bloqueo de la primera.
+ *
+ * HU-077 (D-38): pasada la hora del asignado, cualquier admin activo aprueba o rechaza el pago, y queda quién lo
+ * revisó (`pago.id_admin_revisor`). Un pago vencido es uno asignado hace más de una hora (RN-42): se inserta con esa
+ * fecha de asignación. Las revisiones a la vez con un tercer admin no necesitan iniciar sesión: la conexión `pg` toma
+ * su id. El borde exacto de la hora (P-40) está en `supabase/tests/revisar_pago_vencido.test.sql`.
  */
 
 const URL_BD = process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
@@ -49,7 +54,15 @@ const OBSERVACIONES = "Se cobra por fuera: el pagador vuelve a transferir esta s
 /** Cuánto se espera, como máximo, a que una conexión quede bloqueada por la otra. */
 const ESPERA_MAXIMA = 10_000;
 
+/** HU-077: el otro admin se llama distinto del asignado, para saber de quién es cada nombre que muestra la página. */
+const NOMBRE_DEL_OTRO_ADMIN = "Otro admin de prueba";
+
+/** Unas observaciones que no caben en `pago.observaciones` (500 caracteres). */
+const OBSERVACIONES_LARGAS = "a".repeat(501);
+
 type Cuenta = { usuario: UsuarioPrueba; cliente: Cliente };
+/** Un admin que solo revisa desde una conexión `pg`: basta su id, sin sesión de Auth. */
+type Admin = Pick<Cuenta, "usuario">;
 type Escenario = Awaited<ReturnType<typeof escenario>>;
 
 let fx: Fixtures;
@@ -60,6 +73,8 @@ let mailpit: string;
 let asignado: Cuenta;
 let otroAdmin: Cuenta;
 let monitor: Cuenta;
+/** HU-077: un tercer admin activo, sin sesión, para dos revisiones a la vez de admins que no son el asignado. */
+let tercerAdmin: Admin;
 /** Contactos de pagador de esta prueba (buzón de Mailpit) y claves de `correo_envio` que se borran al final. */
 const destinatarios: string[] = [];
 const claves: string[] = [];
@@ -77,6 +92,11 @@ beforeAll(async () => {
     asignado = await cuenta(await cuentas.crearAdmin());
     otroAdmin = await cuenta(await cuentas.crearAdmin());
     monitor = await cuenta(await cuentas.crearMonitor());
+    tercerAdmin = { usuario: await cuentas.crearAdmin() };
+    exito(
+      await cuentas.admin.from("admin").update({ nombre: NOMBRE_DEL_OTRO_ADMIN }).eq("id", otroAdmin.usuario.id).select().single(),
+      "nombrar al otro admin",
+    );
   } catch (error) {
     await cuentas.limpiar();
     throw error;
@@ -178,7 +198,10 @@ const revisar = (cliente: Cliente, idPago: string, decision: Decision, observaci
   revisarPago(cliente, { idPago, decision, observaciones });
 
 const pagoEnBd = async (id: string) =>
-  exito(await fx.admin.from("pago").select("estado, fecha_revision, observaciones, id_admin").eq("id", id).single(), "leer el pago");
+  exito(await fx.admin.from("pago").select("estado, fecha_revision, observaciones, id_admin, id_admin_revisor").eq("id", id).single(), "leer el pago");
+
+/** La fecha de asignación de un pago asignado hace `ms` milisegundos. Más de una hora: el pago está vencido (RN-42). */
+const asignadoHace = (ms: number) => ({ fechaAsignacion: new Date(Date.now() - ms).toISOString() });
 
 const monitoriaEnBd = async (id: string) =>
   exito(await fx.admin.from("monitoria").select("estado, motivo_cancelacion, fecha_finalizacion").eq("id", id).single(), "leer la monitoría");
@@ -194,6 +217,18 @@ const avisosDe = async (idMonitoria: string) =>
 
 /** Los pagos que el admin asignado ve en su bandeja (HU-012). */
 const pagosDeLaBandeja = async () => (await cargarBandeja(asignado.cliente, asignado.usuario.id)).pagos.map((p) => p.id);
+
+/**
+ * La bandeja del otro admin (HU-077, supuesto 2): sus pagos y, aparte, los vencidos de otros admins. Cualquier admin ve
+ * los vencidos de todos, así que de esa lista solo se miran los pagos de esta prueba.
+ */
+async function bandejaDelOtroAdmin(...deLaPrueba: { id: string }[]) {
+  const bandeja = await cargarBandeja(otroAdmin.cliente, otroAdmin.usuario.id);
+  return {
+    suyos: bandeja.pagos.map((p) => p.id),
+    vencidosDeOtros: bandeja.pagosVencidosDeOtros.filter((p) => deLaPrueba.some((q) => q.id === p.id)),
+  };
+}
 
 /** Las fechas de la franja del escenario que ve un visitante sin sesión en la lista de la materia (HU-016). */
 async function fechasLibresDe(e: Escenario): Promise<string[]> {
@@ -271,7 +306,7 @@ async function esperarBloqueo(pid: number, porPid: number, consulta: { terminada
  * Dentro de una transacción de `cliente`: lo que sigue corre con el rol `authenticated` y el token del admin (el
  * asignado si no se dice otro), como una llamada de la Data API con su sesión.
  */
-async function comoAsignado(cliente: pg.Client, admin: Cuenta = asignado) {
+async function comoAsignado(cliente: pg.Client, admin: Admin = asignado) {
   await cliente.query("set local role authenticated");
   await cliente.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: admin.usuario.id, role: "authenticated" })]);
 }
@@ -311,6 +346,9 @@ describe("criterio 1: el admin abre un pago asignado y ve lo que necesita para r
       revisionHasta: new Date(asignacion.getTime() + HORA),
       restante: { texto: "Quedan 40 min", vencido: false },
       fechaRevision: null,
+      // HU-077: en revisión todavía nadie lo revisó.
+      idAdminRevisor: null,
+      nombreAdminRevisor: null,
       observaciones: null,
       monitoria: {
         estado: "confirmada",
@@ -327,7 +365,8 @@ describe("criterio 1: el admin abre un pago asignado y ve lo que necesita para r
     // La pantalla anticipa con el inicio que leyó lo mismo que decidirá la base: rechazarlo cancela la cita.
     expect(casoDeRechazo(leido!.monitoria.estado, leido!.monitoria.inicio, ahora)).toBe("cancela_la_cita");
 
-    // Las políticas dejan leer el pago a cualquier admin activo; las acciones solo se las da la página al asignado.
+    // Las políticas dejan leer el pago a cualquier admin activo. Las acciones la página se las da al asignado y, pasada
+    // su hora, también a los demás (HU-077): con este, a otro admin todavía no.
     expect(await cargarPagoParaRevisar(otroAdmin.cliente, pago.id, ahora)).toEqual(leido);
   });
 
@@ -338,6 +377,19 @@ describe("criterio 1: el admin abre un pago asignado y ve lo que necesita para r
 
     expect(await cargarPagoParaRevisar(monitor.cliente, pago.id)).toBeNull();
     expect(await cargarPagoParaRevisar(asignado.cliente, randomUUID())).toBeNull();
+  });
+
+  it("HU-077: la acción lee a quién está asignado y hasta cuándo es suyo, con la sesión de cualquier admin; un monitor o un pago que no existe dan null", async () => {
+    const e = await escenario();
+    const monitoria = await fx.crearMonitoria(e.contexto, { fecha: e.fecha() });
+    const asignacion = new Date(Date.now() - 20 * MINUTO);
+    const pago = await pagoEnRevision(monitoria.id, { fechaAsignacion: asignacion.toISOString() });
+
+    const esperada = { idAdmin: asignado.usuario.id, revisionHasta: new Date(asignacion.getTime() + HORA) };
+    expect(await cargarAsignacion(asignado.cliente, pago.id)).toEqual(esperada);
+    expect(await cargarAsignacion(otroAdmin.cliente, pago.id)).toEqual(esperada);
+    expect(await cargarAsignacion(monitor.cliente, pago.id)).toBeNull();
+    expect(await cargarAsignacion(asignado.cliente, randomUUID())).toBeNull();
   });
 
   it("supuesto 8: el pago de una grupal se marca como grupal, y aprobarlo o rechazarlo responde no_individual sin tocar nada", async () => {
@@ -373,7 +425,8 @@ describe("criterio 2: el admin aprueba un pago en revisión", () => {
     const despues = await relojDeLaBase();
     expect(revision).toEqual({ resultado: "aprobado", canceloMonitoria: false });
     const enBd = await pagoEnBd(pago.id);
-    expect(enBd).toMatchObject({ estado: "aprobado", observaciones: null, id_admin: asignado.usuario.id });
+    // HU-077 (criterio 3): queda quién lo revisó; aquí, el mismo asignado.
+    expect(enBd).toMatchObject({ estado: "aprobado", observaciones: null, id_admin: asignado.usuario.id, id_admin_revisor: asignado.usuario.id });
     const revisado = new Date(enBd.fecha_revision!).getTime();
     expect(revisado).toBeGreaterThanOrEqual(antes);
     expect(revisado).toBeLessThanOrEqual(despues);
@@ -382,8 +435,14 @@ describe("criterio 2: el admin aprueba un pago en revisión", () => {
     expect(await reembolsosDe(pago.id)).toEqual([]);
     expect(await correosDe(pago.id)).toEqual([]);
     expect(await pagosDeLaBandeja()).toEqual([]);
-    // La página lo pinta ya revisado, con su fecha (y sin acciones).
-    expect(await cargarPagoParaRevisar(asignado.cliente, pago.id)).toMatchObject({ estado: "aprobado", fechaRevision: new Date(enBd.fecha_revision!) });
+    // La página lo pinta ya revisado, con su fecha y (HU-077) quién lo revisó, sin acciones.
+    expect(await cargarPagoParaRevisar(asignado.cliente, pago.id)).toMatchObject({
+      estado: "aprobado",
+      fechaRevision: new Date(enBd.fecha_revision!),
+      idAdmin: asignado.usuario.id,
+      idAdminRevisor: asignado.usuario.id,
+      nombreAdminRevisor: "Admin de prueba",
+    });
   });
 
   it("§5.2, sin vuelta atrás: aprobar otra vez o rechazar después responde ya_revisado y no mueve ni el estado ni la fecha de revisión", async () => {
@@ -415,7 +474,7 @@ describe("criterios 3 y 5: el admin rechaza el pago de una cita que aún no empi
     const despues = await relojDeLaBase();
     expect(revision).toEqual({ resultado: "rechazado", canceloMonitoria: true });
     const enBd = await pagoEnBd(pago.id);
-    expect(enBd).toMatchObject({ estado: "rechazado", observaciones: null });
+    expect(enBd).toMatchObject({ estado: "rechazado", observaciones: null, id_admin: asignado.usuario.id, id_admin_revisor: asignado.usuario.id });
     const revisado = new Date(enBd.fecha_revision!).getTime();
     expect(revisado).toBeGreaterThanOrEqual(antes);
     expect(revisado).toBeLessThanOrEqual(despues);
@@ -501,16 +560,22 @@ describe("criterio 7 (P-24, supuestos 2 y 3): rechazar el pago de una monitoría
   );
 });
 
-describe("supuesto 1: solo revisa el admin asignado", () => {
-  it("otro admin activo recibe no_asignado al aprobar y al rechazar, y nada cambia", async () => {
+describe("supuesto 1 de HU-020, acotado por D-38: dentro de su hora, solo revisa el admin asignado", () => {
+  it.each([
+    ["recién asignado", 0],
+    // HU-077: a un minuto de que se le pase la hora todavía es solo suyo. El borde exacto (P-40) va en el pgTAP.
+    ["asignado hace 59 min", 59 * MINUTO],
+  ])("%s: otro admin activo recibe no_asignado al aprobar y al rechazar, también con observaciones que no caben (D-39), y nada cambia", async (_caso, hace) => {
     const e = await escenario();
     const monitoria = await fx.crearMonitoria(e.contexto, { fecha: e.fecha() });
-    const pago = await pagoEnRevision(monitoria.id);
+    const pago = await pagoEnRevision(monitoria.id, asignadoHace(hace));
 
     expect(await revisar(otroAdmin.cliente, pago.id, "aprobar")).toEqual({ resultado: "no_asignado", canceloMonitoria: false });
     expect(await revisar(otroAdmin.cliente, pago.id, "rechazar", OBSERVACIONES)).toEqual({ resultado: "no_asignado", canceloMonitoria: false });
+    // HU-077 (nota de D-39): quién puede revisar va antes que el texto; al que no puede no se le dice nada de él.
+    expect(await revisar(otroAdmin.cliente, pago.id, "rechazar", OBSERVACIONES_LARGAS)).toEqual({ resultado: "no_asignado", canceloMonitoria: false });
 
-    expect(await pagoEnBd(pago.id)).toEqual({ estado: "en_revision", fecha_revision: null, observaciones: null, id_admin: asignado.usuario.id });
+    expect(await pagoEnBd(pago.id)).toEqual({ estado: "en_revision", fecha_revision: null, observaciones: null, id_admin: asignado.usuario.id, id_admin_revisor: null });
     expect(await monitoriaEnBd(monitoria.id)).toMatchObject({ estado: "confirmada", motivo_cancelacion: null });
   });
 
@@ -537,24 +602,122 @@ describe("supuesto 1: solo revisa el admin asignado", () => {
   });
 });
 
-describe("dos revisiones del mismo pago a la vez (doble clic o dos pestañas)", () => {
-  // Dos conexiones, cada una en su transacción con el rol y el token del admin asignado. La primera revisa y se queda
-  // con los bloqueos de la monitoría y del pago; la segunda espera el de la monitoría y, cuando la primera confirma,
-  // lee el pago ya revisado.
-  async function carrera(primera: Decision, segunda: Decision) {
+describe("HU-077 (D-38): pasada la hora del asignado, cualquier admin activo revisa el pago", () => {
+  it("criterios 1 y 3: la bandeja del otro admin trae el pago vencido y no el que sigue en hora; lo aprueba por la misma ruta, queda él como revisor, el asignado no cambia y el pago sale de las dos bandejas", async () => {
+    const e = await escenario();
+    const monitoria = await fx.crearMonitoria(e.contexto, { fecha: e.fecha(0) });
+    const vencido = await pagoEnRevision(monitoria.id, asignadoHace(90 * MINUTO));
+    const enHora = await pagoEnRevision((await fx.crearMonitoria(e.contexto, { fecha: e.fecha(1) })).id, asignadoHace(30 * MINUTO));
+
+    // Supuesto 2: el vencido le sale aparte de los suyos, con el nombre del asignado; el que sigue en hora, no.
+    const antes = await bandejaDelOtroAdmin(vencido, enHora);
+    expect(antes.vencidosDeOtros.map((p) => p.id)).toEqual([vencido.id]);
+    expect(antes.vencidosDeOtros[0]).toMatchObject({ nombreAdmin: "Admin de prueba", restante: { vencido: true } });
+    expect(antes.vencidosDeOtros[0].restante.texto).toMatch(/^Vencido hace (29|30|31) min$/);
+    expect(antes.suyos).not.toContain(vencido.id);
+    expect(antes.suyos).not.toContain(enHora.id);
+    // Lo que mira la acción antes que el texto (nota de D-39), con estos mismos pagos: coincide con lo que decide la base.
+    expect(puedeRevisar((await cargarAsignacion(otroAdmin.cliente, vencido.id))!, otroAdmin.usuario.id, new Date())).toBe(true);
+    expect(puedeRevisar((await cargarAsignacion(otroAdmin.cliente, enHora.id))!, otroAdmin.usuario.id, new Date())).toBe(false);
+    const reloj = await relojDeLaBase();
+
+    expect(await revisar(otroAdmin.cliente, vencido.id, "aprobar")).toEqual({ resultado: "aprobado", canceloMonitoria: false });
+
+    const despues = await relojDeLaBase();
+    const enBd = await pagoEnBd(vencido.id);
+    // Criterio 3: queda quién lo revisó. Supuesto 4: revisarlo no se lo reasigna.
+    expect(enBd).toMatchObject({ estado: "aprobado", observaciones: null, id_admin: asignado.usuario.id, id_admin_revisor: otroAdmin.usuario.id });
+    const revisado = new Date(enBd.fecha_revision!).getTime();
+    expect(revisado).toBeGreaterThanOrEqual(reloj);
+    expect(revisado).toBeLessThanOrEqual(despues);
+    expect(await monitoriaEnBd(monitoria.id)).toEqual({ estado: "confirmada", motivo_cancelacion: null, fecha_finalizacion: null });
+    expect(await reembolsosDe(vencido.id)).toEqual([]);
+    expect(await correosDe(vencido.id)).toEqual([]);
+    // La página lo pinta revisado por el otro admin, y asignado al primero.
+    expect(await cargarPagoParaRevisar(asignado.cliente, vencido.id)).toMatchObject({
+      estado: "aprobado",
+      idAdmin: asignado.usuario.id,
+      nombreAdmin: "Admin de prueba",
+      idAdminRevisor: otroAdmin.usuario.id,
+      nombreAdminRevisor: NOMBRE_DEL_OTRO_ADMIN,
+    });
+
+    // Sale de las dos bandejas; el que sigue en hora se queda con el asignado.
+    expect((await bandejaDelOtroAdmin(vencido, enHora)).vencidosDeOtros).toEqual([]);
+    expect(await pagosDeLaBandeja()).toEqual([enHora.id]);
+    // §5.2: ni el asignado lo cambia después.
+    expect(await revisar(asignado.cliente, vencido.id, "rechazar", OBSERVACIONES)).toEqual({ resultado: "ya_revisado", canceloMonitoria: false });
+    expect(await pagoEnBd(vencido.id)).toEqual(enBd);
+  });
+
+  it("criterio 1, con las mismas reglas que el asignado: el rechazo cancela la cita que no empezó y se le avisa al pagador; con la monitoría realizada (P-24) pide observaciones, que tienen que caber, y no la cancela", async () => {
+    const e = await escenario();
+    const futura = await fx.crearMonitoria(e.contexto, { fecha: e.fecha(0) });
+    const deFutura = await pagoEnRevision(futura.id, asignadoHace(2 * HORA));
+    const realizada = await fx.crearMonitoria(e.contexto, { fecha: e.fecha(-4), estado: "realizada", fechaFinalizacion: `${e.fecha(-4)}T16:00:00+00:00` });
+    const deRealizada = await pagoEnRevision(realizada.id, asignadoHace(2 * HORA));
+
+    expect(await revisar(otroAdmin.cliente, deFutura.id, "rechazar")).toEqual({ resultado: "rechazado", canceloMonitoria: true });
+    expect(await pagoEnBd(deFutura.id)).toMatchObject({ estado: "rechazado", observaciones: null, id_admin: asignado.usuario.id, id_admin_revisor: otroAdmin.usuario.id });
+    expect(await monitoriaEnBd(futura.id)).toEqual({ estado: "cancelada", motivo_cancelacion: "pago_rechazado", fecha_finalizacion: null });
+    // Lo que hace la acción después, igual que si lo hubiera rechazado el asignado.
+    expect(await avisarRechazoAlPagador(deFutura.id)).toBe("enviado");
+    const mensajes = await mensajesPara(deFutura.contacto);
+    expect(mensajes).toHaveLength(1);
+    expect(mensajes[0].Subject).toBe(correoEsperado(e.fecha(0)).asunto);
+    expect(await reembolsosDe(deFutura.id)).toEqual([]);
+
+    const antes = await monitoriaEnBd(realizada.id);
+    expect(await revisar(otroAdmin.cliente, deRealizada.id, "rechazar")).toEqual({ resultado: "observaciones_requeridas", canceloMonitoria: false });
+    // Nota de D-39, del otro lado: a quien sí puede revisar se le dice que el texto no cabe.
+    expect(await revisar(otroAdmin.cliente, deRealizada.id, "rechazar", OBSERVACIONES_LARGAS)).toEqual({ resultado: "observaciones_invalidas", canceloMonitoria: false });
+    expect(await pagoEnBd(deRealizada.id)).toMatchObject({ estado: "en_revision", fecha_revision: null, observaciones: null, id_admin_revisor: null });
+
+    expect(await revisar(otroAdmin.cliente, deRealizada.id, "rechazar", OBSERVACIONES)).toEqual({ resultado: "rechazado", canceloMonitoria: false });
+    expect(await pagoEnBd(deRealizada.id)).toMatchObject({
+      estado: "rechazado",
+      observaciones: OBSERVACIONES,
+      id_admin: asignado.usuario.id,
+      id_admin_revisor: otroAdmin.usuario.id,
+    });
+    expect(await monitoriaEnBd(realizada.id)).toEqual(antes);
+    expect(await avisarRechazoAlPagador(deRealizada.id)).toBeNull();
+    expect(await mensajesPara(deRealizada.contacto)).toEqual([]);
+    expect(await reembolsosDe(deRealizada.id)).toEqual([]);
+  });
+
+  it("supuesto 5: el asignado lo sigue revisando con su hora vencida y queda él como revisor; un monitor, ni con la hora vencida", async () => {
     const e = await escenario();
     const monitoria = await fx.crearMonitoria(e.contexto, { fecha: e.fecha() });
-    const pago = await pagoEnRevision(monitoria.id);
+    const pago = await pagoEnRevision(monitoria.id, asignadoHace(3 * HORA));
+
+    expect(await revisar(monitor.cliente, pago.id, "aprobar")).toEqual({ resultado: "sin_permiso", canceloMonitoria: false });
+    expect(await pagoEnBd(pago.id)).toMatchObject({ estado: "en_revision", id_admin_revisor: null });
+
+    expect(await revisar(asignado.cliente, pago.id, "aprobar")).toEqual({ resultado: "aprobado", canceloMonitoria: false });
+    expect(await pagoEnBd(pago.id)).toMatchObject({ estado: "aprobado", id_admin: asignado.usuario.id, id_admin_revisor: asignado.usuario.id });
+    expect(await cargarPagoParaRevisar(otroAdmin.cliente, pago.id)).toMatchObject({ idAdminRevisor: asignado.usuario.id, nombreAdminRevisor: "Admin de prueba" });
+  });
+});
+
+describe("dos revisiones del mismo pago a la vez (doble clic, dos pestañas o, desde HU-077, dos admins)", () => {
+  // Dos conexiones, cada una en su transacción con el rol y el token de un admin: el asignado en las dos, si no se dice
+  // otra cosa. La primera revisa y se queda con los bloqueos de la monitoría y del pago; la segunda espera el de la
+  // monitoría y, cuando la primera confirma, lee el pago ya revisado. `hace`: cuánto hace que se asignó el pago.
+  async function carrera(primera: Decision, segunda: Decision, { quienes = [asignado, asignado], hace = 0 }: { quienes?: [Admin, Admin]; hace?: number } = {}) {
+    const e = await escenario();
+    const monitoria = await fx.crearMonitoria(e.contexto, { fecha: e.fecha() });
+    const pago = await pagoEnRevision(monitoria.id, asignadoHace(hace));
 
     const a = await conexion();
     const b = await conexion();
     try {
       await a.cliente.query("begin");
-      await comoAsignado(a.cliente);
+      await comoAsignado(a.cliente, quienes[0]);
       const ganadora = await revisarEn(a.cliente, pago.id, primera);
 
       await b.cliente.query("begin");
-      await comoAsignado(b.cliente);
+      await comoAsignado(b.cliente, quienes[1]);
       const perdedora = enCurso(revisarEn(b.cliente, pago.id, segunda));
       await esperarBloqueo(b.pid, a.pid, perdedora);
 
@@ -594,7 +757,73 @@ describe("dos revisiones del mismo pago a la vez (doble clic o dos pestañas)", 
   );
 
   it(
-    "supuesto 1: mientras el asignado revisa, otro admin recibe no_asignado sin esperar sus bloqueos (la autorización se lee sin candado)",
+    "HU-077, criterio 4: dos admins que no son el asignado, sobre un pago vencido: vale la aprobación del primero, y el rechazo del otro espera el bloqueo y responde ya_revisado",
+    async () => {
+      const { ganadora, pago, monitoria } = await carrera("aprobar", "rechazar", { quienes: [otroAdmin, tercerAdmin], hace: 2 * HORA });
+
+      expect(ganadora).toEqual({ resultado: "aprobado", cancelo_monitoria: false });
+      // Queda el primero como revisor; el asignado no cambia (supuesto 4).
+      expect(pago).toMatchObject({ estado: "aprobado", observaciones: null, id_admin: asignado.usuario.id, id_admin_revisor: otroAdmin.usuario.id });
+      expect(pago.fecha_revision).not.toBeNull();
+      expect(monitoria).toMatchObject({ estado: "confirmada", motivo_cancelacion: null });
+    },
+    60_000,
+  );
+
+  it(
+    "HU-077, criterio 4: otro admin rechaza primero un pago vencido, y la aprobación que el asignado manda a la vez espera el bloqueo y responde ya_revisado",
+    async () => {
+      const { ganadora, pago, monitoria } = await carrera("rechazar", "aprobar", { quienes: [otroAdmin, asignado], hace: 2 * HORA });
+
+      expect(ganadora).toEqual({ resultado: "rechazado", cancelo_monitoria: true });
+      expect(pago).toMatchObject({ estado: "rechazado", id_admin: asignado.usuario.id, id_admin_revisor: otroAdmin.usuario.id });
+      expect(monitoria).toMatchObject({ estado: "cancelada", motivo_cancelacion: "pago_rechazado" });
+    },
+    60_000,
+  );
+
+  it(
+    "HU-077: si al pago vencido lo reasignan con una hora nueva (HU-074) mientras otro admin espera su fila, ese admin responde no_asignado: la regla se vuelve a mirar con la fila bloqueada",
+    async () => {
+      // La reasignación le pasa los pagos del asignado al admin activo que le sigue en el turno: aquí, `siguiente`.
+      const siguiente = await fx.crearAdmin();
+      const { orden_revision } = exito(await fx.admin.from("admin").select("orden_revision").eq("id", asignado.usuario.id).single(), "leer el turno del asignado");
+      exito(await fx.admin.from("admin").update({ orden_revision: orden_revision + 1 }).eq("id", siguiente.id).select().single(), "poner al siguiente en el turno");
+      const e = await escenario();
+      const monitoria = await fx.crearMonitoria(e.contexto, { fecha: e.fecha() });
+      const pago = await pagoEnRevision(monitoria.id, asignadoHace(2 * HORA));
+
+      const r = await conexion();
+      const b = await conexion();
+      try {
+        // R hace lo que desactivarCuenta() (HU-074) con la llave secreta: reasigna y, sin confirmar, deja bloqueada la
+        // fila del pago, ya con el nuevo admin y una hora nueva.
+        await r.cliente.query("begin");
+        await r.cliente.query("set local role service_role");
+        const { rows } = await r.cliente.query<{ movidos: number }>("select public.reasignar_casos_de_admin($1::uuid) as movidos", [asignado.usuario.id]);
+        expect(rows[0].movidos).toBe(1);
+
+        // B todavía lee el pago vencido de A, así que pasa la mirada sin candado y se queda esperando la fila del pago.
+        await b.cliente.query("begin");
+        await comoAsignado(b.cliente, otroAdmin);
+        const revision = enCurso(revisarEn(b.cliente, pago.id, "aprobar"));
+        await esperarBloqueo(b.pid, r.pid, revision);
+
+        await r.cliente.query("commit");
+        // Con la fila ya bloqueada lee al nuevo admin y su hora nueva: todavía no puede revisarlo.
+        expect(await revision.promesa).toEqual({ resultado: "no_asignado", cancelo_monitoria: false });
+        await b.cliente.query("commit");
+      } finally {
+        await cerrar(r, b);
+      }
+      expect(await pagoEnBd(pago.id)).toEqual({ estado: "en_revision", fecha_revision: null, observaciones: null, id_admin: siguiente.id, id_admin_revisor: null });
+      expect(await monitoriaEnBd(monitoria.id)).toMatchObject({ estado: "confirmada", motivo_cancelacion: null });
+    },
+    60_000,
+  );
+
+  it(
+    "supuesto 1, dentro de la hora: mientras el asignado revisa, otro admin recibe no_asignado sin esperar sus bloqueos (la autorización se lee sin candado)",
     async () => {
       const e = await escenario();
       const monitoria = await fx.crearMonitoria(e.contexto, { fecha: e.fecha() });
@@ -619,7 +848,7 @@ describe("dos revisiones del mismo pago a la vez (doble clic o dos pestañas)", 
       } finally {
         await cerrar(a, b);
       }
-      expect(await pagoEnBd(pago.id)).toMatchObject({ estado: "rechazado", id_admin: asignado.usuario.id });
+      expect(await pagoEnBd(pago.id)).toMatchObject({ estado: "rechazado", id_admin: asignado.usuario.id, id_admin_revisor: asignado.usuario.id });
     },
     60_000,
   );

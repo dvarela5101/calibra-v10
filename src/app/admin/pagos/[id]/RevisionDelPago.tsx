@@ -9,9 +9,10 @@ import estilos from "./revision.module.css";
 const estadoInicial: EstadoRevision = { error: null, valores: { observaciones: "" } };
 
 /**
- * HU-020: aprobar o rechazar el pago, solo para el admin asignado. La revisión no se deshace (§5.2), así que el
- * rechazo pide confirmación: abre un `<details>` con las consecuencias escritas antes del botón (supuesto 7, como
- * desactivar a un admin). Mientras una decisión se envía, los dos botones quedan inactivos.
+ * HU-020: aprobar o rechazar el pago, para el admin asignado o, pasada su hora, para cualquier admin activo (HU-077).
+ * La revisión no se deshace (§5.2), así que el rechazo pide confirmación: abre un `<details>` con las consecuencias
+ * escritas antes del botón (supuesto 7, como desactivar a un admin). Mientras una decisión se envía, los dos botones
+ * quedan inactivos.
  */
 export function RevisionDelPago({
   idPago,
