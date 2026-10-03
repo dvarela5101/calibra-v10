@@ -1,6 +1,22 @@
 # Reparto de trabajo
 
-**Actualizado:** 2 de octubre de 2026, noche (ver "Ajuste del 2-oct-2026, noche"; después vienen la revisión de HU-020, el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+**Actualizado:** 3 de octubre de 2026 (ver "Ajuste del 3-oct-2026"; después vienen el ajuste del 2-oct en la noche, la revisión de HU-020, el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+
+## Ajuste del 3-oct-2026
+
+- **Hechas:** HU-024 ([PR #36](https://github.com/dvarela5101/calibra-v10/pull/36)) y HU-029 ([PR #40](https://github.com/dvarela5101/calibra-v10/pull/40)), las dos cerradas por Juzou04 con el código de dvarela5101. **En progreso, de Juzou04:** HU-025 (llave del reembolso, traspasada) y HU-058 (CAPTCHA).
+- **Nueva:** [HU-080](../backlog/HU-080.md) (no invitar a reseñar a quien reportó, D-40), en Lista. Sale de la pregunta 4 de HU-029.
+- **La cadena del diagnóstico pasa a Juzou04** (decisión de dvarela5101): [HU-060](../backlog/HU-060.md) (motor adaptativo) y [HU-061](../backlog/HU-061.md) (reprocesar el banco de una materia con IA) primero; después [HU-009](../backlog/HU-009.md) (tomar el diagnóstico), [HU-011](../backlog/HU-011.md) (ver el último diagnóstico) y [HU-022](../backlog/HU-022.md) (el diagnóstico en el hub del monitor). Las cinco siguen en Backlog: antes de tomarlas hay que refinarlas y pasar a dvarela5101 las preguntas de negocio que salgan.
+- **Material de las materias (HU-061):** el material fuente (parciales, talleres, guías, notas de monitores) está en el PC de Juzou04, en carpetas por materia. Cuando Juzou04 trabaje la cadena, **agrega esa carpeta a la sesión de Claude Code** (en la app, agregar la carpeta a la sesión; en la terminal, `/add-dir <ruta>`) para que Claude la pueda leer. La carpeta queda fuera del repo: ningún archivo del material se comitea (criterio de HU-061).
+
+| Persona | Siguiente, en orden |
+|---|---|
+| dvarela5101 | [HU-080](../backlog/HU-080.md) (S); después [HU-076](../backlog/HU-076.md) (correos del rechazo), cuando HU-025 esté fusionada |
+| Juzou04 | Cerrar [HU-025](../backlog/HU-025.md) y [HU-058](../backlog/HU-058.md); después [HU-026](../backlog/HU-026.md) y [HU-030](../backlog/HU-030.md); y la cadena del diagnóstico: HU-060 y HU-061, luego HU-009, HU-011 y HU-022 |
+
+Posibles choques:
+- **HU-076 y HU-025:** las dos tocan las plantillas y los reconstructores de correos (`src/lib/correo/`). Por eso HU-076 espera a que HU-025 esté fusionada.
+- **HU-080 y HU-030:** HU-080 lee el estado del reporte de inasistencia; HU-030 lo cambia al resolverlo. Si HU-030 cambia los estados de `reporte_inasistencia`, avisa en el PR.
 
 ## Ajuste del 2-oct-2026, noche
 
