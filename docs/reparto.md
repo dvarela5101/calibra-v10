@@ -1,6 +1,23 @@
 # Reparto de trabajo
 
-**Actualizado:** 2 de octubre de 2026, tarde (ver "Ajuste del 2-oct-2026, revisión de HU-020"; después vienen el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+**Actualizado:** 2 de octubre de 2026, noche (ver "Ajuste del 2-oct-2026, noche"; después vienen la revisión de HU-020, el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+
+## Ajuste del 2-oct-2026, noche
+
+- **Traspaso de dvarela5101 a Juzou04:** HU-024 (cancelar) y HU-058 (CAPTCHA) las cierra Juzou04, con permiso de dvarela5101 (la reserva en `main` sigue a nombre de dvarela5101 hasta que Juzou04 la pase a su nombre con `log`). El código está completo y revisado en las ramas `hu-024-cancelar` y `hu-058-captcha`; lo que falta está en el registro de cada HU. Orden: HU-024 primero y HU-058 después (el CAPTCHA cambia el stack local de las dos personas).
+- **dvarela5101 sigue con HU-029** (reportar inasistencia) en la rama `hu-029-reportar`, que **parte de `hu-024-cancelar`**: usa el botón y la migración de HU-024. No se abre su PR hasta que HU-024 esté fusionada; entonces se integra `main`.
+- **HU-025** (llave del reembolso) tiene plan, pero espera a que HU-024 esté `Hecha`. HU-076 sigue después de HU-025.
+
+| Persona | Ahora | Después |
+|---|---|---|
+| dvarela5101 | [HU-029](../backlog/HU-029.md) (rama `hu-029-reportar`) | [HU-025](../backlog/HU-025.md) (cuando HU-024 esté `Hecha`) y [HU-076](../backlog/HU-076.md) |
+| Juzou04 | Cerrar [HU-024](../backlog/HU-024.md) y luego [HU-058](../backlog/HU-058.md) (traspasadas); [HU-028](../backlog/HU-028.md) y [HU-075](../backlog/HU-075.md) (en curso) | Lo mismo del ajuste anterior: HU-078, HU-026 (espera a HU-025), HU-030 y, en el hueco, HU-077 |
+
+Posibles choques:
+- **Rama `hu-024-cancelar`:** la tocan las dos personas (Juzou04 la cierra y `hu-029-reportar` parte de ella). Juzou04 no reescribe su historia (sin `rebase` ni `push --force`), para que dvarela5101 pueda integrarla.
+- **HU-029 y HU-024:** las dos usan la página de la cita (`src/app/cita/`) y las funciones `cita_por_token`, `mi_cita` y `mis_citas`. HU-029 les agrega una columna de salida (D-37). Si Juzou04 cambia algo de eso al cerrar HU-024, avisa en el PR.
+- **HU-058 y HU-075:** las dos tocan el formulario de contacto. El PR que llegue segundo integra al otro.
+- **HU-024 y HU-020:** HU-024 ajusta `supabase/tests/revisar_pago.test.sql` (de HU-020): el pago aprobado de una cita ya cancelada por el estudiante ahora sí tiene reembolso (P-07).
 
 ## Ajuste del 2-oct-2026, revisión de HU-020
 
