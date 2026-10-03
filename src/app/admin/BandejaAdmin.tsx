@@ -176,11 +176,14 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
       >
         <ul className={estilos.lista}>
           {bandeja.desembolsos.map((desembolso) => (
-            <li key={desembolso.id} className={estilos.fila}>
-              <span className={estilos.nombre}>Transferir {formatearPesos(desembolso.montoNeto)}</span>
-              <span className={estilos.meta}>
-                Sesión del {formatearDia(desembolso.fechaSesion)} · ejecutable después del {formatearFechaHora(desembolso.desembolsableDesde)}
-              </span>
+            <li key={desembolso.id}>
+              {/* HU-028: cada desembolso abre su ejecución, con un <a> como los pagos. */}
+              <a href={`/admin/desembolsos/${desembolso.id}`} className={estilos.filaEnlace}>
+                <span className={estilos.nombre}>Transferir {formatearPesos(desembolso.montoNeto)}</span>
+                <span className={estilos.meta}>
+                  Sesión del {formatearDia(desembolso.fechaSesion)} · ejecutable después del {formatearFechaHora(desembolso.desembolsableDesde)}
+                </span>
+              </a>
             </li>
           ))}
         </ul>
