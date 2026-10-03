@@ -3,7 +3,7 @@
 -- Corre con: npx supabase test db
 -- Todo ocurre en una transacción que termina en rollback: no deja datos.
 --
--- Qué cubre la migración 20261003041608_reportar_inasistencia.sql:
+-- Qué cubre la migración 20261003202252_reportar_inasistencia.sql:
 --   * privado.reportar_inasistencia(id, ahora): los ocho resultados (no_existe, no_individual, ya_reportada, no_reportable,
 --     aun_no_empieza, fuera_de_ventana, sin_admin, reportada), el orden de las comprobaciones, los bordes de la ventana con
 --     p_ahora (con el inicio exacto y con fin + 24 h exactas todavía se puede, P-40), la fila creada (en_revision, asignada
@@ -13,7 +13,8 @@
 --     sesión del Lead, por privado.es_mi_lead), con sus permisos por rol. Las puertas usan now(): sus monitorías empiezan
 --     hace 2 horas en Bogotá.
 --   * RN-83: public.desembolsos_ejecutables excluye el desembolso de una monitoría con un reporte en revisión o aceptado y
---     lo vuelve a listar si el reporte se rechaza.
+--     lo vuelve a listar si el reporte se rechaza; privado.estado_para_ejecutar (HU-028) responde con_reporte. Las
+--     monitorías de RN-83 tienen un pago aprobado, que la vista de HU-028 exige para listar un desembolso.
 --   * D-37: la columna observaciones_reporte en cita_por_token, mi_cita y mis_citas (y en privado.datos_de_cita).
 --   * La restricción reporte_observaciones_con_texto.
 -- Las monitorías se insertan como postgres. Las del núcleo caen en lunes de 2030 (en el futuro: ningún trabajo de pg_cron las
@@ -35,14 +36,15 @@
 --   Puertas (empiezan hace 2 h, salvo 28 y 29): 21 y 22 con token (Lead 01 y Lead 02)   23 la reporta su dueño   24 las que
 --   no pueden   25 la sesión de lead_sesion   26 la cuenta de Estudiante   27 ya reportada   28 todavía no empieza   29 de
 --   hace 30 h (ventana vencida).
---   RN-83: 30 (el desembolso existe antes del reporte) y 31 (el reporte existe antes del desembolso), de 2020.
+--   RN-83: 30 (el desembolso existe antes del reporte) y 31 (el reporte existe antes del desembolso), de 2020, cada una con
+--   un pago aprobado.
 --   D-37 (Lead 02, con token): 40 sin reporte, 41 en revisión con texto, 42 rechazado con texto, 43 aceptado con texto, 44
 --   rechazado sin texto.
 
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(111);
+select plan(114);
 
 -- ---------------------------------------------------------------------------
 -- Existencia, permisos y forma de las seis funciones nuevas
@@ -320,15 +322,19 @@ where id in ('50000000-0000-0000-0000-000000002921', '50000000-0000-0000-0000-00
 insert into public.monitoria_grupal (id_monitoria, cupos, modalidad_pago, precio_por_persona) values
   ('50000000-0000-0000-0000-000000002908', 3, 'dividido', 15000);
 
--- Los pagos de la 15 (rechazado), la 16 (en revisión) y la 18 (aprobado, con su reembolso).
+-- Los pagos de la 15 (rechazado), la 16 (en revisión) y la 18 (aprobado, con su reembolso). Los de la 30 y la 31
+-- (aprobados, de 2020): sin un pago aprobado la vista de HU-028 nunca lista el desembolso (sin_pagos_aprobados), y las
+-- pruebas de RN-83 pasarían sin que el reporte tuviera nada que ver.
 create temporary table pago_29 (id text primary key, nn text not null, estado public.estado_pago not null);
-insert into pago_29 (id, nn, estado) values ('1501', '15', 'rechazado'), ('1601', '16', 'en_revision'), ('1801', '18', 'aprobado');
+insert into pago_29 (id, nn, estado) values ('1501', '15', 'rechazado'), ('1601', '16', 'en_revision'), ('1801', '18', 'aprobado'),
+  ('3001', '30', 'aprobado'), ('3101', '31', 'aprobado');
 insert into public.comprobante_revisado (ruta, tipo)
 select 'c0000000-0000-0000-0000-000000002901/60000000-0000-0000-0000-00000000' || id || '.pdf', 'application/pdf' from pago_29;
 insert into public.pago (id, id_monitoria, monto, nombre_pagador, contacto, estado, id_admin, fecha_pago, fecha_revision, comprobante)
 select ('60000000-0000-0000-0000-00000000' || id)::uuid, ('50000000-0000-0000-0000-0000000029' || nn)::uuid, 20000,
        'Pagador Secreto 29', 'pagador.secreto29@example.com', estado, 'a0000000-0000-0000-0000-0000000029a0',
-       timestamptz '2030-02-01 10:00-05', case when estado = 'en_revision' then null else now() end,
+       case when nn in ('30', '31') then timestamptz '2020-01-01 10:00-05' else timestamptz '2030-02-01 10:00-05' end,
+       case when estado = 'en_revision' then null else now() end,
        'c0000000-0000-0000-0000-000000002901/60000000-0000-0000-0000-00000000' || id || '.pdf'
 from pago_29;
 insert into public.reembolso (id_pago, id_admin, monto, motivo, llave_destino, estado) values
@@ -629,8 +635,15 @@ select results_eq(
 -- ---------------------------------------------------------------------------
 -- RN-83: el desembolso queda suspendido por existir el reporte (public.desembolsos_ejecutables)
 -- ---------------------------------------------------------------------------
--- La 30 es de enero de 2020 (la ventana de 24 h ya venció) y su desembolso está pendiente. La 31 igual, pero su reporte se crea
--- antes de que exista el desembolso.
+-- La 30 es de enero de 2020 (la ventana de 24 h ya venció), con un pago aprobado y su desembolso pendiente. La 31 igual,
+-- pero su reporte se crea antes de que exista el desembolso. Además de la bandeja (la vista), se mira lo que responde
+-- privado.estado_para_ejecutar de HU-028, que es lo que ve la página del desembolso y lo que vuelve a validar la ejecución.
+create function pg_temp.motivo_para_ejecutar(p_nn text) returns text
+language sql stable as $$
+  select e.motivo
+  from public.desembolso d, privado.estado_para_ejecutar(d.id, now()) e
+  where d.id_monitoria = ('50000000-0000-0000-0000-0000000029' || p_nn)::uuid
+$$;
 insert into public.desembolso (id_monitoria, monto_bruto, comision, monto_neto, llave_destino, estado) values
   ('50000000-0000-0000-0000-000000002930', 20000, 2000, 18000, 'llave-ana-29', 'pendiente');
 set local role authenticated;
@@ -638,6 +651,8 @@ set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-0000000029a0","
 select is((select count(*)::int from public.desembolsos_ejecutables where id_monitoria = '50000000-0000-0000-0000-000000002930'), 1,
   'Sin reporte, el desembolso pendiente de una sesión ya vencida es ejecutable');
 reset role;
+select is(pg_temp.motivo_para_ejecutar('30'), null::text,
+  'Control: sin reporte, la página del desembolso (HU-028) tampoco ve nada que lo bloquee');
 select is(pg_temp.reportar('30', timestamptz '2020-01-06 12:00-05'), 'reportada',
   'Reportada la 30 dentro de su ventana (con p_ahora de 2020): reportada');
 set local role authenticated;
@@ -645,6 +660,8 @@ set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-0000000029a0","
 select is((select count(*)::int from public.desembolsos_ejecutables where id_monitoria = '50000000-0000-0000-0000-000000002930'), 0,
   'Con el reporte en revisión el desembolso ya no es ejecutable (RN-83), aunque la ventana de hoy ya haya vencido');
 reset role;
+select is(pg_temp.motivo_para_ejecutar('30'), 'con_reporte',
+  'Y al consultarlo, la página del desembolso y su ejecución (HU-028) responden con_reporte: queda suspendido (RN-83)');
 update public.reporte_inasistencia set estado = 'rechazado', fecha_decision = now(), observaciones = 'No procede.'
 where id_monitoria = '50000000-0000-0000-0000-000000002930';
 set local role authenticated;
@@ -668,6 +685,8 @@ set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-0000000029a0","
 select is((select count(*)::int from public.desembolsos_ejecutables where id_monitoria = '50000000-0000-0000-0000-000000002931'), 0,
   'Un desembolso que nace después del reporte también queda excluido: la suspensión se evalúa en vivo');
 reset role;
+select is(pg_temp.motivo_para_ejecutar('31'), 'con_reporte',
+  'Excluido por el reporte (con_reporte), no por otra causa: la 31 tiene su pago aprobado y la ventana vencida');
 select is(
   (select d.estado::text from public.desembolso d where d.id_monitoria = '50000000-0000-0000-0000-000000002931'),
   'pendiente', 'Y el desembolso sigue pendiente: reportar no escribe en desembolso, solo lo suspende la vista');

@@ -656,6 +656,8 @@ describe("criterios 2 y 3: leerCitaPorToken, la puerta del enlace del correo", (
       estadoPago: "sin_pagar",
       estadoReembolso: null,
       estadoReporte: null,
+      // D-37 (HU-029): sin reporte no hay observaciones del admin.
+      observacionesReporte: null,
     });
     const serializada = JSON.stringify(cita);
     for (const privado of [e.lead.id, e.lead.correo, e.monitor.id, e.monitor.correo, "comision", "id_lead", "idLead"]) {

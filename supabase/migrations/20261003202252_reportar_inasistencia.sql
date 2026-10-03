@@ -18,16 +18,17 @@
 -- pide nada del pago (RN-62 no lo condiciona: una `confirmada` ya empezada puede tener el pago en revisión o rechazado, P-24).
 -- Un reporte rechazado no se repite: hay un solo reporte por monitoría (`reporte_inasistencia_id_monitoria_key`).
 --
--- RN-83, sin código nuevo en `desembolso`: la suspensión es una propiedad derivada. `public.desembolsos_ejecutables` excluye los
--- desembolsos de una monitoría con un reporte `en_revision` o `aceptado`, se evalúa en vivo y por eso da igual que el reporte
--- llegue antes o después de que exista la fila de `desembolso`. AVISO PARA HU-028: `public.desembolso_ejecutable(fin, ahora)`
--- solo compara horas y no conoce los reportes; al reclamar y revalidar hay que usar la vista (o replicar sus tres
--- condiciones: `pendiente`, ventana vencida y sin reporte `en_revision` o `aceptado`), no la función sola. Reportar exige
+-- RN-83, sin código nuevo en `desembolso`: la suspensión es una propiedad derivada. HU-028 (migración 20261003051738_desembolsos)
+-- la lee en `privado.bloqueo_del_desembolso` (`con_reporte` con un reporte `en_revision` o `aceptado`), que usan la vista
+-- `public.desembolsos_ejecutables` de la bandeja y `privado.estado_para_ejecutar` de la página y de la ejecución. Se evalúa en
+-- vivo, así que da igual que el reporte llegue antes o después de que exista la fila de `desembolso`. Reportar exige
 -- `ahora <= fin + 24 h` y ejecutar `ahora > fin + 24 h` (N-6): ningún reporte nuevo llega a un desembolso ya ejecutable.
 --
--- Bloqueos: solo la fila de la monitoría (`for update of m`, el mismo primer bloqueo de `registrar_pago`, `finalizar_monitoria`,
--- `revisar_pago` y `cancelar_cita`) y el índice único del reporte; el `on conflict` cierra la carrera de dos reportes
--- simultáneos. No toma bloqueo de `pago`. Regla para HU-030: monitoría primero, luego el reporte y luego los pagos.
+-- Bloqueos: primero la fila de la monitoría con `for update of m` (no `for no key update`), el mismo primer bloqueo de
+-- `registrar_pago`, `finalizar_monitoria`, `revisar_pago`, `cancelar_cita` y `ejecutar_desembolso` (HU-028, que después
+-- bloquea el desembolso): así reportar y ejecutar quedan en fila. Después, el índice único del reporte; el `on conflict` cierra
+-- la carrera de dos reportes simultáneos. No toma bloqueo de `pago`. Regla para HU-030: monitoría primero, luego el reporte y
+-- luego los pagos.
 --
 -- D-37: la cita para la página suma `observaciones_reporte` al final de la salida de `datos_de_cita`, `cita_por_token`,
 -- `mi_cita` y `mis_citas` (cambia columnas: se borran las seis funciones y se vuelven a crear, con sus permisos; la entrada
