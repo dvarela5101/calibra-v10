@@ -61,12 +61,17 @@ export type EntradaDeContacto = {
 
 const CORREO_DE_OTRO = "Ese correo ya es de otro contacto de Calibra. Escribe el tuyo.";
 
+/** Lo que ve una sesión que ya escribió el tope de correos distintos en la última hora (HU-075, D-36). */
+export const TOPE_DE_CORREOS = "Probaste varios correos seguidos. Espera un rato y vuelve a intentarlo.";
+
 /** ¿El 23505 fue por el correo (`lead_correo_key`) y no por la sesión? */
 const esPorElCorreo = (error: { message?: string; details?: string }) =>
   `${error.message ?? ""} ${error.details ?? ""}`.includes("lead_correo_key");
 
 /**
  * Deja a la sesión como Lead (HU-068):
+ * - si ya escribió el tope de correos distintos en la última hora y este es otro, no guarda nada, no manda enlace
+ *   y le pide esperar (HU-075, D-36; el tope y la ventana viven en la base, `parametros_contacto()`);
  * - si ya es Lead, actualiza sus datos y no crea otro (criterio 4);
  * - si no, crea el Lead con sus diagnósticos (`registrar_lead`);
  * - si el correo ya es de otro Lead, no liga nada: manda el enlace de verificación a ese correo (P-23).
@@ -76,6 +81,15 @@ export async function registrarContacto(entrada: EntradaDeContacto): Promise<Res
   const admin = crearClienteAdmin();
 
   const actual = await leadDeLaSesion(idSesion);
+  // El tope va antes de las dos ramas: las dos dicen si un correo ya es de otro Lead. Lo cuenta la base
+  // (`anotar_correo_de_contacto`), por sesión y sin carreras, exista o no el correo. Volver a enviar el correo que
+  // la sesión ya tiene guardado, para cambiar solo el nombre o el teléfono, no cuenta: no revela nada.
+  if (contacto.correo !== actual?.correo) {
+    const { data: puedeSeguir, error } = await admin.rpc("anotar_correo_de_contacto", { p_id_sesion: idSesion, p_correo: contacto.correo });
+    if (error) throw error;
+    if (!puedeSeguir) return { resultado: "error", error: TOPE_DE_CORREOS };
+  }
+
   if (actual) {
     const { error } = await admin
       .from("lead")
