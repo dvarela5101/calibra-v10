@@ -900,7 +900,7 @@ isOneToOne: true
                            },
 "cita_por_token":
 { Args: { "p_token": string }; Returns: {
-              "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
+              "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"observaciones_reporte": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
             }[]
                            },
 "comision":
@@ -988,7 +988,7 @@ isOneToOne: true
                            },
 "mi_cita":
 { Args: { "p_id_monitoria": string }; Returns: {
-              "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
+              "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"observaciones_reporte": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
             }[]
                            },
 "mi_cuota_de_comprobantes":
@@ -1001,7 +1001,7 @@ isOneToOne: true
                            },
 "mis_citas":
 { Args: Record<PropertyKey, never>; Returns: {
-              "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
+              "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"observaciones_reporte": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
             }[]
                            },
 "monto_neto":
@@ -1044,6 +1044,12 @@ isOneToOne: true
                            },
 "registrar_resena":
 { Args: { "p_calificacion": number,"p_comentario": string,"p_token": string }; Returns: string
+                           },
+"reportar_inasistencia_de_mi_cita":
+{ Args: { "p_id_monitoria": string }; Returns: string
+                           },
+"reportar_inasistencia_por_token":
+{ Args: { "p_token": string }; Returns: string
                            },
 "reporte_inasistencia_hasta":
 { Args: { "p_fin_programado": string }; Returns: string
