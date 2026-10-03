@@ -184,6 +184,23 @@ describe("BandejaAdmin: lo que se ve en cada ítem", () => {
     expect(html.toLowerCase()).not.toContain("bruto");
   });
 
+  it("cada desembolso lleva a su ejecución, con el neto y la fecha dentro del enlace (HU-028)", () => {
+    const desembolso = (id: string) => ({
+      id,
+      montoNeto: 22_500,
+      desembolsableDesde: new Date("2020-01-07T16:00:00.000Z"),
+      fechaSesion: "2020-01-06",
+    });
+    const html = pintar({ ...VACIA, desembolsos: [desembolso("d-1"), desembolso("d-2")], contadores: { ...VACIA.contadores, desembolsos: 2 } });
+    for (const id of ["d-1", "d-2"]) {
+      const enlace = html.match(new RegExp(`<a href="/admin/desembolsos/${id}"[^>]*>(.*?)</a>`))?.[1] ?? "";
+      expect(texto(enlace)).toContain("Transferir $ 22.500");
+      expect(texto(enlace)).toContain("Sesión del 6 de enero de 2020");
+    }
+    // Un enlace por desembolso y ninguno más.
+    expect(html.match(/href="\/admin\/desembolsos\//g)).toHaveLength(2);
+  });
+
   it("los textos de ayuda no llevan plazos escritos a mano: viven en la base (HU-003)", () => {
     const t = texto(pintar(VACIA));
     expect(t).not.toMatch(/\b\d+ horas?\b/);

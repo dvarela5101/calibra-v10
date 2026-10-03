@@ -46,12 +46,9 @@ const test = base.extend<{ escenario: Escenario }>({
 
     await entregar({
       async monitor() {
+        // La fixture ya lo crea con su contacto y su llave en `monitor_privado`.
         const monitor = await cuentas.crearMonitor();
         monitores.push(monitor.id);
-        const { error } = await cliente
-          .from("monitor_privado")
-          .insert({ id_monitor: monitor.id, numero_telefono: "3001234567", correo: monitor.correo, llave: `llave-${randomUUID()}` });
-        if (error) throw new Error(`insertar monitor_privado: ${error.message}`);
         return monitor;
       },
       async materia() {

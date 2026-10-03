@@ -108,7 +108,7 @@
   box-shadow: var(--sombra-carta);
 }
 
-/* Un pago por revisar: toda la tarjeta lleva a su revisión (HU-020). */
+/* Un pago por revisar o un desembolso ejecutable: toda la tarjeta lleva a su página (HU-020, HU-028). */
 .filaEnlace {
   composes: fila;
   color: var(--text);

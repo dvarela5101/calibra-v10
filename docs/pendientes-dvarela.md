@@ -38,6 +38,7 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   Si abres la misma dirección con `admin2@calibra.test`, ves el pago sin botones. Los supuestos que te tocan están en A2.
 - [ ] **HU-074, pagos de un admin que se desactiva** (de Juzou04, [PR #34](https://github.com/dvarela5101/calibra-v10/pull/34)): agenda y paga una monitoría como en HU-018, y el pago le queda a `admin1@calibra.test`. Entra con `admin2@calibra.test` (contraseña `calibra-admin-local`) a `/admin/equipo`. La tarjeta de Admin Uno dice "1 caso abierto". Desactívalo: el aviso dice a quién pasaron sus casos, y en `/admin` de admin2 aparece el pago con una hora nueva para revisarlo. Reactivar todavía no tiene pantalla (HU-072): para volver a tener a Admin Uno, `npm run db:reiniciar`.
 - [ ] **HU-075, tope de correos al dejar el contacto** (de Juzou04, [PR #35](https://github.com/dvarela5101/calibra-v10/pull/35)): abre `/agendar/contacto` en una ventana de incógnito y deja tu contacto con un correo. Después entra a `/agendar/contacto?editar=1` y cambia el correo cuatro veces, cada vez por uno distinto. Al quinto cambio, que es el sexto correo distinto, ves «Probaste varios correos seguidos. Espera un rato y vuelve a intentarlo.» y el contacto no cambia. Volver a escribir uno de los correos que ya usaste sí funciona.
+- [ ] **HU-028, ejecutar desembolsos** (de Juzou04, rama `hu-028-desembolsos`): cuando una monitoría pasa a realizada se crea su desembolso, y pasadas 24 horas del fin aparece en «Desembolsos ejecutables» de la bandeja. Como en local habría que esperar ese día, lo más rápido es ver la prueba en el navegador: `CI=1 npx playwright test e2e/desembolsos.spec.ts --headed`. Abre el desembolso desde la bandeja, muestra el neto y la llave del monitor (nunca la comisión), y registra la transferencia con referencia y fecha. Uno con un reporte en revisión, un pago en revisión o sin pagos aprobados se ve con el motivo y sin formulario.
 - [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
 ### A2. Decisiones de las HUs recientes
@@ -104,6 +105,13 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   - volver a enviar el correo que la sesión ya tiene guardado (para cambiar solo el nombre o el teléfono) no cuenta: no revela nada;
   - para contar, la base guarda el hash de cada correo escrito, no el correo, y lo borra cuando pasa la hora: en el siguiente envío de esa sesión o en la limpieza horaria, así que dura menos de dos horas. Por eso no cambia el aviso de privacidad;
   - un correo inválido o un envío sin la autorización no cuentan, porque se rechazan antes de llegar a la base.
+- [ ] **Desembolsos (HU-028): lo que dejó Juzou04.** El primer supuesto (no se ejecuta con un pago en revisión) ya lo decidiste con D-39. Los demás, con la recomendación de Juzou04:
+  - si al ejecutar no hay pagos aprobados (por ejemplo, el único se rechazó por P-24), no se ejecuta y la pantalla dice que no hay nada que transferir. El desembolso sigue pendiente hasta que se decida qué hacer con esos casos (HU-078 los cierra como cobrados o asumidos);
+  - el admin escribe la referencia y la fecha de la transferencia: la fecha viene con hoy y no puede ser futura ni anterior a la sesión;
+  - la pantalla muestra el neto y la llave destino, nunca el bruto ni la comisión (CLAUDE.md, P-32);
+  - dos admins podrían transferir el mismo desembolso por fuera de la app: la base solo deja registrarlo una vez y al segundo le dice que ya se desembolsó. Con dos admins se acepta ese riesgo;
+  - por ahora solo las individuales generan desembolso; las grupales llegan con HU-036, HU-038 y HU-046;
+  - no se le avisa al monitor por correo (D-16 no lo incluye).
 - [ ] **Correo que ya tiene cuenta (HU-013).** Si invitas a un correo que ya tiene cuenta de Calibra (por ejemplo, de estudiante), hoy el registro no la convierte en monitor y le pide escribir al equipo. Confirma que así está bien, o pide que se pueda convertir.
 
 ### A3. Preparar la cuenta de Gmail (para HU-066)
