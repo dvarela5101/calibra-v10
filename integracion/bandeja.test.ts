@@ -90,7 +90,8 @@ async function armarMundo() {
   const p3 = await fx.crearPagoDe(futura.id, { idAdmin: a.id, fechaAsignacion: hace(10), nombrePagador: "Tercera", monto: 30_000 });
   const p1 = await fx.crearPagoDe(futura.id, { idAdmin: a.id, fechaAsignacion: hace(90), nombrePagador: "Primera", monto: 10_000 });
   const p2 = await fx.crearPagoDe(futura.id, { idAdmin: a.id, fechaAsignacion: hace(30), nombrePagador: "Segunda", monto: 20_000 });
-  const pAprobadoDeA = await fx.crearPagoDe(futura.id, { idAdmin: a.id, estado: "aprobado" });
+  // Asignado hace 2 h respecto de AHORA (fijo): así lo único que lo saca de los vencidos es el estado, no el reloj real.
+  const pAprobadoDeA = await fx.crearPagoDe(futura.id, { idAdmin: a.id, estado: "aprobado", fechaAsignacion: hace(120) });
   const pDeB = await fx.crearPagoDe(futura.id, { idAdmin: b.id, fechaAsignacion: hace(5), nombrePagador: "De B" });
 
   // Reembolsos: dos esperando llave y uno pendiente de A (más uno ya reembolsado y uno de B).

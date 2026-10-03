@@ -44,7 +44,10 @@ where estado <> 'en_revision' and id_admin_revisor is null;
 -- ---------------------------------------------------------------------------
 -- privado.revisar_pago de 20261002142240_revisar_pagos.sql. Tres cambios, marcados con HU-077; la firma, los demás
 -- resultados (P-24, cancelar la cita, ya_revisado, no_individual), el orden de los bloqueos (la monitoría y después
--- el pago) y los permisos no cambian:
+-- el pago) y los permisos no cambian. Un efecto nuevo: como el UPDATE ahora llena id_admin_revisor, la llave foránea
+-- toma FOR KEY SHARE sobre la fila del admin que revisa. Choca con el FOR UPDATE de privado.mover_admin (HU-054), que
+-- solo la hace esperar; si después otra llave del mismo UPDATE bloquea una segunda fila de admin (el reembolso de P-07
+-- de HU-024), conviene que mover_admin pase a FOR NO KEY UPDATE para que no haya interbloqueo.
 --   1. (Criterio 1, supuestos 1 y 5) Revisa el asignado o, pasada su hora, cualquier admin activo: que quien llama es
 --      un admin activo ya lo dice es_admin(), al principio. Se mira sin candado y otra vez con la fila del pago
 --      bloqueada, las dos veces con id_admin y fecha_asignacion.
