@@ -154,3 +154,14 @@
   white-space: pre-line;
   overflow-wrap: anywhere;
 }
+
+/* Un caso cerrado sin llave (HU-025): el correo de quien pagó y el motivo pueden ser largos y no desbordan la tarjeta. */
+.metaLarga {
+  composes: meta;
+  overflow-wrap: anywhere;
+}
+
+/* El botón para reabrir, separado de los datos del caso. */
+.accionDeFila {
+  margin-block-start: var(--e2);
+}

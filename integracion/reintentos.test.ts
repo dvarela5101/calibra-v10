@@ -457,7 +457,7 @@ describe("el lote: cada corrida toma los más antiguos, hasta 10", () => {
     // Doce fallidos de una plantilla sin reconstructor (se descartan sin enviar nada), del más viejo al más nuevo.
     const filas: Awaited<ReturnType<typeof insertarCorreo>>[] = [];
     for (let i = 0; i < 12; i++) {
-      filas.push(await insertarCorreo({ plantilla: "solicitud_llave_reembolso", estado: "fallido", reintentable: true, tocadaHace: (60 - i) * MINUTO }));
+      filas.push(await insertarCorreo({ plantilla: "pago_rechazado_grupal", estado: "fallido", reintentable: true, tocadaHace: (60 - i) * MINUTO }));
     }
     const masNueva = filas[filas.length - 1];
     const reintentables = async () =>
@@ -688,7 +688,8 @@ describe("criterio 3: cada plantilla se reconstruye desde su entidad, y si la en
         .single(),
       "insertar correo con entidad inválida",
     );
-    const sinReconstructor = await insertarCorreo({ plantilla: "solicitud_llave_reembolso", estado: "fallido", reintentable: true, tocadaHace: 3 * MINUTO });
+    // HU-025 le dio reconstructor a solicitud_llave_reembolso: la de las grupales todavía no lo tiene.
+    const sinReconstructor = await insertarCorreo({ plantilla: "pago_rechazado_grupal", estado: "fallido", reintentable: true, tocadaHace: 3 * MINUTO });
     const desconocida = await insertarCorreo({ plantilla: "plantilla_de_otra_epoca", estado: "fallido", reintentable: true, tocadaHace: 3 * MINUTO });
     // La clave no es de su plantilla.
     const claveAjena = `resena_individual:${randomUUID()}`;
