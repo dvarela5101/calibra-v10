@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import type { Bandeja, PagoPorRevisar } from "@/lib/admin/bandeja";
+import type { Bandeja, PagoPorRevisar, PagoVencidoDeOtro } from "@/lib/admin/bandeja";
 import { BandejaAdmin } from "./BandejaAdmin";
 
 // Sin navegador ni base: se pinta la pantalla con una bandeja inventada y se lee el HTML. Lo que
@@ -10,11 +10,21 @@ import { BandejaAdmin } from "./BandejaAdmin";
 
 const VACIA: Bandeja = {
   pagos: [],
+  pagosVencidosDeOtros: [],
   reembolsos: { esperandoLlave: [], pendientes: [] },
   reportes: [],
   desembolsos: [],
   correosSinEnviar: [],
-  contadores: { pagos: 0, reembolsos: 0, reembolsosEsperandoLlave: 0, reembolsosPendientes: 0, reportes: 0, desembolsos: 0, correosSinEnviar: 0 },
+  contadores: {
+    pagos: 0,
+    pagosVencidosDeOtros: 0,
+    reembolsos: 0,
+    reembolsosEsperandoLlave: 0,
+    reembolsosPendientes: 0,
+    reportes: 0,
+    desembolsos: 0,
+    correosSinEnviar: 0,
+  },
 };
 
 const pintar = (bandeja: Bandeja) => renderToStaticMarkup(createElement(BandejaAdmin, { bandeja }));
@@ -196,6 +206,90 @@ describe("BandejaAdmin: lo que se ve en cada ítem", () => {
     // El paso al siguiente admin llega con HU-034; hasta entonces la bandeja no lo anuncia.
     expect(t).not.toMatch(/siguiente admin/i);
     expect(t.match(/vence primero/g)).toHaveLength(1);
+  });
+});
+
+describe("BandejaAdmin: pagos vencidos de otros admins (HU-077, supuesto 2)", () => {
+  const deOtro = (n: number, nombreAdmin = "Admin Dos"): PagoVencidoDeOtro => ({
+    ...pago(n, { restante: { texto: "Vencido hace 30 min", vencido: true } }),
+    nombreAdmin,
+  });
+
+  it("van en Pagos por revisar, después de los propios, con de quién son y desde cuándo están vencidos", () => {
+    const html = pintar({
+      ...VACIA,
+      pagos: [pago(1)],
+      pagosVencidosDeOtros: [deOtro(2), deOtro(3, "Admin Tres")],
+      contadores: { ...VACIA.contadores, pagos: 1, pagosVencidosDeOtros: 2 },
+    });
+    const t = texto(html);
+    // Dentro de la sección de pagos, y antes de la siguiente.
+    const seccion = html.slice(html.indexOf('<section id="pagos"'), html.indexOf('<section id="reembolsos"'));
+    expect(seccion).toContain('<ul aria-label="Asignados a ti"');
+    expect(texto(seccion)).toContain("Vencidos de otros admins (2)");
+    expect(seccion).toMatch(/<h3 id="pagos-de-otros-titulo"[^>]*>/);
+    expect(seccion).toContain('<ul aria-labelledby="pagos-de-otros-titulo"');
+    expect(t.indexOf("Pagador 1")).toBeLessThan(t.indexOf("Vencidos de otros admins"));
+    expect(t.indexOf("Vencidos de otros admins")).toBeLessThan(t.indexOf("Pagador 2"));
+    // Cada uno lleva a su revisión, con el asignado y el vencimiento dentro del enlace.
+    for (const [n, admin] of [
+      [2, "Admin Dos"],
+      [3, "Admin Tres"],
+    ] as const) {
+      const enlace = html.match(new RegExp(`<a href="/admin/pagos/pago-${n}"[^>]*>(.*?)</a>`))?.[1] ?? "";
+      expect(texto(enlace)).toContain(`Pagador ${n} · $ 25.000`);
+      expect(texto(enlace)).toContain(`De ${admin} · Vencido hace 30 min`);
+      expect(enlace).toContain('<time dateTime="2026-10-05T15:00:00.000Z">Vencido hace 30 min</time>');
+    }
+    expect(t).toContain("Al admin asignado se le pasó la hora para revisarlos: ya puedes aprobarlos o rechazarlos tú.");
+  });
+
+  it("el contador de arriba y el de la sección cuentan solo los asignados al admin", () => {
+    const html = pintar({
+      ...VACIA,
+      pagos: [pago(1)],
+      pagosVencidosDeOtros: [deOtro(2)],
+      contadores: { ...VACIA.contadores, pagos: 1, pagosVencidosDeOtros: 1 },
+    });
+    expect(html).toMatch(/<a href="#pagos"[^>]*><span[^>]*>1<\/span><span[^>]*>Pagos por revisar<\/span><\/a>/);
+    expect(texto(html)).toContain("Pagos por revisar (1)");
+    expect(texto(html)).toContain("Vencidos de otros admins (1)");
+  });
+
+  it("sin pagos propios dice que no tiene, y aun así muestra los vencidos de otros", () => {
+    const t = texto(pintar({ ...VACIA, pagosVencidosDeOtros: [deOtro(2)], contadores: { ...VACIA.contadores, pagosVencidosDeOtros: 1 } }));
+    expect(t).toContain("No tienes pagos por revisar.");
+    expect(t).toContain("Vencidos de otros admins (1)");
+    expect(t).toContain("De Admin Dos · Vencido hace 30 min");
+  });
+
+  it("sin vencidos de otros no aparece nada de ellos", () => {
+    const html = pintar({ ...VACIA, pagos: [pago(1)], contadores: { ...VACIA.contadores, pagos: 1 } });
+    expect(html).not.toContain("pagos-de-otros-titulo");
+    expect(texto(html)).not.toContain("otros admins");
+  });
+
+  it("su lista se corta por su cuenta y lo avisa", () => {
+    const t = texto(
+      pintar({
+        ...VACIA,
+        pagos: [pago(1)],
+        pagosVencidosDeOtros: [deOtro(2)],
+        contadores: { ...VACIA.contadores, pagos: 1, pagosVencidosDeOtros: 3 },
+      }),
+    );
+    expect(t).toContain("Vencidos de otros admins (3)");
+    expect(t).toContain("Se muestran los primeros 1 de 3.");
+  });
+
+  it("escapa el nombre del admin asignado", () => {
+    const html = pintar({
+      ...VACIA,
+      pagosVencidosDeOtros: [deOtro(2, '<img src=x onerror="alert(1)">')],
+      contadores: { ...VACIA.contadores, pagosVencidosDeOtros: 1 },
+    });
+    expect(html).not.toContain("<img");
+    expect(html).toContain("De &lt;img");
   });
 });
 

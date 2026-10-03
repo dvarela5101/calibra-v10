@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { cargarBandeja, MAX_FILAS_POR_SECCION } from "@/lib/admin/bandeja";
 import { crearCliente, exigirSupabaseLocal, Fixtures, rolDe } from "./utilidades";
@@ -51,6 +52,8 @@ describe("criterio 3: la semilla deja los admins iniciales con su orden de revis
     const bandeja = await cargarBandeja(cliente, yo.user!.id, AHORA);
     expect(bandeja.contadores).toEqual({
       pagos: 0,
+      // HU-077: los pagos vencidos de otros admins los ve cualquiera: puede haber de otras pruebas.
+      pagosVencidosDeOtros: bandeja.pagosVencidosDeOtros.length,
       reembolsos: 0,
       reembolsosEsperandoLlave: 0,
       reembolsosPendientes: 0,
@@ -181,6 +184,87 @@ describe("criterio 1: el admin ve contadores y listas de lo que tiene asignado",
   });
 });
 
+describe("HU-077 (supuesto 2): los pagos vencidos de otros admins", () => {
+  // Cualquier admin ve los vencidos de todos, así que puede haber de otras pruebas: se mira solo lo de cada una.
+  const soloDe = <T extends { id: string }>(lista: T[], ...pagos: { id: string }[]) => lista.filter((p) => pagos.some((q) => q.id === p.id));
+
+  it("B ve el pago vencido de A, aparte de los suyos, con quién lo tiene y cuánto lleva vencido; no los de A en hora ni el aprobado", async () => {
+    const m = await armarMundo();
+    const nombreDeA = `Admin A ${randomUUID().slice(0, 6)}`;
+    expect((await fx.admin.from("admin").update({ nombre: nombreDeA }).eq("id", m.a.id)).error).toBeNull();
+    const deB = await cargarBandeja(await fx.iniciarSesion(m.b), m.b.id, AHORA);
+
+    expect(soloDe(deB.pagosVencidosDeOtros, m.p1, m.p2, m.p3, m.pAprobadoDeA, m.pDeB)).toEqual([
+      {
+        id: m.p1.id,
+        nombrePagador: "Primera",
+        monto: 10_000,
+        // Asignado hace 90 min: la hora de A terminó hace 30.
+        revisionHasta: new Date(AHORA.getTime() - 30 * MINUTO),
+        restante: { texto: "Vencido hace 30 min", vencido: true },
+        nombreAdmin: nombreDeA,
+      },
+    ]);
+    // Los suyos no cambian: siguen solo los asignados a B.
+    expect(deB.pagos.map((p) => p.id)).toEqual([m.pDeB.id]);
+    expect(deB.contadores.pagos).toBe(1);
+    // El contador cuenta todos los vencidos de otros (al menos el de este mundo) y coincide con la lista, que no se corta.
+    expect(deB.contadores.pagosVencidosDeOtros).toBeGreaterThanOrEqual(1);
+    expect(deB.contadores.pagosVencidosDeOtros).toBe(deB.pagosVencidosDeOtros.length);
+  });
+
+  it("A no ve sus propios vencidos entre los de otros (ya están en los suyos), ni el de B, que sigue en hora", async () => {
+    const m = await armarMundo();
+    const deA = await cargarBandeja(await fx.iniciarSesion(m.a), m.a.id, AHORA);
+    expect(deA.pagos.map((p) => p.id)).toContain(m.p1.id);
+    expect(soloDe(deA.pagosVencidosDeOtros, m.p1, m.p2, m.p3, m.pDeB)).toEqual([]);
+  });
+
+  it("supuesto 1 (P-40): justo en el límite el pago todavía es solo del asignado; un microsegundo después, de todos", async () => {
+    const a = await fx.crearAdmin();
+    const b = await fx.crearAdmin();
+    const monitoria = await fx.crearMonitoria(await fx.crearContextoDeMonitoria(a.id), { fecha: "2030-01-14" });
+    // La hora de revisión es 1 h (RN-42): asignado hace 60 min exactos, su límite es AHORA. La base guarda microsegundos.
+    const enElLimite = await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaAsignacion: "2026-10-05T14:00:00.000000Z" });
+    const unMicroAntes = await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaAsignacion: "2026-10-05T13:59:59.999999Z" });
+    const unMicroDespues = await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaAsignacion: "2026-10-05T14:00:00.000001Z" });
+
+    const deB = await cargarBandeja(await fx.iniciarSesion(b), b.id, AHORA);
+    expect(soloDe(deB.pagosVencidosDeOtros, enElLimite, unMicroAntes, unMicroDespues).map((p) => p.id)).toEqual([unMicroAntes.id]);
+    expect(soloDe(deB.pagosVencidosDeOtros, unMicroAntes)[0].restante).toEqual({ texto: "Venció hace menos de 1 min", vencido: true });
+  });
+
+  it("el que lleva más tiempo vencido va arriba", async () => {
+    const a = await fx.crearAdmin();
+    const b = await fx.crearAdmin();
+    const monitoria = await fx.crearMonitoria(await fx.crearContextoDeMonitoria(a.id), { fecha: "2030-01-14" });
+    const p70 = await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaAsignacion: hace(70) });
+    const p150 = await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaAsignacion: hace(150) });
+    const p120 = await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaAsignacion: hace(120) });
+
+    const deB = await cargarBandeja(await fx.iniciarSesion(b), b.id, AHORA);
+    expect(soloDe(deB.pagosVencidosDeOtros, p70, p150, p120).map((p) => p.restante.texto)).toEqual([
+      "Vencido hace 1 h 30 min",
+      "Vencido hace 1 h",
+      "Vencido hace 10 min",
+    ]);
+  });
+
+  it("su lista se corta por su cuenta y su contador sigue exacto", async () => {
+    const m = await armarMundo();
+    const monitoria = await fx.crearMonitoria(await fx.crearContextoDeMonitoria(m.a.id), { fecha: "2030-01-21" });
+    await fx.crearPagoDe(monitoria.id, { idAdmin: m.a.id, fechaAsignacion: hace(100) });
+    await fx.crearPagoDe(monitoria.id, { idAdmin: m.a.id, fechaAsignacion: hace(110) });
+
+    const deB = await cargarBandeja(await fx.iniciarSesion(m.b), m.b.id, AHORA, { maxFilas: 1 });
+    expect(deB.pagosVencidosDeOtros).toHaveLength(1);
+    // Los tres vencidos de A en este mundo, y los de otras pruebas si los hay.
+    expect(deB.contadores.pagosVencidosDeOtros).toBeGreaterThanOrEqual(3);
+    // La lista propia no se come el lugar de la otra, ni al revés.
+    expect(deB.pagos.map((p) => p.id)).toEqual([m.pDeB.id]);
+  });
+});
+
 describe("criterio 2: un ítem con plazo muestra el tiempo restante", () => {
   it("cada pago dice cuánto le queda para revisarlo o hace cuánto venció (RN-42: 1 hora)", async () => {
     const m = await armarMundo();
@@ -203,12 +287,14 @@ describe("quién puede leer la bandeja", () => {
     const bandeja = await cargarBandeja(await fx.iniciarSesion(monitor), m.a.id, AHORA);
 
     expect(bandeja.pagos).toEqual([]);
+    expect(bandeja.pagosVencidosDeOtros).toEqual([]);
     expect(bandeja.reembolsos).toEqual({ esperandoLlave: [], pendientes: [] });
     expect(bandeja.reportes).toEqual([]);
     expect(bandeja.desembolsos).toEqual([]);
     expect(bandeja.correosSinEnviar).toEqual([]);
     expect(bandeja.contadores).toEqual({
       pagos: 0,
+      pagosVencidosDeOtros: 0,
       reembolsos: 0,
       reembolsosEsperandoLlave: 0,
       reembolsosPendientes: 0,

@@ -22,8 +22,8 @@ import {
 /**
  * Revisar un pago (HU-020) con la sesión del admin. Nada de la llave secreta para leer ni para revisar: las políticas
  * dejan leer los pagos a cualquier admin activo, y `public.revisar_pago` toma la identidad de la sesión
- * (`auth.uid()`, que tiene que ser la del admin asignado) y la hora de la base. Solo el correo al pagador usa la
- * llave secreta, porque su reintento (HU-065) corre sin sesión.
+ * (`auth.uid()`, que tiene que ser la del admin asignado o, pasada su hora, la de cualquier admin activo: HU-077) y
+ * la hora de la base. Solo el correo al pagador usa la llave secreta, porque su reintento (HU-065) corre sin sesión.
  */
 
 type Cliente = SupabaseClient<Database>;
@@ -37,13 +37,19 @@ export type PagoParaRevisar = {
   /** Hoy siempre es `null`: nadie la escribe todavía (supuesto 6). */
   referencia: string | null;
   estado: EstadoDePago;
-  /** El admin asignado: solo él revisa (supuesto 1). */
+  /** El admin asignado. Revisa él o, pasada su hora, cualquier admin activo (HU-077: `quienRevisa`). */
   idAdmin: string;
   nombreAdmin: string;
   /** Cuándo vence la hora que tiene el admin asignado para revisarlo (RN-42). */
   revisionHasta: Date;
   restante: TiempoRestante;
   fechaRevision: Date | null;
+  /**
+   * Quién lo aprobó o lo rechazó (HU-077, criterio 3). `null` mientras está en revisión, y en un pago revisado que
+   * no lo registró (los que se insertan ya revisados, como las fixtures de las pruebas).
+   */
+  idAdminRevisor: string | null;
+  nombreAdminRevisor: string | null;
   observaciones: string | null;
   monitoria: {
     estado: Database["public"]["Enums"]["estado_monitoria"];
@@ -70,8 +76,9 @@ export async function cargarPagoParaRevisar(cliente: Cliente, idPago: string, ah
     cargarParametros(cliente),
     cliente
       .from("pago")
+      // pago tiene dos llaves a admin desde HU-077 (id_admin e id_admin_revisor): cada embebido nombra la suya.
       .select(
-        "id, monto, nombre_pagador, contacto, referencia_transferencia, estado, id_admin, fecha_asignacion, fecha_revision, observaciones, admin(nombre), monitoria(estado, motivo_cancelacion, fecha, id_franja, id_monitor, id_materia), monitoria_plazos(inicio, es_grupal)",
+        "id, monto, nombre_pagador, contacto, referencia_transferencia, estado, id_admin, fecha_asignacion, fecha_revision, observaciones, id_admin_revisor, admin!pago_id_admin_fkey(nombre), revisor:admin!pago_id_admin_revisor_fkey(nombre), monitoria(estado, motivo_cancelacion, fecha, id_franja, id_monitor, id_materia), monitoria_plazos(inicio, es_grupal)",
       )
       .eq("id", idPago)
       .maybeSingle(),
@@ -106,6 +113,8 @@ export async function cargarPagoParaRevisar(cliente: Cliente, idPago: string, ah
     revisionHasta: limite,
     restante: describirTiempoRestante(limite, ahora),
     fechaRevision: pago.fecha_revision ? new Date(pago.fecha_revision) : null,
+    idAdminRevisor: pago.id_admin_revisor,
+    nombreAdminRevisor: pago.revisor?.nombre ?? null,
     observaciones: pago.observaciones,
     monitoria: {
       estado: m.estado,
@@ -121,11 +130,29 @@ export async function cargarPagoParaRevisar(cliente: Cliente, idPago: string, ah
   };
 }
 
+/** A quién está asignado un pago y hasta cuándo es solo suyo: lo que hace falta para `puedeRevisar` (HU-077). */
+export type Asignacion = { idAdmin: string; revisionHasta: Date };
+
+/**
+ * La asignación de un pago, sin su monitoría: la acción de revisar la mira antes de validar las observaciones (nota
+ * de D-39). `null` si el pago no existe o la sesión no lo puede leer.
+ */
+export async function cargarAsignacion(cliente: Cliente, idPago: string): Promise<Asignacion | null> {
+  const [parametros, leido] = await Promise.all([
+    cargarParametros(cliente),
+    cliente.from("pago").select("id_admin, fecha_asignacion").eq("id", idPago).maybeSingle(),
+  ]);
+  if (leido.error) throw new Error(`No se pudo leer el pago: ${leido.error.message}`);
+  if (!leido.data) return null;
+  return { idAdmin: leido.data.id_admin, revisionHasta: revisionHasta(new Date(leido.data.fecha_asignacion), parametros) };
+}
+
 export type Revision = { resultado: ResultadoDeRevision; canceloMonitoria: boolean };
 
 /**
  * Aprueba o rechaza el pago con la sesión de `cliente` (§5.2, sin vuelta atrás). La base comprueba que la sesión sea
- * el admin asignado, que el pago siga en revisión y, al rechazar, si la cita se cancela o es P-24.
+ * el admin asignado o, pasada su hora, un admin activo (HU-077), que el pago siga en revisión y, al rechazar, si la
+ * cita se cancela o es P-24. Guarda quién lo revisó.
  */
 export async function revisarPago(cliente: Cliente, pedido: PedidoDeRevision): Promise<Revision> {
   const { data, error } = await cliente.rpc("revisar_pago", {
