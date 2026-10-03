@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-03 14:15. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-03 15:21. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
