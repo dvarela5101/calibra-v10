@@ -83,7 +83,8 @@ describe("ejecutar (HU-028): lo que se registró", () => {
 });
 
 describe("ejecutar: lo que no se registró", () => {
-  it.each(["ya_desembolsado", "anulado", "no_realizada", "antes_de_plazo", "con_reporte", "pagos_en_revision", "sin_pagos_aprobados"] as const)(
+  // caso_abierto: HU-078 (D-39 (c)), se abrió un caso P-24 en la monitoría.
+  it.each(["ya_desembolsado", "anulado", "no_realizada", "antes_de_plazo", "con_reporte", "pagos_en_revision", "caso_abierto", "sin_pagos_aprobados"] as const)(
     "%s cambió mientras el admin miraba: vuelve al desembolso, que se pinta como está ahora",
     async (resultado) => {
       h.ejecutarDesembolso.mockResolvedValue(resultado);

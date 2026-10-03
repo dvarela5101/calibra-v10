@@ -487,7 +487,8 @@ test.describe("Criterios 3, 5 y 7 · el admin rechaza un pago", () => {
       await abrirRechazo(page).click();
       await expect(
         page.getByText(
-          "La monitoría ya se realizó, así que no se cancela y el pago queda fuera del desembolso del monitor. Un pago rechazado no se reembolsa y al pagador no le escribimos.",
+          // HU-078 (D-39): el caso queda por cobrar o asumir y cuenta en el desembolso cuando alguien lo cierra.
+          "La monitoría ya se realizó, así que no se cancela y el caso queda en «Pagos por cobrar o asumir»: el pago cuenta en el desembolso del monitor solo cuando alguien lo cierre como cobrado o asumido. Un pago rechazado no se reembolsa y al pagador no le escribimos.",
         ),
       ).toBeVisible();
       await expect(page.getByText("Obligatorias: escribe qué se hará con ese cobro, si cobrarlo por fuera o asumirlo. Hasta 500 caracteres.")).toBeVisible();
@@ -503,7 +504,11 @@ test.describe("Criterios 3, 5 y 7 · el admin rechaza un pago", () => {
     await test.step("criterio 7 (P-24): con observaciones, el pago queda rechazado, la monitoría sigue realizada y no se le escribe al pagador", async () => {
       await page.getByLabel("Observaciones", { exact: true }).fill(OBSERVACIONES);
       await botonRechazar(page).click();
-      await expect(aviso(page, "Rechazaste el pago.")).toHaveText("Rechazaste el pago. Ya no aparece en tu bandeja.", ESPERA);
+      // HU-078, criterio 5: el pago no sale de la bandeja, pasa a la sección de los casos.
+      await expect(aviso(page, "Rechazaste el pago.")).toHaveText(
+        "Rechazaste el pago. El caso quedó en «Pagos por cobrar o asumir» de la bandeja hasta que alguien lo cierre como cobrado o asumido.",
+        ESPERA,
+      );
       await expect(dato(seccionPago(page), "Observaciones")).toHaveText(OBSERVACIONES);
       await expect(dato(seccionMonitoria(page), "Estado")).toHaveText("Realizada");
 

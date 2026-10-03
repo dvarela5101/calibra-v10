@@ -1,4 +1,4 @@
--- Pruebas pgTAP de la bandeja del admin (HU-012 y HU-064): vista desembolsos_ejecutables (RN-83; pagos en revisión y sin pagos aprobados, HU-028), semilla y admin desactivado (RN-23).
+-- Pruebas pgTAP de la bandeja del admin (HU-012 y HU-064): vista desembolsos_ejecutables (RN-83; pagos en revisión y sin pagos aprobados, HU-028; casos P-24 abiertos, HU-078), semilla y admin desactivado (RN-23).
 -- Corre con: npx supabase test db
 -- Todo ocurre en una transacción que termina en rollback: no deja datos.
 
@@ -82,7 +82,8 @@ insert into public.lead (id, id_sesion_anonima, nombre, correo, acepta_tratamien
 -- M5 pasada con reporte rechazado: ejecutable.    M6 desembolso ya desembolsado: no.
 -- M7 desembolso anulado: no.
 -- HU-028: M9 pasada con un pago aprobado y otro en revisión: no (D-39).
---         M10 pasada con su único pago rechazado: no (supuesto 2).    M11 pasada sin pagos: no.
+--         M10 pasada con un pago aprobado y otro rechazado con su caso P-24 abierto: no (HU-078).
+--         M11 pasada sin pagos: no.
 insert into public.monitoria (id, id_franja, id_materia, id_lead, fecha, valor_total, estado, fecha_finalizacion) values
   ('50000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-00000000000a', '2020-01-06', 25000, 'realizada', '2020-01-06 16:30:00+00'),
   ('50000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-00000000000a', '2020-01-20', 25000, 'realizada', '2020-01-20 16:30:00+00'),
@@ -114,9 +115,10 @@ insert into public.reporte_inasistencia (id_monitoria, id_admin, estado, fecha_d
   ('50000000-0000-0000-0000-000000000004', 'a0000000-0000-0000-0000-000000000001', 'aceptado', now()),
   ('50000000-0000-0000-0000-000000000005', 'a0000000-0000-0000-0000-000000000001', 'rechazado', now());
 
--- Los pagos (HU-028): sin uno aprobado no hay nada que transferir, así que cada monitoría con desembolso, salvo la M10
--- y la M11, tiene un pago aprobado de 25.000 y solo la excluye lo que dice su caso. La M1 tiene además uno rechazado,
--- que no bloquea. El pago en revisión de la M9 es del otro admin: la vista lo ve igual, porque todo admin activo lee
+-- Los pagos (HU-028): sin uno aprobado no hay nada que transferir, así que cada monitoría con desembolso, salvo la M11,
+-- tiene un pago aprobado de 25.000 y solo la excluye lo que dice su caso. La M1 tiene además uno rechazado con su caso
+-- P-24 ya cerrado (HU-078), que no bloquea; la M10, uno rechazado con el caso abierto, que es lo único que la bloquea
+-- (caso_abierto). El pago en revisión de la M9 es del otro admin: la vista lo ve igual, porque todo admin activo lee
 -- todos los pagos. El id es 61000000-...-000000000NNk (NN = la monitoría, k = a, b) y cada pago apunta a su propio
 -- comprobante revisado (HU-059).
 create temp table pago_prueba on commit drop as
@@ -130,7 +132,7 @@ from (values
   ('04', 'a', 'aprobado', 'a0000000-0000-0000-0000-000000000001'), ('05', 'a', 'aprobado', 'a0000000-0000-0000-0000-000000000001'),
   ('06', 'a', 'aprobado', 'a0000000-0000-0000-0000-000000000001'), ('07', 'a', 'aprobado', 'a0000000-0000-0000-0000-000000000001'),
   ('09', 'a', 'aprobado', 'a0000000-0000-0000-0000-000000000001'), ('09', 'b', 'en_revision', 'a0000000-0000-0000-0000-000000000003'),
-  ('10', 'a', 'rechazado', 'a0000000-0000-0000-0000-000000000001')
+  ('10', 'a', 'rechazado', 'a0000000-0000-0000-0000-000000000001'), ('10', 'b', 'aprobado', 'a0000000-0000-0000-0000-000000000001')
 ) as v(nn, k, estado, id_admin);
 
 insert into public.comprobante_revisado (ruta, tipo) select comprobante, 'image/png' from pago_prueba;
@@ -138,6 +140,9 @@ insert into public.pago (id, id_monitoria, monto, nombre_pagador, contacto, esta
 select id, id_monitoria, 25000, 'Pagador Prueba', 'pagador@example.com', estado,
        case when estado <> 'en_revision' then now() end, id_admin, comprobante
 from pago_prueba;
+update public.pago
+set cierre_rechazo = 'asumido', id_admin_cierre = 'a0000000-0000-0000-0000-000000000001', fecha_cierre = now()
+where id = '61000000-0000-0000-0000-00000000001b';
 
 -- ---------------------------------------------------------------------------
 -- 4. Qué desembolsos son ejecutables (RN-83)
@@ -182,7 +187,7 @@ select is(
 select is(
   (select count(*)::int from public.desembolsos_ejecutables where id_monitoria = '50000000-0000-0000-0000-000000000010'),
   0,
-  'HU-028 (supuesto 2): con su único pago rechazado no hay nada que transferir: no es ejecutable, aunque la foto diga 22.500');
+  'HU-078 (D-39): con un pago aprobado y otro rechazado con el caso P-24 abierto no es ejecutable: solo la saca el caso abierto (caso_abierto)');
 
 select is(
   (select count(*)::int from public.desembolsos_ejecutables where id_monitoria = '50000000-0000-0000-0000-000000000011'),

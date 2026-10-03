@@ -214,10 +214,14 @@ describe("consecuenciasDelRechazo (supuestos 4 y 7)", () => {
     expect(texto).not.toMatch(/Se cancela|queda libre|Le avisamos/);
   });
 
-  it("P-24: el pago queda fuera del desembolso del monitor", () => {
-    expect(consecuenciasDelRechazo("ya_empezo", PAGO)).toMatch(/^La sesión ya empezó, así que la monitoría no se cancela y el pago queda fuera del desembolso/);
-    expect(consecuenciasDelRechazo("ya_realizada", PAGO)).toMatch(/^La monitoría ya se realizó, así que no se cancela/);
+  it("P-24 (HU-078, D-39): el caso queda por cobrar o asumir y cuenta en el desembolso solo cuando alguien lo cierra", () => {
+    const porCobrar =
+      "el caso queda en «Pagos por cobrar o asumir»: el pago cuenta en el desembolso del monitor solo cuando alguien lo cierre como cobrado o asumido. Un pago rechazado no se reembolsa y al pagador no le escribimos.";
+    expect(consecuenciasDelRechazo("ya_empezo", PAGO)).toBe(`La sesión ya empezó, así que la monitoría no se cancela y ${porCobrar}`);
+    expect(consecuenciasDelRechazo("ya_realizada", PAGO)).toBe(`La monitoría ya se realizó, así que no se cancela y ${porCobrar}`);
+    // Con la monitoría ya cancelada no hay caso (supuesto 1 de HU-078).
     expect(consecuenciasDelRechazo("ya_cancelada", PAGO)).toMatch(/^La monitoría ya estaba cancelada: solo cambia el pago\./);
+    expect(consecuenciasDelRechazo("ya_cancelada", PAGO)).not.toMatch(/cobrar o asumir|desembolso/);
   });
 });
 
@@ -284,7 +288,8 @@ describe("avisoDelEnvio", () => {
 });
 
 describe("avisosDeLaPagina", () => {
-  const RECHAZADO = { estado: "rechazado" as const, contacto: "camila@uniandes.edu.co" };
+  // Sin caso: la monitoría se canceló (el rechazo la canceló o el estudiante ya lo había hecho).
+  const RECHAZADO = { estado: "rechazado" as const, contacto: "camila@uniandes.edu.co", caso: null };
 
   it("dice que se aprobó solo si el pago de verdad está aprobado", () => {
     expect(avisosDeLaPagina({ revisado: "aprobado" }, { ...RECHAZADO, estado: "aprobado" })).toEqual([
@@ -310,6 +315,24 @@ describe("avisosDeLaPagina", () => {
       { exito: true, texto: "Rechazaste el pago. Ya no aparece en tu bandeja." },
       { exito: false, texto },
     ]);
+  });
+
+  it("HU-078, criterio 5: tras un rechazo en P-24 dice que el caso quedó en Pagos por cobrar o asumir, y no que salió de la bandeja", () => {
+    const p24 = { ...RECHAZADO, caso: "abierto" as const };
+    const exito = {
+      exito: true,
+      texto: "Rechazaste el pago. El caso quedó en «Pagos por cobrar o asumir» de la bandeja hasta que alguien lo cierre como cobrado o asumido.",
+    };
+    expect(avisosDeLaPagina({ revisado: "rechazado" }, p24)).toEqual([exito]);
+    // En P-24 no se le escribe al pagador: un ?correo= escrito a mano no inventa avisos del correo.
+    expect(avisosDeLaPagina({ revisado: "rechazado", correo: "enviado" }, p24)).toEqual([exito]);
+    expect(avisosDeLaPagina({ revisado: "rechazado", correo: "fallo" }, p24)).toEqual([exito]);
+    // Si alguien ya cerró el caso cuando se pinta la página, ya no está en esa sección.
+    expect(avisosDeLaPagina({ revisado: "rechazado" }, { ...RECHAZADO, caso: "cerrado" })).toEqual([
+      { exito: true, texto: "Rechazaste el pago. Ya no aparece en tu bandeja." },
+    ]);
+    // Un enlace viejo no anuncia un rechazo que no pasó.
+    expect(avisosDeLaPagina({ revisado: "rechazado" }, { ...p24, estado: "aprobado" })).toEqual([]);
   });
 
   it("los errores que vuelven a la página se dicen como alerta; los desconocidos no", () => {

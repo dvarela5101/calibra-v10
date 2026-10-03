@@ -177,7 +177,7 @@ describe("Ejecutar un desembolso (HU-028): uno ejecutable (criterio 4)", () => {
 });
 
 describe("Ejecutar un desembolso: lo que no se puede ejecutar (criterios 2 y 3)", () => {
-  it.each(["antes_de_plazo", "con_reporte", "pagos_en_revision", "sin_pagos_aprobados", "no_realizada"] as const)(
+  it.each(["antes_de_plazo", "con_reporte", "pagos_en_revision", "caso_abierto", "sin_pagos_aprobados", "no_realizada"] as const)(
     "%s: dice por qué en palabras, sin formulario ni botón para copiar la llave",
     async (motivo: MotivoParaNoEjecutar) => {
       const html = await pintar(desembolso({ motivo }));
@@ -193,6 +193,18 @@ describe("Ejecutar un desembolso: lo que no se puede ejecutar (criterios 2 y 3)"
 
   it("D-39: con un pago en revisión dice que espera esa revisión", async () => {
     expect(texto(await pintar(desembolso({ motivo: "pagos_en_revision" })))).toContain("Espera la revisión de un pago de esta monitoría");
+  });
+
+  it("HU-078, criterio 4: con un caso P-24 abierto dice que espera a que se cierre, sin formulario", async () => {
+    const html = await pintar(desembolso({ motivo: "caso_abierto" }));
+    expect(texto(html)).toContain("Espera a que se cierre el caso del pago rechazado en «Pagos por cobrar o asumir».");
+    expect(html).not.toContain("<form");
+  });
+
+  it("HU-078, criterio 4: si al ejecutar se abrió un caso, vuelve como alerta con el motivo una sola vez", async () => {
+    const t = texto(await pintar(desembolso({ motivo: "caso_abierto" }), { error: "caso_abierto" }));
+    expect(t).toContain(MENSAJE_DE_CAMBIO);
+    expect(t.split(MENSAJES_DE_MOTIVO.caso_abierto)).toHaveLength(2);
   });
 
   it("P-28: un anulado lo dice y no se ejecuta, aunque la base lo haya leído ejecutable un instante antes", async () => {
