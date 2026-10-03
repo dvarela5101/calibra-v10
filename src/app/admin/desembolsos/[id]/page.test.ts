@@ -140,6 +140,22 @@ describe("Ejecutar un desembolso (HU-028): uno ejecutable (criterio 4)", () => {
     expect(t.indexOf(consecuencias)).toBeLessThan(t.indexOf("Sí, registrar la transferencia"));
   });
 
+  it("el formulario entero (la referencia, la fecha y el botón) está dentro de la confirmación, que empieza cerrada: sin abrirla no hay dónde pulsar Enter", async () => {
+    const html = await pintar(desembolso());
+    const inicio = html.indexOf("<details");
+    const fin = html.indexOf("</details>");
+    expect(inicio).toBeGreaterThan(-1);
+    expect(html.slice(inicio, html.indexOf(">", inicio) + 1)).not.toContain("open");
+    const dentro = html.slice(inicio, fin);
+    const fuera = html.slice(0, inicio) + html.slice(fin);
+    for (const pieza of ["<form", 'name="id_desembolso"', 'name="neto_esperado"', 'id="referencia"', 'id="fecha"', 'type="submit"', "No se puede deshacer."]) {
+      expect(dentro, pieza).toContain(pieza);
+      expect(fuera, pieza).not.toContain(pieza);
+    }
+    // Dentro, el texto de lo que se registra va antes de los campos.
+    expect(dentro.indexOf("No se puede deshacer.")).toBeLessThan(dentro.indexOf('id="referencia"'));
+  });
+
   it("supuesto 4: nunca habla de bruto ni de comisión", async () => {
     for (const d of [desembolso(), DESEMBOLSADO, desembolso({ motivo: "pagos_en_revision" })]) {
       const html = (await pintar(d)).toLowerCase();

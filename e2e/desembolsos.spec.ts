@@ -240,7 +240,7 @@ const ejecutableDespuesDe = (fecha: string) => new Date(`${sumarDias(fecha, 1)}T
 // Criterios 1, 3 y 4: abrir el desembolso desde la bandeja y registrar la transferencia
 // ---------------------------------------------------------------------------
 test.describe("Criterios 1, 3 y 4 · el admin abre un desembolso ejecutable y registra la transferencia", () => {
-  test("desde la bandeja ve el neto, la llave del monitor (y la copia) y la monitoría, sin la comisión; confirma, registra la referencia y la fecha y queda desembolsado con su nombre; sale de la bandeja; la página respeta las reglas del producto", async ({
+  test("desde la bandeja ve el neto, la llave del monitor (y la copia) y la monitoría, sin la comisión; con la confirmación cerrada, Enter no registra nada; la abre, registra la referencia y la fecha y queda desembolsado con su nombre; sale de la bandeja; la página respeta las reglas del producto", async ({
     page,
     context,
     escenario,
@@ -248,6 +248,8 @@ test.describe("Criterios 1, 3 y 4 · el admin abre un desembolso ejecutable y re
     const { admin, monitor, llave, materia } = escenario;
     const d = await escenario.desembolso(3);
     const referencia = `TRX-${randomUUID().slice(0, 8)}`;
+    // La que escribe y no confirma: si llegara a la base, la fila final no tendría `referencia`.
+    const referenciaSinConfirmar = `SIN-CONFIRMAR-${randomUUID().slice(0, 8)}`;
     // El portapapeles de Chromium sin cabeza pide permiso, como en e2e/pagar.spec.ts.
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await entrarComoAdmin(page, admin);
@@ -283,20 +285,43 @@ test.describe("Criterios 1, 3 y 4 · el admin abre un desembolso ejecutable y re
       expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(llave);
     });
 
-    await test.step("supuesto 3: escribe la referencia; la fecha viene con hoy y no acepta una futura ni anterior a la sesión", async () => {
+    await test.step("con la confirmación cerrada nada se registra: la referencia está dentro de ella, Enter solo la abre y un envío con ella cerrada no llega a la acción", async () => {
+      const campo = page.getByLabel("Referencia de la transferencia");
+      // Cerrada, no hay dónde escribir la referencia: el formulario entero está dentro de la confirmación.
+      await expect(campo).toBeHidden();
+      await expect(page.getByLabel("Fecha de la transferencia")).toBeHidden();
+      // Escribe una referencia y vuelve a cerrar la confirmación sin confirmar.
+      await abrirConfirmacion(page).click();
+      await campo.fill(referenciaSinConfirmar);
+      await abrirConfirmacion(page).click();
+      await expect(campo).toBeHidden();
+      // Pulsa Enter sobre lo único que se puede pulsar: la confirmación se abre, nada se envía.
+      await abrirConfirmacion(page).press("Enter");
+      await expect(botonRegistrar(page)).toBeVisible();
+      await abrirConfirmacion(page).click();
+      await expect(botonRegistrar(page)).toBeHidden();
+      // Lo que hacía Enter en la referencia: enviar el formulario con la confirmación cerrada (el navegador usa el
+      // botón de confirmar aunque esté oculto). Ninguna petición sale de la página y el desembolso sigue pendiente.
+      const envio = page.waitForRequest((peticion) => peticion.method() === "POST", { timeout: 3_000 }).catch(() => null);
+      await page.locator("form").evaluate((formulario: HTMLFormElement) => formulario.requestSubmit());
+      expect(await envio, "un envío con la confirmación cerrada no llega a la acción").toBeNull();
+      await expect(page).toHaveURL(`/admin/desembolsos/${d.id}`);
+      expect(await escenario.leerDesembolso(d.id)).toMatchObject({ estado: "pendiente", id_admin: null, referencia_transferencia: null });
+    });
+
+    await test.step("criterio 4 y supuesto 3: al abrirla, la confirmación dice antes qué se registra; escribe la referencia; la fecha viene con hoy y no acepta una futura ni anterior a la sesión", async () => {
+      await abrirConfirmacion(page).click();
+      await expect(page.getByText(`Registra la transferencia de ${pesos(d.neto)} a ${llave}. No se puede deshacer.`)).toBeVisible();
+      await expect(botonRegistrar(page)).toBeVisible();
       await page.getByLabel("Referencia de la transferencia").fill(referencia);
       const fecha = page.getByLabel("Fecha de la transferencia");
       await expect(fecha).toHaveValue(hoy());
       await expect(fecha).toHaveAttribute("max", hoy());
       await expect(fecha).toHaveAttribute("min", d.fecha);
+      await expectReglasDelProducto(page, "la confirmación abierta");
     });
 
-    await test.step("criterio 4: la confirmación dice antes qué se registra; al confirmar queda desembolsado con su id, la referencia y la fecha", async () => {
-      await abrirConfirmacion(page).click();
-      await expect(page.getByText(`Registra la transferencia de ${pesos(d.neto)} a ${llave}. No se puede deshacer.`)).toBeVisible();
-      await expect(botonRegistrar(page)).toBeVisible();
-      await expectReglasDelProducto(page, "la confirmación abierta");
-
+    await test.step("criterio 4: al confirmar queda desembolsado con su id, la referencia y la fecha", async () => {
       await botonRegistrar(page).click();
       await expect(aviso(page, "Registraste la transferencia.")).toHaveText("Registraste la transferencia. El desembolso ya no aparece en la bandeja.", ESPERA);
       await expect(page).toHaveURL(`/admin/desembolsos/${d.id}?ejecutado=desembolsado`);

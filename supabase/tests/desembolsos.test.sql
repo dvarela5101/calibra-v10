@@ -11,7 +11,8 @@
 --     (auth.uid() lo lee sin importar el rol). Son de lunes de 2031 y se insertan ya realizadas, con su desembolso a
 --     mano (el trigger es solo de UPDATE): cada caso tiene la foto de montos que necesita. ahora = miércoles
 --     31-dic-2031 12:00 en Bogotá, salvo en el borde de N-6.
---   * Las puertas públicas, con now(), sobre una monitoría de 2020.
+--   * Las puertas públicas, con now(), sobre una monitoría de 2020 y otra que terminó hace una hora: ninguna prueba
+--     compara now() con una fecha fija que algún día quede atrás.
 -- Dos admins que ejecutan a la vez no caben en una transacción: los cubre la prueba de integración.
 --
 -- Elenco (ids terminados en 28NN; la materia es 'PGTAP-28'):
@@ -34,11 +35,13 @@
 --     30 la del lunes 29-dic-2031: su fin + 24 h es el martes 30 a las 11:00 (borde de N-6)
 --     31 un pago aprobado de 30.000 (neto 27.000) y la foto de 22.500, para monto_cambio
 --     32 la del lunes 1-jun-2020, para las puertas públicas con now()
+--     33 realizada, que empezó 2 h antes de now() y terminó hace una hora (su propia franja), con un pago aprobado y un
+--        reporte en revisión: con now(), su fin + 24 h siempre queda 23 h adelante (la puerta dice antes_de_plazo)
 
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(88);
+select plan(90);
 
 -- ---------------------------------------------------------------------------
 -- Estructura y permisos
@@ -59,6 +62,8 @@ select has_function('privado', 'ejecutar_desembolso_de_la_sesion', array['uuid',
   'Existe privado.ejecutar_desembolso_de_la_sesion, la que ejecuta la sesión con la hora de la base');
 select has_function('public', 'ejecutar_desembolso', array['uuid', 'text', 'date', 'integer'],
   'Existe su puerta en la Data API');
+select has_function('privado', 'bloqueo_del_desembolso', array['uuid'],
+  'Existe privado.bloqueo_del_desembolso, lo que bloquea por la monitoría: la usan estado_para_ejecutar y la vista de la bandeja');
 select ok(
   (select bool_and(prosecdef) from pg_proc
    where oid in ('privado.calcular_desembolso(uuid)'::regprocedure,
@@ -140,6 +145,18 @@ select ok(
                     'public.ejecutar_desembolso(uuid, text, date, integer)'::regprocedure)
       and a.grantee = 0),
   'Nadie las hereda de PUBLIC');
+-- La vista desembolsos_ejecutables es security_invoker: quien la consulta ejecuta la función, que lee con sus permisos.
+select ok(
+  not (select prosecdef from pg_proc where oid = 'privado.bloqueo_del_desembolso(uuid)'::regprocedure)
+  and (select 'search_path=""' = any(proconfig) from pg_proc where oid = 'privado.bloqueo_del_desembolso(uuid)'::regprocedure)
+  and has_function_privilege('authenticated', 'privado.bloqueo_del_desembolso(uuid)', 'execute')
+  and has_function_privilege('service_role', 'privado.bloqueo_del_desembolso(uuid)', 'execute')
+  and not has_function_privilege('anon', 'privado.bloqueo_del_desembolso(uuid)', 'execute')
+  and not exists (
+    select 1
+    from pg_proc p, aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
+    where p.oid = 'privado.bloqueo_del_desembolso(uuid)'::regprocedure and a.grantee = 0),
+  'bloqueo_del_desembolso corre con los permisos de quien llama (security invoker, search_path vacío): la ejecutan authenticated y service_role, que consultan la vista; anon y PUBLIC no');
 select has_trigger('public', 'monitoria', 'monitoria_crea_desembolso',
   'Existe el trigger monitoria_crea_desembolso en monitoria');
 select matches(
@@ -259,6 +276,19 @@ from (values
   ('32', date '2020-06-01', 'realizada', null)
 ) as v(nn, fecha, estado, motivo);
 
+-- La 33, para la puerta con now(): empezó 2 h antes de now() y dura 60 min, en su propia franja construida desde su
+-- inicio en Bogotá (como las del trigger).
+insert into public.franja (id, id_monitor, dia, hora, presencial, precio, duracion_min)
+select '30000000-0000-0000-0000-000000002833', 'b0000000-0000-0000-0000-0000000028a0',
+       extract(isodow from t.inicio at time zone 'America/Bogota')::smallint, (t.inicio at time zone 'America/Bogota')::time,
+       true, 25000, 60
+from (select now() - interval '2 hours' as inicio) t;
+insert into public.monitoria (id, id_franja, id_materia, id_lead, fecha, valor_total, estado, fecha_finalizacion)
+select '50000000-0000-0000-0000-000000002833', '30000000-0000-0000-0000-000000002833',
+       '10000000-0000-0000-0000-000000002801', '40000000-0000-0000-0000-000000002801',
+       (t.inicio at time zone 'America/Bogota')::date, 25000, 'realizada', now() - interval '1 hour'
+from (select now() - interval '2 hours' as inicio) t;
+
 -- Los pagos: el id es 60000000-...-000000028NNk (k = a, b, c) y cada uno apunta a su propio comprobante revisado
 -- (HU-059). No hace falta el archivo.
 create temporary table pago_caso (nn text, k text, monto integer, estado public.estado_pago, observaciones text);
@@ -269,7 +299,7 @@ insert into pago_caso values
   ('24', 'a', 25000, 'aprobado', null), ('25', 'a', 25000, 'aprobado', null), ('25', 'b', 5000, 'en_revision', null),
   ('26', 'a', 25000, 'rechazado', 'Se cobra por fuera (P-24).'), ('27', 'a', 25000, 'aprobado', null),
   ('28', 'a', 25000, 'aprobado', null), ('29', 'a', 25000, 'aprobado', null), ('30', 'a', 25000, 'aprobado', null),
-  ('31', 'a', 30000, 'aprobado', null), ('32', 'a', 25000, 'aprobado', null);
+  ('31', 'a', 30000, 'aprobado', null), ('32', 'a', 25000, 'aprobado', null), ('33', 'a', 25000, 'aprobado', null);
 
 insert into public.comprobante_revisado (ruta, tipo)
 select 'c0000000-0000-0000-0000-000000002801/60000000-0000-0000-0000-000000028' || nn || k || '.png', 'image/png'
@@ -298,25 +328,29 @@ from (values
   ('29', 25000, 2500, 'pendiente', null, null, null),
   ('30', 25000, 2500, 'pendiente', null, null, null),
   ('31', 25000, 2500, 'pendiente', null, null, null),
-  ('32', 25000, 2500, 'pendiente', null, null, null)
+  ('32', 25000, 2500, 'pendiente', null, null, null),
+  ('33', 25000, 2500, 'pendiente', null, null, null)
 ) as v(nn, bruto, comision, estado, id_admin, fecha, referencia);
 
 insert into public.reporte_inasistencia (id_monitoria, id_admin, estado, fecha_decision) values
   ('50000000-0000-0000-0000-000000002822', 'a0000000-0000-0000-0000-0000000028a0', 'en_revision', null),
   ('50000000-0000-0000-0000-000000002823', 'a0000000-0000-0000-0000-0000000028a0', 'aceptado', now()),
   ('50000000-0000-0000-0000-000000002824', 'a0000000-0000-0000-0000-0000000028a0', 'rechazado', now()),
-  ('50000000-0000-0000-0000-000000002827', 'a0000000-0000-0000-0000-0000000028a0', 'aceptado', now());
+  ('50000000-0000-0000-0000-000000002827', 'a0000000-0000-0000-0000-0000000028a0', 'aceptado', now()),
+  ('50000000-0000-0000-0000-000000002833', 'a0000000-0000-0000-0000-0000000028a0', 'en_revision', null);
 
 select ok(
-  (select count(*) = 18 from public.monitoria where id::text like '50000000-0000-0000-0000-0000000028%')
+  (select count(*) = 19 from public.monitoria where id::text like '50000000-0000-0000-0000-0000000028%')
   and (select count(*) = 0 from public.desembolso where id_monitoria::text like '50000000-0000-0000-0000-00000000280%')
-  and (select count(*) = 12 from public.desembolso where id::text like '70000000-0000-0000-0000-0000000028%')
-  and (select count(*) = 19 from public.pago where id::text like '60000000-0000-0000-0000-000000028%')
+  and (select count(*) = 13 from public.desembolso where id::text like '70000000-0000-0000-0000-0000000028%')
+  and (select count(*) = 20 from public.pago where id::text like '60000000-0000-0000-0000-000000028%')
   and (select public.inicio_sesion(m.fecha, f.hora) = timestamptz '2031-12-29 10:00-05'
        from public.monitoria m join public.franja f on f.id = m.id_franja
        where m.id = '50000000-0000-0000-0000-000000002830')
+  and (select desembolsable_desde - now() = interval '23 hours'
+       from public.monitoria_plazos where id_monitoria = '50000000-0000-0000-0000-000000002833')
   and (select banned_until > now() from auth.users where id = 'a0000000-0000-0000-0000-0000000028c0'),
-  'Control: las 18 monitorías y los 19 pagos existen, las del trigger aún no tienen desembolso y las de ejecutar sí (12), la 30 empieza el 29-dic-2031 a las 10:00 en Bogotá y C está desactivado');
+  'Control: las 19 monitorías y los 20 pagos existen, las del trigger aún no tienen desembolso y las de ejecutar sí (13), la 30 empieza el 29-dic-2031 a las 10:00 en Bogotá, el fin + 24 h de la 33 queda 23 h después de now() y C está desactivado');
 
 -- ---------------------------------------------------------------------------
 -- Criterio 1 (RN-80): al pasar a realizada nace el desembolso pendiente
@@ -498,9 +532,9 @@ select results_eq(
   $$values (null::text, 22500)$$,
   'Por la puerta, con la hora real: el admin ve que la de 2020 se puede ejecutar y su neto');
 select results_eq(
-  $$select motivo, monto_neto from public.estado_para_ejecutar('70000000-0000-0000-0000-000000002822')$$,
+  $$select motivo, monto_neto from public.estado_para_ejecutar('70000000-0000-0000-0000-000000002833')$$,
   $$values ('antes_de_plazo'::text, 22500)$$,
-  'Y que la de 2031 todavía no: antes_de_plazo se dice antes que el reporte');
+  'Y que la 33, que terminó hace una hora, todavía no: antes_de_plazo se dice antes que el reporte');
 set local request.jwt.claims to '{"sub":"b0000000-0000-0000-0000-0000000028a0","role":"authenticated"}';
 select is((select count(*)::int from public.estado_para_ejecutar('70000000-0000-0000-0000-000000002832')), 0,
   'El monitor no recibe nada, ni el neto de su propio desembolso');

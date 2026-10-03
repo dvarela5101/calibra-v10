@@ -177,8 +177,9 @@ const desembolsoEnBd = async (id: string) => exito(await fx.admin.from("desembol
 const ejecutar = (cliente: Cliente, idDesembolso: string, netoEsperado: number, referencia = `TRX-${randomUUID().slice(0, 8)}`) =>
   ejecutarDesembolso(cliente, { idDesembolso, referencia, fecha: hoy(), netoEsperado });
 
-/** Los desembolsos que el admin de la prueba ve en su bandeja (HU-012). */
-const desembolsosDeLaBandeja = async () => (await cargarBandeja(admin.cliente, admin.usuario.id)).desembolsos.map((d) => d.id);
+/** Los desembolsos que el admin de la prueba ve en su bandeja (HU-012), sin el corte de la lista: que uno falte es por la vista. */
+const desembolsosDeLaBandeja = async () =>
+  (await cargarBandeja(admin.cliente, admin.usuario.id, new Date(), { maxFilas: 1_000 })).desembolsos.map((d) => d.id);
 
 /** Sin filas: el permiso se niega (error) o la RLS no deja ver ninguna; en ningún caso hay filas afectadas. */
 function sinFilas(resultado: { data: unknown[] | null; error: { message: string } | null }) {
@@ -365,10 +366,12 @@ describe("criterio 2 y D-39: el admin ve por qué no se puede ejecutar, y la bas
     ["sin pagos aprobados", "sin_pagos_aprobados", () => realizadaConDesembolso([{ estado: "rechazado" }])],
   ];
 
-  it.each(casos)("%s: cargarDesembolso da el motivo %s, ejecutar responde lo mismo y nada cambia", async (_caso, motivo, crear) => {
+  it.each(casos)("%s: la bandeja no lo lista, cargarDesembolso da el motivo %s, ejecutar responde lo mismo y nada cambia", async (_caso, motivo, crear) => {
     const { desembolso } = await crear();
     const antes = await desembolsoEnBd(desembolso.id);
 
+    // La vista de la bandeja coincide con estado_para_ejecutar: no ofrece lo que la página no deja ejecutar.
+    expect(await desembolsosDeLaBandeja()).not.toContain(desembolso.id);
     const leido = await cargarDesembolso(admin.cliente, desembolso.id);
     expect(leido?.motivo).toBe(motivo);
     expect(leido?.ejecucion).toBeNull();
@@ -377,10 +380,11 @@ describe("criterio 2 y D-39: el admin ve por qué no se puede ejecutar, y la bas
     expect(await desembolsoEnBd(desembolso.id)).toEqual(antes);
   });
 
-  it("un reporte rechazado no bloquea: se puede ejecutar", async () => {
+  it("un reporte rechazado no bloquea: está en la bandeja y se puede ejecutar", async () => {
     const { monitoria, desembolso } = await realizadaConDesembolso([{ estado: "aprobado" }]);
     await fx.crearReporte({ idMonitoria: monitoria.id, idAdmin: admin.usuario.id, estado: "rechazado" });
 
+    expect(await desembolsosDeLaBandeja()).toContain(desembolso.id);
     expect((await cargarDesembolso(admin.cliente, desembolso.id))?.motivo).toBeNull();
     expect(await ejecutar(admin.cliente, desembolso.id, 22_500)).toBe("desembolsado");
   });
