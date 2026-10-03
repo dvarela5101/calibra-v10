@@ -31,6 +31,7 @@ const CITA: Cita = {
   estadoPago: "en_revision",
   estadoReembolso: null,
   estadoReporte: null,
+  observacionesReporte: null,
 };
 
 const pintar = (citas: Cita[], ahora: Date = AHORA) => renderToStaticMarkup(createElement(ListaDeCitas, { citas, ahora }));

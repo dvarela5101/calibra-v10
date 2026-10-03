@@ -47,6 +47,7 @@ const CITA: Cita = {
   estadoPago: "en_revision",
   estadoReembolso: null,
   estadoReporte: null,
+  observacionesReporte: null,
 };
 
 const cita = (cambios: Partial<Cita> = {}): Cita => ({ ...CITA, ...cambios });
@@ -95,6 +96,7 @@ describe("citaDeFila", () => {
     estado_pago: "en_revision",
     estado_reembolso: null,
     estado_reporte: null,
+    observaciones_reporte: null,
   };
 
   it("lee las fechas como Date y copia el resto", () => {
@@ -114,6 +116,14 @@ describe("citaDeFila", () => {
       estado_reporte: "aceptado",
     });
     expect(leida).toMatchObject({ estado: "cancelada", motivoCancelacion: "monitor_no_asistio", estadoReembolso: "esperando_llave", estadoReporte: "aceptado" });
+  });
+
+  it("lee observaciones_reporte (D-37): el texto tal cual y el nulo", () => {
+    expect(citaDeFila({ ...FILA, estado_reporte: "rechazado", observaciones_reporte: "Sí hubo monitor en el salón." })).toMatchObject({
+      estadoReporte: "rechazado",
+      observacionesReporte: "Sí hubo monitor en el salón.",
+    });
+    expect(citaDeFila(FILA).observacionesReporte).toBeNull();
   });
 
   it.each([
@@ -320,6 +330,95 @@ describe("vistaDeCita: cancelada", () => {
     expect(textoDelReembolso("pendiente")).toBe("Recibimos tu llave. Estamos haciendo la devolución del dinero.");
     expect(textoDelReembolso("reembolsado")).toBe("Ya te devolvimos el dinero.");
     expect(textoDelReembolso(null)).toBeNull();
+  });
+});
+
+describe("vistaDeCita: el reporte de inasistencia (HU-029, D-37)", () => {
+  const DURANTE = en(INICIO, 30 * 60_000);
+  const TEXTO_PARA_REPORTAR =
+    "¿El monitor no llegó? Puedes reportarlo hasta el martes, 14 de enero de 2020, 11:30 a. m. Un admin revisa el caso. Si lo acepta, la monitoría se cancela y te devolvemos el dinero de tu pago.";
+
+  it("si se puede reportar, dice hasta cuándo (con la fecha límite en Bogotá), que un admin lo revisa y qué pasa si lo acepta", () => {
+    // 16:30 UTC del 14 de enero son las 11:30 a. m. en Bogotá: la frase no repite el punto tras «a. m.».
+    for (const ahora of [DURANTE, en(FIN, HORA), REPORTE_HASTA]) {
+      const vista = vistaDeCita(CITA, ahora);
+      expect(vista.puedeReportar).toBe(true);
+      expect(plano(vista.textoDelReporte)).toBe(TEXTO_PARA_REPORTAR);
+      expect(vista.observacionesDelReporte).toBeNull();
+    }
+    expect(plano(vistaDeCita(cita({ estado: "realizada" }), en(FIN, HORA)).textoDelReporte)).toBe(TEXTO_PARA_REPORTAR);
+  });
+
+  it("no ofrece reportar antes del inicio ni pasado el plazo (borde inclusivo en reporteHasta, P-40)", () => {
+    for (const ahora of [en(INICIO, -1), en(REPORTE_HASTA, 1)]) {
+      const vista = vistaDeCita(CITA, ahora);
+      expect(vista.puedeReportar).toBe(false);
+      expect(vista.textoDelReporte).toBeNull();
+    }
+    expect(vistaDeCita(CITA, INICIO).puedeReportar).toBe(true);
+  });
+
+  it("puedeReportar exige confirmada o realizada y ningún reporte previo", () => {
+    expect(vistaDeCita(cita({ estado: "cancelada", motivoCancelacion: "estudiante" }), DURANTE).puedeReportar).toBe(false);
+    expect(vistaDeCita(cita({ estado: "pendiente_pago", estadoPago: "sin_pagar" }), DURANTE).puedeReportar).toBe(false);
+    for (const estadoReporte of ["en_revision", "aceptado", "rechazado"] as const) {
+      expect(vistaDeCita(cita({ estadoReporte }), DURANTE).puedeReportar, estadoReporte).toBe(false);
+    }
+  });
+
+  it("en revisión: dice que lo están revisando y que aquí verá la decisión; no vuelve a ofrecer reportar", () => {
+    const vista = vistaDeCita(cita({ estadoReporte: "en_revision" }), DURANTE);
+    expect(vista.textoDelReporte).toBe("Recibimos tu reporte. Un admin lo está revisando y aquí verás su decisión.");
+    expect(vista.observacionesDelReporte).toBeNull();
+    expect(vista.puedeReportar).toBe(false);
+  });
+
+  it("aceptado: «Un admin aceptó tu reporte.» salvo que el motivo de la cancelación ya lo diga", () => {
+    expect(vistaDeCita(cita({ estadoReporte: "aceptado", estado: "realizada" }), en(FIN, HORA)).textoDelReporte).toBe("Un admin aceptó tu reporte.");
+    const cancelada = vistaDeCita(cita({ estado: "cancelada", motivoCancelacion: "monitor_no_asistio", estadoReporte: "aceptado" }), en(FIN, HORA));
+    expect(cancelada.textoDelMotivo).toBe("El monitor no asistió y se aceptó tu reporte.");
+    expect(cancelada.textoDelReporte).toBeNull();
+  });
+
+  it("rechazado: dice que no lo aceptó y que la monitoría sigue como estaba", () => {
+    const vista = vistaDeCita(cita({ estadoReporte: "rechazado" }), en(FIN, HORA));
+    expect(vista.textoDelReporte).toBe("Un admin revisó tu reporte y no lo aceptó: la monitoría sigue como estaba.");
+    expect(vista.puedeReportar).toBe(false);
+  });
+
+  it("las observaciones del admin solo se muestran con el reporte rechazado y no vacías, tal cual (D-37)", () => {
+    const observacionesReporte = "  El monitor sí estuvo en el salón. Tenemos su registro.  ";
+    const rechazado = vistaDeCita(cita({ estadoReporte: "rechazado", observacionesReporte }), en(FIN, HORA));
+    expect(rechazado.observacionesDelReporte).toBe(observacionesReporte);
+    for (const vacia of [null, "", "   ", " "]) {
+      expect(vistaDeCita(cita({ estadoReporte: "rechazado", observacionesReporte: vacia }), en(FIN, HORA)).observacionesDelReporte, JSON.stringify(vacia)).toBeNull();
+    }
+    for (const estadoReporte of ["en_revision", "aceptado", null] as const) {
+      expect(vistaDeCita(cita({ estadoReporte, observacionesReporte }), en(FIN, HORA)).observacionesDelReporte, String(estadoReporte)).toBeNull();
+    }
+    // También en una cancelada.
+    const cancelada = cita({ estado: "cancelada", motivoCancelacion: "estudiante", estadoReporte: "rechazado", observacionesReporte });
+    expect(vistaDeCita(cancelada, en(FIN, HORA)).observacionesDelReporte).toBe(observacionesReporte);
+  });
+
+  it("«El monitor la marcará como realizada.» sale en la terminada sin reporte y se quita cuando hay uno", () => {
+    const terminada = en(FIN, HORA);
+    expect(vistaDeCita(CITA, terminada).textoDelEstado).toBe("El monitor la marcará como realizada.");
+    for (const estadoReporte of ["en_revision", "aceptado", "rechazado"] as const) {
+      expect(vistaDeCita(cita({ estadoReporte }), terminada).textoDelEstado, estadoReporte).toBeNull();
+    }
+    // En curso nunca lo lleva.
+    expect(vistaDeCita(CITA, DURANTE).textoDelEstado).toBeNull();
+  });
+
+  it("el texto no menciona el desembolso, comisión ni nada del monitor más que el hecho de que no llegó", () => {
+    const textos = [
+      vistaDeCita(CITA, DURANTE).textoDelReporte,
+      vistaDeCita(cita({ estadoReporte: "en_revision" }), DURANTE).textoDelReporte,
+      vistaDeCita(cita({ estadoReporte: "aceptado" }), DURANTE).textoDelReporte,
+      vistaDeCita(cita({ estadoReporte: "rechazado" }), DURANTE).textoDelReporte,
+    ];
+    for (const texto of textos) expect(texto, String(texto)).not.toMatch(/desembolso|comisi|neto|@|tel[eé]fono|whatsapp/i);
   });
 });
 

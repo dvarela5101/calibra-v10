@@ -4,8 +4,9 @@ import type { Cita } from "@/lib/citas/reglas";
 import PaginaDeCita from "./page";
 
 // Sin navegador ni base: la página de la cita con el enlace del correo, con la cita inventada y la hora fija. Aquí se
-// fija cuándo sale el botón de cancelar (solo con plazo, HU-024) y qué se dice cuando no hay. La base decide de verdad
-// si cabe; el recorrido completo lo cubre e2e/cancelar.spec.ts.
+// fija cuándo sale el botón de cancelar (solo con plazo, HU-024), cuándo el de reportar que el monitor no llegó (desde
+// el inicio y dentro de la ventana, sin reporte previo, HU-029) y qué se dice cuando no hay ninguno. La base decide de
+// verdad si cabe; el recorrido completo lo cubren e2e/cancelar.spec.ts y e2e/reportar.spec.ts.
 
 const datos = vi.hoisted(() => ({ cita: null as Cita | null }));
 
@@ -14,6 +15,7 @@ vi.mock("@/lib/auth/sesion", () => ({ obtenerSesion: async () => null }));
 vi.mock("@/lib/supabase/servidor", () => ({ crearClienteServidor: async () => null }));
 // La acción vive en el servidor y el botón es del navegador: aquí solo se pintan.
 vi.mock("./acciones", () => ({ cancelarCita: async () => ({ error: null }) }));
+vi.mock("./acciones-de-reporte", () => ({ reportarInasistencia: async () => ({ error: null }) }));
 vi.mock("next/navigation", () => ({ unstable_rethrow: () => {} }));
 
 const HORA = 3_600_000;
@@ -43,6 +45,7 @@ const CITA: Cita = {
   estadoPago: "aprobado",
   estadoReembolso: null,
   estadoReporte: null,
+  observacionesReporte: null,
 };
 
 async function pintar(cita: Cita | null, ahora: Date, token: string | string[] = TOKEN): Promise<string> {
@@ -97,7 +100,7 @@ describe("Página de la cita con el enlace del correo (HU-024)", () => {
     expect(t).not.toContain("escríbenos");
   });
 
-  it("una cita en curso, terminada o ya cancelada no ofrece cancelar", async () => {
+  it("una cita en curso, terminada, realizada o ya cancelada no ofrece cancelar", async () => {
     const casos: [Cita, Date][] = [
       [CITA, new Date(INICIO.getTime() + 30 * 60_000)],
       [CITA, new Date(CITA.finProgramado.getTime() + 1)],
@@ -106,7 +109,7 @@ describe("Página de la cita con el enlace del correo (HU-024)", () => {
     ];
     for (const [cita, ahora] of casos) {
       const html = await pintar(cita, ahora);
-      expect(html, cita.estado).not.toContain("<button");
+      expect(html, cita.estado).not.toContain("Cancelar mi monitoría");
       expect(texto(html), cita.estado).not.toContain("fuerza mayor");
     }
   });
@@ -128,5 +131,74 @@ describe("Página de la cita con el enlace del correo (HU-024)", () => {
       expect(html).not.toContain("<button");
       expect(html).not.toContain(TOKEN);
     }
+  });
+});
+
+describe("Página de la cita con el enlace del correo (HU-029): reportar que el monitor no llegó", () => {
+  const EN_CURSO = new Date(INICIO.getTime() + 30 * 60_000);
+  const BOTON_REPORTAR = /<button[^>]*type="button"[^>]*>El monitor no llegó<\/button>/;
+
+  it("con la sesión ya empezada ofrece «El monitor no llegó», con el token en un campo oculto, y no ofrece cancelar", async () => {
+    const html = await pintar(CITA, EN_CURSO);
+    expect(html).toMatch(BOTON_REPORTAR);
+    expect(html).toMatch(new RegExp(`<input[^>]*type="hidden"[^>]*name="token"[^>]*value="${TOKEN}"`));
+    expect(html).not.toContain('name="id"');
+    expect(html).not.toContain("Cancelar mi monitoría");
+    expect(texto(html)).toContain("¿El monitor no llegó? Puedes reportarlo hasta el");
+  });
+
+  it("al empezar y con el límite exacto de la ventana todavía lo ofrece; un instante después ya no (P-40)", async () => {
+    expect(await pintar(CITA, INICIO)).toMatch(BOTON_REPORTAR);
+    expect(await pintar(CITA, CITA.reporteHasta)).toMatch(BOTON_REPORTAR);
+    const vencida = await pintar(CITA, new Date(CITA.reporteHasta.getTime() + 1));
+    expect(vencida).not.toContain("<button");
+    expect(texto(vencida)).not.toContain("Puedes reportarlo");
+  });
+
+  it("una realizada dentro de la ventana también lo ofrece", async () => {
+    expect(await pintar({ ...CITA, estado: "realizada" }, new Date(INICIO.getTime() + 2 * HORA))).toMatch(BOTON_REPORTAR);
+  });
+
+  it("antes del inicio y con plazo ofrece solo cancelar", async () => {
+    const html = await pintar(CITA, new Date(CANCELABLE_HASTA.getTime() - 4 * HORA));
+    expect(html).toContain("Cancelar mi monitoría");
+    expect(html).not.toContain("El monitor no llegó");
+  });
+
+  it("antes del inicio y sin plazo no ofrece ninguno de los dos", async () => {
+    const html = await pintar(CITA, new Date(CANCELABLE_HASTA.getTime() + 1));
+    expect(html).not.toContain("<button");
+    expect(html).not.toContain("El monitor no llegó");
+  });
+
+  it("con un reporte ya hecho no ofrece reportar y dice cómo va", async () => {
+    const casos: [Cita["estadoReporte"], string][] = [
+      ["en_revision", "Recibimos tu reporte. Un admin lo está revisando y aquí verás su decisión."],
+      ["aceptado", "Un admin aceptó tu reporte."],
+      ["rechazado", "Un admin revisó tu reporte y no lo aceptó: la monitoría sigue como estaba."],
+    ];
+    for (const [estadoReporte, frase] of casos) {
+      const html = await pintar({ ...CITA, estadoReporte }, EN_CURSO);
+      expect(html, String(estadoReporte)).not.toContain("<button");
+      expect(texto(html), String(estadoReporte)).toContain(frase);
+    }
+  });
+
+  it("con el reporte rechazado y observaciones, las muestra; sin ellas no pone el bloque", async () => {
+    const con = await pintar({ ...CITA, estadoReporte: "rechazado", observacionesReporte: "El monitor sí estuvo en el salón." }, EN_CURSO);
+    expect(texto(con)).toContain("Observaciones del admin");
+    expect(texto(con)).toContain("El monitor sí estuvo en el salón.");
+    const sin = await pintar({ ...CITA, estadoReporte: "rechazado", observacionesReporte: null }, EN_CURSO);
+    expect(texto(sin)).not.toContain("Observaciones del admin");
+  });
+
+  it("una cancelada porque se aceptó el reporte lo dice una sola vez y no ofrece nada", async () => {
+    const html = await pintar(
+      { ...CITA, estado: "cancelada", motivoCancelacion: "monitor_no_asistio", estadoReporte: "aceptado", estadoReembolso: "esperando_llave" },
+      EN_CURSO,
+    );
+    expect(texto(html)).toContain("El monitor no asistió y se aceptó tu reporte.");
+    expect(texto(html)).not.toContain("Un admin aceptó tu reporte.");
+    expect(html).not.toContain("<button");
   });
 });

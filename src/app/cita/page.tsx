@@ -7,6 +7,7 @@ import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { CancelarCita } from "./CancelarCita";
 import { DetalleDeCita, EnlaceQueNoSirve, NoPudimosCargar } from "./DetalleDeCita";
 import { ListaDeCitas } from "./ListaDeCitas";
+import { ReportarInasistencia } from "./ReportarInasistencia";
 
 // Con `?token=` el enlace del correo trae el token: que no quede en buscadores ni se filtre por el Referer.
 export async function generateMetadata({ searchParams }: PageProps<"/cita">): Promise<Metadata> {
@@ -22,7 +23,8 @@ export async function generateMetadata({ searchParams }: PageProps<"/cita">): Pr
  * HU-019 (P-04, D-20): la cita del Lead. Con `?token=` (el enlace del correo de confirmación) muestra esa cita, sin
  * sesión y sin ligar el navegador al Lead; sin token, "Mis citas" de la sesión del navegador (criterio 4, D-24).
  * Va fuera del grupo `(publico)`: abrir el enlace desde otro dispositivo no crea una sesión anónima. Con el enlace
- * también se cancela (HU-024): el botón solo sale mientras hay plazo; la base decide con su propia hora.
+ * también se cancela (HU-024, mientras hay plazo) y se reporta que el monitor no llegó (HU-029, desde el inicio y hasta
+ * 24 h después del fin): la base decide con su propia hora.
  */
 export default async function Cita({ searchParams }: PageProps<"/cita">) {
   const { token } = await searchParams;
@@ -41,12 +43,18 @@ export default async function Cita({ searchParams }: PageProps<"/cita">) {
   if (!cita || typeof token !== "string") return <EnlaceQueNoSirve />;
 
   const ahora = new Date();
-  const puedeCancelar = vistaDeCita(cita, ahora).puedeCancelar;
+  const vista = vistaDeCita(cita, ahora);
+  // Cancelar es antes del inicio y reportar desde el inicio: no se solapan, así que el hueco lleva a lo sumo una.
+  const acciones = vista.puedeCancelar ? (
+    <CancelarCita origen={{ token }} estadoPago={cita.estadoPago} />
+  ) : vista.puedeReportar ? (
+    <ReportarInasistencia origen={{ token }} />
+  ) : undefined;
   return (
     <DetalleDeCita
       cita={cita}
       ahora={ahora}
-      acciones={puedeCancelar ? <CancelarCita origen={{ token }} estadoPago={cita.estadoPago} /> : undefined}
+      acciones={acciones}
       contactoSoporte={identidadDelProveedor().correo}
     />
   );
