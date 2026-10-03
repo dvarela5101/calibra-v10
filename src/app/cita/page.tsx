@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { obtenerSesion } from "@/lib/auth/sesion";
-import type { Cita } from "@/lib/citas/reglas";
+import { vistaDeCita, type Cita } from "@/lib/citas/reglas";
 import { leerCitaPorToken, leerMisCitas } from "@/lib/citas/servidor";
+import { identidadDelProveedor } from "@/lib/pagos/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { CancelarCita } from "./CancelarCita";
 import { DetalleDeCita, EnlaceQueNoSirve, NoPudimosCargar } from "./DetalleDeCita";
 import { ListaDeCitas } from "./ListaDeCitas";
 
@@ -19,7 +21,8 @@ export async function generateMetadata({ searchParams }: PageProps<"/cita">): Pr
 /**
  * HU-019 (P-04, D-20): la cita del Lead. Con `?token=` (el enlace del correo de confirmación) muestra esa cita, sin
  * sesión y sin ligar el navegador al Lead; sin token, "Mis citas" de la sesión del navegador (criterio 4, D-24).
- * Va fuera del grupo `(publico)`: abrir el enlace desde otro dispositivo no crea una sesión anónima.
+ * Va fuera del grupo `(publico)`: abrir el enlace desde otro dispositivo no crea una sesión anónima. Con el enlace
+ * también se cancela (HU-024): el botón solo sale mientras hay plazo; la base decide con su propia hora.
  */
 export default async function Cita({ searchParams }: PageProps<"/cita">) {
   const { token } = await searchParams;
@@ -35,9 +38,18 @@ export default async function Cita({ searchParams }: PageProps<"/cita">) {
     console.error("[citas] no se pudo leer la cita del enlace:", error instanceof Error ? error.message : error);
     return <NoPudimosCargar titulo="No pudimos cargar tu cita" />;
   }
-  if (!cita) return <EnlaceQueNoSirve />;
+  if (!cita || typeof token !== "string") return <EnlaceQueNoSirve />;
 
-  return <DetalleDeCita cita={cita} ahora={new Date()} />;
+  const ahora = new Date();
+  const puedeCancelar = vistaDeCita(cita, ahora).puedeCancelar;
+  return (
+    <DetalleDeCita
+      cita={cita}
+      ahora={ahora}
+      acciones={puedeCancelar ? <CancelarCita origen={{ token }} estadoPago={cita.estadoPago} /> : undefined}
+      contactoSoporte={identidadDelProveedor().correo}
+    />
+  );
 }
 
 /** Las citas de la sesión del navegador. Sin sesión no hay citas: se ve la misma lista vacía. */

@@ -17,7 +17,7 @@ import {
 
 type Cliente = SupabaseClient<Database>;
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Cuántas confirmaciones toma cada corrida. Lo normal es una por corrida: el trigger la pide al anotarla. */
 export const LOTE_DE_CONFIRMACIONES = 10;
@@ -32,7 +32,7 @@ export const PRESUPUESTO_DE_CORRIDA_MS = 20_000;
 /** Corridas en las que una confirmación puede fallar antes de abandonarla, para que no tape a las demás. */
 export const MAXIMO_DE_INTENTOS = 5;
 
-const instanteIso = (valor: string): string => new Date(valor).toISOString();
+export const instanteIso = (valor: string): string => new Date(valor).toISOString();
 
 /** Los datos del correo de una monitoría, con la llave secreta. `null` si la monitoría no tiene confirmación anotada. */
 async function leerDatos(cliente: Cliente, idMonitoria: string): Promise<DatosDeConfirmacionCita | null> {

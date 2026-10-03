@@ -99,6 +99,15 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
     cancelableHasta: "2020-01-13T03:00:00.000Z",
     enlace: "https://calibra.example/cita?token=abc123",
   },
+  cancelacion_cita: {
+    nombre: "Ana",
+    materia: "Cálculo Integral",
+    inicio: "2020-01-13T15:00:00.000Z",
+    reembolsos: [{ monto: 25_000, enlace: "https://calibra.example/reembolso?token=abc123" }],
+    conPagoEnRevision: false,
+    reembolsoAOtroContacto: false,
+    enlaceCita: "https://calibra.example/cita?token=abc123",
+  },
 };
 
 const REMITENTE = "Calibra <no-responder@calibra.test>";

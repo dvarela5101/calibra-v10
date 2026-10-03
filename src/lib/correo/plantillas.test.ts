@@ -45,15 +45,24 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
     cancelableHasta: "2020-01-13T03:00:00.000Z",
     enlace: "https://calibra.example/cita?token=abc123",
   },
+  cancelacion_cita: {
+    nombre: "Ana",
+    materia: "Cálculo Integral",
+    inicio: "2020-01-13T15:00:00.000Z",
+    reembolsos: [{ monto: 25_000, enlace: "https://calibra.example/reembolso?token=abc123" }],
+    conPagoEnRevision: false,
+    reembolsoAOtroContacto: false,
+    enlaceCita: "https://calibra.example/cita?token=abc123",
+  },
 };
 
 const render = <P extends Plantilla>(plantilla: P, cambios: Partial<DatosPorPlantilla[P]> = {}) =>
   renderizar(plantilla, { ...EJEMPLOS[plantilla], ...cambios });
 
 describe("las plantillas de correo", () => {
-  it("son las que salen por correo: diagnóstico, reseña, llave, dos rechazos, escalamiento, invitación de monitor, verificación del correo del Lead, dos avisos al monitor y la confirmación de la cita", () => {
+  it("son las que salen por correo: diagnóstico, reseña, llave, dos rechazos, escalamiento, invitación de monitor, verificación del correo del Lead, dos avisos al monitor y la confirmación y la cancelación de la cita", () => {
     expect([...PLANTILLAS].sort()).toEqual(Object.keys(EJEMPLOS).sort());
-    expect(PLANTILLAS).toHaveLength(11);
+    expect(PLANTILLAS).toHaveLength(12);
   });
 
   it.each(PLANTILLAS)("%s sale en español con HTML y texto plano", (plantilla) => {
@@ -312,6 +321,148 @@ describe("confirmación de la cita (HU-019, P-04, D-19 a D-23)", () => {
     ["valorTotal", { valorTotal: 25_000.5 }],
   ] as const)("%s inválido es un error de quien llama, no un correo con hueco", (_campo, cambios) => {
     expect(() => render("confirmacion_cita", cambios)).toThrow(RangeError);
+  });
+});
+
+describe("cancelación de la cita (HU-024, D-26 a D-28, P-07)", () => {
+  const plano = (cambios: Partial<DatosPorPlantilla["cancelacion_cita"]> = {}) =>
+    render("cancelacion_cita", cambios).texto.replace(/[  ]/g, " ");
+  const LLAVE = (n: number) => `https://calibra.example/reembolso?token=${String(n).repeat(64)}`;
+  const SIN_REEMBOLSOS = { reembolsos: [] };
+
+  it("dice qué cancelaste: asunto con la materia, título, saludo, la fecha y hora en Bogotá y que la fecha quedó libre", () => {
+    const { asunto, texto } = render("cancelacion_cita");
+    expect(asunto).toBe("Cancelaste tu monitoría de Cálculo Integral");
+    const llano = plano();
+    expect(texto).toContain("Tu monitoría quedó cancelada");
+    expect(llano).toContain("Hola, Ana.");
+    // 15:00 UTC son las 10:00 a. m. en Bogotá.
+    expect(llano).toContain("Cancelaste tu monitoría de Cálculo Integral del lunes, 13 de enero de 2020, 10:00 a. m. La fecha quedó libre.");
+  });
+
+  it("con un reembolso: devuelve el valor, pide la llave con el botón «Enviar mi llave» y el pie solo habla de la llave", () => {
+    const { html } = render("cancelacion_cita");
+    const llano = plano();
+    expect(llano).toContain(
+      "Vamos a devolverte $ 25.000. Para hacer la transferencia necesitamos tu llave, por ejemplo tu celular o tu correo registrado en el banco.",
+    );
+    expect(llano).toContain("Enviar mi llave: https://calibra.example/reembolso?token=abc123");
+    expect(html).toContain('href="https://calibra.example/reembolso?token=abc123"');
+    expect(llano).toContain("Solo te pedimos la llave. Calibra nunca te pide claves del banco ni datos de tu tarjeta.");
+    // El enlace de la cita no compite con el de la llave: el botón es uno solo.
+    expect(llano).not.toContain("Ver mi cita");
+    expect(llano).not.toContain("Puedes agendar otra monitoría");
+  });
+
+  it("con varios reembolsos: suma el total, el botón lleva el primero y cada otro pago tiene su línea con su enlace", () => {
+    const llano = plano({
+      reembolsos: [
+        { monto: 15_000, enlace: LLAVE(1) },
+        { monto: 6_000, enlace: LLAVE(2) },
+        { monto: 4_000, enlace: LLAVE(3) },
+      ],
+    });
+    expect(llano).toContain("Vamos a devolverte $ 25.000.");
+    expect(llano).toContain(`Enviar mi llave: ${LLAVE(1)}`);
+    expect(llano).toContain(`La llave del otro pago de $ 6.000: ${LLAVE(2)}`);
+    expect(llano).toContain(`La llave del otro pago de $ 4.000: ${LLAVE(3)}`);
+    expect(llano.match(/La llave del otro pago/g)).toHaveLength(2);
+  });
+
+  it("con el pago de otra persona (otro correo): avisa que se le escribe a quien pagó, sin pedirle nada a este destinatario", () => {
+    const llano = plano({ ...SIN_REEMBOLSOS, reembolsoAOtroContacto: true });
+    expect(llano).toContain("Le escribimos a quien pagó, a su correo, para pedirle la llave y devolverle el dinero.");
+    expect(llano).not.toContain("Vamos a devolverte");
+    expect(llano).not.toContain("Enviar mi llave");
+    expect(plano()).not.toContain("Le escribimos a quien pagó");
+  });
+
+  it("con un pago en revisión: el texto exacto de D-27, con o sin reembolsos", () => {
+    const texto = "Tu pago todavía está en revisión. Si se aprueba, te pedimos la llave para devolverte el dinero; si se rechaza, no hay reembolso.";
+    expect(plano({ ...SIN_REEMBOLSOS, conPagoEnRevision: true })).toContain(texto);
+    expect(plano({ conPagoEnRevision: true })).toContain(texto);
+    expect(plano()).not.toContain("todavía está en revisión");
+  });
+
+  it("sin reembolsos y con enlace de la cita: botón «Ver mi cita» y el pie de agendar otra", () => {
+    const { html } = render("cancelacion_cita", SIN_REEMBOLSOS);
+    const llano = plano(SIN_REEMBOLSOS);
+    expect(llano).toContain("Ver mi cita: https://calibra.example/cita?token=abc123");
+    expect(html).toContain('href="https://calibra.example/cita?token=abc123"');
+    expect(llano).toContain("Puedes agendar otra monitoría cuando quieras.");
+    expect(llano).not.toContain("Enviar mi llave");
+    expect(llano).not.toContain("Solo te pedimos la llave");
+  });
+
+  it("sin reembolsos ni enlace de la cita: sin botón ni enlaces", () => {
+    const { html, texto } = render("cancelacion_cita", { ...SIN_REEMBOLSOS, enlaceCita: null });
+    expect(html).not.toContain("<a ");
+    expect(texto).not.toContain("https://");
+    expect(texto).toContain("Puedes agendar otra monitoría cuando quieras.");
+  });
+
+  it("no lleva comisión ni el contacto del monitor ni del Lead: sus datos no los incluyen (P-37, P-32)", () => {
+    // `reembolsoAOtroContacto` es solo un aviso (booleano): no lleva el correo de nadie.
+    const campos = Object.keys(EJEMPLOS.cancelacion_cita).filter((campo) => campo !== "reembolsoAOtroContacto");
+    expect(campos.filter((campo) => /comisi|correo|telefono|contacto|neto|monitor/i.test(campo))).toEqual([]);
+    expect(typeof EJEMPLOS.cancelacion_cita.reembolsoAOtroContacto).toBe("boolean");
+    for (const cambios of [{}, SIN_REEMBOLSOS, { conPagoEnRevision: true, reembolsoAOtroContacto: true }]) {
+      const { asunto, html, texto } = render("cancelacion_cita", cambios);
+      for (const contenido of [asunto, html, texto]) expect(contenido).not.toMatch(/comisi|neto/i);
+    }
+  });
+
+  it("no lee el reloj: el mismo dato da el mismo cuerpo hoy y dentro de un año (la Idempotency-Key lo exige)", () => {
+    vi.useFakeTimers();
+    try {
+      for (const cambios of [{}, SIN_REEMBOLSOS, { conPagoEnRevision: true, reembolsoAOtroContacto: true }]) {
+        vi.setSystemTime(new Date("2020-01-01T00:00:00Z"));
+        const antes = render("cancelacion_cita", cambios);
+        vi.setSystemTime(new Date("2021-01-01T00:00:00Z"));
+        expect(render("cancelacion_cita", cambios)).toEqual(antes);
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("escapa en el HTML lo que viene de fuera: nombre y materia", () => {
+    const { html, texto } = render("cancelacion_cita", { nombre: '<img src=x onerror="alert(1)">', materia: "Cálculo <script>" });
+    expect(html).not.toContain("<img");
+    expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;img src=x onerror=&quot;alert(1)&quot;&gt;");
+    expect(html).toContain("Cálculo &lt;script&gt;");
+    expect(texto).toContain('Hola, <img src=x onerror="alert(1)">.');
+  });
+
+  it("un salto de línea en la materia no parte el asunto ni cuela una cabecera", () => {
+    const salto = String.fromCharCode(13, 10);
+    const { asunto } = render("cancelacion_cita", { materia: `Cálculo${salto}Bcc: alguien@otro.co` });
+    expect(asunto).not.toMatch(/[\r\n]/);
+    expect(asunto).toBe("Cancelaste tu monitoría de Cálculo Bcc: alguien@otro.co");
+  });
+
+  it("los enlaces pasan por enlaceSeguro: uno peligroso falla en vez de armar el correo, venga del botón o de otra línea", () => {
+    expect(() => render("cancelacion_cita", { reembolsos: [{ monto: 25_000, enlace: "javascript:alert(1)" }] })).toThrow(RangeError);
+    expect(() =>
+      render("cancelacion_cita", {
+        reembolsos: [
+          { monto: 25_000, enlace: LLAVE(1) },
+          { monto: 5_000, enlace: "data:text/html,x" },
+        ],
+      }),
+    ).toThrow(RangeError);
+    expect(() => render("cancelacion_cita", { ...SIN_REEMBOLSOS, enlaceCita: "javascript:alert(1)" })).toThrow(RangeError);
+  });
+
+  it.each<[string, Partial<DatosPorPlantilla["cancelacion_cita"]>]>([
+    ["nombre", { nombre: "  " }],
+    ["materia", { materia: " \n " }],
+    ["inicio", { inicio: "mañana" }],
+    ["monto", { reembolsos: [{ monto: -1, enlace: "https://calibra.example/reembolso?token=abc123" }] }],
+    ["monto", { reembolsos: [{ monto: 25_000.5, enlace: "https://calibra.example/reembolso?token=abc123" }] }],
+  ])("%s inválido es un error de quien llama, no un correo con hueco", (_campo, cambios) => {
+    expect(() => render("cancelacion_cita", cambios)).toThrow(RangeError);
   });
 });
 
