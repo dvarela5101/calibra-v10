@@ -30,7 +30,6 @@ vi.mock("@/lib/admin/pagos", () => ({
     return datos.pago;
   },
   revisarPago: vi.fn(),
-  avisarRechazoAlPagador: vi.fn(),
 }));
 vi.mock("@/lib/admin/casos-p24", () => ({ cerrarCasoP24: vi.fn() }));
 vi.mock("@/lib/comprobantes/almacenamiento", () => ({ enlaceDeComprobanteDePago: firmar }));
@@ -171,7 +170,7 @@ describe("Revisión de un pago: aprobar y rechazar (criterios 2, 3 y 7, supuesto
     expect(t).toContain("Aprobar pago");
     expect(html).toMatch(/<details[^>]*><summary[^>]*>Rechazar el pago<\/summary>/);
     const consecuencias =
-      "Se cancela la monitoría del 7 de enero de 2030 y esa fecha queda libre para otra persona. Un pago rechazado no se reembolsa. Le avisamos a Camila Rojas por correo, a camila@uniandes.edu.co.";
+      "Se cancela la monitoría del 7 de enero de 2030 y esa fecha queda libre para otra persona. Un pago rechazado no se reembolsa. Le avisaremos a Camila Rojas por correo, a camila@uniandes.edu.co. También le avisaremos al monitor.";
     expect(t).toContain(consecuencias);
     expect(t.indexOf(consecuencias)).toBeLessThan(t.indexOf("Sí, rechazar el pago"));
     expect(t).toContain("Observaciones (opcionales)");
@@ -208,11 +207,36 @@ describe("Revisión de un pago: aprobar y rechazar (criterios 2, 3 y 7, supuesto
     expect(html).toMatch(/<textarea[^>]*required/);
   });
 
-  it("con la cita ya cancelada por el estudiante, solo cambia el pago y no se le escribe al pagador", async () => {
+  it("HU-076, D-39 d: con la cita ya cancelada por el estudiante, solo cambia el pago y se le avisa al pagador que no hay reembolso", async () => {
     const t = texto(await pintar(pago({}, { estado: "cancelada", motivoCancelacion: "estudiante" })));
     expect(t).toContain("Estado Cancelada: la canceló el estudiante");
-    expect(t).toContain("La monitoría ya estaba cancelada: solo cambia el pago. Un pago rechazado no se reembolsa y al pagador no le escribimos.");
+    expect(t).toContain(
+      "La monitoría ya estaba cancelada: solo cambia el pago. Un pago rechazado no se reembolsa. Le avisaremos a Camila Rojas por correo, a camila@uniandes.edu.co, que no hay reembolso.",
+    );
+    expect(t).not.toContain("al monitor");
     expect(t).toContain("Aprobar pago");
+  });
+
+  it("HU-076: si el contacto no es un correo, el admin lee que tiene que avisarle él (sin prometer el correo)", async () => {
+    const cancela = texto(await pintar(pago({ contacto: "3001234567" })));
+    expect(cancela).toContain(
+      "Se cancela la monitoría del 7 de enero de 2030 y esa fecha queda libre para otra persona. Un pago rechazado no se reembolsa. El contacto de Camila Rojas no es un correo: tendrás que avisarle tú, al 3001234567. También le avisaremos al monitor.",
+    );
+    const yaCancelada = texto(await pintar(pago({ contacto: "3001234567" }, { estado: "cancelada", motivoCancelacion: "estudiante" })));
+    expect(yaCancelada).toContain(
+      "La monitoría ya estaba cancelada: solo cambia el pago. Un pago rechazado no se reembolsa. El contacto de Camila Rojas no es un correo: tendrás que avisarle tú, al 3001234567.",
+    );
+  });
+
+  it("HU-076: una monitoría pendiente de pago (defensivo) se cancela sin avisarle al monitor", async () => {
+    const t = texto(await pintar(pago({}, { estado: "pendiente_pago" })));
+    expect(t).toContain("Un pago rechazado no se reembolsa. Le avisaremos a Camila Rojas por correo, a camila@uniandes.edu.co.");
+    expect(t).not.toContain("También le avisaremos al monitor");
+  });
+
+  it("cancelada por otro motivo (monitor que no asistió), al pagador no se le escribe", async () => {
+    const t = texto(await pintar(pago({}, { estado: "cancelada", motivoCancelacion: "monitor_no_asistio" })));
+    expect(t).toContain("La monitoría ya estaba cancelada: solo cambia el pago. Un pago rechazado no se reembolsa y al pagador no le escribimos.");
   });
 });
 
@@ -324,14 +348,30 @@ describe("Revisión de un pago: después de revisar", () => {
     expect(t).not.toContain("Asignado a");
   });
 
-  it("tras rechazar, el mensaje de éxito es un role=status y dice si el correo salió", async () => {
-    const html = await pintar(RECHAZADO, { revisado: "rechazado", correo: "enviado" });
-    expect(html).toMatch(/<p role="status"[^>]*>Rechazaste el pago\. Ya no aparece en tu bandeja\. Le avisamos al pagador por correo\.<\/p>/);
+  it("HU-076: tras rechazar, el mensaje de éxito es un role=status y dice que el correo saldrá en unos minutos", async () => {
+    const html = await pintar(RECHAZADO, { revisado: "rechazado" });
+    expect(html).toMatch(
+      /<p role="status"[^>]*>Rechazaste el pago\. Ya no aparece en tu bandeja\. Le avisaremos al pagador por correo en unos minutos\.<\/p>/,
+    );
   });
 
-  it("si el correo no salió, se lo dice al admin como alerta", async () => {
-    const html = await pintar(RECHAZADO, { revisado: "rechazado", correo: "por_reintentar" });
-    expect(html).toMatch(/<p role="alert"[^>]*>El correo a camila@uniandes\.edu\.co no salió todavía\./);
+  it("HU-076: con la cita ya cancelada por el estudiante también sale el correo, y el mensaje es el mismo", async () => {
+    const yaCancelada = { ...RECHAZADO, monitoria: { ...RECHAZADO.monitoria, motivoCancelacion: "estudiante" as const } };
+    expect(texto(await pintar(yaCancelada, { revisado: "rechazado" }))).toContain(
+      "Rechazaste el pago. Ya no aparece en tu bandeja. Le avisaremos al pagador por correo en unos minutos.",
+    );
+  });
+
+  it("HU-076: si el contacto no es un correo, no promete el correo y se lo dice al admin como alerta", async () => {
+    const html = await pintar({ ...RECHAZADO, contacto: "3001234567" }, { revisado: "rechazado" });
+    expect(html).toMatch(/<p role="status"[^>]*>Rechazaste el pago\. Ya no aparece en tu bandeja\.<\/p>/);
+    expect(html).toMatch(/<p role="alert"[^>]*>El contacto del pagador no es un correo: avísale tú, al 3001234567\.<\/p>/);
+  });
+
+  it("HU-076: el parámetro ?correo= de antes ya no dice nada", async () => {
+    const t = texto(await pintar(RECHAZADO, { revisado: "rechazado", correo: "por_reintentar" }));
+    expect(t).not.toContain("no salió todavía");
+    expect(t).not.toContain("Correos que no salieron");
   });
 
   it("tras aprobar, el éxito; y un enlace viejo no anuncia una aprobación que no pasó", async () => {

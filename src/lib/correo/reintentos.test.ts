@@ -208,6 +208,8 @@ function reconstructoresCon(cambios: Partial<Reconstructores> = {}): Reconstruct
     verificacion_lead: null,
     confirmacion_cita: null,
     cancelacion_cita: null,
+    aviso_monitor_pago_rechazado: null,
+    pago_rechazado_sin_reembolso: null,
     ...cambios,
   };
 }

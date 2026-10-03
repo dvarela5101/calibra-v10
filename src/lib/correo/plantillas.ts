@@ -26,6 +26,8 @@ export const PLANTILLAS = [
   "aviso_monitor_cancelada",
   "confirmacion_cita",
   "cancelacion_cita",
+  "aviso_monitor_pago_rechazado",
+  "pago_rechazado_sin_reembolso",
 ] as const;
 
 export type Plantilla = (typeof PLANTILLAS)[number];
@@ -44,6 +46,8 @@ export const NOMBRE_DE_PLANTILLA: Record<Plantilla, string> = {
   aviso_monitor_cancelada: "Aviso al monitor: el estudiante canceló",
   confirmacion_cita: "Confirmación de la cita",
   cancelacion_cita: "Cancelación de la cita",
+  aviso_monitor_pago_rechazado: "Aviso al monitor: pago rechazado",
+  pago_rechazado_sin_reembolso: "Pago rechazado (cita ya cancelada)",
 };
 
 export function esPlantilla(valor: string): valor is Plantilla {
@@ -123,6 +127,16 @@ export type DatosPorPlantilla = {
     reembolsoAOtroContacto: boolean;
     enlaceCita: string | null;
   };
+  /**
+   * Una monitoría individual confirmada se canceló porque no se pudo verificar el pago (D-16, D-38, HU-076). Al monitor.
+   * Sin nombre del estudiante, sin su contacto (P-37) y sin montos. `inicio` es un instante ISO; `enlace`, su agenda.
+   */
+  aviso_monitor_pago_rechazado: { nombreMonitor: string; materia: string; inicio: string; enlace: string };
+  /**
+   * Pago rechazado cuando el estudiante ya había cancelado la cita (D-39 d, HU-076): no hay reembolso. Al pagador.
+   * `fechaSesion` es el día de la monitoría, `AAAA-MM-DD`.
+   */
+  pago_rechazado_sin_reembolso: { nombre: string; monto: number; fechaSesion: string; contactoSoporte?: string };
 };
 
 export type CorreoRenderizado = { asunto: string; html: string; texto: string };
@@ -406,6 +420,43 @@ function contenidoDe<P extends Plantilla>(plantilla: P, datos: DatosPorPlantilla
             d.reembolsos.length > 0
               ? "Solo te pedimos la llave. Calibra nunca te pide claves del banco ni datos de tu tarjeta."
               : "Puedes agendar otra monitoría cuando quieras.",
+        },
+      };
+    }
+    case "aviso_monitor_pago_rechazado": {
+      const d = datos as DatosPorPlantilla["aviso_monitor_pago_rechazado"];
+      const materia = linea(d.materia, "materia");
+      const cuando = formatearFechaHora(instante(d.inicio, "inicio"));
+      return {
+        asunto: `Se canceló tu monitoría de ${materia}`,
+        contenido: {
+          titulo: "Se canceló una de tus monitorías",
+          parrafos: [
+            `Hola, ${cerrar(linea(d.nombreMonitor, "nombreMonitor"))}`,
+            `Se canceló la monitoría de ${materia} del ${cerrar(cuando)}`,
+            "Fue porque no se pudo verificar el pago.",
+            "No tienes que hacer nada: ya no aparece entre tus próximas monitorías.",
+          ],
+          boton: { texto: "Ver mi agenda", enlace: d.enlace },
+        },
+      };
+    }
+    case "pago_rechazado_sin_reembolso": {
+      const d = datos as DatosPorPlantilla["pago_rechazado_sin_reembolso"];
+      const parrafos = [
+        `Hola, ${cerrar(linea(d.nombre, "nombre"))}`,
+        `No pudimos verificar tu comprobante de ${formatearPesos(d.monto)} para la monitoría del ${formatearDia(d.fechaSesion)}, que ya estaba cancelada.`,
+        "Como el pago no se aprobó, no hay reembolso.",
+      ];
+      // Un contacto vacío o en blanco es un contacto no informado: no se promete un canal que no existe.
+      const soporte = d.contactoSoporte?.trim();
+      if (soporte) parrafos.push(`Si crees que fue un error, escríbenos a ${linea(soporte, "contactoSoporte")}.`);
+      return {
+        asunto: "No pudimos verificar tu pago y no hay reembolso",
+        contenido: {
+          titulo: "No pudimos verificar tu pago",
+          parrafos,
+          pie: "Puedes agendar otra monitoría cuando quieras.",
         },
       };
     }

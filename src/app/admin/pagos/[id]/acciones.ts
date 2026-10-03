@@ -2,14 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { avisarRechazoAlPagador, cargarAsignacion, revisarPago, type Asignacion, type Revision } from "@/lib/admin/pagos";
+import { cargarAsignacion, revisarPago, type Asignacion, type Revision } from "@/lib/admin/pagos";
 import {
   leerRevision,
   MENSAJE_DE_FALLO,
   MENSAJES_DE_REVISION,
   observacionesValidas,
   puedeRevisar,
-  type AvisoAlPagador,
 } from "@/lib/admin/pagos-reglas";
 import { esUuid } from "@/lib/agendar/reglas";
 import { exigirRol } from "@/lib/auth/sesion";
@@ -22,7 +21,7 @@ import { crearClienteServidor } from "@/lib/supabase/servidor";
  * quién puede revisar (nota de D-39): a quien no puede le responde lo mismo que la base (`no_asignado`), sin decirle
  * nada del texto. Tras revisar vuelve a la página del pago, que dice qué pasó (`?revisado=`); lo que cambió mientras
  * el admin miraba (otro lo revisó, lo reasignaron) también vuelve a pintarla (`?error=`). `valores` devuelve lo
- * escrito para no vaciar las observaciones tras un error.
+ * escrito para no vaciar las observaciones tras un error. Desde HU-076 la acción no envía correos: los avisa la base.
  */
 export type EstadoRevision = { error: string | null; valores: { observaciones: string } };
 
@@ -71,12 +70,11 @@ export async function revisar(_anterior: EstadoRevision, datos: FormData): Promi
 
   const { resultado } = revision;
   if (resultado === "aprobado" || resultado === "rechazado") {
-    // Supuesto 4: al pagador solo se le escribe cuando el rechazo canceló la cita (criterio 3).
-    let correo: AvisoAlPagador | null = null;
-    if (resultado === "rechazado" && revision.canceloMonitoria) correo = await avisarRechazoAlPagador(idPago);
+    // HU-076: los correos del rechazo (al pagador y al monitor) los anota la base en la misma transacción y salen por
+    // los procesos programados; la acción ya no manda nada.
     revalidatePath("/admin");
     revalidatePath(ruta);
-    redirect(`${ruta}?${new URLSearchParams({ revisado: resultado, ...(correo ? { correo } : {}) })}`);
+    redirect(`${ruta}?${new URLSearchParams({ revisado: resultado })}`);
   }
   if (resultado === "ya_revisado" || resultado === "no_asignado" || resultado === "no_individual") {
     revalidatePath("/admin");

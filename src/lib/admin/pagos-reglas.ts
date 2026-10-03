@@ -1,8 +1,6 @@
 import { esUuid } from "@/lib/agendar/reglas";
 import { esCorreo } from "@/lib/correo/contacto";
 import type { Reconstruccion } from "@/lib/correo/plantillas";
-// Solo el tipo: se borra al compilar, así que este módulo puro no arrastra el servidor de correo a ningún lado.
-import type { ResultadoEnvio } from "@/lib/correo/servidor";
 import { formatearDia, formatearFechaHora } from "@/lib/fechas";
 import { dentroDePlazo, plazoAlcanzado } from "@/lib/plazos/motor";
 import type { Database } from "@/lib/supabase/tipos";
@@ -11,7 +9,7 @@ import type { EstadoDelCaso } from "./casos-p24-reglas";
 /**
  * Revisar un pago (HU-020): el admin asignado lo aprueba o lo rechaza contra su comprobante y, pasada su hora,
  * cualquier admin activo (HU-077, D-38). Aquí va lo puro: quién puede revisar, qué responde la base, qué se le dice
- * al admin con cada resultado, qué pasa con la monitoría si lo rechaza y los datos del correo al pagador. Quién puede
+ * al admin con cada resultado, qué pasa con la monitoría si lo rechaza, a quién se le avisa y los datos del correo al pagador. Quién puede
  * revisar, el borde de P-24 y los cambios los decide `public.revisar_pago` con su propia hora; lo de aquí solo lo
  * anticipa en la pantalla.
  */
@@ -169,28 +167,65 @@ const SIN_REEMBOLSO = "Un pago rechazado no se reembolsa";
 const QUEDA_POR_COBRAR =
   "el caso queda en «Pagos por cobrar o asumir»: el pago cuenta en el desembolso del monitor solo cuando alguien lo cierre como cobrado o asumido";
 
+/** La monitoría como está ahora, lo único que decide a quién avisa el rechazo. */
+export type MonitoriaParaElAviso = { estado: EstadoMonitoria; motivoCancelacion: MotivoCancelacion | null };
+
+/** Qué correo le toca al pagador: el de HU-020 (la cita se canceló por el rechazo) o el de «no hay reembolso» (HU-076). */
+export type CorreoAlPagador = "cita_cancelada" | "cita_ya_cancelada";
+
+/**
+ * HU-076: a quién le avisa el rechazo. Es la misma regla de `privado.anotar_aviso_rechazo_pago` y de
+ * `privado.anotar_aviso_monitor`, solo para decirlo en pantalla; la base decide con la monitoría como queda al rechazar:
+ * - `cancela_la_cita`: el rechazo la cancela. El pagador recibe el aviso de HU-020 y, si estaba confirmada, el monitor
+ *   también (una por pagar, que con un pago no debería existir, no se le avisa al monitor: D-16).
+ * - `ya_cancelada` por `pago_rechazado` (otro pago de la misma cita ya la canceló): el pagador recibe el mismo aviso
+ *   de HU-020, que sigue siendo cierto; el monitor ya lo supo.
+ * - `ya_cancelada` por `estudiante`: el pagador recibe el aviso corto de que no hay reembolso (D-39 d); el monitor ya lo
+ *   supo por la cancelación del estudiante.
+ * - Todo lo demás (P-24, otros motivos de cancelación): nadie.
+ */
+export function quienSeEntera(caso: CasoDeRechazo, m: MonitoriaParaElAviso): { pagador: CorreoAlPagador | null; monitor: boolean } {
+  switch (caso) {
+    case "cancela_la_cita":
+      return { pagador: "cita_cancelada", monitor: m.estado === "confirmada" };
+    case "ya_cancelada":
+      if (m.motivoCancelacion === "pago_rechazado") return { pagador: "cita_cancelada", monitor: false };
+      if (m.motivoCancelacion === "estudiante") return { pagador: "cita_ya_cancelada", monitor: false };
+      return { pagador: null, monitor: false };
+    case "ya_empezo":
+    case "ya_realizada":
+      return { pagador: null, monitor: false };
+  }
+}
+
+/** Lo que se le dice al admin cuando el correo al pagador no puede salir: el contacto no es un correo (P-22). */
+const avisarleTu = (nombre: string, contacto: string) => `El contacto de ${nombre} no es un correo: tendrás que avisarle tú, al ${contacto}.`;
+
 /**
  * Lo que se lee antes de "Sí, rechazar el pago" (supuesto 7): qué pasa con la cita y su fecha, que no hay reembolso
- * (RN-43) y si se le escribe al pagador (supuesto 4). Solo se le escribe cuando el rechazo cancela la cita, y solo
- * si su contacto es un correo (P-22).
+ * (RN-43) y a quién se le avisa (HU-076, `quienSeEntera`). A quien no tiene un correo como contacto se le avisa el
+ * admin (P-22).
  */
 export function consecuenciasDelRechazo(
   caso: CasoDeRechazo,
-  pago: { fechaSesion: string; nombrePagador: string; contacto: string },
+  pago: { fechaSesion: string; nombrePagador: string; contacto: string; monitoria: MonitoriaParaElAviso },
 ): string {
+  const { pagador, monitor } = quienSeEntera(caso, pago.monitoria);
+  const aviso = (cola = "") =>
+    esCorreo(pago.contacto)
+      ? `Le avisaremos a ${pago.nombrePagador} por correo, a ${pago.contacto}${cola}.`
+      : avisarleTu(pago.nombrePagador, pago.contacto);
   switch (caso) {
-    case "cancela_la_cita": {
-      const aviso = esCorreo(pago.contacto)
-        ? `Le avisamos a ${pago.nombrePagador} por correo, a ${pago.contacto}.`
-        : `El contacto de ${pago.nombrePagador} no es un correo: tendrás que avisarle tú, al ${pago.contacto}.`;
-      return `Se cancela la monitoría del ${formatearDia(pago.fechaSesion)} y esa fecha queda libre para otra persona. ${SIN_REEMBOLSO}. ${aviso}`;
-    }
+    case "cancela_la_cita":
+      return `Se cancela la monitoría del ${formatearDia(pago.fechaSesion)} y esa fecha queda libre para otra persona. ${SIN_REEMBOLSO}. ${aviso()}${monitor ? " También le avisaremos al monitor." : ""}`;
     case "ya_empezo":
       return `La sesión ya empezó, así que la monitoría no se cancela y ${QUEDA_POR_COBRAR}. ${SIN_REEMBOLSO} y al pagador no le escribimos.`;
     case "ya_realizada":
       return `La monitoría ya se realizó, así que no se cancela y ${QUEDA_POR_COBRAR}. ${SIN_REEMBOLSO} y al pagador no le escribimos.`;
     case "ya_cancelada":
-      return `La monitoría ya estaba cancelada: solo cambia el pago. ${SIN_REEMBOLSO} y al pagador no le escribimos.`;
+      // Cancelada por otro motivo (monitor que no asistió, diferencia no cubierta): el texto de antes de HU-076.
+      if (!pagador) return `La monitoría ya estaba cancelada: solo cambia el pago. ${SIN_REEMBOLSO} y al pagador no le escribimos.`;
+      return `La monitoría ya estaba cancelada: solo cambia el pago. ${SIN_REEMBOLSO}. ${aviso(pagador === "cita_ya_cancelada" ? ", que no hay reembolso" : "")}`;
   }
 }
 
@@ -231,44 +266,25 @@ export function correoDeRechazo(pago: PagoParaElCorreo, contactoSoporte: string 
   };
 }
 
-/**
- * Cómo quedó el aviso al pagador, para decírselo al admin. `por_reintentar`: quedó `fallido` o en curso en
- * `correo_envio` y lo reintenta HU-065. `fallo`: no quedó registro, así que nadie lo va a reintentar.
- */
-export type AvisoAlPagador = "enviado" | "por_reintentar" | "no_es_correo" | "fallo";
-
-const AVISOS: readonly AvisoAlPagador[] = ["enviado", "por_reintentar", "no_es_correo", "fallo"];
-
-export function esAvisoAlPagador(valor: unknown): valor is AvisoAlPagador {
-  return AVISOS.includes(valor as AvisoAlPagador);
-}
-
-export function avisoDelEnvio(envio: ResultadoEnvio): AvisoAlPagador {
-  if (envio.ok) return "enviado";
-  if (envio.motivo === "contacto_no_es_correo") return "no_es_correo";
-  if (envio.motivo === "fallo_del_registro") return "fallo";
-  return "por_reintentar";
-}
-
 export type AvisoDeLaPagina = { exito: boolean; texto: string };
 
 const ERRORES_DE_LA_PAGINA = ["ya_revisado", "no_asignado", "no_individual"] as const;
 
 /**
- * Lo que se dice arriba de la revisión después de una acción: la acción vuelve a la página con `?revisado=`,
- * `?correo=` o `?error=`. El éxito solo se dice si el pago de verdad quedó así: un enlace viejo o escrito a mano no
- * anuncia una revisión que no pasó. `caso` es el de `estadoDelCaso` (HU-078): un rechazo en P-24 no cancela la
- * monitoría (`revisar_pago` responde lo mismo que cuando el estudiante ya la había cancelado), así que se mira el caso
- * como quedó y no el resultado.
+ * Lo que se dice arriba de la revisión después de una acción: la acción vuelve a la página con `?revisado=` o
+ * `?error=`. El éxito solo se dice si el pago de verdad quedó así: un enlace viejo o escrito a mano no anuncia una
+ * revisión que no pasó. `caso` es el de `estadoDelCaso` (HU-078): un rechazo en P-24 no cancela la monitoría
+ * (`revisar_pago` responde lo mismo que cuando el estudiante ya la había cancelado), así que se mira el caso como
+ * quedó y no el resultado. HU-076: el correo al pagador ya no sale en la acción sino por la bandeja de salida, así que
+ * la página dice que saldrá en unos minutos, según `quienSeEntera` con la monitoría como quedó.
  */
 export function avisosDeLaPagina(
   consulta: Record<string, string | string[] | undefined>,
-  pago: { estado: EstadoDePago; contacto: string; caso: EstadoDelCaso | null },
+  pago: { estado: EstadoDePago; contacto: string; caso: EstadoDelCaso | null; monitoria: MonitoriaParaElAviso },
 ): AvisoDeLaPagina[] {
   const valor = (clave: string) => (typeof consulta[clave] === "string" ? (consulta[clave] as string) : null);
   const avisos: AvisoDeLaPagina[] = [];
   const revisado = valor("revisado");
-  const correo = valor("correo");
 
   if (revisado === "aprobado" && pago.estado === "aprobado") {
     avisos.push({ exito: true, texto: "Aprobaste el pago. Ya no aparece en tu bandeja." });
@@ -279,17 +295,13 @@ export function avisosDeLaPagina(
       texto: "Rechazaste el pago. El caso quedó en «Pagos por cobrar o asumir» de la bandeja hasta que alguien lo cierre como cobrado o asumido.",
     });
   } else if (revisado === "rechazado" && pago.estado === "rechazado") {
-    const enviado = correo === "enviado" ? " Le avisamos al pagador por correo." : "";
-    avisos.push({ exito: true, texto: `Rechazaste el pago. Ya no aparece en tu bandeja.${enviado}` });
-    if (correo === "por_reintentar") {
-      avisos.push({
-        exito: false,
-        texto: `El correo a ${pago.contacto} no salió todavía. Calibra lo reintenta solo; si no sale, lo verás en tu bandeja en "Correos que no salieron".`,
-      });
-    } else if (correo === "no_es_correo") {
+    // Con el pago ya rechazado, la monitoría está como quedó: se mira como `ya_cancelada` (si el rechazo la canceló,
+    // o si ya lo estaba) y no como la que iba a cancelarse.
+    const lePertenece = quienSeEntera("ya_cancelada", pago.monitoria).pagador !== null;
+    const conCorreo = lePertenece && esCorreo(pago.contacto);
+    avisos.push({ exito: true, texto: `Rechazaste el pago. Ya no aparece en tu bandeja.${conCorreo ? " Le avisaremos al pagador por correo en unos minutos." : ""}` });
+    if (lePertenece && !conCorreo) {
       avisos.push({ exito: false, texto: `El contacto del pagador no es un correo: avísale tú, al ${pago.contacto}.` });
-    } else if (correo === "fallo") {
-      avisos.push({ exito: false, texto: `No pudimos avisarle al pagador. Escríbele tú a ${pago.contacto}.` });
     }
   }
 
