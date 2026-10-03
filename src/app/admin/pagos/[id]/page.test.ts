@@ -32,6 +32,7 @@ vi.mock("@/lib/admin/pagos", () => ({
   revisarPago: vi.fn(),
   avisarRechazoAlPagador: vi.fn(),
 }));
+vi.mock("@/lib/admin/casos-p24", () => ({ cerrarCasoP24: vi.fn() }));
 vi.mock("@/lib/comprobantes/almacenamiento", () => ({ enlaceDeComprobanteDePago: firmar }));
 vi.mock("next/navigation", () => ({
   notFound: () => {
@@ -62,6 +63,7 @@ function pago(cambios: Partial<Omit<PagoParaRevisar, "monitoria">> = {}, monitor
     idAdminRevisor: null,
     nombreAdminRevisor: null,
     observaciones: null,
+    cierre: null,
     monitoria: {
       estado: "confirmada",
       motivoCancelacion: null,
@@ -147,7 +149,13 @@ describe("Revisión de un pago (HU-020): lo que ve el admin (criterio 1)", () =>
   });
 
   it("escapa lo que viene de la base", async () => {
-    const html = await pintar(pago({ nombrePagador: '<img src=x onerror="alert(1)">', estado: "rechazado", observaciones: "<script>alert(2)</script>" }));
+    // Con la monitoría cancelada no es un caso P-24 (HU-078): sin formulario, React no agrega su <script> de reenvío.
+    const html = await pintar(
+      pago(
+        { nombrePagador: '<img src=x onerror="alert(1)">', estado: "rechazado", observaciones: "<script>alert(2)</script>" },
+        { estado: "cancelada", motivoCancelacion: "pago_rechazado" },
+      ),
+    );
     // El único <img> es el logo de la pantalla.
     expect(html).not.toContain("<img src=x");
     expect(html).toContain("&lt;img src=x");
@@ -178,7 +186,11 @@ describe("Revisión de un pago: aprobar y rechazar (criterios 2, 3 y 7, supuesto
   it("P-24: una confirmada en su inicio exacto ya empezó (P-40): no se cancela y las observaciones son obligatorias", async () => {
     const html = await pintar(pago({}, { inicio: AHORA }));
     const t = texto(html);
-    expect(t).toContain("La sesión ya empezó, así que la monitoría no se cancela y el pago queda fuera del desembolso del monitor.");
+    // HU-078 (D-39): el caso queda por cobrar o asumir y cuenta en el desembolso cuando alguien lo cierra.
+    expect(t).toContain(
+      "La sesión ya empezó, así que la monitoría no se cancela y el caso queda en «Pagos por cobrar o asumir»: el pago cuenta en el desembolso del monitor solo cuando alguien lo cierre como cobrado o asumido.",
+    );
+    expect(t).not.toContain("queda fuera del desembolso");
     expect(t).not.toContain("Se cancela la monitoría");
     expect(t).not.toContain("Observaciones (opcionales)");
     expect(t).toContain("Obligatorias: escribe qué se hará con ese cobro, si cobrarlo por fuera o asumirlo.");
@@ -335,6 +347,137 @@ describe("Revisión de un pago: después de revisar", () => {
     const html = await pintar(RECHAZADO, { error: "ya_revisado" });
     expect(html).toMatch(/<p role="alert"[^>]*>Este pago ya se revisó, y una revisión no se puede cambiar\.<\/p>/);
     expect(texto(html)).toContain(MENSAJES_DE_REVISION.ya_revisado);
+  });
+});
+
+describe("Pagos por cobrar o asumir (HU-078)", () => {
+  const OBSERVACIONES = "Se cobra por fuera.\nLlamar el lunes.";
+  /** Un caso P-24 abierto: rechazado y la monitoría ya realizada, sin cierre. */
+  const ABIERTO = pago(
+    { estado: "rechazado", fechaRevision: new Date("2030-01-07T14:10:00.000Z"), idAdminRevisor: YO, nombreAdminRevisor: "Admin Uno", observaciones: OBSERVACIONES },
+    { estado: "realizada" },
+  );
+  const CERRADO = {
+    ...ABIERTO,
+    cierre: { como: "cobrado" as const, nota: "Pagó por Nequi.", idAdmin: OTRO, nombreAdmin: "Admin Dos", fecha: new Date("2030-01-08T15:30:00.000Z") },
+  };
+  const CONSECUENCIAS =
+    "Cerrar el caso no se puede deshacer. Sale de «Pagos por cobrar o asumir», el pago sigue rechazado y su monto cuenta en el desembolso del monitor.";
+
+  it("criterio 2: un caso abierto se explica, con las observaciones del rechazo, y se cierra dentro de una confirmación que dice que no se deshace", async () => {
+    const html = await pintar(ABIERTO);
+    const t = texto(html);
+    expect(t).toContain("Observaciones Se cobra por fuera. Llamar el lunes.");
+    expect(t).toContain("Por cobrar o asumir");
+    expect(t).toContain(
+      "Este pago se rechazó cuando la sesión ya había empezado, así que la monitoría no se canceló. Lo que se anotó al rechazarlo está en Observaciones.",
+    );
+    // Criterio 4: el admin sabe que el desembolso espera.
+    expect(t).toContain("Mientras siga abierto, el desembolso de esta monitoría no se puede ejecutar.");
+    expect(html).toMatch(/<details[^>]*><summary[^>]*>Cerrar el caso<\/summary>/);
+    expect(t).toContain(CONSECUENCIAS);
+    expect(t.indexOf(CONSECUENCIAS)).toBeLessThan(t.indexOf("Sí, cerrar el caso"));
+    expect(t).toContain("¿Cómo se resolvió?");
+    expect(t).toContain("Cobrado: el pagador pagó por fuera");
+    expect(t).toContain("Asumido: Calibra no lo cobra");
+    expect(t).toContain("Nota (opcional)");
+    // Ninguna opción viene marcada: el admin elige.
+    expect(html).not.toMatch(/<input[^>]*type="radio"[^>]*checked/);
+    // Quién cierra lo pone la sesión, no el formulario; nunca se habla de comisión ni de bruto.
+    expect(html).not.toContain(YO);
+    expect(html.toLowerCase()).not.toMatch(/comisi|bruto/);
+  });
+
+  it("el formulario entero (las opciones, la nota y el botón) está dentro de la confirmación, que empieza cerrada", async () => {
+    const html = await pintar(ABIERTO);
+    const inicio = html.indexOf("<details");
+    const fin = html.indexOf("</details>");
+    expect(inicio).toBeGreaterThan(-1);
+    // La única confirmación de la página es la del caso: la revisión ya pasó.
+    expect(html.indexOf("<details", inicio + 1)).toBe(-1);
+    expect(html.slice(inicio, html.indexOf(">", inicio) + 1)).not.toContain("open");
+    const dentro = html.slice(inicio, fin);
+    const fuera = html.slice(0, inicio) + html.slice(fin);
+    for (const pieza of ["<form", `name="id_pago" value="${ID}"`, 'value="cobrado"', 'value="asumido"', 'id="nota"', 'maxLength="500"', 'type="submit"', "no se puede deshacer"]) {
+      expect(dentro, pieza).toContain(pieza);
+      expect(fuera, pieza).not.toContain(pieza);
+    }
+    expect(dentro.match(/<input type="radio"[^>]*name="cierre"/g)).toHaveLength(2);
+    expect(dentro.indexOf("no se puede deshacer")).toBeLessThan(dentro.indexOf('type="radio"'));
+  });
+
+  it("supuesto 1: una confirmada que ya empezó también es un caso", async () => {
+    const html = await pintar({ ...ABIERTO, monitoria: { ...ABIERTO.monitoria, estado: "confirmada", inicio: new Date(AHORA.getTime() - 60_000) } });
+    expect(texto(html)).toContain("Cerrar el caso");
+  });
+
+  it("supuesto 1: un pago rechazado de una monitoría cancelada no es un caso, ni un pago aprobado o en revisión", async () => {
+    for (const p of [
+      pago({ estado: "rechazado", fechaRevision: new Date("2030-01-07T14:10:00.000Z") }, { estado: "cancelada", motivoCancelacion: "pago_rechazado" }),
+      pago({ estado: "rechazado", fechaRevision: new Date("2030-01-07T14:10:00.000Z") }, { estado: "cancelada", motivoCancelacion: "estudiante" }),
+      pago({ estado: "aprobado", fechaRevision: new Date("2030-01-07T14:10:00.000Z") }, { estado: "realizada" }),
+      pago({}, { estado: "realizada" }),
+    ]) {
+      const t = texto(await pintar(p));
+      expect(t).not.toContain("Por cobrar o asumir");
+      expect(t).not.toContain("Cerrar el caso");
+    }
+  });
+
+  it("criterio 2: un caso cerrado dice cómo, quién, cuándo y la nota, sin formulario", async () => {
+    const html = await pintar(CERRADO);
+    const t = texto(html);
+    expect(t).toContain("Caso Cerrado. Cobrado: el pagador pagó por fuera");
+    expect(t).toContain("Cerrado por Admin Dos");
+    expect(t).toContain("Cerrado martes, 8 de enero de 2030, 10:30 a. m.");
+    expect(html).toContain('<time dateTime="2030-01-08T15:30:00.000Z">');
+    expect(t).toContain("Nota Pagó por Nequi.");
+    expect(html).not.toContain("<form");
+    expect(t).not.toContain("Cerrar el caso");
+    expect(t).not.toContain("Mientras siga abierto");
+  });
+
+  it("P-28: si la monitoría se canceló después del cierre, el cierre se sigue mostrando, sin formulario", async () => {
+    const html = await pintar({ ...CERRADO, monitoria: { ...CERRADO.monitoria, estado: "cancelada", motivoCancelacion: "monitor_no_asistio" } });
+    expect(texto(html)).toContain("Caso Cerrado. Cobrado: el pagador pagó por fuera");
+    expect(html).not.toContain("<form");
+  });
+
+  it("un caso asumido sin nota no inventa una", async () => {
+    const t = texto(await pintar({ ...CERRADO, cierre: { ...CERRADO.cierre, como: "asumido", nota: null } }));
+    expect(t).toContain("Caso Cerrado. Asumido: Calibra no lo cobra");
+    expect(t).not.toContain("Nota");
+  });
+
+  it("criterio 5: tras un rechazo en P-24 el éxito dice que el caso quedó en Pagos por cobrar o asumir", async () => {
+    const html = await pintar(ABIERTO, { revisado: "rechazado" });
+    expect(html).toMatch(
+      /<p role="status"[^>]*>Rechazaste el pago\. El caso quedó en «Pagos por cobrar o asumir» de la bandeja hasta que alguien lo cierre como cobrado o asumido\.<\/p>/,
+    );
+    expect(texto(html)).not.toContain("Ya no aparece en tu bandeja");
+  });
+
+  it("tras cerrarlo, el éxito es un role=status; un enlace viejo o el cierre de otro admin no lo anuncian", async () => {
+    const mio = { ...CERRADO, cierre: { ...CERRADO.cierre, idAdmin: YO, nombreAdmin: "Admin Uno" } };
+    expect(await pintar(mio, { caso: "cerrado" })).toMatch(
+      /<p role="status"[^>]*>Cerraste el caso como cobrado\. Ya no aparece en «Pagos por cobrar o asumir»\.<\/p>/,
+    );
+    expect(await pintar(CERRADO, { caso: "cerrado" })).not.toContain("Cerraste");
+    expect(await pintar(ABIERTO, { caso: "cerrado" })).not.toContain("Cerraste");
+  });
+
+  it("si otro admin lo cerró mientras tanto, lo dice como alerta y muestra cómo quedó", async () => {
+    const html = await pintar(CERRADO, { caso: "ya_cerrado" });
+    expect(html).toMatch(/<p role="alert"[^>]*>Este caso ya estaba cerrado, y un cierre no se puede cambiar\.<\/p>/);
+    expect(texto(html)).toContain("Cerrado por Admin Dos");
+  });
+
+  it("escapa la nota y el nombre de quien lo cerró", async () => {
+    const html = await pintar({ ...CERRADO, cierre: { ...CERRADO.cierre, nota: "<script>alert(1)</script>", nombreAdmin: "<b>Admin</b>" } });
+    // Cerrado no tiene formulario: el único <script> sería el de la nota.
+    expect(html).not.toContain("<script");
+    expect(html).not.toContain("<b>Admin");
+    expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
   });
 });
 

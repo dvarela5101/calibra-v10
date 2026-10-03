@@ -6,6 +6,7 @@ import type { ResultadoEnvio } from "@/lib/correo/servidor";
 import { formatearDia, formatearFechaHora } from "@/lib/fechas";
 import { dentroDePlazo, plazoAlcanzado } from "@/lib/plazos/motor";
 import type { Database } from "@/lib/supabase/tipos";
+import type { EstadoDelCaso } from "./casos-p24-reglas";
 
 /**
  * Revisar un pago (HU-020): el admin asignado lo aprueba o lo rechaza contra su comprobante y, pasada su hora,
@@ -164,6 +165,10 @@ export function pideObservaciones(caso: CasoDeRechazo): boolean {
 
 const SIN_REEMBOLSO = "Un pago rechazado no se reembolsa";
 
+/** HU-078 (D-39): en P-24 el rechazo deja un caso abierto, que cuenta en el desembolso cuando alguien lo cierra. */
+const QUEDA_POR_COBRAR =
+  "el caso queda en «Pagos por cobrar o asumir»: el pago cuenta en el desembolso del monitor solo cuando alguien lo cierre como cobrado o asumido";
+
 /**
  * Lo que se lee antes de "Sí, rechazar el pago" (supuesto 7): qué pasa con la cita y su fecha, que no hay reembolso
  * (RN-43) y si se le escribe al pagador (supuesto 4). Solo se le escribe cuando el rechazo cancela la cita, y solo
@@ -181,9 +186,9 @@ export function consecuenciasDelRechazo(
       return `Se cancela la monitoría del ${formatearDia(pago.fechaSesion)} y esa fecha queda libre para otra persona. ${SIN_REEMBOLSO}. ${aviso}`;
     }
     case "ya_empezo":
-      return `La sesión ya empezó, así que la monitoría no se cancela y el pago queda fuera del desembolso del monitor. ${SIN_REEMBOLSO} y al pagador no le escribimos.`;
+      return `La sesión ya empezó, así que la monitoría no se cancela y ${QUEDA_POR_COBRAR}. ${SIN_REEMBOLSO} y al pagador no le escribimos.`;
     case "ya_realizada":
-      return `La monitoría ya se realizó, así que no se cancela y el pago queda fuera del desembolso del monitor. ${SIN_REEMBOLSO} y al pagador no le escribimos.`;
+      return `La monitoría ya se realizó, así que no se cancela y ${QUEDA_POR_COBRAR}. ${SIN_REEMBOLSO} y al pagador no le escribimos.`;
     case "ya_cancelada":
       return `La monitoría ya estaba cancelada: solo cambia el pago. ${SIN_REEMBOLSO} y al pagador no le escribimos.`;
   }
@@ -252,11 +257,13 @@ const ERRORES_DE_LA_PAGINA = ["ya_revisado", "no_asignado", "no_individual"] as 
 /**
  * Lo que se dice arriba de la revisión después de una acción: la acción vuelve a la página con `?revisado=`,
  * `?correo=` o `?error=`. El éxito solo se dice si el pago de verdad quedó así: un enlace viejo o escrito a mano no
- * anuncia una revisión que no pasó.
+ * anuncia una revisión que no pasó. `caso` es el de `estadoDelCaso` (HU-078): un rechazo en P-24 no cancela la
+ * monitoría (`revisar_pago` responde lo mismo que cuando el estudiante ya la había cancelado), así que se mira el caso
+ * como quedó y no el resultado.
  */
 export function avisosDeLaPagina(
   consulta: Record<string, string | string[] | undefined>,
-  pago: { estado: EstadoDePago; contacto: string },
+  pago: { estado: EstadoDePago; contacto: string; caso: EstadoDelCaso | null },
 ): AvisoDeLaPagina[] {
   const valor = (clave: string) => (typeof consulta[clave] === "string" ? (consulta[clave] as string) : null);
   const avisos: AvisoDeLaPagina[] = [];
@@ -265,6 +272,12 @@ export function avisosDeLaPagina(
 
   if (revisado === "aprobado" && pago.estado === "aprobado") {
     avisos.push({ exito: true, texto: "Aprobaste el pago. Ya no aparece en tu bandeja." });
+  } else if (revisado === "rechazado" && pago.estado === "rechazado" && pago.caso === "abierto") {
+    // HU-078, criterio 5: el pago sigue en la bandeja, en otra sección, hasta que alguien cierre el caso.
+    avisos.push({
+      exito: true,
+      texto: "Rechazaste el pago. El caso quedó en «Pagos por cobrar o asumir» de la bandeja hasta que alguien lo cierre como cobrado o asumido.",
+    });
   } else if (revisado === "rechazado" && pago.estado === "rechazado") {
     const enviado = correo === "enviado" ? " Le avisamos al pagador por correo." : "";
     avisos.push({ exito: true, texto: `Rechazaste el pago. Ya no aparece en tu bandeja.${enviado}` });

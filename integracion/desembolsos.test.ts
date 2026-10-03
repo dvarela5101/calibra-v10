@@ -362,8 +362,12 @@ describe("criterio 2 y D-39: el admin ve por qué no se puede ejecutar, y la bas
     ["anulado", "anulado", () => realizadaConDesembolso([{ estado: "aprobado" }], "anulado")],
     // D-39: si se ejecutara, P-29 dejaría ese pago fuera del desembolso para siempre.
     ["con su pago todavía en revisión", "pagos_en_revision", () => realizadaConDesembolso([{ estado: "en_revision" }])],
-    // Supuesto 2: el único pago se rechazó (P-24) y no hay nada que transferir.
-    ["sin pagos aprobados", "sin_pagos_aprobados", () => realizadaConDesembolso([{ estado: "rechazado" }])],
+    // HU-078 (D-39): el pago rechazado de una monitoría realizada es un caso P-24 que, cerrado, cuenta en el desembolso;
+    // mientras siga abierto no se ejecuta, aunque haya otro pago aprobado.
+    ["con un pago aprobado y un caso P-24 abierto", "caso_abierto", () => realizadaConDesembolso([{ estado: "aprobado" }, { estado: "rechazado" }])],
+    ["con su único pago rechazado y el caso P-24 abierto", "caso_abierto", () => realizadaConDesembolso([{ estado: "rechazado" }])],
+    // Supuesto 2 (y supuesto 5 de HU-078): ni pagos aprobados ni casos cerrados, así que no hay nada que transferir.
+    ["sin ningún pago", "sin_pagos_aprobados", () => realizadaConDesembolso([])],
   ];
 
   it.each(casos)("%s: la bandeja no lo lista, cargarDesembolso da el motivo %s, ejecutar responde lo mismo y nada cambia", async (_caso, motivo, crear) => {

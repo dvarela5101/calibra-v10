@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import type { Bandeja, PagoPorRevisar, PagoVencidoDeOtro } from "@/lib/admin/bandeja";
+import type { Bandeja, PagoPorCobrarOAsumir, PagoPorRevisar, PagoVencidoDeOtro } from "@/lib/admin/bandeja";
 import { BandejaAdmin } from "./BandejaAdmin";
 
 // Sin navegador ni base: se pinta la pantalla con una bandeja inventada y se lee el HTML. Lo que
@@ -11,6 +11,7 @@ import { BandejaAdmin } from "./BandejaAdmin";
 const VACIA: Bandeja = {
   pagos: [],
   pagosVencidosDeOtros: [],
+  pagosPorCobrarOAsumir: [],
   reembolsos: { esperandoLlave: [], pendientes: [] },
   reportes: [],
   desembolsos: [],
@@ -18,6 +19,7 @@ const VACIA: Bandeja = {
   contadores: {
     pagos: 0,
     pagosVencidosDeOtros: 0,
+    pagosPorCobrarOAsumir: 0,
     reembolsos: 0,
     reembolsosEsperandoLlave: 0,
     reembolsosPendientes: 0,
@@ -49,20 +51,24 @@ describe("BandejaAdmin: secciones vacías", () => {
   it("cada sección dice que no hay nada en vez de quedar en blanco", () => {
     const t = texto(pintar(VACIA));
     expect(t).toContain("No tienes pagos por revisar.");
+    expect(t).toContain("No hay pagos por cobrar ni por asumir.");
     expect(t).toContain("No tienes reembolsos por atender.");
     expect(t).toContain("No tienes reportes en revisión.");
     expect(t).toContain("No hay desembolsos listos para ejecutar.");
     expect(t).toContain("Todos los correos salieron.");
   });
 
-  it("los cinco contadores están arriba, en un nav con nombre, y cada uno lleva a su sección", () => {
+  it("los seis contadores están arriba, en un nav con nombre, y cada uno lleva a su sección", () => {
     const html = pintar({
       ...VACIA,
-      contadores: { ...VACIA.contadores, pagos: 3, reembolsos: 2, reportes: 1, desembolsos: 5, correosSinEnviar: 4 },
+      contadores: { ...VACIA.contadores, pagos: 3, pagosPorCobrarOAsumir: 6, reembolsos: 2, reportes: 1, desembolsos: 5, correosSinEnviar: 4 },
     });
     expect(html).toContain('<nav aria-label="Resumen de tu bandeja">');
+    // Ni uno más ni uno menos.
+    expect(html.match(/<a href="#/g)).toHaveLength(6);
     for (const [id, cifra, rotulo] of [
       ["pagos", 3, "Pagos por revisar"],
+      ["por-cobrar", 6, "Pagos por cobrar o asumir"],
       ["reembolsos", 2, "Reembolsos"],
       ["reportes", 1, "Reportes en revisión"],
       ["desembolsos", 5, "Desembolsos ejecutables"],
@@ -307,6 +313,81 @@ describe("BandejaAdmin: pagos vencidos de otros admins (HU-077, supuesto 2)", ()
     });
     expect(html).not.toContain("<img");
     expect(html).toContain("De &lt;img");
+  });
+});
+
+describe("BandejaAdmin: pagos por cobrar o asumir (HU-078)", () => {
+  const caso = (n: number, extra: Partial<PagoPorCobrarOAsumir> = {}): PagoPorCobrarOAsumir => ({
+    id: `caso-${n}`,
+    nombrePagador: `Pagador ${n}`,
+    contacto: `pagador${n}@uniandes.edu.co`,
+    monto: 32_000,
+    observaciones: "Se cobra por fuera.\nLlamar el lunes.",
+    rechazadoEn: new Date("2026-10-02T15:00:00.000Z"),
+    monitoria: { fecha: "2026-10-01", nombreMateria: "Cálculo Diferencial", nombreMonitor: "Andrés Gómez" },
+    ...extra,
+  });
+  const conCasos = (casos: PagoPorCobrarOAsumir[], total = casos.length) =>
+    pintar({ ...VACIA, pagosPorCobrarOAsumir: casos, contadores: { ...VACIA.contadores, pagosPorCobrarOAsumir: total } });
+  const seccion = (html: string) => html.slice(html.indexOf('<section id="por-cobrar"'), html.indexOf('<section id="reembolsos"'));
+
+  it("criterio 1: cada caso lleva a la página de su pago, con el pagador, su contacto, el monto, la monitoría y las observaciones dentro del enlace", () => {
+    const html = conCasos([caso(1), caso(2, { observaciones: null })]);
+    // [\s\S] y no `.`: las observaciones traen saltos de línea.
+    const enlace = html.match(/<a href="\/admin\/pagos\/caso-1"[^>]*>([\s\S]*?)<\/a>/)?.[1] ?? "";
+    const t = texto(enlace);
+    expect(t).toContain("Pagador 1 · $ 32.000");
+    expect(t).toContain("pagador1@uniandes.edu.co");
+    expect(t).toContain("Cálculo Diferencial con Andrés Gómez · Sesión del 1 de octubre de 2026");
+    // 10:00 en Bogotá: la fecha sale en la zona del negocio.
+    expect(t).toContain("Rechazado el viernes, 2 de octubre de 2026, 10:00 a. m.");
+    expect(enlace).toContain('<time dateTime="2026-10-02T15:00:00.000Z">');
+    // Los saltos de línea se conservan (la clase lleva white-space: pre-line).
+    expect(enlace).toContain("Observaciones: Se cobra por fuera.\nLlamar el lunes.");
+    // Sin observaciones no inventa el rótulo.
+    const sinObservaciones = html.match(/<a href="\/admin\/pagos\/caso-2"[^>]*>([\s\S]*?)<\/a>/)?.[1] ?? "";
+    expect(sinObservaciones).not.toContain("Observaciones");
+    // Un enlace por caso, en la sección, en el orden que trae la base (el más antiguo primero).
+    expect(seccion(html).match(/href="\/admin\/pagos\//g)).toHaveLength(2);
+    expect(seccion(html).indexOf("caso-1")).toBeLessThan(seccion(html).indexOf("caso-2"));
+  });
+
+  it("va en su propia sección, con su contador, después de los pagos por revisar, y dice que es de todos los admins", () => {
+    const html = conCasos([caso(1)]);
+    const s = seccion(html);
+    expect(s).toContain('<section id="por-cobrar" aria-labelledby="por-cobrar-titulo"');
+    expect(texto(s)).toContain("Pagos por cobrar o asumir (1)");
+    expect(texto(s)).toContain("ciérralo como cobrado si el pagador pagó por fuera, o asumido si Calibra no lo cobra");
+    expect(texto(s)).toContain("El más antiguo va arriba. Son los mismos para todos los admins.");
+    expect(html.indexOf('<section id="pagos"')).toBeLessThan(html.indexOf('<section id="por-cobrar"'));
+    // No se mezcla con los pagos por revisar.
+    expect(texto(html.slice(html.indexOf('<section id="pagos"'), html.indexOf('<section id="por-cobrar"')))).not.toContain("Pagador 1");
+  });
+
+  it("su lista se corta por su cuenta y lo avisa", () => {
+    const t = texto(conCasos([caso(1)], 4));
+    expect(t).toContain("Pagos por cobrar o asumir (4)");
+    expect(t).toContain("Se muestran los primeros 1 de 4.");
+  });
+
+  it("nunca habla de bruto ni de comisión", () => {
+    const html = conCasos([caso(1)]).toLowerCase();
+    expect(html).not.toContain("comisi");
+    expect(html).not.toContain("bruto");
+  });
+
+  it("escapa lo que viene de la base", () => {
+    const html = conCasos([
+      caso(1, {
+        nombrePagador: '<img src=x onerror="alert(1)">',
+        contacto: "<b>contacto</b>",
+        observaciones: "<script>alert(2)</script>",
+        monitoria: { fecha: "2026-10-01", nombreMateria: "<i>Materia</i>", nombreMonitor: "<u>Monitor</u>" },
+      }),
+    ]);
+    for (const etiqueta of ["<img", "<script", "<b>", "<i>", "<u>"]) expect(html).not.toContain(etiqueta);
+    expect(html).toContain("&lt;img");
+    expect(html).toContain("&lt;script&gt;");
   });
 });
 

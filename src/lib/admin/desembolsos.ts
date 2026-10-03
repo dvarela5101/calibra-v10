@@ -122,7 +122,7 @@ export async function cargarDesembolso(cliente: Cliente, idDesembolso: string): 
 /**
  * Registra la transferencia con la sesión de `cliente` (sin vuelta atrás). La base comprueba que la sesión sea un
  * admin activo, bloquea la monitoría y el desembolso, vuelve a mirar RN-83, D-39 y el supuesto 2, y recalcula los
- * montos con los pagos aprobados de ahora (P-29).
+ * montos con los pagos aprobados de ahora (P-29) y, desde HU-078, con los casos P-24 cerrados.
  */
 export async function ejecutarDesembolso(cliente: Cliente, pedido: PedidoDeEjecucion): Promise<ResultadoDeEjecucion> {
   const { data, error } = await cliente.rpc("ejecutar_desembolso", {

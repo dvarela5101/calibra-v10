@@ -78,3 +78,40 @@
   min-block-size: 120px;
   resize: vertical;
 }
+
+/* Cerrar un caso P-24 (HU-078): el formulario entero va dentro de la confirmación, como al ejecutar un desembolso. */
+.confirmar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.campos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  border: 0;
+}
+
+/* Toda la etiqueta se toca: 44 px de alto aunque el círculo mida 22. */
+.opcion {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  min-block-size: var(--toque-min);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.radio {
+  flex: none;
+  inline-size: 22px;
+  block-size: 22px;
+  accent-color: var(--primary);
+}

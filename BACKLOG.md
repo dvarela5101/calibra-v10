@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-03 11:04. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-03 15:21. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -41,8 +41,8 @@ _Generado automaticamente: 2026-10-03 11:04. No editar a mano; usa `scripts/back
 | [HU-076](backlog/HU-076.md) | [Sistema] Correos del rechazo de un pago: al monitor y al pagador, sin que se pierdan | Lista | P0 | M | HU-020, HU-051, HU-024 |
 | [HU-025](backlog/HU-025.md) | [Pagador] Entregar mi llave para recibir un reembolso | En progreso | P0 | M | HU-024, HU-006 |
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | En progreso | P0 | M | HU-019 |
-| [HU-078](backlog/HU-078.md) | [Admin] Ver y cerrar los pagos rechazados de sesiones que ya ocurrieron (P-24) | En progreso | P1 | M | HU-020, HU-028 |
 | [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | En progreso | P2 | S | HU-004 |
+| [HU-078](backlog/HU-078.md) | [Admin] Ver y cerrar los pagos rechazados de sesiones que ya ocurrieron (P-24) | En revision | P1 | M | HU-020, HU-028 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
