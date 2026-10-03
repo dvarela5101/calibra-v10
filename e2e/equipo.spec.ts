@@ -16,7 +16,10 @@ async function entrar(page: Page, cuenta: Cuenta): Promise<void> {
   await expect(page).toHaveURL(RUTA, ESPERA);
 }
 
-const tarjeta = (page: Page, nombre: string) => page.getByRole("listitem").filter({ hasText: nombre });
+// Por el nombre exacto de la cabecera, no por cualquier texto: desde HU-074 la tarjeta de otro admin de prueba con un
+// pago en revisión dice «Sus casos abiertos pasan a {nombre}» y un filtro por texto encontraría dos tarjetas.
+const tarjeta = (page: Page, nombre: string) =>
+  page.getByRole("listitem").filter({ has: page.getByText(nombre, { exact: true }) });
 
 test.describe("Equipo de admins (HU-054)", () => {
   test("se llega desde la bandeja, se ve el orden y a uno mismo no se le ofrece desactivarse", async ({ page, cuentas }) => {

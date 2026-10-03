@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import pg from "pg";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { claveDeCorreo } from "@/lib/correo/enviar";
 import { RECONSTRUCTORES } from "@/lib/correo/reconstructores";
@@ -9,6 +10,7 @@ import {
   leadDeLaSesion,
   reconstruirVerificacion,
   registrarContacto,
+  TOPE_DE_CORREOS,
   verificacionVigente,
   type EntradaDeContacto,
 } from "@/lib/leads/servidor";
@@ -20,14 +22,18 @@ import { exigirSupabaseLocal, exito, Fixtures, idsVisibles } from "./utilidades"
 // Mailpit y la sesión se liga con `confirmar_correo_de_lead`. Las sesiones son anónimas de verdad y las lecturas se
 // hacen con su propio JWT, así que las políticas (`privado.es_mi_lead`) también se prueban.
 //
-// El Auth local deja crear 30 sesiones anónimas por hora por IP (`[auth.rate_limit]` de supabase/config.toml) y el resto
-// de la suite ya usa unas veinte: por eso aquí se crean tres una sola vez y cada prueba borra lo que dejó (Leads,
-// enlaces, sesiones ligadas, registro de correos y buzón) antes de la siguiente.
+// El Auth local deja crear 150 sesiones anónimas por hora por IP (`[auth.rate_limit]` de supabase/config.toml) y el
+// resto de la suite ya usa muchas: por eso aquí se crean tres una sola vez y cada prueba borra lo que dejó (Leads,
+// enlaces, sesiones ligadas, registro de correos, buzón y los correos que anotó el tope de HU-075) antes de la siguiente.
+// Esa última tabla es privada (nadie la lee por la Data API): se lee, se envejece y se borra con `pg`, como postgres.
+
+const URL_BD = process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 
 type Sesion = Awaited<ReturnType<Fixtures["crearAnonimo"]>>;
 
 let fx: Fixtures;
 let sesiones: Fixtures;
+let bd: pg.Client;
 let mailpit: string;
 /** La sesión que crea el Lead. */
 let duena: Sesion;
@@ -46,8 +52,11 @@ const sha256 = (texto: string) => createHash("sha256").update(texto).digest("hex
 
 beforeAll(async () => {
   await exigirSupabaseLocal();
+  if (!/@(127\.0\.0\.1|localhost):/.test(URL_BD)) throw new Error(`SUPABASE_DB_URL no es local (${URL_BD}).`);
   mailpit = process.env.MAILPIT_URL ?? "";
   if (!mailpit) throw new Error("Falta MAILPIT_URL: corre npm run db:env.");
+  bd = new pg.Client({ connectionString: URL_BD });
+  await bd.connect();
   sesiones = new Fixtures();
   try {
     duena = await sesiones.crearAnonimo();
@@ -64,6 +73,7 @@ afterAll(async () => {
   const errores: string[] = [];
   // Por si una prueba se cortó antes de limpiar: al borrar la sesión, su Lead quedaría huérfano.
   await borrarLeadsDeLaPrueba(errores);
+  await bd.end();
   await sesiones.limpiar();
   if (errores.length) throw new Error(`La limpieza dejó datos de prueba en la base local:\n- ${errores.join("\n- ")}`);
 });
@@ -97,7 +107,8 @@ afterEach(async () => {
  * Borra los Leads que creó `registrarContacto` (Fixtures no los conoce) y todo lo que cuelga de ellos: los registros
  * de correo por su clave `verificacion_lead:<id>`, los mensajes del buzón, y (en cascada) los enlaces, las sesiones
  * ligadas y los diagnósticos ligados. Se buscan por sesión y por correo, y van antes que los usuarios: al borrar una
- * sesión, `lead.id_sesion_anonima` se anula y el Lead ya no se encontraría.
+ * sesión, `lead.id_sesion_anonima` se anula y el Lead ya no se encontraría. También borra los correos que el tope
+ * (HU-075) anotó a las tres sesiones: duran una hora, y sin borrarlos la sesión llegaría al tope a mitad del archivo.
  */
 async function borrarLeadsDeLaPrueba(errores: string[]): Promise<void> {
   const admin = sesiones.admin;
@@ -113,6 +124,9 @@ async function borrarLeadsDeLaPrueba(errores: string[]): Promise<void> {
     const porSesion = await admin.from("lead").select("id").in("id_sesion_anonima", idsDeSesiones);
     if (porSesion.error) errores.push(`buscar Leads por sesión: ${porSesion.error.message}`);
     for (const { id } of porSesion.data ?? []) ids.add(id);
+    await bd
+      .query("delete from privado.correo_de_contacto where id_sesion = any($1::uuid[])", [idsDeSesiones])
+      .catch((error: unknown) => errores.push(`borrar los correos anotados por el tope: ${String(error)}`));
   }
   if (destinatarios.length) {
     const porCorreo = await admin.from("lead").select("id").in("correo", destinatarios);
@@ -229,6 +243,37 @@ async function pedirEnlace(sesion: Sesion, correo: string, siguiente = "/agendar
   const enlaces = await enlacesDe(idLead);
   const mensajes = await mensajesPara(correo);
   return { idLead, verificacion: enlaces[enlaces.length - 1], token: tokenDe(mensajes[0]) };
+}
+
+/** El correo de un Lead que ya existe y no es de ninguna sesión de la prueba (se borra al terminar, con su buzón). */
+async function correoDeOtroLead(): Promise<string> {
+  const correo = correoNuevo();
+  exito(
+    await fx.admin
+      .from("lead")
+      .insert({ nombre: "Lead Ajeno", correo, acepta_tratamiento_datos: true, fecha_consentimiento: new Date().toISOString() })
+      .select("id")
+      .single(),
+    "crear el Lead dueño del correo",
+  );
+  return correo;
+}
+
+/** Los correos que el tope tiene anotados para la sesión (su SHA-256), ordenados. */
+async function anotadosDe(idSesion: string): Promise<string[]> {
+  const { rows } = await bd.query<{ correo_hash: string }>("select correo_hash from privado.correo_de_contacto where id_sesion = $1", [idSesion]);
+  return rows.map((fila) => fila.correo_hash).sort();
+}
+
+const hashesDe = (correos: string[]) => correos.map(sha256).sort();
+
+/** Como si la sesión hubiera escrito ese correo hace `minutos`, con la hora de la base (la que usa el tope). */
+async function envejecerAnotado(idSesion: string, correo: string, minutos: number): Promise<void> {
+  const { rowCount } = await bd.query(
+    "update privado.correo_de_contacto set escrito_en = now() - make_interval(mins => $3::int) where id_sesion = $1 and correo_hash = $2",
+    [idSesion, sha256(correo), minutos],
+  );
+  expect(rowCount, `${correo} debía estar anotado`).toBe(1);
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -630,6 +675,127 @@ describe("freno (RN-12): como máximo 3 enlaces por Lead en una hora", () => {
 
     expect(await enlacesDe(lead.id)).toHaveLength(5);
     expect(await mensajesPara(correo)).toHaveLength(5);
+  });
+});
+
+describe("tope de correos (HU-075, D-36): como máximo 5 correos distintos por sesión en una hora", () => {
+  const TOPE_LLENO = { resultado: "error", error: TOPE_DE_CORREOS };
+
+  it("una sesión que todavía no es Lead: tras 5 correos distintos, el sexto no se guarda, no dice si existe ni manda enlace", async () => {
+    expect(TOPE_DE_CORREOS).toBe("Probaste varios correos seguidos. Espera un rato y vuelve a intentarlo.");
+    // El tope y la ventana viven en la base.
+    expect(exito(await fx.admin.rpc("parametros_contacto"), "leer los parámetros del contacto")).toEqual([{ tope_correos: 5, tope_ventana_min: 60 }]);
+    // Cinco correos de Leads que ya existen: cuentan igual, la sesión no queda como Lead y a cada dueño le llega su enlace.
+    const escritos: string[] = [];
+    for (let i = 0; i < 5; i++) escritos.push(await correoDeOtroLead());
+    for (const correo of escritos) {
+      expect(await registrarContacto(entradaDe(otra.id, { correo }))).toEqual({ resultado: "verificar", envio: "enviado" });
+    }
+
+    // Un sexto correo libre no crea el Lead...
+    const libre = correoNuevo();
+    expect(await registrarContacto(entradaDe(otra.id, { correo: libre }))).toEqual(TOPE_LLENO);
+    expect(await leadDeLaSesion(otra.id)).toBeNull();
+    expect((await fx.admin.from("lead").select("id").eq("correo", libre)).data).toEqual([]);
+    // ...y uno que es de otro Lead responde lo mismo: no se sabe si existe, no se crea enlace ni sale correo.
+    const correoDeAna = correoNuevo();
+    const ana = await crearLeadDeDuena(correoDeAna);
+    expect(await registrarContacto(entradaDe(otra.id, { correo: correoDeAna }))).toEqual(TOPE_LLENO);
+    expect(await enlacesDe(ana.id)).toEqual([]);
+    expect((await fx.admin.from("correo_envio").select("clave").eq("destinatario", correoDeAna)).data).toEqual([]);
+    expect(await mensajesPara(correoDeAna)).toEqual([]);
+    // Lo anotado son los cinco primeros, y solo su SHA-256: los frenados no cuentan.
+    expect(await anotadosDe(otra.id)).toEqual(hashesDe(escritos));
+
+    // Repetir uno de los cinco (en mayúsculas y con espacios) sigue normal, aun con el tope lleno, y no suma.
+    expect(await registrarContacto(entradaDe(otra.id, { correo: ` ${escritos[0].toUpperCase()} ` }))).toEqual({ resultado: "verificar", envio: "enviado" });
+    expect(await anotadosDe(otra.id)).toEqual(hashesDe(escritos));
+  });
+
+  it("una sesión que ya es Lead también se frena al cambiar su correo: su Lead no cambia y no se sabe si el correo existe", async () => {
+    const [primero, ...otros] = Array.from({ length: 5 }, () => correoNuevo());
+    await crearLeadDeDuena(primero, { nombre: "Ana" });
+    for (const correo of otros) expect(await registrarContacto(entradaDe(duena.id, { nombre: "Ana", correo }))).toEqual({ resultado: "lead" });
+    const antes = await leadDe(duena.id);
+    expect(antes.correo).toBe(otros[3]);
+    const correoDeBeto = correoNuevo();
+    expect(await registrarContacto(entradaDe(otra.id, { nombre: "Beto", correo: correoDeBeto }))).toEqual({ resultado: "lead" });
+    const libre = correoNuevo();
+
+    // Un sexto correo libre no se guarda, y el de otro Lead no responde que es de otro.
+    expect(await registrarContacto(entradaDe(duena.id, { nombre: "Ana Cambiada", correo: libre }))).toEqual(TOPE_LLENO);
+    expect(await registrarContacto(entradaDe(duena.id, { nombre: "Ana Cambiada", correo: correoDeBeto }))).toEqual(TOPE_LLENO);
+
+    expect(await leadDe(duena.id)).toEqual(antes);
+    expect((await fx.admin.from("lead").select("id").eq("correo", libre)).data).toEqual([]);
+    expect(await anotadosDe(duena.id)).toEqual(hashesDe([primero, ...otros]));
+    // Volver a enviar el correo que ya tiene, para cambiar solo el nombre, sigue normal.
+    expect(await registrarContacto(entradaDe(duena.id, { nombre: "Ana María", correo: otros[3] }))).toEqual({ resultado: "lead" });
+    expect(await leadDe(duena.id)).toMatchObject({ id: antes.id, nombre: "Ana María", correo: otros[3] });
+  });
+
+  it("volver a enviar el correo que su Lead ya tiene no cuenta, aunque ya no esté anotado y el tope esté lleno", async () => {
+    const correo = correoNuevo();
+    const ana = await crearLeadDeDuena(correo, { nombre: "Ana" });
+    // Lo escribió hace más de una hora: la próxima anotación lo borra.
+    await envejecerAnotado(duena.id, correo, 61);
+    // Cinco correos de otros Leads llenan el tope; ninguno cambia su Lead.
+    const escritos: string[] = [];
+    for (let i = 0; i < 5; i++) escritos.push(await correoDeOtroLead());
+    for (const ajeno of escritos) {
+      expect(await registrarContacto(entradaDe(duena.id, { nombre: "Ana", correo: ajeno }))).toEqual({
+        resultado: "error",
+        error: "Ese correo ya es de otro contacto de Calibra. Escribe el tuyo.",
+      });
+    }
+    expect(await anotadosDe(duena.id)).toEqual(hashesDe(escritos));
+
+    const resultado = await registrarContacto(entradaDe(duena.id, { nombre: "Ana María", correo: ` ${correo.toUpperCase()}` }));
+
+    expect(resultado).toEqual({ resultado: "lead" });
+    expect(await leadDe(duena.id)).toMatchObject({ id: ana.id, nombre: "Ana María", correo });
+    expect(await anotadosDe(duena.id)).toEqual(hashesDe(escritos));
+  });
+
+  it("la cuenta es por hora: con los correos de hace más de una hora, la sesión vuelve a escribir otros", async () => {
+    const escritos = Array.from({ length: 5 }, () => correoNuevo());
+    await crearLeadDeDuena(escritos[0]);
+    for (const correo of escritos.slice(1)) expect(await registrarContacto(entradaDe(duena.id, { correo }))).toEqual({ resultado: "lead" });
+    const [sexto, septimo, octavo] = [correoNuevo(), correoNuevo(), correoNuevo()];
+    expect(await registrarContacto(entradaDe(duena.id, { correo: sexto }))).toEqual(TOPE_LLENO);
+
+    // Con dos de hace 61 minutos y tres de hace 59, quedan tres dentro de la hora y caben dos más.
+    for (const [correo, minutos] of [[escritos[0], 61], [escritos[1], 61], [escritos[2], 59], [escritos[3], 59], [escritos[4], 59]] as const) {
+      await envejecerAnotado(duena.id, correo, minutos);
+    }
+
+    expect(await registrarContacto(entradaDe(duena.id, { correo: sexto }))).toEqual({ resultado: "lead" });
+    expect(await registrarContacto(entradaDe(duena.id, { correo: septimo }))).toEqual({ resultado: "lead" });
+    // Ya hay cinco dentro de la hora (los tres de hace 59 minutos y los dos nuevos): el siguiente se frena.
+    expect(await registrarContacto(entradaDe(duena.id, { correo: octavo }))).toEqual(TOPE_LLENO);
+
+    expect(await leadDe(duena.id)).toMatchObject({ correo: septimo });
+    // Los de hace más de una hora se borraron al anotar.
+    expect(await anotadosDe(duena.id)).toEqual(hashesDe([escritos[2], escritos[3], escritos[4], sexto, septimo]));
+  });
+
+  it("con 6 correos distintos a la vez desde la misma sesión, pasan exactamente 5: el tope no tiene carreras", async () => {
+    const escritos = Array.from({ length: 6 }, () => correoNuevo());
+
+    const resultados = await Promise.all(escritos.map((correo) => registrarContacto(entradaDe(tercera.id, { correo }))));
+
+    expect(resultados.filter((r) => r.resultado === "lead")).toHaveLength(5);
+    expect(resultados.filter((r) => r.resultado !== "lead")).toEqual([TOPE_LLENO]);
+    expect(await anotadosDe(tercera.id)).toHaveLength(5);
+    const { data } = await fx.admin.from("lead").select("correo").eq("id_sesion_anonima", tercera.id);
+    expect(data).toHaveLength(1);
+  });
+
+  it("una sesión no llama al tope por la Data API", async () => {
+    const anotar = await otra.cliente.rpc("anotar_correo_de_contacto", { p_id_sesion: otra.id, p_correo: `intrusa-${randomUUID()}@calibra.test` });
+
+    expect(anotar.error?.code).toBe("42501");
+    expect(await anotadosDe(otra.id)).toEqual([]);
   });
 });
 

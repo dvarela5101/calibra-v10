@@ -567,13 +567,13 @@ isOneToOne: false
                   ]
                 },"pago": {
                   Row: {
-                    "comprobante": string,"contacto": string,"estado": Database["public"]['Enums']["estado_pago"],"fecha_asignacion": string,"fecha_pago": string,"fecha_revision": string | null,"id": string,"id_admin": string,"id_monitoria": string,"monto": number,"nombre_pagador": string,"observaciones": string | null,"referencia_transferencia": string | null
+                    "comprobante": string,"contacto": string,"estado": Database["public"]['Enums']["estado_pago"],"fecha_asignacion": string,"fecha_pago": string,"fecha_revision": string | null,"id": string,"id_admin": string,"id_admin_revisor": string | null,"id_monitoria": string,"monto": number,"nombre_pagador": string,"observaciones": string | null,"referencia_transferencia": string | null
                   }
                   Insert: {
-                    "comprobante": string,"contacto": string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin": string,"id_monitoria": string,"monto": number,"nombre_pagador": string,"observaciones"?: string | null,"referencia_transferencia"?: string | null
+                    "comprobante": string,"contacto": string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin": string,"id_admin_revisor"?: string | null,"id_monitoria": string,"monto": number,"nombre_pagador": string,"observaciones"?: string | null,"referencia_transferencia"?: string | null
                   }
                   Update: {
-                    "comprobante"?: string,"contacto"?: string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin"?: string,"id_monitoria"?: string,"monto"?: number,"nombre_pagador"?: string,"observaciones"?: string | null,"referencia_transferencia"?: string | null
+                    "comprobante"?: string,"contacto"?: string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin"?: string,"id_admin_revisor"?: string | null,"id_monitoria"?: string,"monto"?: number,"nombre_pagador"?: string,"observaciones"?: string | null,"referencia_transferencia"?: string | null
                   }
                   Relationships: [
                     {
@@ -585,6 +585,12 @@ isOneToOne: false
     },{
       foreignKeyName: "pago_id_admin_fkey"
       columns: ["id_admin"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pago_id_admin_revisor_fkey"
+      columns: ["id_admin_revisor"]
 isOneToOne: false
       referencedRelation: "admin"
       referencedColumns: ["id"]
@@ -886,6 +892,9 @@ isOneToOne: true
 "anotar_comprobante_revisado":
 { Args: { "p_ruta": string,"p_tipo": string }; Returns: string
                            },
+"anotar_correo_de_contacto":
+{ Args: { "p_correo": string,"p_id_sesion": string }; Returns: boolean
+                           },
 "cancelable_hasta":
 { Args: { "p_es_grupal": boolean,"p_inicio": string }; Returns: string
                            },
@@ -951,9 +960,17 @@ isOneToOne: true
 "desembolso_ejecutable":
 { Args: { "p_ahora": string,"p_fin_programado": string }; Returns: boolean
                            },
+"ejecutar_desembolso":
+{ Args: { "p_fecha": string,"p_id_desembolso": string,"p_neto_esperado": number,"p_referencia": string }; Returns: string
+                           },
 "equipo_de_admins":
 { Args: Record<PropertyKey, never>; Returns: {
               "activo": boolean,"casos_abiertos": number,"correo": string,"id": string,"nombre": string,"orden_revision": number
+            }[]
+                           },
+"estado_para_ejecutar":
+{ Args: { "p_id_desembolso": string }; Returns: {
+              "monto_neto": number,"motivo": string
             }[]
                            },
 "fecha_limite_diferencia":
@@ -1018,6 +1035,11 @@ isOneToOne: true
 "parametros_comprobantes":
 { Args: Record<PropertyKey, never>; Returns: {
               "cuota_subidas": number,"cuota_ventana_min": number,"huerfano_tras_min": number
+            }[]
+                           },
+"parametros_contacto":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "tope_correos": number,"tope_ventana_min": number
             }[]
                            },
 "parametros_negocio":

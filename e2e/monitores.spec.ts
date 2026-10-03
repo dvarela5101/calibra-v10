@@ -7,12 +7,12 @@ test.describe.configure({ mode: "default", timeout: 90_000 });
 const ESPERA = { timeout: 20_000 };
 const TITULO_SIN_INVITACION = "Necesitas una invitación vigente";
 
-/** La fixture crea solo la fila `monitor`; el panel también lee `monitor_privado` (la llave). */
+/** La fixture crea el monitor con una llave al azar en `monitor_privado`, que lee el panel: aquí se fija la que se espera. */
 async function crearMonitorConLlave(cuentas: Cuentas, llave: string): Promise<Cuenta> {
   const monitor = await cuentas.crearMonitor();
   const { error } = await cuentas.cliente
     .from("monitor_privado")
-    .insert({ id_monitor: monitor.id, numero_telefono: "3001234567", correo: monitor.correo, llave });
+    .upsert({ id_monitor: monitor.id, numero_telefono: "3001234567", correo: monitor.correo, llave });
   if (error) throw error;
   const { error: errorPerfil } = await cuentas.cliente.from("perfil_monitor").insert({ id_monitor: monitor.id });
   if (errorPerfil) throw errorPerfil;

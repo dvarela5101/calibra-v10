@@ -53,6 +53,19 @@ function sufijo(): string {
   return randomBytes(3).toString("hex");
 }
 
+/**
+ * HU-028: la monitoría que pasa a realizada (la finaliza su monitor, la cambia la prueba o la cierra pg_cron) crea su
+ * desembolso, y desembolso.id_monitoria no cae en cascada. Las limpiezas lo borran antes que las monitorías de esos
+ * monitores. Responde como una consulta de supabase-js (`{ error }`), para el `borrar(...)` de cada prueba.
+ */
+export async function borrarDesembolsosDeMonitores(cliente: SupabaseClient, idsMonitores: string[]): Promise<{ error: { message: string } | null }> {
+  const { data, error } = await cliente.from("monitoria").select("id").in("id_monitor", idsMonitores);
+  if (error) return { error };
+  const monitorias = (data as { id: string }[]).map((monitoria) => monitoria.id);
+  if (monitorias.length === 0) return { error: null };
+  return await cliente.from("desembolso").delete().in("id_monitoria", monitorias);
+}
+
 // ---------------------------------------------------------------------------
 // Sesión de Supabase en las cookies
 // ---------------------------------------------------------------------------
@@ -156,6 +169,7 @@ async function borrarCorreos(ids: string[]): Promise<void> {
 export type Cuentas = {
   /** Cliente con la llave secreta, para consultar o cambiar el estado real. */
   cliente: SupabaseClient;
+  /** Un monitor con su fila de `monitor_privado` (contacto y una llave al azar), como lo deja `registrar_monitor`. */
   crearMonitor(): Promise<Cuenta>;
   crearAdmin(): Promise<Cuenta>;
   /** RN-23: desactivar es banear en Auth; la fila se conserva. */
@@ -198,6 +212,14 @@ export const test = base.extend<{ cuentas: Cuentas }>({
               .insert({ id, nombre: cuenta.nombre, correo: cuenta.correo, orden_revision: randomInt(100_000_000, 2_000_000_000) });
       const { error: errorFila } = await fila;
       if (errorFila) throw errorFila;
+      if (rol === "monitor") {
+        // Como lo deja `registrar_monitor` (HU-013): con su contacto y su llave. Sin la llave, su monitoría no puede
+        // pasar a realizada, porque el desembolso la copia (HU-028).
+        const { error: errorPrivado } = await cliente
+          .from("monitor_privado")
+          .insert({ id_monitor: id, numero_telefono: "3001234567", correo: cuenta.correo, llave: `llave-${randomUUID()}` });
+        if (errorPrivado) throw errorPrivado;
+      }
       return { id, ...cuenta };
     }
 
