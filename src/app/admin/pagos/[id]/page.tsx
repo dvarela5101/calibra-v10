@@ -5,12 +5,14 @@ import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { cargarPagoParaRevisar, type PagoParaRevisar } from "@/lib/admin/pagos";
 import {
+  avisoDeQuienRevisa,
   avisosDeLaPagina,
   ayudaDeObservaciones,
   casoDeRechazo,
   consecuenciasDelRechazo,
   MENSAJES_DE_REVISION,
   pideObservaciones,
+  quienRevisa,
 } from "@/lib/admin/pagos-reglas";
 import { textoDeEstado } from "@/lib/agenda/reglas";
 import { esUuid } from "@/lib/agendar/reglas";
@@ -35,8 +37,10 @@ const TITULOS: Record<PagoParaRevisar["estado"], string> = {
 
 /**
  * HU-020: el pago con su comprobante, sus datos y su monitoría (criterio 1). Cualquier admin activo lo ve (las
- * políticas ya lo dejan), pero solo el asignado lo aprueba o lo rechaza (supuesto 1), aunque se le haya vencido la
- * hora: el escalamiento llega con HU-034. El comprobante se firma al abrirlo, no al pintar la página (criterio 6).
+ * políticas ya lo dejan). Lo aprueba o lo rechaza el asignado, aunque se le haya vencido la hora, y desde HU-077
+ * (D-38) también cualquier admin activo cuando esa hora ya pasó; antes, el otro admin lo ve sin acciones y sabe hasta
+ * cuándo es del asignado. Ya revisado, dice quién lo revisó. El comprobante se firma al abrirlo, no al pintar la
+ * página (criterio 6).
  */
 export default async function RevisarPago({ params, searchParams }: PageProps<"/admin/pagos/[id]">) {
   const { id } = await params;
@@ -65,14 +69,18 @@ export default async function RevisarPago({ params, searchParams }: PageProps<"/
   const avisos = avisosDeLaPagina(await searchParams, pago);
   const m = pago.monitoria;
   const enRevision = pago.estado === "en_revision";
-  const asignado = pago.idAdmin === sesion.idUsuario;
+  const quien = quienRevisa(pago, sesion.idUsuario, ahora);
+  const puede = quien !== "en_hora";
+  const aviso = avisoDeQuienRevisa(quien, pago);
   const caso = casoDeRechazo(m.estado, m.inicio, ahora);
+  // HU-077: si lo revisó otro admin, también se dice a quién estaba asignado.
+  const revisoOtro = pago.idAdminRevisor !== null && pago.idAdminRevisor !== pago.idAdmin;
 
   return (
     <Pantalla
       eyebrow={EYEBROW}
       titulo={TITULOS[pago.estado]}
-      subtitulo={enRevision && asignado ? "Compara el comprobante con estos datos antes de aprobarlo o rechazarlo." : undefined}
+      subtitulo={enRevision && puede ? "Compara el comprobante con estos datos antes de aprobarlo o rechazarlo." : undefined}
     >
       {avisos.map((aviso) => (
         <p key={aviso.texto} role={aviso.exito ? "status" : "alert"} className={aviso.exito ? formulario.exito : formulario.error}>
@@ -103,14 +111,28 @@ export default async function RevisarPago({ params, searchParams }: PageProps<"/
               </dd>
             </>
           ) : (
-            pago.fechaRevision && (
-              <>
-                <dt className={estilos.dato}>Revisado</dt>
-                <dd className={estilos.valor}>
-                  <time dateTime={pago.fechaRevision.toISOString()}>{formatearFechaHora(pago.fechaRevision)}</time>
-                </dd>
-              </>
-            )
+            <>
+              {pago.fechaRevision && (
+                <>
+                  <dt className={estilos.dato}>Revisado</dt>
+                  <dd className={estilos.valor}>
+                    <time dateTime={pago.fechaRevision.toISOString()}>{formatearFechaHora(pago.fechaRevision)}</time>
+                  </dd>
+                </>
+              )}
+              {pago.nombreAdminRevisor && (
+                <>
+                  <dt className={estilos.dato}>Revisado por</dt>
+                  <dd className={estilos.valor}>{pago.nombreAdminRevisor}</dd>
+                </>
+              )}
+              {revisoOtro && (
+                <>
+                  <dt className={estilos.dato}>Asignado a</dt>
+                  <dd className={estilos.valor}>{pago.nombreAdmin}</dd>
+                </>
+              )}
+            </>
           )}
           {pago.observaciones && (
             <>
@@ -154,19 +176,23 @@ export default async function RevisarPago({ params, searchParams }: PageProps<"/
         </dl>
       </section>
 
+      {/* HU-077: a otro admin se le dice hasta cuándo es del asignado (sin acciones) o que esa hora ya pasó. */}
       {enRevision &&
-        (!asignado ? (
-          <p className={formulario.ayuda}>Este pago está asignado a {pago.nombreAdmin}. Solo esa persona puede aprobarlo o rechazarlo.</p>
+        (!puede ? (
+          <p className={formulario.ayuda}>{aviso}</p>
         ) : m.grupal ? (
           // Supuesto 8: las grupales llegan con HU-038; la base también responde no_individual.
           <p className={formulario.ayuda}>{MENSAJES_DE_REVISION.no_individual}</p>
         ) : (
-          <RevisionDelPago
-            idPago={pago.id}
-            consecuencias={consecuenciasDelRechazo(caso, { fechaSesion: m.fecha, nombrePagador: pago.nombrePagador, contacto: pago.contacto })}
-            observacionesObligatorias={pideObservaciones(caso)}
-            ayudaObservaciones={ayudaDeObservaciones(caso)}
-          />
+          <>
+            {aviso && <p className={formulario.ayuda}>{aviso}</p>}
+            <RevisionDelPago
+              idPago={pago.id}
+              consecuencias={consecuenciasDelRechazo(caso, { fechaSesion: m.fecha, nombrePagador: pago.nombrePagador, contacto: pago.contacto })}
+              observacionesObligatorias={pideObservaciones(caso)}
+              ayudaObservaciones={ayudaDeObservaciones(caso)}
+            />
+          </>
         ))}
 
       <VolverALaBandeja />

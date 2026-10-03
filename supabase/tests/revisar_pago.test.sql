@@ -250,7 +250,7 @@ select is(
     (select resultado from public.revisar_pago('60000000-0000-0000-0000-000000002009', 'aprobar', null)),
     (select resultado from public.revisar_pago('60000000-0000-0000-0000-000000002009', 'rechazar', 'Nota'))],
   array['no_asignado', 'no_asignado'],
-  'Supuesto 1: el pago asignado a B no lo revisa A, aunque A sea un admin activo: no_asignado');
+  'Supuesto 1, dentro de la hora de B (D-38, HU-077): el pago asignado a B no lo revisa A, aunque A sea un admin activo: no_asignado');
 select is(
   array[
     (select resultado from public.revisar_pago('60000000-0000-0000-0000-000000002008', 'rechazar', null)),

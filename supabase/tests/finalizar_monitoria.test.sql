@@ -14,7 +14,7 @@
 -- fecha_finalizacion y una cancelada, motivo.
 --
 -- Elenco (todos los ids terminan en 23NN; la materia es 'PGTAP-23-A'):
---   Monitores: A (dicta todas las monitorías) y B (otro monitor, sin monitorías). Admin 01. Lead 01 con su sesión anónima.
+--   Monitores: A (dicta todas las monitorías, con su llave) y B (otro monitor, sin monitorías). Admin 01. Lead 01 con su sesión anónima.
 --   Finalizar (monitor A), con la hora real:
 --     01 confirmada que empezó hace 2 h      02 confirmada que empieza justo ahora (P-40)
 --     03 confirmada que empieza en 1 microsegundo   04 realizada (con su fecha_finalizacion)
@@ -148,6 +148,9 @@ insert into public.admin (id, nombre, correo, orden_revision) values
 insert into public.monitor (id, nombre) values
   ('b0000000-0000-0000-0000-0000000023a0', 'Ana 23'),
   ('b0000000-0000-0000-0000-0000000023b0', 'Beto 23');
+-- Pasar a realizada crea el desembolso con la llave del monitor (HU-028): A necesita su monitor_privado.
+insert into public.monitor_privado (id_monitor, numero_telefono, correo, llave) values
+  ('b0000000-0000-0000-0000-0000000023a0', '3000002301', 'ana23@calibra.test', 'llave-ana-23');
 insert into public.materia (id, nombre, codigo) values
   ('10000000-0000-0000-0000-0000000023a1', 'Materia 23 A', 'PGTAP-23-A');
 insert into public.certificado (id_monitor, id_materia, id_admin) values

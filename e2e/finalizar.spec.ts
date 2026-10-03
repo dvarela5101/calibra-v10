@@ -2,7 +2,7 @@ import { randomInt, randomUUID } from "node:crypto";
 import type { Locator, Page } from "@playwright/test";
 import { diaDelNegocio, formatearDiaConSemana, formatearFechaHora } from "../src/lib/fechas";
 import { horaDeFin } from "../src/lib/franjas/reglas";
-import { enviarCredenciales, expect, test as base, type Cuenta } from "./utilidades";
+import { borrarDesembolsosDeMonitores, enviarCredenciales, expect, test as base, type Cuenta } from "./utilidades";
 
 // HU-023: el monitor marca como realizada una monitoría confirmada que ya empezó (D-13), la agenda y el panel se lo
 // recuerdan (D-15) y la base no deja finalizar lo que aún no empieza ni lo que es de otro monitor. Corre contra el
@@ -202,6 +202,8 @@ const test = base.extend<{ escenario: Escenario }>({
     if (pagos.length) await borrar("pagos", cliente.from("pago").delete().in("id", pagos));
     if (comprobantes.length) await borrar("comprobantes revisados", cliente.from("comprobante_revisado").delete().in("ruta", comprobantes));
     if (monitores.length) {
+      // HU-028: la que pasó a realizada tiene su desembolso, que no cae con la monitoría.
+      await borrar("desembolsos", borrarDesembolsosDeMonitores(cliente, monitores));
       await borrar("monitorías", cliente.from("monitoria").delete().in("id_monitor", monitores));
       await borrar("franjas", cliente.from("franja").delete().in("id_monitor", monitores));
       await borrar("certificados", cliente.from("certificado").delete().in("id_monitor", monitores));

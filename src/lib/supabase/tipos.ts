@@ -567,13 +567,13 @@ isOneToOne: false
                   ]
                 },"pago": {
                   Row: {
-                    "comprobante": string,"contacto": string,"estado": Database["public"]['Enums']["estado_pago"],"fecha_asignacion": string,"fecha_pago": string,"fecha_revision": string | null,"id": string,"id_admin": string,"id_monitoria": string,"monto": number,"nombre_pagador": string,"observaciones": string | null,"referencia_transferencia": string | null
+                    "comprobante": string,"contacto": string,"estado": Database["public"]['Enums']["estado_pago"],"fecha_asignacion": string,"fecha_pago": string,"fecha_revision": string | null,"id": string,"id_admin": string,"id_admin_revisor": string | null,"id_monitoria": string,"monto": number,"nombre_pagador": string,"observaciones": string | null,"referencia_transferencia": string | null
                   }
                   Insert: {
-                    "comprobante": string,"contacto": string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin": string,"id_monitoria": string,"monto": number,"nombre_pagador": string,"observaciones"?: string | null,"referencia_transferencia"?: string | null
+                    "comprobante": string,"contacto": string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin": string,"id_admin_revisor"?: string | null,"id_monitoria": string,"monto": number,"nombre_pagador": string,"observaciones"?: string | null,"referencia_transferencia"?: string | null
                   }
                   Update: {
-                    "comprobante"?: string,"contacto"?: string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin"?: string,"id_monitoria"?: string,"monto"?: number,"nombre_pagador"?: string,"observaciones"?: string | null,"referencia_transferencia"?: string | null
+                    "comprobante"?: string,"contacto"?: string,"estado"?: Database["public"]['Enums']["estado_pago"],"fecha_asignacion"?: string,"fecha_pago"?: string,"fecha_revision"?: string | null,"id"?: string,"id_admin"?: string,"id_admin_revisor"?: string | null,"id_monitoria"?: string,"monto"?: number,"nombre_pagador"?: string,"observaciones"?: string | null,"referencia_transferencia"?: string | null
                   }
                   Relationships: [
                     {
@@ -585,6 +585,12 @@ isOneToOne: false
     },{
       foreignKeyName: "pago_id_admin_fkey"
       columns: ["id_admin"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pago_id_admin_revisor_fkey"
+      columns: ["id_admin_revisor"]
 isOneToOne: false
       referencedRelation: "admin"
       referencedColumns: ["id"]
@@ -954,9 +960,17 @@ isOneToOne: true
 "desembolso_ejecutable":
 { Args: { "p_ahora": string,"p_fin_programado": string }; Returns: boolean
                            },
+"ejecutar_desembolso":
+{ Args: { "p_fecha": string,"p_id_desembolso": string,"p_neto_esperado": number,"p_referencia": string }; Returns: string
+                           },
 "equipo_de_admins":
 { Args: Record<PropertyKey, never>; Returns: {
               "activo": boolean,"casos_abiertos": number,"correo": string,"id": string,"nombre": string,"orden_revision": number
+            }[]
+                           },
+"estado_para_ejecutar":
+{ Args: { "p_id_desembolso": string }; Returns: {
+              "monto_neto": number,"motivo": string
             }[]
                            },
 "fecha_limite_diferencia":
