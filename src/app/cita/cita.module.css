@@ -194,3 +194,61 @@
   font-size: 15px;
   color: var(--muted);
 }
+
+/*
+ * El reporte de inasistencia (HU-029): el aviso del estado (borde --primary como .plazo; es solo relleno, el texto va
+ * en --text) y, si el admin lo rechazó, sus observaciones. Ese texto lo escribe otra persona: se parte donde haga
+ * falta y se respetan sus saltos de línea.
+ */
+.reporte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  margin-block-start: var(--e3);
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-inline-start: 6px solid var(--primary);
+  border-radius: var(--r);
+  font-size: 16px;
+}
+
+.observaciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  margin-block-start: var(--e3);
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+.observacionesTitulo {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.observacionesTexto {
+  font-size: 16px;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* Reportar no destruye nada: sus botones son los del formulario, sin el rojo de cancelar. */
+.reportar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.confirmacionReporte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-inline-start: 6px solid var(--primary);
+  border-radius: var(--r);
+}

@@ -32,6 +32,7 @@ const PRESENCIAL: Cita = {
   estadoPago: "en_revision",
   estadoReembolso: null,
   estadoReporte: null,
+  observacionesReporte: null,
 };
 
 const VIRTUAL: Cita = { ...PRESENCIAL, presencial: false, lugar: null, enlace: "https://meet.example/abc-defg-hij" };
@@ -202,6 +203,95 @@ describe("DetalleDeCita (HU-019): en curso y terminada", () => {
       expect(texto(html)).not.toContain("Enlace de la videollamada");
       expect(html).not.toContain("meet.example");
       expect(html).not.toContain("<a href=\"https");
+    }
+  });
+});
+
+describe("DetalleDeCita (HU-029): el reporte de que el monitor no llegó", () => {
+  const EN_CURSO = new Date(INICIO.getTime() + 30 * 60_000);
+  const VENCIDA = new Date(PRESENCIAL.reporteHasta.getTime() + 1);
+
+  it("sin reporte y dentro de la ventana avisa hasta cuándo se puede reportar, en hora de Bogotá, y el botón va en el hueco de las acciones", () => {
+    const html = pintar(PRESENCIAL, EN_CURSO, { acciones: "El monitor no llegó" });
+    const t = texto(html);
+    expect(t).toContain(
+      "¿El monitor no llegó? Puedes reportarlo hasta el jueves, 8 de octubre de 2026, 11:00 a. m. Un admin revisa el caso. Si lo acepta, la monitoría se cancela y te devolvemos el dinero de tu pago.",
+    );
+    expect(t).not.toContain("..");
+    expect(html).toMatch(/<button[^>]*type="button"[^>]*>El monitor no llegó<\/button>/);
+    // El aviso va antes del hueco de las acciones.
+    expect(html.indexOf("Puedes reportarlo")).toBeLessThan(html.indexOf("<button"));
+  });
+
+  it("sin reporte y sin ventana (todavía no empieza, o ya pasó) no sale nada del reporte", () => {
+    for (const ahora of [AHORA, VENCIDA]) {
+      const html = pintar(PRESENCIAL, ahora);
+      expect(texto(html)).not.toMatch(/reportar|reporte|Observaciones/);
+      expect(html).not.toContain("<button");
+    }
+  });
+
+  it("el texto del plazo de cancelar no cambia por el reporte", () => {
+    expect(texto(pintar(PRESENCIAL, AHORA))).toContain("Puedes cancelarla hasta el martes, 6 de octubre de 2026, 10:00 p. m. Quedan 1 d 12 h.");
+  });
+
+  it("en revisión dice que se recibió y que aquí verá la decisión, y ya no ofrece reportar", () => {
+    const t = texto(pintar({ ...PRESENCIAL, estadoReporte: "en_revision" }, EN_CURSO));
+    expect(t).toContain("Recibimos tu reporte. Un admin lo está revisando y aquí verás su decisión.");
+    expect(t).not.toContain("Puedes reportarlo");
+  });
+
+  it("terminada con un reporte hecho no dice que el monitor la marcará como realizada", () => {
+    const ahora = new Date(PRESENCIAL.finProgramado.getTime() + 1);
+    expect(texto(pintar(PRESENCIAL, ahora))).toContain("El monitor la marcará como realizada.");
+    const conReporte = texto(pintar({ ...PRESENCIAL, estadoReporte: "en_revision" }, ahora));
+    expect(conReporte).not.toContain("El monitor la marcará como realizada.");
+    expect(conReporte).toContain("Recibimos tu reporte.");
+  });
+
+  it("aceptado dice que un admin lo aceptó; si la cita ya se canceló por eso, el motivo lo dice y no se repite", () => {
+    expect(texto(pintar({ ...PRESENCIAL, estado: "realizada", estadoReporte: "aceptado" }, EN_CURSO))).toContain("Un admin aceptó tu reporte.");
+    const cancelada = texto(
+      pintar({ ...PRESENCIAL, estado: "cancelada", motivoCancelacion: "monitor_no_asistio", estadoReporte: "aceptado", estadoReembolso: "esperando_llave" }, EN_CURSO),
+    );
+    expect(cancelada).toContain("El monitor no asistió y se aceptó tu reporte.");
+    expect(cancelada).not.toContain("Un admin aceptó tu reporte.");
+    expect(cancelada).toContain("Vamos a devolverte el dinero.");
+  });
+
+  it("rechazado dice que la monitoría sigue como estaba y muestra las observaciones del admin", () => {
+    const html = pintar({ ...PRESENCIAL, estadoReporte: "rechazado", observacionesReporte: "El monitor sí estuvo en el salón." }, EN_CURSO);
+    const t = texto(html);
+    expect(t).toContain("Un admin revisó tu reporte y no lo aceptó: la monitoría sigue como estaba.");
+    expect(t).toContain("Observaciones del admin El monitor sí estuvo en el salón.");
+    expect(html).toMatch(/<p[^>]*>Observaciones del admin<\/p>/);
+  });
+
+  it("las observaciones se pintan como texto: el HTML que traigan se escapa y no se interpreta", () => {
+    const html = pintar(
+      { ...PRESENCIAL, estadoReporte: "rechazado", observacionesReporte: '<script>alert(1)</script> <img src=x onerror="y">' },
+      EN_CURSO,
+    );
+    expect(html).not.toContain("<script>");
+    expect(html).not.toContain("<img src=x");
+    expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+  });
+
+  it("rechazado sin observaciones (nulas o en blanco) no pone el bloque; sin rechazar, tampoco", () => {
+    for (const observacionesReporte of [null, "", "   "]) {
+      const t = texto(pintar({ ...PRESENCIAL, estadoReporte: "rechazado", observacionesReporte }, EN_CURSO));
+      expect(t, String(observacionesReporte)).not.toContain("Observaciones del admin");
+    }
+    for (const estadoReporte of ["en_revision", "aceptado", null] as const) {
+      const t = texto(pintar({ ...PRESENCIAL, estadoReporte, observacionesReporte: "Un texto" }, EN_CURSO));
+      expect(t, String(estadoReporte)).not.toContain("Observaciones del admin");
+    }
+  });
+
+  it("no habla de comisión ni del contacto del monitor", () => {
+    for (const estadoReporte of [null, "en_revision", "aceptado", "rechazado"] as const) {
+      const t = texto(pintar({ ...PRESENCIAL, estadoReporte, observacionesReporte: "Texto" }, EN_CURSO));
+      expect(t, String(estadoReporte)).not.toMatch(/comisi|neto|tel[eé]fono|whatsapp|@/i);
     }
   });
 });
