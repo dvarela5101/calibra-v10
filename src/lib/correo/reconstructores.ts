@@ -1,4 +1,5 @@
 import "server-only";
+import { reconstruirPagoRechazado } from "@/lib/admin/pagos";
 import { reconstruirAvisoCancelada, reconstruirAvisoConfirmada } from "@/lib/avisos/servidor";
 import { reconstruirCancelacionCita } from "@/lib/citas/cancelar";
 import { reconstruirConfirmacionCita } from "@/lib/citas/servidor";
@@ -20,10 +21,10 @@ export const RECONSTRUCTORES: Reconstructores = {
   resena_individual: (entidad) => reconstruirInvitacionResena(entidad),
   confirmacion_cita: (entidad) => reconstruirConfirmacionCita(entidad),
   cancelacion_cita: (entidad) => reconstruirCancelacionCita(entidad),
+  pago_rechazado_individual: (entidad) => reconstruirPagoRechazado(entidad),
   // Todavía ninguna HU dispara estas plantillas.
   recuperacion_diagnostico: null,
   solicitud_llave_reembolso: null,
-  pago_rechazado_individual: null,
   pago_rechazado_grupal: null,
   escalamiento_pago: null,
 };
