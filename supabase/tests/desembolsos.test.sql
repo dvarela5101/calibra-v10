@@ -37,6 +37,7 @@
 --     32 la del lunes 1-jun-2020, para las puertas públicas con now()
 --     33 realizada, que empezó 2 h antes de now() y terminó hace una hora (su propia franja), con un pago aprobado y un
 --        reporte en revisión: con now(), su fin + 24 h siempre queda 23 h adelante (la puerta dice antes_de_plazo)
+--     34 realizada y sin ningún pago (la foto dice 0), para sin_pagos_aprobados (HU-078)
 
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -273,7 +274,8 @@ from (values
   ('29', date '2031-03-03', 'cancelada', 'monitor_no_asistio'),
   ('30', date '2031-12-29', 'realizada', null),
   ('31', date '2031-03-10', 'realizada', null),
-  ('32', date '2020-06-01', 'realizada', null)
+  ('32', date '2020-06-01', 'realizada', null),
+  ('34', date '2031-03-17', 'realizada', null)
 ) as v(nn, fecha, estado, motivo);
 
 -- La 33, para la puerta con now(): empezó 2 h antes de now() y dura 60 min, en su propia franja construida desde su
@@ -329,7 +331,8 @@ from (values
   ('30', 25000, 2500, 'pendiente', null, null, null),
   ('31', 25000, 2500, 'pendiente', null, null, null),
   ('32', 25000, 2500, 'pendiente', null, null, null),
-  ('33', 25000, 2500, 'pendiente', null, null, null)
+  ('33', 25000, 2500, 'pendiente', null, null, null),
+  ('34', 0, 0, 'pendiente', null, null, null)
 ) as v(nn, bruto, comision, estado, id_admin, fecha, referencia);
 
 insert into public.reporte_inasistencia (id_monitoria, id_admin, estado, fecha_decision) values
@@ -340,9 +343,9 @@ insert into public.reporte_inasistencia (id_monitoria, id_admin, estado, fecha_d
   ('50000000-0000-0000-0000-000000002833', 'a0000000-0000-0000-0000-0000000028a0', 'en_revision', null);
 
 select ok(
-  (select count(*) = 19 from public.monitoria where id::text like '50000000-0000-0000-0000-0000000028%')
+  (select count(*) = 20 from public.monitoria where id::text like '50000000-0000-0000-0000-0000000028%')
   and (select count(*) = 0 from public.desembolso where id_monitoria::text like '50000000-0000-0000-0000-00000000280%')
-  and (select count(*) = 13 from public.desembolso where id::text like '70000000-0000-0000-0000-0000000028%')
+  and (select count(*) = 14 from public.desembolso where id::text like '70000000-0000-0000-0000-0000000028%')
   and (select count(*) = 20 from public.pago where id::text like '60000000-0000-0000-0000-000000028%')
   and (select public.inicio_sesion(m.fecha, f.hora) = timestamptz '2031-12-29 10:00-05'
        from public.monitoria m join public.franja f on f.id = m.id_franja
@@ -350,7 +353,7 @@ select ok(
   and (select desembolsable_desde - now() = interval '23 hours'
        from public.monitoria_plazos where id_monitoria = '50000000-0000-0000-0000-000000002833')
   and (select banned_until > now() from auth.users where id = 'a0000000-0000-0000-0000-0000000028c0'),
-  'Control: las 19 monitorías y los 20 pagos existen, las del trigger aún no tienen desembolso y las de ejecutar sí (13), la 30 empieza el 29-dic-2031 a las 10:00 en Bogotá, el fin + 24 h de la 33 queda 23 h después de now() y C está desactivado');
+  'Control: las 20 monitorías y los 20 pagos existen, las del trigger aún no tienen desembolso y las de ejecutar sí (14), la 30 empieza el 29-dic-2031 a las 10:00 en Bogotá, el fin + 24 h de la 33 queda 23 h después de now() y C está desactivado');
 
 -- ---------------------------------------------------------------------------
 -- Criterio 1 (RN-80): al pasar a realizada nace el desembolso pendiente
@@ -476,17 +479,14 @@ select results_eq(
   $$select motivo, monto_neto from privado.estado_para_ejecutar('70000000-0000-0000-0000-000000002825', '2031-12-31 12:00-05')$$,
   $$values ('pagos_en_revision'::text, 22500)$$,
   'Criterio 3 (D-39): con un pago en revisión no se puede, aunque otro ya esté aprobado: pagos_en_revision');
--- HU-078: el único pago de la 26 es un caso P-24 abierto. sin_pagos_aprobados queda para la 05 (del trigger), que no
--- tiene ningún pago y ya es realizada con su desembolso pendiente.
+-- HU-078: el único pago de la 26 es un caso P-24 abierto. sin_pagos_aprobados queda para la 34, que no tiene ningún
+-- pago.
 select results_eq(
   $$select motivo, monto_neto from privado.estado_para_ejecutar('70000000-0000-0000-0000-000000002826', '2031-12-31 12:00-05')
     union all
-    select e.motivo, e.monto_neto
-    from public.desembolso d
-    cross join lateral privado.estado_para_ejecutar(d.id, '2031-12-31 12:00-05') e
-    where d.id_monitoria = '50000000-0000-0000-0000-000000002805'$$,
+    select motivo, monto_neto from privado.estado_para_ejecutar('70000000-0000-0000-0000-000000002834', '2031-12-31 12:00-05')$$,
   $$values ('caso_abierto'::text, 0), ('sin_pagos_aprobados', 0)$$,
-  'HU-078 (D-39): con el único pago rechazado y su caso P-24 abierto, caso_abierto (ese monto todavía puede contar); supuesto 2: sin ningún pago (la 05) no hay nada que transferir, sin_pagos_aprobados. Neto 0 en las dos');
+  'HU-078 (D-39): con el único pago rechazado y su caso P-24 abierto, caso_abierto (ese monto todavía puede contar); supuesto 2: sin ningún pago (la 34) no hay nada que transferir, sin_pagos_aprobados. Neto 0 en las dos');
 select results_eq(
   $$select motivo, monto_neto from privado.estado_para_ejecutar('70000000-0000-0000-0000-000000002827', '2031-12-31 12:00-05')$$,
   $$values ('anulado'::text, 22500)$$,
@@ -556,7 +556,7 @@ reset role;
 -- ---------------------------------------------------------------------------
 -- ejecutar_desembolso con ahora = 31-dic-2031 12:00 en Bogotá: lo que no se ejecuta
 -- ---------------------------------------------------------------------------
--- HU-078: por la monitoría, para que entren también los que creó el trigger (la 05 se intenta ejecutar abajo).
+-- HU-078: por la monitoría, así entran también los que creó el trigger (01, 04 y 05), que ningún intento toca.
 create temporary table antes as
 select id, estado::text as estado, id_admin, referencia_transferencia, fecha_desembolso, monto_bruto, comision, monto_neto
 from public.desembolso where id_monitoria::text like '50000000-0000-0000-0000-0000000028%';
@@ -623,8 +623,7 @@ select is(
     privado.ejecutar_desembolso('70000000-0000-0000-0000-000000002823', 'TRF-1', date '2031-12-31', 22500, '2031-12-31 12:00-05'),
     privado.ejecutar_desembolso('70000000-0000-0000-0000-000000002825', 'TRF-1', date '2031-12-31', 22500, '2031-12-31 12:00-05'),
     privado.ejecutar_desembolso('70000000-0000-0000-0000-000000002826', 'TRF-1', date '2031-12-31', 0, '2031-12-31 12:00-05'),
-    privado.ejecutar_desembolso((select d.id from public.desembolso d where d.id_monitoria = '50000000-0000-0000-0000-000000002805'),
-                                'TRF-1', date '2031-12-31', 0, '2031-12-31 12:00-05')
+    privado.ejecutar_desembolso('70000000-0000-0000-0000-000000002834', 'TRF-1', date '2031-12-31', 0, '2031-12-31 12:00-05')
   ],
   array['no_realizada', 'antes_de_plazo', 'con_reporte', 'con_reporte', 'pagos_en_revision', 'caso_abierto', 'sin_pagos_aprobados'],
   'Al ejecutar se vuelve a validar como en la pantalla: monitoría no realizada, el instante exacto de fin + 24 h (N-6), un reporte en revisión o aceptado, un pago en revisión (D-39), un caso P-24 abierto (HU-078) y sin pagos aprobados');

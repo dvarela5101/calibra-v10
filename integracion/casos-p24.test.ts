@@ -117,6 +117,13 @@ function lunesDeHace(semanas: number): string {
   return fecha;
 }
 
+/** El lunes dentro de `semanas` semanas o el siguiente: su sesión de las 10:00 todavía no empieza. */
+function lunesDentroDe(semanas: number): string {
+  let fecha = sumarDias(hoy(), 7 * semanas);
+  while (diaIsoDeFecha(fecha) !== 1) fecha = sumarDias(fecha, 1);
+  return fecha;
+}
+
 const formatoDeHora = new Intl.DateTimeFormat("en-GB", {
   timeZone: ZONA_HORARIA_NEGOCIO,
   hour: "2-digit",
@@ -404,9 +411,10 @@ describe("criterio 2: un admin activo cierra el caso como cobrado o asumido", ()
 describe("supuesto 1: lo que no es un caso no sale en la sección ni se cierra", () => {
   it("un pago aprobado, uno en revisión y uno rechazado que canceló su cita responden no_es_caso; uno que no existe, no_encontrado; nada cambia", async () => {
     const contexto = await fx.crearContextoDeMonitoria(asignado.usuario.id);
-    // 2030-01-07 y 2030-01-14 caen en lunes, el día de la franja: la sesión todavía no empieza.
-    const futura = await fx.crearMonitoria(contexto, { fecha: "2030-01-07" });
-    const otraFutura = await fx.crearMonitoria(contexto, { fecha: "2030-01-14" });
+    // Dos lunes, el día de la franja, dentro de una y dos semanas: la sesión todavía no empieza, sea cual sea el día en
+    // que corra la prueba.
+    const futura = await fx.crearMonitoria(contexto, { fecha: lunesDentroDe(1) });
+    const otraFutura = await fx.crearMonitoria(contexto, { fecha: lunesDentroDe(2) });
     const aprobado = await fx.crearPagoDe(futura.id, { idAdmin: asignado.usuario.id, estado: "aprobado" });
     const enRevision = await pagoEnRevision(futura.id);
     // Rechazarlo cancela la cita (RN-43): no hay nada que cobrar ni asumir.

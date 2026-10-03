@@ -43,6 +43,31 @@ isOneToOne: false
       referencedColumns: ["id_monitoria"]
     }
                   ]
+                },"cancelacion_cita": {
+                  Row: {
+                    "con_pago_en_revision": boolean,"correo_destino": string | null,"creada_en": string,"id": string,"id_monitoria": string,"intentos": number,"procesado_en": string | null,"reembolso_a_otro_contacto": boolean
+                  }
+                  Insert: {
+                    "con_pago_en_revision": boolean,"correo_destino"?: string | null,"creada_en"?: string,"id"?: string,"id_monitoria": string,"intentos"?: number,"procesado_en"?: string | null,"reembolso_a_otro_contacto": boolean
+                  }
+                  Update: {
+                    "con_pago_en_revision"?: boolean,"correo_destino"?: string | null,"creada_en"?: string,"id"?: string,"id_monitoria"?: string,"intentos"?: number,"procesado_en"?: string | null,"reembolso_a_otro_contacto"?: boolean
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "cancelacion_cita_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "monitoria"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cancelacion_cita_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "monitoria_plazos"
+      referencedColumns: ["id_monitoria"]
+    }
+                  ]
                 },"certificado": {
                   Row: {
                     "fecha_emision": string,"fecha_evaluacion": string,"id": string,"id_admin": string,"id_materia": string,"id_monitor": string
@@ -654,13 +679,13 @@ isOneToOne: false
                   ]
                 },"reembolso": {
                   Row: {
-                    "estado": Database["public"]['Enums']["estado_reembolso"],"fecha_generacion": string,"fecha_reembolso": string | null,"id": string,"id_admin": string,"id_pago": string,"llave_destino": string | null,"monto": number,"motivo": string,"referencia_transferencia": string | null
+                    "estado": Database["public"]['Enums']["estado_reembolso"],"fecha_generacion": string,"fecha_reembolso": string | null,"id": string,"id_admin": string | null,"id_pago": string,"llave_destino": string | null,"monto": number,"motivo": string,"referencia_transferencia": string | null
                   }
                   Insert: {
-                    "estado"?: Database["public"]['Enums']["estado_reembolso"],"fecha_generacion"?: string,"fecha_reembolso"?: string | null,"id"?: string,"id_admin": string,"id_pago": string,"llave_destino"?: string | null,"monto": number,"motivo": string,"referencia_transferencia"?: string | null
+                    "estado"?: Database["public"]['Enums']["estado_reembolso"],"fecha_generacion"?: string,"fecha_reembolso"?: string | null,"id"?: string,"id_admin"?: string | null,"id_pago": string,"llave_destino"?: string | null,"monto": number,"motivo": string,"referencia_transferencia"?: string | null
                   }
                   Update: {
-                    "estado"?: Database["public"]['Enums']["estado_reembolso"],"fecha_generacion"?: string,"fecha_reembolso"?: string | null,"id"?: string,"id_admin"?: string,"id_pago"?: string,"llave_destino"?: string | null,"monto"?: number,"motivo"?: string,"referencia_transferencia"?: string | null
+                    "estado"?: Database["public"]['Enums']["estado_reembolso"],"fecha_generacion"?: string,"fecha_reembolso"?: string | null,"id"?: string,"id_admin"?: string | null,"id_pago"?: string,"llave_destino"?: string | null,"monto"?: number,"motivo"?: string,"referencia_transferencia"?: string | null
                   }
                   Relationships: [
                     {
@@ -724,6 +749,25 @@ isOneToOne: true
       columns: ["id_pago"]
 isOneToOne: true
       referencedRelation: "pago"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"solicitud_llave": {
+                  Row: {
+                    "creada_en": string,"en_correo_de_cancelacion": boolean,"id_reembolso": string,"token": string
+                  }
+                  Insert: {
+                    "creada_en"?: string,"en_correo_de_cancelacion"?: boolean,"id_reembolso": string,"token"?: string
+                  }
+                  Update: {
+                    "creada_en"?: string,"en_correo_de_cancelacion"?: boolean,"id_reembolso"?: string,"token"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "solicitud_llave_id_reembolso_fkey"
+      columns: ["id_reembolso"]
+isOneToOne: true
+      referencedRelation: "reembolso"
       referencedColumns: ["id"]
     }
                   ]
@@ -860,6 +904,12 @@ isOneToOne: true
 "cancelable_hasta":
 { Args: { "p_es_grupal": boolean,"p_inicio": string }; Returns: string
                            },
+"cancelar_cita_por_token":
+{ Args: { "p_token": string }; Returns: string
+                           },
+"cancelar_mi_cita":
+{ Args: { "p_id_monitoria": string }; Returns: string
+                           },
 "cerrar_caso_p24":
 { Args: { "p_cierre": string,"p_id_pago": string,"p_nota"?: string }; Returns: string
                            },
@@ -893,6 +943,11 @@ isOneToOne: true
 "datos_de_aviso_monitor":
 { Args: { "p_id_monitoria": string }; Returns: {
               "correo_monitor": string,"duracion_min": number,"estado": Database["public"]['Enums']["estado_monitoria"],"grupal": boolean,"inicio": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_estudiante": string,"nombre_materia": string,"nombre_monitor": string,"presencial": boolean
+            }[]
+                           },
+"datos_de_cancelacion_cita":
+{ Args: { "p_id_monitoria": string }; Returns: {
+              "con_pago_en_revision": boolean,"correo_destino": string,"creada_en": string,"estado": Database["public"]['Enums']["estado_monitoria"],"grupal": boolean,"inicio": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_lead": string,"nombre_materia": string,"reembolso_a_otro_contacto": boolean,"token_cita": string
             }[]
                            },
 "datos_de_confirmacion_cita":
@@ -946,6 +1001,11 @@ isOneToOne: true
                            },
 "inicio_sesion":
 { Args: { "p_fecha": string,"p_hora": string }; Returns: string
+                           },
+"llaves_de_cancelacion":
+{ Args: { "p_id_monitoria": string }; Returns: {
+              "id_reembolso": string,"monto": number,"token": string
+            }[]
                            },
 "mi_agenda":
 { Args: Record<PropertyKey, never>; Returns: {
