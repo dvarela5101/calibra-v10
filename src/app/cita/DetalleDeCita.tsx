@@ -17,8 +17,9 @@ type Props = {
   ahora: Date;
   /**
    * El hueco de las acciones. La página pone aquí "Cancelar mi monitoría" (HU-024) solo cuando
-   * `vistaDeCita(cita, ahora).puedeCancelar`, y HU-029 pondrá "El monitor no llegó" cuando `puedeReportar`. Sin
-   * ellas, la página solo informa: hasta cuándo se puede cancelar o que el plazo terminó.
+   * `vistaDeCita(cita, ahora).puedeCancelar` y "El monitor no llegó" (HU-029) cuando `puedeReportar`; no se solapan
+   * (cancelar es antes del inicio, reportar desde el inicio). Sin ellas, la página solo informa: hasta cuándo se
+   * puede cancelar, que el plazo terminó o el estado del reporte.
    */
   acciones?: ReactNode;
   /** El correo de Calibra para los casos de fuerza mayor de una cita sin plazo para cancelar (criterio 3). Sin él, el texto no promete un canal. */
@@ -60,6 +61,17 @@ export function DetalleDeCita({ cita, ahora, acciones, contactoSoporte = null, c
       )}
       {vista.textoDelPago && <p className={estilos.nota}>{vista.textoDelPago}</p>}
       {vista.textoDelReembolso && <p className={estilos.aviso}>{vista.textoDelReembolso}</p>}
+      {vista.textoDelReporte && (
+        <div className={estilos.reporte}>
+          <p>{vista.textoDelReporte}</p>
+        </div>
+      )}
+      {vista.observacionesDelReporte && (
+        <div className={estilos.observaciones}>
+          <p className={estilos.observacionesTitulo}>Observaciones del admin</p>
+          <p className={estilos.observacionesTexto}>{vista.observacionesDelReporte}</p>
+        </div>
+      )}
       {acciones && <div className={estilos.acciones}>{acciones}</div>}
       <div className={estilos.enlaces}>
         {vista.tipo === "pendiente_pago" && (
