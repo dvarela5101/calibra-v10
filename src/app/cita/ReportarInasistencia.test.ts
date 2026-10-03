@@ -68,7 +68,7 @@ describe("PasoDeReporte (HU-029): la confirmación", () => {
     expect(si.atributos).toContain('type="submit"');
     expect(no.nombre).toBe("No, volver");
     expect(no.atributos).toContain('type="button"');
-    expect(no.atributos).toContain("autoFocus");
+    expect(no.atributos).toContain("autofocus");
     expect(botones(html)).toHaveLength(2);
   });
 

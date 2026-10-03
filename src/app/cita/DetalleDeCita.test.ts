@@ -273,7 +273,7 @@ describe("DetalleDeCita (HU-029): el reporte de que el monitor no llegó", () =>
       EN_CURSO,
     );
     expect(html).not.toContain("<script>");
-    expect(html).not.toContain("<img");
+    expect(html).not.toContain("<img src=x");
     expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
   });
 

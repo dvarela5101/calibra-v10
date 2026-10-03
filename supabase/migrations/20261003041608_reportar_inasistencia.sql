@@ -335,8 +335,7 @@ as $$
   ) re
   left join lateral (
     select r.estado::text as estado_reporte,
-           case when r.estado <> 'en_revision' then nullif(btrim(r.observaciones, E' 	
-'), '') end as observaciones_reporte
+           case when r.estado <> 'en_revision' then nullif(btrim(r.observaciones, E' \t\r\n'), '') end as observaciones_reporte
     from public.reporte_inasistencia r
     where r.id_monitoria = m.id
   ) rp on true

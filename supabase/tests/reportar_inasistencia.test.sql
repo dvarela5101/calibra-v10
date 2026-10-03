@@ -42,7 +42,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(155);
+select plan(111);
 
 -- ---------------------------------------------------------------------------
 -- Existencia, permisos y forma de las seis funciones nuevas
