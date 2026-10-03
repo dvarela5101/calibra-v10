@@ -82,7 +82,7 @@ revoke all on table privado.correo_de_contacto from public, anon, authenticated,
 -- no guarda el contacto ni manda enlace. No lee lead: la respuesta no depende de si el correo existe en Calibra.
 -- La ventana tiene el borde de crear_verificacion_lead (HU-068): cuenta lo escrito después de ahora - ventana; lo
 -- escrito justo en ahora - ventana ya no cuenta.
--- Un correo nulo o en blanco es un error: el servidor nunca lo manda (el correo es obligatorio, P-21).
+-- Un correo nulo o en blanco es un error: el servidor nunca lo manda (el correo es obligatorio, P-22).
 create or replace function privado.anotar_correo_de_contacto(
   p_id_sesion uuid,
   p_correo text,

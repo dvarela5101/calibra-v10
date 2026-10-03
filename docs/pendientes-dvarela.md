@@ -37,6 +37,7 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 
   Si abres la misma dirección con `admin2@calibra.test`, ves el pago sin botones. Los supuestos que te tocan están en A2.
 - [ ] **HU-074, pagos de un admin que se desactiva** (de Juzou04, [PR #34](https://github.com/dvarela5101/calibra-v10/pull/34)): agenda y paga una monitoría como en HU-018, y el pago le queda a `admin1@calibra.test`. Entra con `admin2@calibra.test` (contraseña `calibra-admin-local`) a `/admin/equipo`. La tarjeta de Admin Uno dice "1 caso abierto". Desactívalo: el aviso dice a quién pasaron sus casos, y en `/admin` de admin2 aparece el pago con una hora nueva para revisarlo. Reactivar todavía no tiene pantalla (HU-072): para volver a tener a Admin Uno, `npm run db:reiniciar`.
+- [ ] **HU-075, tope de correos al dejar el contacto** (de Juzou04, rama `hu-075-tope-de-correos`): abre `/agendar/contacto` en una ventana de incógnito y deja tu contacto con un correo. Después entra a `/agendar/contacto?editar=1` y cambia el correo cuatro veces, cada vez por uno distinto. Al quinto cambio, que es el sexto correo distinto, ves «Probaste varios correos seguidos. Espera un rato y vuelve a intentarlo.» y el contacto no cambia. Volver a escribir uno de los correos que ya usaste sí funciona.
 - [ ] **Las HUs que Claude saque mientras no estás** quedan `En revision`; la lista está en `BACKLOG.md` y cada una trae en su registro cómo verificarla.
 
 ### A2. Decisiones de las HUs recientes
@@ -98,6 +99,11 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   - Si alguien agenda cuando ya pasó el plazo para cancelar, el correo dice «No podrás cancelarla: cuando la agendaste ya había pasado el plazo para hacerlo.» No nombra las 12 horas: los plazos no se escriben fijos en los correos (viven en la base).
   - El enlace de la videollamada se muestra como «Abrir la videollamada», no la dirección completa.
   - Los motivos de cancelación y el estado del reembolso en palabras (por ejemplo, «Vamos a devolverte el dinero. Te escribimos al correo del pago para pedirte la llave.») son una primera versión; HU-024 y HU-025 los ajustan.
+- [ ] **Tope de correos (HU-075): lo que dejó Juzou04.** Las recomendaciones son las suyas:
+  - el tope cuenta también los cambios de correo en `/agendar/contacto?editar=1`. Esa pantalla responde «Ese correo ya es de otro contacto de Calibra»; sin tope, bastaría dejar un primer correo para probar todos los demás;
+  - volver a enviar el correo que la sesión ya tiene guardado (para cambiar solo el nombre o el teléfono) no cuenta: no revela nada;
+  - para contar, la base guarda el hash de cada correo escrito, no el correo, y lo borra cuando pasa la hora: en el siguiente envío de esa sesión o en la limpieza horaria, así que dura menos de dos horas. Por eso no cambia el aviso de privacidad;
+  - un correo inválido o un envío sin la autorización no cuentan, porque se rechazan antes de llegar a la base.
 - [ ] **Correo que ya tiene cuenta (HU-013).** Si invitas a un correo que ya tiene cuenta de Calibra (por ejemplo, de estudiante), hoy el registro no la convierte en monitor y le pide escribir al equipo. Confirma que así está bien, o pide que se pueda convertir.
 
 ### A3. Preparar la cuenta de Gmail (para HU-066)
