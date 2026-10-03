@@ -52,13 +52,33 @@ describe("resultados y motivos (HU-028)", () => {
   });
 
   it("al ejecutar, un motivo de la base se dice igual que en la página", () => {
-    for (const motivo of ["anulado", "no_realizada", "antes_de_plazo", "con_reporte", "pagos_en_revision", "sin_pagos_aprobados", "no_encontrado"] as const) {
+    for (const motivo of [
+      "anulado",
+      "no_realizada",
+      "antes_de_plazo",
+      "con_reporte",
+      "pagos_en_revision",
+      "caso_abierto",
+      "sin_pagos_aprobados",
+      "no_encontrado",
+    ] as const) {
       expect(MENSAJES_DE_EJECUCION[motivo]).toBe(MENSAJES_DE_MOTIVO[motivo]);
     }
   });
 
   it("D-39: con un pago en revisión dice que espera esa revisión", () => {
     expect(MENSAJES_DE_MOTIVO.pagos_en_revision).toMatch(/^Espera la revisión de un pago de esta monitoría/);
+  });
+
+  it("HU-078 (D-39 (c), criterio 4): con un caso P-24 abierto dice que espera a que se cierre, en el orden de la base", () => {
+    expect(MENSAJES_DE_MOTIVO.caso_abierto).toBe("Espera a que se cierre el caso del pago rechazado en «Pagos por cobrar o asumir».");
+    // El orden de privado.bloqueo_del_desembolso: con_reporte, pagos_en_revision, caso_abierto, sin_pagos_aprobados.
+    const orden = (lista: readonly string[]) => ["con_reporte", "pagos_en_revision", "caso_abierto", "sin_pagos_aprobados"].map((m) => lista.indexOf(m));
+    for (const lista of [MOTIVOS_PARA_NO_EJECUTAR, RESULTADOS_DE_EJECUCION, CAMBIOS_DEL_DESEMBOLSO]) {
+      const posiciones = orden(lista);
+      expect(posiciones.every((p) => p >= 0)).toBe(true);
+      expect([...posiciones].sort((a, b) => a - b)).toEqual(posiciones);
+    }
   });
 
   it("supuesto 2: sin pagos aprobados dice que no hay nada que transferir", () => {

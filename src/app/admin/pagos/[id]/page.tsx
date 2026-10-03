@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
+import { avisosDelCaso, estadoDelCaso, EXPLICACION_DEL_CASO, TEXTOS_DEL_CIERRE } from "@/lib/admin/casos-p24-reglas";
 import { cargarPagoParaRevisar, type PagoParaRevisar } from "@/lib/admin/pagos";
 import {
   avisoDeQuienRevisa,
@@ -22,6 +23,7 @@ import { formatearDia, formatearFechaHora } from "@/lib/fechas";
 import { horaCorta, horaDeFin } from "@/lib/franjas/reglas";
 import { formatearPesos } from "@/lib/moneda";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { CerrarCaso } from "./CerrarCaso";
 import { RevisionDelPago } from "./RevisionDelPago";
 import estilos from "./revision.module.css";
 
@@ -40,7 +42,8 @@ const TITULOS: Record<PagoParaRevisar["estado"], string> = {
  * políticas ya lo dejan). Lo aprueba o lo rechaza el asignado, aunque se le haya vencido la hora, y desde HU-077
  * (D-38) también cualquier admin activo cuando esa hora ya pasó; antes, el otro admin lo ve sin acciones y sabe hasta
  * cuándo es del asignado. Ya revisado, dice quién lo revisó. El comprobante se firma al abrirlo, no al pintar la
- * página (criterio 6).
+ * página (criterio 6). HU-078: si el pago es un caso P-24, cualquier admin activo lo cierra aquí como cobrado o
+ * asumido (supuestos 2 y 3); ya cerrado, dice cómo, quién, cuándo y la nota.
  */
 export default async function RevisarPago({ params, searchParams }: PageProps<"/admin/pagos/[id]">) {
   const { id } = await params;
@@ -66,8 +69,12 @@ export default async function RevisarPago({ params, searchParams }: PageProps<"/
   }
   if (!pago) notFound();
 
-  const avisos = avisosDeLaPagina(await searchParams, pago);
   const m = pago.monitoria;
+  const cierre = pago.cierre;
+  // HU-078: nulo si no es un caso P-24; si no, abierto o cerrado (supuesto 1).
+  const casoP24 = estadoDelCaso(pago.estado, m.estado, cierre?.como ?? null);
+  const consulta = await searchParams;
+  const avisos = [...avisosDeLaPagina(consulta, { ...pago, caso: casoP24 }), ...avisosDelCaso(consulta, cierre, sesion.idUsuario)];
   const enRevision = pago.estado === "en_revision";
   const quien = quienRevisa(pago, sesion.idUsuario, ahora);
   const puede = quien !== "en_hora";
@@ -194,6 +201,39 @@ export default async function RevisarPago({ params, searchParams }: PageProps<"/
             />
           </>
         ))}
+
+      {/* HU-078: el caso P-24, abierto con su formulario o cerrado con cómo, quién y cuándo. Un cierre se muestra
+          siempre, aunque la monitoría se haya cancelado después (P-28). */}
+      {(casoP24 || cierre) && (
+        <section aria-labelledby="caso" className={estilos.seccion}>
+          <h2 id="caso" className={estilos.titulo}>
+            Por cobrar o asumir
+          </h2>
+          {cierre ? (
+            <dl className={estilos.datos}>
+              <dt className={estilos.dato}>Caso</dt>
+              <dd className={estilos.valor}>Cerrado. {TEXTOS_DEL_CIERRE[cierre.como]}</dd>
+              <dt className={estilos.dato}>Cerrado por</dt>
+              <dd className={estilos.valor}>{cierre.nombreAdmin}</dd>
+              <dt className={estilos.dato}>Cerrado</dt>
+              <dd className={estilos.valor}>
+                <time dateTime={cierre.fecha.toISOString()}>{formatearFechaHora(cierre.fecha)}</time>
+              </dd>
+              {cierre.nota && (
+                <>
+                  <dt className={estilos.dato}>Nota</dt>
+                  <dd className={`${estilos.valor} ${estilos.observaciones}`}>{cierre.nota}</dd>
+                </>
+              )}
+            </dl>
+          ) : (
+            <>
+              <p className={formulario.ayuda}>{EXPLICACION_DEL_CASO}</p>
+              <CerrarCaso idPago={pago.id} />
+            </>
+          )}
+        </section>
+      )}
 
       <VolverALaBandeja />
     </Pantalla>

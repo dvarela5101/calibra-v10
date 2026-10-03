@@ -9,6 +9,7 @@ import { describirTiempoRestante, type TiempoRestante } from "@/lib/plazos/resta
 import { correoConsultasDatos } from "@/lib/privacidad/consentimiento";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/tipos";
+import { esCierre, type CierreDeCaso } from "./casos-p24-reglas";
 import {
   avisoDelEnvio,
   correoDeRechazo,
@@ -51,6 +52,11 @@ export type PagoParaRevisar = {
   idAdminRevisor: string | null;
   nombreAdminRevisor: string | null;
   observaciones: string | null;
+  /**
+   * HU-078: cómo, quién y cuándo se cerró su caso P-24, con la nota si la hay. `null` mientras el caso está abierto o
+   * si el pago no es un caso (`estadoDelCaso`).
+   */
+  cierre: { como: CierreDeCaso; nota: string | null; idAdmin: string; nombreAdmin: string; fecha: Date } | null;
   monitoria: {
     estado: Database["public"]["Enums"]["estado_monitoria"];
     motivoCancelacion: Database["public"]["Enums"]["motivo_cancelacion"] | null;
@@ -76,9 +82,10 @@ export async function cargarPagoParaRevisar(cliente: Cliente, idPago: string, ah
     cargarParametros(cliente),
     cliente
       .from("pago")
-      // pago tiene dos llaves a admin desde HU-077 (id_admin e id_admin_revisor): cada embebido nombra la suya.
+      // pago tiene tres llaves a admin (id_admin, id_admin_revisor desde HU-077 e id_admin_cierre desde HU-078): cada
+      // embebido nombra la suya.
       .select(
-        "id, monto, nombre_pagador, contacto, referencia_transferencia, estado, id_admin, fecha_asignacion, fecha_revision, observaciones, id_admin_revisor, admin!pago_id_admin_fkey(nombre), revisor:admin!pago_id_admin_revisor_fkey(nombre), monitoria(estado, motivo_cancelacion, fecha, id_franja, id_monitor, id_materia), monitoria_plazos(inicio, es_grupal)",
+        "id, monto, nombre_pagador, contacto, referencia_transferencia, estado, id_admin, fecha_asignacion, fecha_revision, observaciones, id_admin_revisor, cierre_rechazo, nota_cierre, id_admin_cierre, fecha_cierre, admin!pago_id_admin_fkey(nombre), revisor:admin!pago_id_admin_revisor_fkey(nombre), cerrador:admin!pago_id_admin_cierre_fkey(nombre), monitoria(estado, motivo_cancelacion, fecha, id_franja, id_monitor, id_materia), monitoria_plazos(inicio, es_grupal)",
       )
       .eq("id", idPago)
       .maybeSingle(),
@@ -99,6 +106,19 @@ export async function cargarPagoParaRevisar(cliente: Cliente, idPago: string, ah
   if (fallo) throw new Error(`No se pudo leer la monitoría del pago: ${fallo.message}`);
   if (!franja.data || !monitor.data || !materia.data) throw new Error("El pago está incompleto.");
 
+  let cierre: PagoParaRevisar["cierre"] = null;
+  if (pago.cierre_rechazo !== null) {
+    // La base exige cómo, quién y cuándo juntos (pago_cierre_coherente, HU-078).
+    if (!esCierre(pago.cierre_rechazo) || !pago.id_admin_cierre || !pago.fecha_cierre) throw new Error("El pago está incompleto.");
+    cierre = {
+      como: pago.cierre_rechazo,
+      nota: pago.nota_cierre,
+      idAdmin: pago.id_admin_cierre,
+      nombreAdmin: pago.cerrador?.nombre ?? "un admin",
+      fecha: new Date(pago.fecha_cierre),
+    };
+  }
+
   // Es la hora del admin asignado: escalar o reasignar (HU-034, HU-074) le ponen otra fecha de asignación.
   const limite = revisionHasta(new Date(pago.fecha_asignacion), parametros);
   return {
@@ -116,6 +136,7 @@ export async function cargarPagoParaRevisar(cliente: Cliente, idPago: string, ah
     idAdminRevisor: pago.id_admin_revisor,
     nombreAdminRevisor: pago.revisor?.nombre ?? null,
     observaciones: pago.observaciones,
+    cierre,
     monitoria: {
       estado: m.estado,
       motivoCancelacion: m.motivo_cancelacion,

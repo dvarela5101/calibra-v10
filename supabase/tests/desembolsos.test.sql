@@ -28,7 +28,7 @@
 --   NN y su foto dice neto 22.500 salvo que se diga otra cosa):
 --     21 con su único pago en revisión (la foto dice 0); el pago se aprueba a mitad de la prueba
 --     22 con un reporte en revisión    23 con un reporte aceptado    24 con un reporte rechazado
---     25 un pago aprobado y otro en revisión      26 con el único pago rechazado (P-24)
+--     25 un pago aprobado y otro en revisión      26 con el único pago rechazado (P-24), el caso abierto (HU-078)
 --     27 anulado: monitoría cancelada por monitor_no_asistio y reporte aceptado (D-37)
 --     28 ya desembolsado por B (con una foto de neto 18.000)
 --     29 pendiente, pero la monitoría está cancelada y sin reporte (defensa)
@@ -476,10 +476,17 @@ select results_eq(
   $$select motivo, monto_neto from privado.estado_para_ejecutar('70000000-0000-0000-0000-000000002825', '2031-12-31 12:00-05')$$,
   $$values ('pagos_en_revision'::text, 22500)$$,
   'Criterio 3 (D-39): con un pago en revisión no se puede, aunque otro ya esté aprobado: pagos_en_revision');
+-- HU-078: el único pago de la 26 es un caso P-24 abierto. sin_pagos_aprobados queda para la 05 (del trigger), que no
+-- tiene ningún pago y ya es realizada con su desembolso pendiente.
 select results_eq(
-  $$select motivo, monto_neto from privado.estado_para_ejecutar('70000000-0000-0000-0000-000000002826', '2031-12-31 12:00-05')$$,
-  $$values ('sin_pagos_aprobados'::text, 0)$$,
-  'Supuesto 2: con el único pago rechazado no hay nada que transferir: sin_pagos_aprobados, neto 0');
+  $$select motivo, monto_neto from privado.estado_para_ejecutar('70000000-0000-0000-0000-000000002826', '2031-12-31 12:00-05')
+    union all
+    select e.motivo, e.monto_neto
+    from public.desembolso d
+    cross join lateral privado.estado_para_ejecutar(d.id, '2031-12-31 12:00-05') e
+    where d.id_monitoria = '50000000-0000-0000-0000-000000002805'$$,
+  $$values ('caso_abierto'::text, 0), ('sin_pagos_aprobados', 0)$$,
+  'HU-078 (D-39): con el único pago rechazado y su caso P-24 abierto, caso_abierto (ese monto todavía puede contar); supuesto 2: sin ningún pago (la 05) no hay nada que transferir, sin_pagos_aprobados. Neto 0 en las dos');
 select results_eq(
   $$select motivo, monto_neto from privado.estado_para_ejecutar('70000000-0000-0000-0000-000000002827', '2031-12-31 12:00-05')$$,
   $$values ('anulado'::text, 22500)$$,
@@ -549,9 +556,10 @@ reset role;
 -- ---------------------------------------------------------------------------
 -- ejecutar_desembolso con ahora = 31-dic-2031 12:00 en Bogotá: lo que no se ejecuta
 -- ---------------------------------------------------------------------------
+-- HU-078: por la monitoría, para que entren también los que creó el trigger (la 05 se intenta ejecutar abajo).
 create temporary table antes as
 select id, estado::text as estado, id_admin, referencia_transferencia, fecha_desembolso, monto_bruto, comision, monto_neto
-from public.desembolso where id::text like '70000000-0000-0000-0000-0000000028%';
+from public.desembolso where id_monitoria::text like '50000000-0000-0000-0000-0000000028%';
 
 set local request.jwt.claims to '{"role":"authenticated"}';
 select is(
@@ -614,16 +622,18 @@ select is(
     privado.ejecutar_desembolso('70000000-0000-0000-0000-000000002822', 'TRF-1', date '2031-12-31', 22500, '2031-12-31 12:00-05'),
     privado.ejecutar_desembolso('70000000-0000-0000-0000-000000002823', 'TRF-1', date '2031-12-31', 22500, '2031-12-31 12:00-05'),
     privado.ejecutar_desembolso('70000000-0000-0000-0000-000000002825', 'TRF-1', date '2031-12-31', 22500, '2031-12-31 12:00-05'),
-    privado.ejecutar_desembolso('70000000-0000-0000-0000-000000002826', 'TRF-1', date '2031-12-31', 0, '2031-12-31 12:00-05')
+    privado.ejecutar_desembolso('70000000-0000-0000-0000-000000002826', 'TRF-1', date '2031-12-31', 0, '2031-12-31 12:00-05'),
+    privado.ejecutar_desembolso((select d.id from public.desembolso d where d.id_monitoria = '50000000-0000-0000-0000-000000002805'),
+                                'TRF-1', date '2031-12-31', 0, '2031-12-31 12:00-05')
   ],
-  array['no_realizada', 'antes_de_plazo', 'con_reporte', 'con_reporte', 'pagos_en_revision', 'sin_pagos_aprobados'],
-  'Al ejecutar se vuelve a validar como en la pantalla: monitoría no realizada, el instante exacto de fin + 24 h (N-6), un reporte en revisión o aceptado, un pago en revisión (D-39) y sin pagos aprobados');
+  array['no_realizada', 'antes_de_plazo', 'con_reporte', 'con_reporte', 'pagos_en_revision', 'caso_abierto', 'sin_pagos_aprobados'],
+  'Al ejecutar se vuelve a validar como en la pantalla: monitoría no realizada, el instante exacto de fin + 24 h (N-6), un reporte en revisión o aceptado, un pago en revisión (D-39), un caso P-24 abierto (HU-078) y sin pagos aprobados');
 select is(
   privado.ejecutar_desembolso('70000000-0000-0000-0000-000000002831', 'TRF-1', date '2031-12-31', 22500, '2031-12-31 12:00-05'),
   'monto_cambio', 'P-29: si el neto de ahora (27.000) no es el que vio el admin (22.500): monto_cambio');
 select results_eq(
   $$select id, estado::text, id_admin, referencia_transferencia, fecha_desembolso, monto_bruto, comision, monto_neto
-    from public.desembolso where id::text like '70000000-0000-0000-0000-0000000028%' order by id$$,
+    from public.desembolso where id_monitoria::text like '50000000-0000-0000-0000-0000000028%' order by id$$,
   $$select * from antes order by id$$,
   'Ninguno de esos intentos tocó un desembolso');
 

@@ -147,3 +147,10 @@
   border: 1px solid var(--alert);
   border-radius: var(--r);
 }
+
+/* Las observaciones de un pago por cobrar o asumir (HU-078) conservan los saltos de línea que escribió el admin. */
+.observaciones {
+  composes: meta;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
