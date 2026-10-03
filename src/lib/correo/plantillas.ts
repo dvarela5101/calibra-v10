@@ -1,5 +1,6 @@
 import { formatearDia, formatearFechaHora } from "@/lib/fechas";
 import { formatearPesos } from "@/lib/moneda";
+import { TEXTO_PAGO_EN_REVISION_AL_CANCELAR } from "@/lib/reembolsos/reglas";
 import { armarHtml, armarTexto, enlaceSeguro, type Contenido } from "./html";
 
 /**
@@ -24,6 +25,7 @@ export const PLANTILLAS = [
   "aviso_monitor_confirmada",
   "aviso_monitor_cancelada",
   "confirmacion_cita",
+  "cancelacion_cita",
 ] as const;
 
 export type Plantilla = (typeof PLANTILLAS)[number];
@@ -41,6 +43,7 @@ export const NOMBRE_DE_PLANTILLA: Record<Plantilla, string> = {
   aviso_monitor_confirmada: "Aviso al monitor: monitoría confirmada",
   aviso_monitor_cancelada: "Aviso al monitor: el estudiante canceló",
   confirmacion_cita: "Confirmación de la cita",
+  cancelacion_cita: "Cancelación de la cita",
 };
 
 export function esPlantilla(valor: string): valor is Plantilla {
@@ -101,6 +104,24 @@ export type DatosPorPlantilla = {
     enlaceSesion: string | null;
     cancelableHasta: string | null;
     enlace: string;
+  };
+  /**
+   * El Lead canceló su monitoría individual confirmada a tiempo (D-27, HU-024). Al mismo destinatario que la
+   * confirmación. `inicio` es un instante ISO. `reembolsos` son solo los que este correo pide (los de pagos hechos
+   * por el mismo correo): cada uno con su monto y el enlace completo a la página de la llave (HU-025). Sin ellos y
+   * con `conPagoEnRevision`, explica que la llave se pide si el admin aprueba el pago. `reembolsoAOtroContacto`:
+   * otro pago lo hizo alguien con otro correo y a esa persona se le pide la llave aparte. `enlaceCita` (el enlace de
+   * gestión) va solo si no hay reembolsos que pedir. Todo es un dato fijo anotado al cancelar: ni el reloj ni el
+   * estado de los pagos de después cambian el cuerpo, así que un reintento da el mismo correo.
+   */
+  cancelacion_cita: {
+    nombre: string;
+    materia: string;
+    inicio: string;
+    reembolsos: { monto: number; enlace: string }[];
+    conPagoEnRevision: boolean;
+    reembolsoAOtroContacto: boolean;
+    enlaceCita: string | null;
   };
 };
 
@@ -340,6 +361,51 @@ function contenidoDe<P extends Plantilla>(plantilla: P, datos: DatosPorPlantilla
           parrafos,
           boton: { texto: "Ver o gestionar mi cita", enlace: d.enlace },
           pie: "Este enlace es solo tuyo. No lo compartas.",
+        },
+      };
+    }
+    case "cancelacion_cita": {
+      const d = datos as DatosPorPlantilla["cancelacion_cita"];
+      const materia = linea(d.materia, "materia");
+      const cuando = formatearFechaHora(instante(d.inicio, "inicio"));
+      for (const r of d.reembolsos) {
+        if (!Number.isInteger(r.monto) || r.monto < 0) throw new RangeError("El monto de cada reembolso debe ser un entero de pesos, cero o más.");
+      }
+      const enlaces = d.reembolsos.map((r) => enlaceSeguro(r.enlace));
+      const parrafos = [
+        `Hola, ${cerrar(linea(d.nombre, "nombre"))}`,
+        `Cancelaste tu monitoría de ${materia} del ${cerrar(cuando)} La fecha quedó libre.`,
+      ];
+      // D-27: pide la llave de los reembolsos que ya se crearon con un pago de este mismo correo (RN-60, RN-61).
+      if (d.reembolsos.length > 0) {
+        const suma = d.reembolsos.reduce((total, r) => total + r.monto, 0);
+        parrafos.push(
+          `Vamos a devolverte ${formatearPesos(suma)}. Para hacer la transferencia necesitamos tu llave, por ejemplo tu celular o tu correo registrado en el banco.`,
+        );
+        // El botón lleva el primero; si hubo más pagos, cada uno tiene su propia llave y su propio enlace.
+        d.reembolsos.slice(1).forEach((r, i) => parrafos.push(`La llave del otro pago de ${formatearPesos(r.monto)}: ${enlaces[i + 1]}`));
+      }
+      if (d.reembolsoAOtroContacto) {
+        parrafos.push("Le escribimos a quien pagó, a su correo, para pedirle la llave y devolverle el dinero.");
+      }
+      // P-07: con el pago todavía en revisión no hay reembolso que pedir; la llave se pide solo si el admin lo aprueba.
+      if (d.conPagoEnRevision) parrafos.push(TEXTO_PAGO_EN_REVISION_AL_CANCELAR);
+      const boton =
+        d.reembolsos.length > 0
+          ? { texto: "Enviar mi llave", enlace: enlaces[0] }
+          : d.enlaceCita != null
+            ? { texto: "Ver mi cita", enlace: d.enlaceCita }
+            : undefined;
+      return {
+        asunto: `Cancelaste tu monitoría de ${materia}`,
+        contenido: {
+          titulo: "Tu monitoría quedó cancelada",
+          parrafos,
+          boton,
+          pie:
+            d.reembolsos.length > 0
+              ? "Solo te pedimos la llave. Calibra nunca te pide claves del banco ni datos de tu tarjeta."
+              : "Puedes agendar otra monitoría cuando quieras.",
         },
       };
     }

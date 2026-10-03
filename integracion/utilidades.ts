@@ -541,6 +541,9 @@ export class Fixtures {
     if (reembolsos.length) await intentar("borrar reembolso", this.admin.from("reembolso").delete().in("id", reembolsos));
     if (reportes.length) await intentar("borrar reporte", this.admin.from("reporte_inasistencia").delete().in("id", reportes));
     if (desembolsos.length) await intentar("borrar desembolso", this.admin.from("desembolso").delete().in("id", desembolsos));
+    // Los reembolsos de los pagos anotados: los crean los triggers y la cancelación (HU-024), no `crearReembolso`, y la
+    // llave foránea impide borrar el pago antes. Su solicitud de llave se va en cascada.
+    if (pagos.length) await intentar("borrar reembolso de los pagos", this.admin.from("reembolso").delete().in("id_pago", pagos));
     if (pagos.length) await intentar("borrar pago", this.admin.from("pago").delete().in("id", pagos));
     // Después de los pagos: la llave foránea pago.comprobante impide borrar antes un revisado en uso. Además de
     // los anotados con marcarRevisado(), los de cualquier archivo borrado arriba (una revisión que lo anotó).

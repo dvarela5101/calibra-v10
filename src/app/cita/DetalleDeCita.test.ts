@@ -36,12 +36,13 @@ const PRESENCIAL: Cita = {
 
 const VIRTUAL: Cita = { ...PRESENCIAL, presencial: false, lugar: null, enlace: "https://meet.example/abc-defg-hij" };
 
-const pintar = (cita: Cita, ahora: Date = AHORA, extra: { conLista?: boolean; acciones?: string } = {}) =>
+const pintar = (cita: Cita, ahora: Date = AHORA, extra: { conLista?: boolean; acciones?: string; contactoSoporte?: string | null } = {}) =>
   renderToStaticMarkup(
     createElement(DetalleDeCita, {
       cita,
       ahora,
       conLista: extra.conLista,
+      contactoSoporte: extra.contactoSoporte,
       acciones: extra.acciones ? createElement("button", { type: "button" }, extra.acciones) : undefined,
     }),
   );
@@ -82,7 +83,7 @@ describe("DetalleDeCita (HU-019): confirmada antes del inicio, con plazo", () =>
     expect(t).not.toContain("aprobado");
   });
 
-  it("no pone botones (HU-024) ni cifras de comisión, y no ofrece la lista sin sesión", () => {
+  it("sin acciones que pasarle no pone botones, ni cifras de comisión, y no ofrece la lista sin sesión", () => {
     expect(html).not.toContain("<button");
     expect(t).not.toMatch(/comisi/i);
     expect(t).not.toContain("Ver mis citas");
@@ -135,6 +136,48 @@ describe("DetalleDeCita (HU-019): confirmada antes del inicio, sin plazo", () =>
   it("una cita agendada con menos de 12 horas (RN-37) nace sin plazo", () => {
     const tarde = { ...PRESENCIAL, cancelableHasta: new Date(AHORA.getTime() - HORA) };
     expect(texto(pintar(tarde))).toContain("El plazo para cancelarla terminó el");
+  });
+});
+
+describe("DetalleDeCita (HU-024, criterio 3): sin plazo para cancelar", () => {
+  const SIN_PLAZO = new Date(PRESENCIAL.cancelableHasta.getTime() + 1);
+  const FUERZA_MAYOR = "Pasó el plazo para cancelarla. Los casos de fuerza mayor los resuelve un admin";
+
+  it("explica que los casos de fuerza mayor los resuelve un admin y da el correo de soporte", () => {
+    const html = pintar(PRESENCIAL, SIN_PLAZO, { contactoSoporte: "soporte@calibra.example" });
+    expect(texto(html)).toContain(`${FUERZA_MAYOR}: escríbenos a soporte@calibra.example.`);
+    expect(texto(html)).not.toContain("..");
+    // Es una explicación, no una acción: sin botones.
+    expect(html).not.toContain("<button");
+  });
+
+  it("sin correo de soporte no promete un canal que no existe", () => {
+    for (const contactoSoporte of [null, undefined, "  "]) {
+      const t = texto(pintar(PRESENCIAL, SIN_PLAZO, { contactoSoporte }));
+      expect(t, String(contactoSoporte)).toContain(`${FUERZA_MAYOR}.`);
+      expect(t, String(contactoSoporte)).not.toContain("escríbenos");
+    }
+  });
+
+  it("también lo dice la cita agendada con menos de 12 horas (RN-37)", () => {
+    const tarde = { ...PRESENCIAL, cancelableHasta: new Date(AHORA.getTime() - HORA) };
+    expect(texto(pintar(tarde))).toContain(`${FUERZA_MAYOR}.`);
+  });
+
+  it("con plazo no habla de fuerza mayor, y el límite exacto todavía cuenta como con plazo (P-40)", () => {
+    expect(texto(pintar(PRESENCIAL, AHORA, { contactoSoporte: "soporte@calibra.example" }))).not.toContain("fuerza mayor");
+    expect(texto(pintar(PRESENCIAL, PRESENCIAL.cancelableHasta, { contactoSoporte: "soporte@calibra.example" }))).not.toContain("fuerza mayor");
+  });
+
+  it("cuando ya empezó, terminó, se realizó o se canceló ya no hay nada que explicar del plazo", () => {
+    const soporte = { contactoSoporte: "soporte@calibra.example" };
+    const casos = [
+      pintar(PRESENCIAL, new Date(INICIO.getTime() + 30 * 60_000), soporte),
+      pintar(PRESENCIAL, new Date(PRESENCIAL.finProgramado.getTime() + 1), soporte),
+      pintar({ ...PRESENCIAL, estado: "realizada" }, new Date(INICIO.getTime() + 2 * HORA), soporte),
+      pintar({ ...PRESENCIAL, estado: "cancelada", motivoCancelacion: "estudiante" }, SIN_PLAZO, soporte),
+    ];
+    for (const html of casos) expect(texto(html)).not.toContain("fuerza mayor");
   });
 });
 
@@ -208,6 +251,25 @@ describe("DetalleDeCita (HU-019): cancelada", () => {
 
   it("sin reembolso no dice nada de devolver dinero", () => {
     expect(texto(cancelada({ motivoCancelacion: "pago_rechazado" }))).not.toContain("devol");
+  });
+
+  it("la cancelaste con el pago todavía en revisión (P-07): dice que si se aprueba te piden la llave y si no, no hay reembolso", () => {
+    const t = texto(cancelada({ motivoCancelacion: "estudiante", estadoPago: "en_revision", estadoReembolso: null }));
+    expect(t).toContain("La cancelaste tú.");
+    expect(t).toContain("Tu pago todavía está en revisión. Si se aprueba, te pedimos la llave para devolverte el dinero; si se rechaza, no hay reembolso.");
+  });
+
+  it("la cancelaste con el pago rechazado: no hay reembolso", () => {
+    const t = texto(cancelada({ motivoCancelacion: "estudiante", estadoPago: "rechazado", estadoReembolso: null }));
+    expect(t).toContain("Tu pago no se aprobó, así que no hay reembolso.");
+    expect(t).not.toContain("Vamos a devolverte");
+  });
+
+  it("la cancelaste con el reembolso ya creado: solo dice del reembolso, no del pago en revisión", () => {
+    const t = texto(cancelada({ motivoCancelacion: "estudiante", estadoPago: "aprobado", estadoReembolso: "esperando_llave" }));
+    expect(t).toContain("Vamos a devolverte el dinero.");
+    expect(t).not.toContain("todavía está en revisión");
+    expect(t).not.toContain("no se aprobó");
   });
 });
 

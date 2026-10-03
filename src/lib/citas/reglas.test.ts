@@ -7,6 +7,7 @@ import {
   rutaDeCita,
   rutaDeMiCita,
   RUTA_DE_CITAS,
+  textoDelDineroAlCancelar,
   textoDelMotivo,
   textoDelReembolso,
   tieneFormaDeTokenDeCita,
@@ -163,6 +164,14 @@ describe("vistaDeCita: confirmada antes del inicio (criterio 2 de HU-019)", () =
     expect(vista.titulo).toBe("Tu monitoría está confirmada");
   });
 
+  it("sin plazo y antes del inicio hay que explicar los casos de fuerza mayor (criterio 3 de HU-024); con plazo no", () => {
+    expect(vistaDeCita(CITA, en(CANCELABLE_HASTA, -HORA)).mostrarCasosExtremos).toBe(false);
+    expect(vistaDeCita(CITA, CANCELABLE_HASTA).mostrarCasosExtremos).toBe(false); // borde inclusivo (P-40)
+    expect(vistaDeCita(CITA, en(CANCELABLE_HASTA, 1))).toMatchObject({ puedeCancelar: false, mostrarCasosExtremos: true });
+    // Agendada con poca antelación (RN-37): nunca tuvo plazo.
+    expect(vistaDeCita(CITA, en(INICIO, -2 * HORA))).toMatchObject({ puedeCancelar: false, mostrarCasosExtremos: true });
+  });
+
   it("muestra el lugar o el enlace (D-21) y el pago en revisión con el texto de D-22 adaptado a la página", () => {
     const vista = vistaDeCita(CITA, en(INICIO, -6 * HORA));
     expect(vista.mostrarLugarYEnlace).toBe(true);
@@ -192,6 +201,7 @@ describe("vistaDeCita: confirmada en curso o terminada", () => {
       titulo: "Tu monitoría ya empezó",
       textoDelPlazo: null,
       puedeCancelar: false,
+      mostrarCasosExtremos: false,
       puedeReportar: true,
       mostrarLugarYEnlace: true,
     });
@@ -205,6 +215,7 @@ describe("vistaDeCita: confirmada en curso o terminada", () => {
       textoDelEstado: "El monitor la marcará como realizada.",
       textoDelPago: null,
       puedeCancelar: false,
+      mostrarCasosExtremos: false,
       puedeReportar: true,
       mostrarLugarYEnlace: false,
     });
@@ -256,6 +267,46 @@ describe("vistaDeCita: cancelada", () => {
     expect(vistaDeCita(cita({ estado: "cancelada", motivoCancelacion: "estudiante" }), INICIO).textoDelReembolso).toBeNull();
   });
 
+  it("cancelada por el estudiante con el pago en revisión (P-07): todavía no hay reembolso y se dice qué pasa según se resuelva (D-27)", () => {
+    const vista = vistaDeCita(cita({ estado: "cancelada", motivoCancelacion: "estudiante", estadoPago: "en_revision" }), en(INICIO, -6 * HORA));
+    expect(vista.textoDelPago).toBe(
+      "Tu pago todavía está en revisión. Si se aprueba, te pedimos la llave para devolverte el dinero; si se rechaza, no hay reembolso.",
+    );
+    expect(vista.textoDelReembolso).toBeNull();
+  });
+
+  it("cancelada por el estudiante con el pago rechazado: no hay reembolso", () => {
+    const vista = vistaDeCita(cita({ estado: "cancelada", motivoCancelacion: "estudiante", estadoPago: "rechazado" }), en(INICIO, -6 * HORA));
+    expect(vista.textoDelPago).toBe("Tu pago no se aprobó, así que no hay reembolso.");
+  });
+
+  it("cancelada por el estudiante con el reembolso ya creado, o con un pago que no hay que reembolsar, no dice nada del pago", () => {
+    const ahora = en(INICIO, -6 * HORA);
+    const estudiante = { estado: "cancelada", motivoCancelacion: "estudiante" } as const;
+    // El pago se aprobó después de cancelar (P-07): ya hay reembolso y lo dice textoDelReembolso, no textoDelPago.
+    const tarde = vistaDeCita(cita({ ...estudiante, estadoPago: "aprobado", estadoReembolso: "esperando_llave" }), ahora);
+    expect(tarde.textoDelPago).toBeNull();
+    expect(tarde.textoDelReembolso).toContain("Vamos a devolverte el dinero");
+    expect(vistaDeCita(cita({ ...estudiante, estadoPago: "en_revision", estadoReembolso: "esperando_llave" }), ahora).textoDelPago).toBeNull();
+    expect(vistaDeCita(cita({ ...estudiante, estadoPago: "aprobado" }), ahora).textoDelPago).toBeNull();
+    expect(vistaDeCita(cita({ ...estudiante, estadoPago: "sin_pagar" }), ahora).textoDelPago).toBeNull();
+  });
+
+  it("las canceladas por otro motivo no dicen nada del pago: su motivo ya lo explica", () => {
+    for (const motivoCancelacion of ["pago_rechazado", "monitor_no_asistio", "diferencia_no_cubierta", "reserva_expirada", null] as const) {
+      for (const estadoPago of ["en_revision", "rechazado"] as const) {
+        expect(vistaDeCita(cita({ estado: "cancelada", motivoCancelacion, estadoPago }), INICIO).textoDelPago, `${motivoCancelacion} ${estadoPago}`).toBeNull();
+      }
+    }
+  });
+
+  it("una cancelada nunca ofrece cancelar ni explica casos de fuerza mayor", () => {
+    expect(vistaDeCita(cita({ estado: "cancelada", motivoCancelacion: "estudiante" }), en(INICIO, -6 * HORA))).toMatchObject({
+      puedeCancelar: false,
+      mostrarCasosExtremos: false,
+    });
+  });
+
   it("textoDelMotivo cubre cada motivo y la ausencia de motivo", () => {
     expect(textoDelMotivo("estudiante")).toBe("La cancelaste tú.");
     expect(textoDelMotivo("monitor_no_asistio")).toBe("El monitor no asistió y se aceptó tu reporte.");
@@ -275,7 +326,24 @@ describe("vistaDeCita: cancelada", () => {
 describe("vistaDeCita: pendiente de pago", () => {
   it("es solo el respaldo: la página manda estas a la reserva", () => {
     const vista = vistaDeCita(cita({ estado: "pendiente_pago", estadoPago: "sin_pagar", lugar: null }), en(INICIO, -6 * HORA));
-    expect(vista).toMatchObject({ tipo: "pendiente_pago", puedeCancelar: false, puedeReportar: false, mostrarLugarYEnlace: false });
+    expect(vista).toMatchObject({ tipo: "pendiente_pago", puedeCancelar: false, mostrarCasosExtremos: false, puedeReportar: false, mostrarLugarYEnlace: false });
+  });
+});
+
+describe("textoDelDineroAlCancelar (HU-024, paso de confirmación)", () => {
+  it("con el pago aprobado, que se devuelve completo y se pide la llave por correo", () => {
+    expect(textoDelDineroAlCancelar("aprobado")).toBe("Te devolvemos el valor completo: te pedimos la llave por correo.");
+  });
+
+  it("con el pago en revisión, el texto de D-27 (el mismo del correo)", () => {
+    expect(textoDelDineroAlCancelar("en_revision")).toBe(
+      "Tu pago todavía está en revisión. Si se aprueba, te pedimos la llave para devolverte el dinero; si se rechaza, no hay reembolso.",
+    );
+  });
+
+  it("sin pago aprobado ni en revisión no hay nada que decir del dinero", () => {
+    expect(textoDelDineroAlCancelar("rechazado")).toBeNull();
+    expect(textoDelDineroAlCancelar("sin_pagar")).toBeNull();
   });
 });
 
@@ -285,6 +353,8 @@ describe("lo que muestra la página no lleva comisión ni contacto del monitor (
       CITA,
       cita({ estado: "realizada" }),
       cita({ estado: "cancelada", motivoCancelacion: "monitor_no_asistio", estadoReembolso: "reembolsado" }),
+      cita({ estado: "cancelada", motivoCancelacion: "estudiante", estadoPago: "en_revision" }),
+      cita({ estado: "cancelada", motivoCancelacion: "estudiante", estadoPago: "rechazado" }),
       cita({ estado: "pendiente_pago" }),
     ];
     for (const caso of casos) {
@@ -292,6 +362,9 @@ describe("lo que muestra la página no lleva comisión ni contacto del monitor (
         const textos = Object.values(vistaDeCita(caso, ahora)).filter((v): v is string => typeof v === "string");
         for (const texto of textos) expect(texto).not.toMatch(/comisi|neto/i);
       }
+    }
+    for (const estadoPago of ["aprobado", "en_revision", "rechazado", "sin_pagar"] as const) {
+      expect(textoDelDineroAlCancelar(estadoPago) ?? "").not.toMatch(/comisi|neto/i);
     }
     expect(Object.keys(CITA).filter((campo) => /comisi|correo|telefono|contacto/i.test(campo))).toEqual([]);
   });

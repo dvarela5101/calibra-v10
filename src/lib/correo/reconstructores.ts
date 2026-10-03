@@ -1,5 +1,6 @@
 import "server-only";
 import { reconstruirAvisoCancelada, reconstruirAvisoConfirmada } from "@/lib/avisos/servidor";
+import { reconstruirCancelacionCita } from "@/lib/citas/cancelar";
 import { reconstruirConfirmacionCita } from "@/lib/citas/servidor";
 import { reconstruirVerificacion } from "@/lib/leads/servidor";
 import { reconstruirInvitacion } from "@/lib/monitores/servidor";
@@ -18,6 +19,7 @@ export const RECONSTRUCTORES: Reconstructores = {
   aviso_monitor_cancelada: (entidad) => reconstruirAvisoCancelada(entidad),
   resena_individual: (entidad) => reconstruirInvitacionResena(entidad),
   confirmacion_cita: (entidad) => reconstruirConfirmacionCita(entidad),
+  cancelacion_cita: (entidad) => reconstruirCancelacionCita(entidad),
   // Todavía ninguna HU dispara estas plantillas.
   recuperacion_diagnostico: null,
   solicitud_llave_reembolso: null,

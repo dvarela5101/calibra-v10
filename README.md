@@ -219,8 +219,19 @@ HU-019 (P-04, D-19 a D-25): cuando una monitoría individual pasa de `pendiente_
 - El token se guarda tal cual y no vence mientras exista la cita (D-20): sirve para ver la cita y, con HU-024 y HU-029, para cancelarla y reportar inasistencia. Abrirlo no liga el navegador al Lead.
 - `/cita?token=…` muestra la cita (`public.cita_por_token`, solo `service_role`). Sin token, `/cita` lista las citas del navegador (`public.mis_citas`) y `/cita/[id]` abre una (`public.mi_cita`), las dos con la sesión del Lead (`privado.es_mi_lead`). Las rutas van fuera de `(publico)`: abrir el enlace no crea una sesión anónima. Llevan `noindex` y `no-referrer`.
 - El lugar de la presencial o el enlace de la virtual solo salen con la cita confirmada, aunque el pago siga en revisión (D-21). Si el pago se rechaza, o la cita terminó, se cancela o se realiza, dejan de mostrarse.
-- La página dice hasta cuándo se puede cancelar, sin botón: cancelar llega con HU-024 (D-25). `src/lib/citas/reglas.ts` (`vistaDeCita`) decide los textos de cada estado.
+- La página dice hasta cuándo se puede cancelar y, dentro del plazo, ofrece cancelar (HU-024, abajo). `src/lib/citas/reglas.ts` (`vistaDeCita`) decide los textos de cada estado.
 - "Mis citas" está en el pie de página y en la reserva confirmada ("Ver y gestionar mi cita").
+
+## Cancelar una cita
+
+HU-024 (RN-60, RN-61, P-07, D-26 a D-29): el Lead cancela su monitoría individual `confirmada` hasta 12 h antes del inicio, con el enlace del correo de confirmación o con la sesión del navegador. Fuera de plazo no hay botón y la página explica que los casos de fuerza mayor los resuelve un admin.
+
+- `privado.cancelar_cita(id, ahora)` (definer, ningún rol la ejecuta) bloquea la monitoría y después sus pagos, compara con `public.cancelable_hasta` y la hora de la base (borde inclusivo, P-40) y pasa la cita a `cancelada` (`estudiante`): la fecha queda libre y sale el aviso al monitor de HU-051. Responde `cancelada`, `ya_cancelada`, `fuera_de_plazo`, `no_cancelable`, `no_individual` o `no_existe`.
+- Dos puertas, siempre con `now()`: `public.cancelar_cita_por_token` (solo `service_role`, el token de `confirmacion_cita`) y `public.cancelar_mi_cita` (la sesión del Lead, `privado.es_mi_lead`). La acción `src/app/cita/acciones.ts` elige la puerta; `CancelarCita.tsx` pide confirmar antes.
+- Por cada pago `aprobado` se crea un reembolso total en `esperando_llave` con el motivo «Cancelaste la monitoría dentro del plazo.», asignado al primer admin activo (D-26). Sin admin activo se cancela igual y el reembolso queda sin admin (D-28); el trabajo `calibra-asignar-reembolsos` (cada 5 minutos) se lo asigna cuando haya uno.
+- P-07: si el pago seguía en revisión, el trigger `pago_reembolsa_cancelacion` crea el reembolso cuando el admin lo aprueba. Un pago rechazado no tiene reembolso (RN-43).
+- Cada reembolso nace con su token en `public.solicitud_llave` (solo `service_role`), para la página de la llave de HU-025 (`/reembolso?token=…`).
+- El correo `cancelacion_cita` (D-27) va al mismo destinatario que la confirmación. Si hubo reembolso, pide ahí la llave; si el pago seguía en revisión, explica que la llave se pide si se aprueba. Si pagó otra persona con otro correo, dice que le escribimos a ella: ese pedido lo manda HU-025 (`solicitud_llave.en_correo_de_cancelacion` marca las que ya pidió este correo). Sale por `public.cancelacion_cita` → `privado.disparar_cancelaciones_cita()` → `/api/procesos/avisar-cancelaciones` (mismos secretos de Vault), con pg_cron cada 5 minutos (`calibra-avisar-cancelaciones`). Entidad = id de la monitoría; HU-065 lo reintenta.
 
 ## Franjas del monitor
 
@@ -252,6 +263,7 @@ Los comprobantes van en el bucket privado `comprobantes` de Supabase Storage (HU
 | `recuperacion_diagnostico` | Diagnóstico completado: enlace con token para recuperar los resultados | Lead |
 | `resena_individual` | Monitoría individual realizada: enlace a la reseña, sin límite de tiempo | Lead |
 | `confirmacion_cita` | Monitoría individual confirmada: resumen y enlace para gestionar la cita (HU-019) | Lead |
+| `cancelacion_cita` | El Lead canceló a tiempo: confirma la cancelación y, si hay reembolso, pide la llave (HU-024) | Lead |
 | `solicitud_llave_reembolso` | Reembolso creado: se pide la llave para devolver el dinero | Pagador |
 | `pago_rechazado_individual` | Pago rechazado en una individual: la cita se cancela | Pagador |
 | `pago_rechazado_grupal` | Pago rechazado en una grupal: se anula ese cupo | Pagador |
