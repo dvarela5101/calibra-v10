@@ -1,6 +1,21 @@
 # Reparto de trabajo
 
-**Actualizado:** 2 de octubre de 2026, tarde (ver "Ajuste del 2-oct-2026, tarde"; después vienen la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+**Actualizado:** 2 de octubre de 2026, tarde (ver "Ajuste del 2-oct-2026, revisión de HU-020"; después vienen el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+
+## Ajuste del 2-oct-2026, revisión de HU-020
+
+- **Hecha:** HU-020 ([PR #32](https://github.com/dvarela5101/calibra-v10/pull/32)). **En revision:** HU-074 (Juzou04, [PR #34](https://github.com/dvarela5101/calibra-v10/pull/34)). **En progreso:** HU-024 y HU-058 (dvarela5101), HU-028 y HU-075 (Juzou04).
+- D-39 cierra la revisión de HU-020: amplía [HU-076](../backlog/HU-076.md) (correos del rechazo, también al pagador), crea [HU-078](../backlog/HU-078.md) (casos P-24) y suma un criterio a HU-028. HU-076, HU-077 y HU-078 pasan a Lista. Reparto confirmado por dvarela5101.
+
+| Persona | Siguiente, en orden |
+|---|---|
+| dvarela5101 | [HU-024](../backlog/HU-024.md) (cancelar), [HU-025](../backlog/HU-025.md) (llave del reembolso), [HU-076](../backlog/HU-076.md) (correos del rechazo) y [HU-029](../backlog/HU-029.md) (reportar inasistencia). En paralelo, [HU-058](../backlog/HU-058.md) (CAPTCHA) |
+| Juzou04 | [HU-028](../backlog/HU-028.md) y [HU-075](../backlog/HU-075.md) (en curso); después [HU-078](../backlog/HU-078.md) (casos P-24, sigue a HU-028), [HU-026](../backlog/HU-026.md) (espera a HU-025) y [HU-030](../backlog/HU-030.md). En el hueco: [HU-077](../backlog/HU-077.md) (otro admin revisa un pago vencido) |
+
+Posibles choques:
+- **HU-028 y HU-078:** HU-078 cambia el cálculo y el bloqueo del desembolso que deja HU-028, así que va después.
+- **HU-076 y HU-077:** las dos tocan la revisión de pagos de HU-020 (`acciones.ts`, y HU-077 también `privado.revisar_pago`). El PR que llegue segundo integra al otro.
+- **HU-076 y HU-024:** el correo al pagador de una cita ya cancelada sigue el tono del correo de cancelación de HU-024. HU-025 va antes que HU-076 para no hacer esperar a HU-026.
 
 ## Ajuste del 2-oct-2026, tarde
 

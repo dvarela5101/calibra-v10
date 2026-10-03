@@ -32,8 +32,8 @@ export async function mover(datos: FormData): Promise<void> {
 }
 
 /**
- * HU-054 (RN-23, P-44): desactiva a otro admin. Sus reembolsos y reportes abiertos pasan al siguiente admin activo y
- * su cuenta queda bloqueada; sus certificados y revisiones se conservan.
+ * HU-054 (RN-23, P-44): desactiva a otro admin. Sus pagos en revisión (HU-074) y sus reembolsos y reportes abiertos
+ * pasan al siguiente admin activo y su cuenta queda bloqueada; sus certificados y revisiones se conservan.
  */
 export async function desactivar(datos: FormData): Promise<void> {
   const sesion = await exigirRol("admin", RUTA);

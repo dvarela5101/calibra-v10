@@ -9,7 +9,10 @@ export type MiembroDelEquipo = {
   correo: string;
   ordenRevision: number;
   activo: boolean;
-  /** Reembolsos activos y reportes en revisión a su nombre: pasan al siguiente si se desactiva (P-44). */
+  /**
+   * Reembolsos activos, reportes en revisión y pagos en revisión (HU-074) a su nombre: pasan al siguiente si se
+   * desactiva (P-44).
+   */
   casosAbiertos: number;
 };
 
