@@ -20,6 +20,7 @@ const PATRONES_DE_SECRETO: [string, RegExp][] = [
   ["llave privada PEM", /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/],
   ["llave de Resend", /\bre_[A-Za-z0-9]{8,}_[A-Za-z0-9]{16,}/],
   ["token de Vercel asignado", /VERCEL_TOKEN\s*=\s*\S{8,}/],
+  ["secreto de Turnstile asignado", /TURNSTILE_SECRET_KEY[ \t]*=[ \t]*\S{8,}/],
 ];
 
 describe("secretos fuera del repo", () => {

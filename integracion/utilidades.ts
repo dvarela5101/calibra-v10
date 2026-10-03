@@ -8,6 +8,12 @@ export type Cliente = SupabaseClient<Database>;
 
 export type UsuarioPrueba = { id: string; correo: string; contrasena: string };
 
+/**
+ * HU-058: el token que Auth local acepta con la llave secreta de prueba de Turnstile (la que publica Cloudflare:
+ * valida cualquier token no vacío). Con el CAPTCHA de Auth apagado se ignora, así que pasarlo siempre es inocuo.
+ */
+export const TOKEN_CAPTCHA_DE_PRUEBA = "XXXX.DUMMY.TOKEN.XXXX";
+
 const AYUDA = "corre npm run db:iniciar y npm run db:env";
 const HOSTS_LOCALES = ["127.0.0.1", "localhost", "[::1]", "::1"];
 
@@ -87,6 +93,18 @@ export async function idsVisibles(
   return (data as unknown as Record<string, string>[]).map((fila) => fila[columna]);
 }
 
+/** Cliente nuevo con la sesión de quien entra con correo y contraseña (lleva el token del CAPTCHA, HU-058). */
+export async function iniciarSesionConClave(correo: string, contrasena: string): Promise<Cliente> {
+  const cliente = crearCliente();
+  const { error } = await cliente.auth.signInWithPassword({
+    email: correo,
+    password: contrasena,
+    options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA },
+  });
+  if (error) throw new Error(`signInWithPassword: ${error.message}`);
+  return cliente;
+}
+
 const contrasenaAleatoria = () => randomBytes(18).toString("base64url");
 const correoUnico = () => `prueba-${randomUUID()}@calibra.test`;
 const sinBorrar = (mensaje: string) => /not found/i.test(mensaje);
@@ -128,7 +146,7 @@ export class Fixtures {
   /** Visitante anónimo: devuelve el cliente con la sesión activa y su id. */
   async crearAnonimo(): Promise<{ cliente: Cliente; id: string }> {
     const cliente = crearCliente();
-    const { data, error } = await cliente.auth.signInAnonymously();
+    const { data, error } = await cliente.auth.signInAnonymously({ options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA } });
     if (error || !data.user) throw new Error(`signInAnonymously: ${error?.message ?? "sin usuario"}`);
     this.usuarios.push(data.user.id);
     return { cliente, id: data.user.id };
@@ -136,10 +154,7 @@ export class Fixtures {
 
   /** Cliente nuevo con la sesión real de esa cuenta (nada de claims simulados). */
   async iniciarSesion(usuario: UsuarioPrueba): Promise<Cliente> {
-    const cliente = crearCliente();
-    const { error } = await cliente.auth.signInWithPassword({ email: usuario.correo, password: usuario.contrasena });
-    if (error) throw new Error(`signInWithPassword: ${error.message}`);
-    return cliente;
+    return iniciarSesionConClave(usuario.correo, usuario.contrasena);
   }
 
   async crearAdmin() {

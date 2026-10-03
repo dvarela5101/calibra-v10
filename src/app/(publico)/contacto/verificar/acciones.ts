@@ -13,7 +13,7 @@ export type EstadoConfirmacion = { error: string | null };
  */
 export async function confirmar(_anterior: EstadoConfirmacion, datos: FormData): Promise<EstadoConfirmacion> {
   const sesion = await obtenerSesion();
-  if (!sesion) return { error: "No encontramos tu sesión. Recarga la página e intenta de nuevo." };
+  if (!sesion) return { error: "No pudimos verificar tu navegador. Recarga la página e intenta de nuevo." };
   if (sesion.rol === "monitor" || sesion.rol === "admin") {
     return { error: "Estás con tu cuenta del equipo de Calibra. Abre el enlace en otra ventana, sin iniciar sesión." };
   }

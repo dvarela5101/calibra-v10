@@ -1,0 +1,37 @@
+/* Contenedor del widget de Cloudflare Turnstile para la sesión anónima (HU-058). */
+
+/*
+ * Vive en document.body, fuera de React (lo crea src/lib/captcha/sesionAnonima.ts), fijo abajo y
+ * centrado, por encima del contenido. Sin reto a la vista no tiene caja: el modo interaction-only
+ * deja el iframe oculto y el contenedor queda sin tamaño, sin borde ni sombra.
+ */
+.contenedor {
+  position: fixed;
+  inset-block-end: var(--e4);
+  inset-inline: 0;
+  margin-inline: auto;
+  inline-size: fit-content;
+  z-index: 1000;
+}
+
+/*
+ * Contenedor del widget en los formularios de cuentas (CampoCaptcha, HU-058 D-30). Sin `display: contents`
+ * el contenedor vacío sumaría un hueco (`gap`) en la columna del formulario; así, mientras el modo
+ * interaction-only deja el iframe oculto no ocupa nada, y cuando Cloudflare pide la casilla ella entra en la columna.
+ */
+.campo {
+  display: contents;
+}
+
+/*
+ * Cloudflare pide interacción: se muestra la tarjeta con su casilla. El iframe es de un tercero y
+ * no se deja forzar a 14 px de texto ni a 44 px de área táctil: es la excepción documentada en el
+ * riesgo 8 del plan de HU-058. Solo aparece si Cloudflare lo decide.
+ */
+.visible {
+  padding: var(--e2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-chico);
+  background: var(--surface);
+  box-shadow: var(--sombra-carta);
+}

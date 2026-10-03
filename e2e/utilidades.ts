@@ -166,7 +166,44 @@ export type Cuentas = {
   esperarCorreo(destinatario: string): Promise<CorreoRecibido>;
 };
 
+/** Token de prueba de Turnstile: Auth local lo valida contra Cloudflare con la llave secreta de prueba (HU-058). */
+export const TOKEN_CAPTCHA_DE_PRUEBA = "XXXX.DUMMY.TOKEN.XXXX";
+
+/**
+ * Reemplaza el script de Turnstile (`src/lib/captcha/turnstile.ts` lo carga de Cloudflare) por un widget de mentira
+ * que entrega el token de prueba apenas se dibuja (`setTimeout(…, 0)`). Auth sigue verificando el token contra
+ * Cloudflare con la llave secreta de prueba: el stub solo ahorra el reto en el navegador, así el alta de la sesión
+ * anónima ocurre en milisegundos y `networkidle` vuelve a significar "ya hay sesión". `reset(id)` vuelve a entregar un
+ * token: los formularios de cuentas vacían el suyo al terminar cada acción y esperan que `reset` traiga otro.
+ * `render` devuelve un id no vacío (con `undefined` la app lo toma como un fallo).
+ */
+const SCRIPT_DE_TURNSTILE = `(() => {
+  const token = ${JSON.stringify(TOKEN_CAPTCHA_DE_PRUEBA)};
+  const widgets = new Map();
+  let siguiente = 0;
+  const entregar = (id) => setTimeout(() => widgets.get(id)?.callback?.(token), 0);
+  window.turnstile = {
+    render(_contenedor, opciones) {
+      const id = "stub-" + ++siguiente;
+      widgets.set(id, opciones);
+      entregar(id);
+      return id;
+    },
+    reset(id) { entregar(id); },
+    remove(id) { widgets.delete(id); },
+    getResponse: () => token,
+  };
+})();`;
+
 export const test = base.extend<{ cuentas: Cuentas }>({
+  // Todo contexto de la fixture `page` trae el stub de Turnstile. Los que una prueba crea con `browser.newContext` no
+  // lo heredan y usan el script real de Cloudflare (lo esperado, p. ej. al reabrir el navegador con lo guardado).
+  context: async ({ context }, entregar) => {
+    await context.route("**/challenges.cloudflare.com/turnstile/v0/api.js*", (ruta) =>
+      ruta.fulfill({ status: 200, contentType: "text/javascript; charset=utf-8", body: SCRIPT_DE_TURNSTILE }),
+    );
+    await entregar(context);
+  },
   // Playwright exige desestructurar el primer argumento, aunque no dependa de nada. El segundo
   // no se llama `use` porque eslint lo confundiría con un hook de React.
   cuentas: async ({}, entregar) => {

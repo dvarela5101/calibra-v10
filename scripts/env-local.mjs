@@ -36,6 +36,9 @@ const contenido = [
   `LLAVE_PLATAFORMA_QR_URL=${QR_DE_PRUEBA}`,
   "PROVEEDOR_NOMBRE=Calibra (prueba)",
   "PROVEEDOR_DOCUMENTO=000000000",
+  // CAPTCHA (HU-058): llave del sitio de PRUEBA de Cloudflare (widget invisible, siempre valida). Es pública
+  // por diseño. La secreta no va aquí: no la lee la app, solo Auth, y la pone `npm run db:iniciar`.
+  "NEXT_PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000BB",
   "",
 ].join("\n");
 

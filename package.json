@@ -14,7 +14,7 @@
     "test:integracion": "vitest run --config vitest.integracion.config.mts",
     "test:e2e": "playwright test",
     "verificar": "npm run lint && npm run typecheck && npm test && npm run contenido:validar && npm run build && npm run test:e2e",
-    "db:iniciar": "supabase start -x realtime,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta",
+    "db:iniciar": "node scripts/db-iniciar.mjs -x realtime,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta",
     "db:reiniciar": "supabase db reset",
     "db:verificar": "node scripts/verificar-bd.mjs",
     "db:detener": "supabase stop",

@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { cargarBandeja, MAX_FILAS_POR_SECCION } from "@/lib/admin/bandeja";
-import { crearCliente, exigirSupabaseLocal, Fixtures, rolDe } from "./utilidades";
+import { crearCliente, exigirSupabaseLocal, Fixtures, iniciarSesionConClave, rolDe } from "./utilidades";
 
 // HU-012 contra el Supabase LOCAL: la bandeja del admin y la semilla de admins iniciales.
 // Cada prueba crea sus propios datos y los borra al final.
@@ -41,9 +41,7 @@ describe("criterio 3: la semilla deja los admins iniciales con su orden de revis
   });
 
   it.each(ADMINS_SEMILLA)("$correo entra con correo y contraseña y la base lo reconoce como admin", async ({ correo }) => {
-    const cliente = crearCliente();
-    const { error } = await cliente.auth.signInWithPassword({ email: correo, password: CONTRASENA_SEMILLA });
-    expect(error).toBeNull();
+    const cliente = await iniciarSesionConClave(correo, CONTRASENA_SEMILLA);
     expect(await rolDe(cliente)).toBe("admin");
 
     // Y su bandeja carga: vacía, porque la semilla no le asigna nada.

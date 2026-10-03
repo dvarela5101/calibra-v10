@@ -8,6 +8,8 @@ const MENSAJES: Record<string, string> = {
   weak_password: "La contraseña debe tener al menos 8 caracteres.",
   same_password: "Usa una contraseña distinta de la anterior.",
   otp_expired: "El enlace ya se usó o venció. Pide uno nuevo.",
+  // HU-058: Auth rechazó el token de Turnstile (falta, venció o ya se usó).
+  captcha_failed: "No pudimos verificar que eres una persona. Recarga la página e intenta de nuevo.",
 };
 
 export function mensajeDeError(codigo: string | undefined, porDefecto = "Algo falló. Intenta de nuevo."): string {

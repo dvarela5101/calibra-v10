@@ -214,11 +214,14 @@ token_verifications = 30
 # Number of Web3 logins that can be made in a 5 minute interval per IP address.
 web3 = 30
 
-# Configure one of the supported captcha providers: `hcaptcha`, `turnstile`.
-# [auth.captcha]
-# enabled = true
-# provider = "hcaptcha"
-# secret = ""
+# HU-058: CAPTCHA de Cloudflare Turnstile para Auth. Un solo interruptor activa el token en el inicio anónimo,
+# el login con contraseña y /recover (HU-058). La llave secreta sale de TURNSTILE_SECRET_KEY: `npm run
+# db:iniciar` pone la llave de PRUEBA de Cloudflare (pública, siempre valida) si no defines otra. Para el
+# proyecto real se carga en el panel de Supabase (docs/pendientes-dvarela.md §C), nunca aquí.
+[auth.captcha]
+enabled = true
+provider = "turnstile"
+secret = "env(TURNSTILE_SECRET_KEY)"
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.

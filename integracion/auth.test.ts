@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { convertirAnonimoEnCuenta } from "@/lib/auth/convertir";
 import { desactivarCuenta, reactivarCuenta } from "@/lib/auth/cuentas";
-import { crearCliente, exigirSupabaseLocal, Fixtures, idsVisibles, rolDe } from "./utilidades";
+import { crearCliente, exigirSupabaseLocal, Fixtures, idsVisibles, rolDe, TOKEN_CAPTCHA_DE_PRUEBA } from "./utilidades";
 
 // Pruebas de integración de HU-004 contra el Supabase LOCAL (Auth, REST y base reales).
 // Cada prueba crea sus propios usuarios y los borra al final.
@@ -51,7 +51,11 @@ describe("Criterio 2: el anónimo se vuelve cuenta sin cambiar de id", () => {
 
     // Un cliente nuevo entra con ese correo y contraseña y ve lo mismo.
     const nuevo = crearCliente();
-    const inicio = await nuevo.auth.signInWithPassword({ email: correo, password: contrasena });
+    const inicio = await nuevo.auth.signInWithPassword({
+      email: correo,
+      password: contrasena,
+      options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA },
+    });
     expect(inicio.error).toBeNull();
     expect(inicio.data.user?.id).toBe(id);
     expect(inicio.data.user?.is_anonymous).toBe(false);
@@ -97,7 +101,12 @@ describe("Criterio 4 (RN-23): un admin desactivado no entra y sus registros se c
 
     await desactivarCuenta(admin.id);
 
-    const bloqueado = await crearCliente().auth.signInWithPassword({ email: admin.correo, password: admin.contrasena });
+    // Con el token, para que el rechazo sea el del usuario baneado y no `captcha_failed` (HU-058).
+    const bloqueado = await crearCliente().auth.signInWithPassword({
+      email: admin.correo,
+      password: admin.contrasena,
+      options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA },
+    });
     expect(bloqueado.error?.code).toBe("user_banned");
     expect(bloqueado.data.session).toBeNull();
 
