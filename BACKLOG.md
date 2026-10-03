@@ -42,11 +42,11 @@ _Generado automaticamente: 2026-10-03 00:08. No editar a mano; usa `scripts/back
 | [HU-076](backlog/HU-076.md) | [Sistema] Correos del rechazo de un pago: al monitor y al pagador, sin que se pierdan | Lista | P0 | M | HU-020, HU-051, HU-024 |
 | [HU-077](backlog/HU-077.md) | [Admin] Revisar un pago que el admin asignado no revisó a tiempo | Lista | P1 | S | HU-020 |
 | [HU-078](backlog/HU-078.md) | [Admin] Ver y cerrar los pagos rechazados de sesiones que ya ocurrieron (P-24) | Lista | P1 | M | HU-020, HU-028 |
-| [HU-024](backlog/HU-024.md) | [Lead] Cancelar mi monitoría individual hasta 12 h antes | En progreso | P0 | M | HU-019, HU-003 |
 | [HU-028](backlog/HU-028.md) | [Admin] Ejecutar desembolsos a monitores | En progreso | P0 | M | HU-023, HU-020 |
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | En progreso | P0 | M | HU-019 |
 | [HU-075](backlog/HU-075.md) | [Técnica] Limitar los intentos de correo por sesión al dejar el contacto | En progreso | P1 | S | HU-068 |
 | [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | En progreso | P2 | S | HU-004 |
+| [HU-024](backlog/HU-024.md) | [Lead] Cancelar mi monitoría individual hasta 12 h antes | En revision | P0 | M | HU-019, HU-003 |
 | [HU-074](backlog/HU-074.md) | [Técnica] Reasignar los pagos en revisión de un admin que se desactiva | En revision | P1 | S | HU-054, HU-018 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
