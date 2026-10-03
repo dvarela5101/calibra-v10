@@ -65,7 +65,7 @@ export default async function EquipoDeAdmins({ searchParams }: PageProps<"/admin
     <Pantalla
       eyebrow="Administración"
       titulo="Equipo de admins"
-      subtitulo="Los pagos se reparten en este orden, saltándose a los desactivados. Si desactivas a alguien, sus reembolsos y reportes abiertos pasan al siguiente admin activo."
+      subtitulo="Los pagos se reparten en este orden, saltándose a los desactivados. Si desactivas a alguien, sus pagos en revisión y sus reembolsos y reportes abiertos pasan al siguiente admin activo."
     >
       {aviso && (
         <p role={aviso.exito ? "status" : "alert"} className={aviso.exito ? formulario.exito : formulario.error}>

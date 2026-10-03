@@ -42,9 +42,10 @@ export async function moverAdmin(cliente: Cliente, id: string, direccion: Direcc
 export type ResultadoDeDesactivar = { ok: true; nombre: string; recibe: string | null } | { ok: false; motivo: MotivoParaNoDesactivar };
 
 /**
- * Desactiva a otro admin (RN-23): sus casos abiertos pasan al siguiente activo (P-44) y su cuenta queda baneada, los
- * dos pasos dentro de `desactivarCuenta()`. Antes se comprueba con el equipo que ve el admin de la sesión (si no es
- * admin activo, lo ve vacío y no puede desactivar a nadie).
+ * Desactiva a otro admin (RN-23): sus casos abiertos, pagos en revisión incluidos (HU-074), pasan al siguiente activo
+ * (P-44) y su cuenta queda baneada, todo dentro de `desactivarCuenta()`, que reasigna antes y después del baneo. Antes
+ * se comprueba con el equipo que ve el admin de la sesión (si no es admin activo, lo ve vacío y no puede desactivar a
+ * nadie).
  */
 export async function desactivarAdmin(cliente: Cliente, idPropio: string, idObjetivo: string): Promise<ResultadoDeDesactivar> {
   const equipo = await cargarEquipo(cliente);
