@@ -38,6 +38,8 @@ npm run dev
 
 Si tu stack local ya estaba corriendo de antes, sin Storage, `npm run db:iniciar` no le agrega el servicio que falta: hay que correr `npm run db:detener` y luego `npm run db:iniciar`. Sin Storage no existe el bucket `comprobantes` y fallan las pruebas de integración de comprobantes. Para una base limpia con las migraciones y la semilla, `npm run db:reiniciar`.
 
+Con HU-058 el Auth local exige el CAPTCHA de Cloudflare Turnstile (con las llaves de prueba, que siempre validan). Si `supabase start` corrió sin `TURNSTILE_SECRET_KEY`, toda alta anónima falla con `invalid-input-secret`; usa siempre `npm run db:iniciar`, que pone la llave secreta de prueba. El Auth local y los runners de CI necesitan salida a internet (validan contra Cloudflare). Al traer esta HU hay que reiniciar el stack (`npm run db:detener` y luego `npm run db:iniciar`): Auth lee el CAPTCHA solo al crear el contenedor.
+
 Para las pruebas de punta a punta hace falta Chromium de Playwright, una sola vez por máquina:
 
 ```bash
@@ -57,7 +59,7 @@ npx playwright install --no-shell chromium
 | `npm run test:e2e` | Pruebas de punta a punta (Playwright). Levanta `npm run dev`, o `npm run start` si `CI` está definido. Necesita el Supabase local |
 | `npm run build` | Build de producción |
 | `npm run verificar` | Lint, tipos, pruebas unitarias, banco de preguntas, build y e2e, en el orden del pipeline |
-| `npm run db:iniciar` | Levanta Supabase local (Postgres, Auth, REST, Storage y Mailpit) con las migraciones |
+| `npm run db:iniciar` | Levanta Supabase local (Postgres, Auth, REST, Storage y Mailpit) con las migraciones y la llave secreta de prueba de Turnstile (CAPTCHA) |
 | `npm run db:env` | Escribe `.env.local` con las llaves del Supabase local |
 | `npm run db:tipos` | Regenera `src/lib/supabase/tipos.ts` desde el esquema local |
 | `npm run db:reiniciar` | Borra la base local y aplica las migraciones y la semilla desde cero |

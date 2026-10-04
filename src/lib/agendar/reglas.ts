@@ -88,7 +88,7 @@ export const MENSAJES: Record<Exclude<ResultadoDeAgendar, "agendada" | "ya_agend
   sin_antelacion: "Faltan menos de 3 horas para esta monitoría y ya no se puede agendar. Elige otra fecha.",
   ocupada: "Alguien acaba de apartar esta fecha. Elige otra.",
   no_disponible: "Esta fecha ya no está disponible. Elige otra.",
-  sin_sesion: "No encontramos tu sesión. Recarga la página e intenta de nuevo.",
+  sin_sesion: "No pudimos verificar tu navegador. Recarga la página e intenta de nuevo.",
 };
 
 export function esResultadoDeAgendar(valor: unknown): valor is ResultadoDeAgendar {

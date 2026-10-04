@@ -34,7 +34,7 @@ const VUELVE_A_SUBIRLO = "Vuelve a subirlo.";
 
 const MENSAJES: Record<Exclude<ResultadoRegistroPago, "sin_admin">, string> = {
   registrado: "Recibimos tu comprobante. Tu monitoría quedó confirmada y el pago queda en revisión.",
-  sin_sesion: "No encontramos tu sesión. Recarga la página e intenta de nuevo.",
+  sin_sesion: "No pudimos verificar tu navegador. Recarga la página e intenta de nuevo.",
   // No distingue "no existe" de "es de otra persona": no revela qué reservas existen.
   no_es_tuya: "No encontramos esta reserva en tu sesión. Solo quien la apartó puede pagarla.",
   no_individual: "El pago de las monitorías grupales todavía no se hace en esta página.",

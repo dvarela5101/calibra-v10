@@ -94,8 +94,12 @@ export function leerSesion(cookies: Cookie[]): SesionEnCookie | null {
   }
 }
 
-/** Espera a que el navegador reciba la cookie de sesión (la sesión anónima nace en el cliente). */
-export async function esperarSesion(context: BrowserContext): Promise<SesionEnCookie> {
+/**
+ * Espera a que el navegador reciba la cookie de sesión (la sesión anónima nace en el cliente). Los 20 s por defecto
+ * bastan con el stub de Turnstile; con el script real de Cloudflare, quien llama pasa un plazo no menor que el que se
+ * da la propia app (ver `ESPERA_CON_TURNSTILE_REAL` en e2e/captcha.spec.ts).
+ */
+export async function esperarSesion(context: BrowserContext, timeout = 20_000): Promise<SesionEnCookie> {
   let sesion: SesionEnCookie | null = null;
   await expect
     .poll(
@@ -103,7 +107,7 @@ export async function esperarSesion(context: BrowserContext): Promise<SesionEnCo
         sesion = leerSesion(await context.cookies());
         return sesion !== null;
       },
-      { message: "el navegador debía recibir la cookie de sesión", timeout: 20_000 },
+      { message: "el navegador debía recibir la cookie de sesión", timeout },
     )
     .toBe(true);
   return sesion!;
@@ -180,7 +184,54 @@ export type Cuentas = {
   esperarCorreo(destinatario: string): Promise<CorreoRecibido>;
 };
 
+/** Token de prueba de Turnstile: Auth local lo valida contra Cloudflare con la llave secreta de prueba (HU-058). */
+export const TOKEN_CAPTCHA_DE_PRUEBA = "XXXX.DUMMY.TOKEN.XXXX";
+
+/**
+ * Reemplaza el script de Turnstile (`src/lib/captcha/turnstile.ts` lo carga de Cloudflare) por un widget de mentira
+ * que entrega el token de prueba apenas se dibuja (`setTimeout(…, 0)`). Auth sigue verificando el token contra
+ * Cloudflare con la llave secreta de prueba: el stub solo ahorra el reto en el navegador, así el alta de la sesión
+ * anónima ocurre en milisegundos y `networkidle` vuelve a significar "ya hay sesión". `reset(id)` vuelve a entregar un
+ * token: los formularios de cuentas vacían el suyo al terminar cada acción y esperan que `reset` traiga otro.
+ * `render` devuelve un id no vacío (con `undefined` la app lo toma como un fallo).
+ */
+const SCRIPT_DE_TURNSTILE = `(() => {
+  const token = ${JSON.stringify(TOKEN_CAPTCHA_DE_PRUEBA)};
+  const widgets = new Map();
+  let siguiente = 0;
+  const entregar = (id) => setTimeout(() => widgets.get(id)?.callback?.(token), 0);
+  window.turnstile = {
+    render(_contenedor, opciones) {
+      const id = "stub-" + ++siguiente;
+      widgets.set(id, opciones);
+      entregar(id);
+      return id;
+    },
+    reset(id) { entregar(id); },
+    remove(id) { widgets.delete(id); },
+    getResponse: () => token,
+  };
+})();`;
+
+/**
+ * Pone el stub de Turnstile en un contexto. La fixture `context` lo hace con todos los suyos; un contexto que la prueba
+ * crea con `browser.newContext` no lo hereda y, sin esto, corre el reto REAL de Cloudflare, que con la máquina cargada
+ * no entrega el token dentro de los 20 s que se da la app (`ESPERA_DEL_TOKEN_MS`) y la sesión no nace. Solo
+ * e2e/captcha.spec.ts prueba a propósito el script real.
+ */
+export async function usarTurnstileDePrueba(context: BrowserContext): Promise<void> {
+  await context.route("**/challenges.cloudflare.com/turnstile/v0/api.js*", (ruta) =>
+    ruta.fulfill({ status: 200, contentType: "text/javascript; charset=utf-8", body: SCRIPT_DE_TURNSTILE }),
+  );
+}
+
 export const test = base.extend<{ cuentas: Cuentas }>({
+  // Todo contexto de la fixture `page` trae el stub de Turnstile. Los que una prueba crea con `browser.newContext` no
+  // lo heredan y usan el script real de Cloudflare, salvo que llamen `usarTurnstileDePrueba`.
+  context: async ({ context }, entregar) => {
+    await usarTurnstileDePrueba(context);
+    await entregar(context);
+  },
   // Playwright exige desestructurar el primer argumento, aunque no dependa de nada. El segundo
   // no se llama `use` porque eslint lo confundiría con un hook de React.
   cuentas: async ({}, entregar) => {

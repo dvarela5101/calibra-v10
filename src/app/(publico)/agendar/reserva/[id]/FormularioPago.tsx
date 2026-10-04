@@ -2,7 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { startTransition, useActionState, useRef, useState, type FormEvent } from "react";
+import { useExigirSesionAnonima } from "@/components/captcha/useExigirSesionAnonima";
 import formulario from "@/components/formulario.module.css";
+import { TEXTO_VERIFICANDO } from "@/lib/captcha/textos";
 import { subirComprobante } from "@/lib/comprobantes/almacenamiento";
 import { mensajeDeRegistroPago, validarPagador } from "@/lib/pagos/reglas";
 import { crearClienteNavegador } from "@/lib/supabase/navegador";
@@ -53,6 +55,8 @@ export function FormularioPago({ idMonitoria, hasta, ahora, idUsuario, nombre, c
   const [subiendo, setSubiendo] = useState(false);
   const [errorLocal, setErrorLocal] = useState<string | null>(null);
   const campoArchivo = useRef<HTMLInputElement>(null);
+  // HU-058: la subida y la acción necesitan la sesión; si todavía no está lista, el envío espera la verificación.
+  const sesion = useExigirSesionAnonima();
   // La última subida. Si la acción falla por otra cosa (la red, nadie del equipo disponible), reintentar con el
   // mismo archivo no gasta otra de las 5 subidas del día (HU-059). Otro archivo elegido sí se sube.
   const subida = useRef<{ archivo: File; ruta: string } | null>(null);
@@ -62,6 +66,9 @@ export function FormularioPago({ idMonitoria, hasta, ahora, idUsuario, nombre, c
   const error = errorLocal ?? (ocupado ? null : estado.error);
 
   async function enviar(evento: FormEvent<HTMLFormElement>) {
+    // Sin sesión lista la guardia frena el envío y lo reenvía con `requestSubmit()` cuando la haya: el archivo
+    // elegido sigue en el campo y este manejador vuelve a correr desde el principio.
+    if (sesion.alEnviar(evento)) return;
     evento.preventDefault();
     if (ocupado) return;
     const datos = new FormData(evento.currentTarget);
@@ -157,8 +164,10 @@ export function FormularioPago({ idMonitoria, hasta, ahora, idUsuario, nombre, c
         </p>
       )}
 
-      <button type="submit" className={formulario.boton} disabled={ocupado}>
-        {subiendo ? "Subiendo…" : enviando ? "Enviando…" : "Enviar comprobante"}
+      {sesion.aviso}
+
+      <button type="submit" className={formulario.boton} disabled={ocupado || sesion.verificando}>
+        {sesion.verificando ? TEXTO_VERIFICANDO : subiendo ? "Subiendo…" : enviando ? "Enviando…" : "Enviar comprobante"}
       </button>
     </form>
   );

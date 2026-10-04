@@ -32,7 +32,7 @@ export async function dejarContacto(_anterior: EstadoContacto, datos: FormData):
 
   // La sesión anónima nace en el navegador al abrir la página (RN-10); sin ella no hay a quién ligar el Lead.
   const sesion = await obtenerSesion();
-  if (!sesion) return fallo("No encontramos tu sesión. Recarga la página e intenta de nuevo.");
+  if (!sesion) return fallo("No pudimos verificar tu navegador. Recarga la página e intenta de nuevo.");
   if (sesion.rol === "monitor" || sesion.rol === "admin") {
     return fallo("Estás con tu cuenta del equipo de Calibra. Para agendar como estudiante, sal de tu cuenta o usa otra ventana.");
   }

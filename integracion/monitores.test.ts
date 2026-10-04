@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { buscarInvitacion, invitarMonitor, registrarMonitor } from "@/lib/monitores/servidor";
-import { crearCliente, exigirSupabaseLocal, exito, Fixtures, rolDe } from "./utilidades";
+import { exigirSupabaseLocal, exito, Fixtures, iniciarSesionConClave, rolDe } from "./utilidades";
 
 // HU-013 contra el Supabase LOCAL: la invitación se guarda de verdad, el correo sale por Mailpit y la
 // cuenta se crea en Auth. Nada de esto toca el proyecto real.
@@ -147,9 +147,7 @@ describe("registrarMonitor", () => {
     expect(await buscarInvitacion(token)).toEqual({ vigente: false });
 
     // La persona entra con su contraseña y la base la reconoce como monitor.
-    const cliente = crearCliente();
-    const { error } = await cliente.auth.signInWithPassword({ email: correo, password: registro.contrasena });
-    expect(error).toBeNull();
+    const cliente = await iniciarSesionConClave(correo, registro.contrasena);
     expect(await rolDe(cliente)).toBe("monitor");
   });
 
