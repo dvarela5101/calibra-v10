@@ -1,15 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { ResultadoEnvio } from "@/lib/correo/servidor";
 import { renderizar } from "@/lib/correo/plantillas";
 import {
   avisoDeQuienRevisa,
-  avisoDelEnvio,
   avisosDeLaPagina,
   ayudaDeObservaciones,
   casoDeRechazo,
   consecuenciasDelRechazo,
   correoDeRechazo,
-  esAvisoAlPagador,
   esResultadoDeRevision,
   LARGO_MAXIMO_OBSERVACIONES,
   leerRevision,
@@ -19,6 +16,7 @@ import {
   pideObservaciones,
   puedeRevisar,
   quienRevisa,
+  quienSeEntera,
   RESULTADOS_DE_REVISION,
   type PagoParaElCorreo,
 } from "./pagos-reglas";
@@ -192,36 +190,98 @@ describe("casoDeRechazo (RN-43, P-24, supuesto 2)", () => {
   });
 });
 
-describe("consecuenciasDelRechazo (supuestos 4 y 7)", () => {
-  const PAGO = { fechaSesion: "2030-01-07", nombrePagador: "Camila Rojas", contacto: "camila@uniandes.edu.co" };
+describe("quienSeEntera (HU-076): la regla de la base, solo para el texto", () => {
+  it("cancela_la_cita: el pagador siempre; el monitor solo si estaba confirmada (una por pagar no se le avisa, D-16)", () => {
+    expect(quienSeEntera("cancela_la_cita", { estado: "confirmada", motivoCancelacion: null })).toEqual({ pagador: "cita_cancelada", monitor: true });
+    expect(quienSeEntera("cancela_la_cita", { estado: "pendiente_pago", motivoCancelacion: null })).toEqual({ pagador: "cita_cancelada", monitor: false });
+  });
 
-  it("criterio 3: se cancela la cita, la fecha queda libre, no hay reembolso y se le avisa al pagador", () => {
+  it("ya_cancelada: por pago_rechazado, el mismo aviso de siempre al pagador; por estudiante, el de «no hay reembolso»; ningún monitor", () => {
+    expect(quienSeEntera("ya_cancelada", { estado: "cancelada", motivoCancelacion: "pago_rechazado" })).toEqual({ pagador: "cita_cancelada", monitor: false });
+    expect(quienSeEntera("ya_cancelada", { estado: "cancelada", motivoCancelacion: "estudiante" })).toEqual({ pagador: "cita_ya_cancelada", monitor: false });
+  });
+
+  it.each(["monitor_no_asistio", "diferencia_no_cubierta"] as const)("ya_cancelada por %s: nadie", (motivo) => {
+    expect(quienSeEntera("ya_cancelada", { estado: "cancelada", motivoCancelacion: motivo })).toEqual({ pagador: null, monitor: false });
+  });
+
+  it.each(["ya_empezo", "ya_realizada"] as const)("%s (P-24, criterio 6): nadie, y no se escribe al pagador", (caso) => {
+    expect(quienSeEntera(caso, { estado: "confirmada", motivoCancelacion: null })).toEqual({ pagador: null, monitor: false });
+    expect(quienSeEntera(caso, { estado: "realizada", motivoCancelacion: null })).toEqual({ pagador: null, monitor: false });
+  });
+});
+
+describe("consecuenciasDelRechazo (supuestos 4 y 7; HU-076)", () => {
+  const CONFIRMADA = { estado: "confirmada" as const, motivoCancelacion: null };
+  const PAGO = { fechaSesion: "2030-01-07", nombrePagador: "Camila Rojas", contacto: "camila@uniandes.edu.co", monitoria: CONFIRMADA };
+  const POR_ESTUDIANTE = { estado: "cancelada" as const, motivoCancelacion: "estudiante" as const };
+
+  it("D-38: se cancela la cita, la fecha queda libre, no hay reembolso y se le avisa al pagador y al monitor", () => {
     expect(consecuenciasDelRechazo("cancela_la_cita", PAGO)).toBe(
-      "Se cancela la monitoría del 7 de enero de 2030 y esa fecha queda libre para otra persona. Un pago rechazado no se reembolsa. Le avisamos a Camila Rojas por correo, a camila@uniandes.edu.co.",
+      "Se cancela la monitoría del 7 de enero de 2030 y esa fecha queda libre para otra persona. Un pago rechazado no se reembolsa. Le avisaremos a Camila Rojas por correo, a camila@uniandes.edu.co. También le avisaremos al monitor.",
     );
   });
 
-  it("con un teléfono de contacto, dice que no sale correo y que avise el admin", () => {
-    expect(consecuenciasDelRechazo("cancela_la_cita", { ...PAGO, contacto: "3001234567" })).toMatch(
-      /El contacto de Camila Rojas no es un correo: tendrás que avisarle tú, al 3001234567\.$/,
+  it("si la monitoría estaba pendiente de pago (defensivo), no se le avisa al monitor", () => {
+    expect(consecuenciasDelRechazo("cancela_la_cita", { ...PAGO, monitoria: { estado: "pendiente_pago", motivoCancelacion: null } })).toBe(
+      "Se cancela la monitoría del 7 de enero de 2030 y esa fecha queda libre para otra persona. Un pago rechazado no se reembolsa. Le avisaremos a Camila Rojas por correo, a camila@uniandes.edu.co.",
     );
   });
 
-  it.each(["ya_empezo", "ya_realizada", "ya_cancelada"] as const)("%s: no se cancela nada, no hay reembolso y no se escribe al pagador", (caso) => {
-    const texto = consecuenciasDelRechazo(caso, PAGO);
+  it("con un teléfono de contacto, el admin tiene que avisarle él al pagador, y al monitor se le sigue avisando", () => {
+    expect(consecuenciasDelRechazo("cancela_la_cita", { ...PAGO, contacto: "3001234567" })).toBe(
+      "Se cancela la monitoría del 7 de enero de 2030 y esa fecha queda libre para otra persona. Un pago rechazado no se reembolsa. El contacto de Camila Rojas no es un correo: tendrás que avisarle tú, al 3001234567. También le avisaremos al monitor.",
+    );
+  });
+
+  it("D-39 d: con la cita ya cancelada por el estudiante, solo cambia el pago y se le avisa al pagador que no hay reembolso", () => {
+    expect(consecuenciasDelRechazo("ya_cancelada", { ...PAGO, monitoria: POR_ESTUDIANTE })).toBe(
+      "La monitoría ya estaba cancelada: solo cambia el pago. Un pago rechazado no se reembolsa. Le avisaremos a Camila Rojas por correo, a camila@uniandes.edu.co, que no hay reembolso.",
+    );
+  });
+
+  it("D-39 d: si el contacto no es un correo, la misma frase de «tendrás que avisarle tú»", () => {
+    expect(consecuenciasDelRechazo("ya_cancelada", { ...PAGO, contacto: "3001234567", monitoria: POR_ESTUDIANTE })).toBe(
+      "La monitoría ya estaba cancelada: solo cambia el pago. Un pago rechazado no se reembolsa. El contacto de Camila Rojas no es un correo: tendrás que avisarle tú, al 3001234567.",
+    );
+  });
+
+  it("supuesto 2: si otro pago de la misma cita ya la canceló por el rechazo, el pagador recibe el aviso de siempre y no se nombra al monitor", () => {
+    const texto = consecuenciasDelRechazo("ya_cancelada", { ...PAGO, monitoria: { estado: "cancelada", motivoCancelacion: "pago_rechazado" } });
+    expect(texto).toBe(
+      "La monitoría ya estaba cancelada: solo cambia el pago. Un pago rechazado no se reembolsa. Le avisaremos a Camila Rojas por correo, a camila@uniandes.edu.co.",
+    );
+    expect(texto).not.toContain("al monitor");
+  });
+
+  it.each(["monitor_no_asistio", "diferencia_no_cubierta"] as const)("cancelada por %s: el texto de antes, al pagador no le escribimos", (motivo) => {
+    expect(consecuenciasDelRechazo("ya_cancelada", { ...PAGO, monitoria: { estado: "cancelada", motivoCancelacion: motivo } })).toBe(
+      "La monitoría ya estaba cancelada: solo cambia el pago. Un pago rechazado no se reembolsa y al pagador no le escribimos.",
+    );
+  });
+
+  it.each(["ya_empezo", "ya_realizada"] as const)("%s: no se cancela nada, no hay reembolso y no se escribe a nadie", (caso) => {
+    const texto = consecuenciasDelRechazo(caso, { ...PAGO, monitoria: { estado: caso === "ya_realizada" ? "realizada" : "confirmada", motivoCancelacion: null } });
     expect(texto).toContain("no se reembolsa");
     expect(texto).toContain("al pagador no le escribimos");
-    expect(texto).not.toMatch(/Se cancela|queda libre|Le avisamos/);
+    expect(texto).not.toMatch(/Se cancela|queda libre|Le avisaremos/);
   });
 
   it("P-24 (HU-078, D-39): el caso queda por cobrar o asumir y cuenta en el desembolso solo cuando alguien lo cierra", () => {
     const porCobrar =
       "el caso queda en «Pagos por cobrar o asumir»: el pago cuenta en el desembolso del monitor solo cuando alguien lo cierre como cobrado o asumido. Un pago rechazado no se reembolsa y al pagador no le escribimos.";
     expect(consecuenciasDelRechazo("ya_empezo", PAGO)).toBe(`La sesión ya empezó, así que la monitoría no se cancela y ${porCobrar}`);
-    expect(consecuenciasDelRechazo("ya_realizada", PAGO)).toBe(`La monitoría ya se realizó, así que no se cancela y ${porCobrar}`);
+    expect(consecuenciasDelRechazo("ya_realizada", { ...PAGO, monitoria: { estado: "realizada", motivoCancelacion: null } })).toBe(
+      `La monitoría ya se realizó, así que no se cancela y ${porCobrar}`,
+    );
     // Con la monitoría ya cancelada no hay caso (supuesto 1 de HU-078).
-    expect(consecuenciasDelRechazo("ya_cancelada", PAGO)).toMatch(/^La monitoría ya estaba cancelada: solo cambia el pago\./);
-    expect(consecuenciasDelRechazo("ya_cancelada", PAGO)).not.toMatch(/cobrar o asumir|desembolso/);
+    expect(consecuenciasDelRechazo("ya_cancelada", { ...PAGO, monitoria: POR_ESTUDIANTE })).not.toMatch(/cobrar o asumir|desembolso/);
+  });
+
+  it("ningún texto menciona comisión", () => {
+    for (const caso of ["cancela_la_cita", "ya_empezo", "ya_realizada", "ya_cancelada"] as const) {
+      expect(consecuenciasDelRechazo(caso, PAGO).toLowerCase()).not.toMatch(/comisi/);
+    }
   });
 });
 
@@ -269,27 +329,15 @@ describe("correoDeRechazo (criterio 3, supuesto 4)", () => {
   });
 });
 
-describe("avisoDelEnvio", () => {
-  const fallo = (motivo: Extract<ResultadoEnvio, { ok: false }>["motivo"]): ResultadoEnvio => ({ ok: false, motivo, error: "x", intentos: 1 });
-
-  it("separa lo que se reintenta solo de lo que tiene que resolver el admin", () => {
-    expect(avisoDelEnvio({ ok: true, yaEnviado: false, intentos: 1, idProveedor: null })).toBe("enviado");
-    expect(avisoDelEnvio({ ok: true, yaEnviado: true, intentos: 0, idProveedor: null })).toBe("enviado");
-    expect(avisoDelEnvio(fallo("contacto_no_es_correo"))).toBe("no_es_correo");
-    // Sin fila en correo_envio, HU-065 no lo ve: no se reintenta.
-    expect(avisoDelEnvio(fallo("fallo_del_registro"))).toBe("fallo");
-    for (const motivo of ["sin_proveedor", "fallo_del_proveedor", "en_curso"] as const) expect(avisoDelEnvio(fallo(motivo))).toBe("por_reintentar");
-  });
-
-  it("reconoce los avisos que la acción pone en la dirección", () => {
-    for (const aviso of ["enviado", "por_reintentar", "no_es_correo", "fallo"]) expect(esAvisoAlPagador(aviso)).toBe(true);
-    expect(esAvisoAlPagador("otro")).toBe(false);
-  });
-});
-
 describe("avisosDeLaPagina", () => {
   // Sin caso: la monitoría se canceló (el rechazo la canceló o el estudiante ya lo había hecho).
-  const RECHAZADO = { estado: "rechazado" as const, contacto: "camila@uniandes.edu.co", caso: null };
+  const RECHAZADO = {
+    estado: "rechazado" as const,
+    contacto: "camila@uniandes.edu.co",
+    caso: null,
+    monitoria: { estado: "cancelada" as const, motivoCancelacion: "pago_rechazado" as const },
+  };
+  const EN_UNOS_MINUTOS = "Rechazaste el pago. Ya no aparece en tu bandeja. Le avisaremos al pagador por correo en unos minutos.";
 
   it("dice que se aprobó solo si el pago de verdad está aprobado", () => {
     expect(avisosDeLaPagina({ revisado: "aprobado" }, { ...RECHAZADO, estado: "aprobado" })).toEqual([
@@ -299,26 +347,36 @@ describe("avisosDeLaPagina", () => {
     expect(avisosDeLaPagina({ revisado: "rechazado" }, { ...RECHAZADO, estado: "aprobado" })).toEqual([]);
   });
 
-  it("al rechazar dice si el correo salió", () => {
-    expect(avisosDeLaPagina({ revisado: "rechazado", correo: "enviado" }, RECHAZADO)).toEqual([
-      { exito: true, texto: "Rechazaste el pago. Ya no aparece en tu bandeja. Le avisamos al pagador por correo." },
-    ]);
-    expect(avisosDeLaPagina({ revisado: "rechazado" }, RECHAZADO)).toEqual([{ exito: true, texto: "Rechazaste el pago. Ya no aparece en tu bandeja." }]);
+  it("HU-076: al rechazar una cita que se canceló, dice que el correo al pagador saldrá en unos minutos", () => {
+    expect(avisosDeLaPagina({ revisado: "rechazado" }, RECHAZADO)).toEqual([{ exito: true, texto: EN_UNOS_MINUTOS }]);
   });
 
-  it.each([
-    ["por_reintentar", 'El correo a camila@uniandes.edu.co no salió todavía. Calibra lo reintenta solo; si no sale, lo verás en tu bandeja en "Correos que no salieron".'],
-    ["no_es_correo", "El contacto del pagador no es un correo: avísale tú, al camila@uniandes.edu.co."],
-    ["fallo", "No pudimos avisarle al pagador. Escríbele tú a camila@uniandes.edu.co."],
-  ])("si el correo quedó %s, se lo dice al admin como alerta", (correo, texto) => {
-    expect(avisosDeLaPagina({ revisado: "rechazado", correo }, RECHAZADO)).toEqual([
+  it("HU-076: con la cita ya cancelada por el estudiante también sale el correo, el de «no hay reembolso»", () => {
+    const pago = { ...RECHAZADO, monitoria: { estado: "cancelada" as const, motivoCancelacion: "estudiante" as const } };
+    expect(avisosDeLaPagina({ revisado: "rechazado" }, pago)).toEqual([{ exito: true, texto: EN_UNOS_MINUTOS }]);
+  });
+
+  it("HU-076: si el contacto no es un correo, no promete nada y le dice al admin que avise él", () => {
+    expect(avisosDeLaPagina({ revisado: "rechazado" }, { ...RECHAZADO, contacto: "3001234567" })).toEqual([
       { exito: true, texto: "Rechazaste el pago. Ya no aparece en tu bandeja." },
-      { exito: false, texto },
+      { exito: false, texto: "El contacto del pagador no es un correo: avísale tú, al 3001234567." },
     ]);
+  });
+
+  it("si al pagador no se le escribe (cancelada por otro motivo, o un caso P-24 ya cerrado), no promete ningún correo", () => {
+    const solo = [{ exito: true, texto: "Rechazaste el pago. Ya no aparece en tu bandeja." }];
+    expect(avisosDeLaPagina({ revisado: "rechazado" }, { ...RECHAZADO, monitoria: { estado: "cancelada", motivoCancelacion: "monitor_no_asistio" } })).toEqual(solo);
+    expect(avisosDeLaPagina({ revisado: "rechazado" }, { ...RECHAZADO, caso: "cerrado", monitoria: { estado: "realizada", motivoCancelacion: null } })).toEqual(solo);
+  });
+
+  it("el parámetro ?correo= ya no hace nada: un enlace viejo o escrito a mano no inventa avisos del correo", () => {
+    for (const correo of ["enviado", "por_reintentar", "no_es_correo", "fallo"]) {
+      expect(avisosDeLaPagina({ revisado: "rechazado", correo }, RECHAZADO)).toEqual([{ exito: true, texto: EN_UNOS_MINUTOS }]);
+    }
   });
 
   it("HU-078, criterio 5: tras un rechazo en P-24 dice que el caso quedó en Pagos por cobrar o asumir, y no que salió de la bandeja", () => {
-    const p24 = { ...RECHAZADO, caso: "abierto" as const };
+    const p24 = { ...RECHAZADO, caso: "abierto" as const, monitoria: { estado: "realizada" as const, motivoCancelacion: null } };
     const exito = {
       exito: true,
       texto: "Rechazaste el pago. El caso quedó en «Pagos por cobrar o asumir» de la bandeja hasta que alguien lo cierre como cobrado o asumido.",
@@ -327,10 +385,6 @@ describe("avisosDeLaPagina", () => {
     // En P-24 no se le escribe al pagador: un ?correo= escrito a mano no inventa avisos del correo.
     expect(avisosDeLaPagina({ revisado: "rechazado", correo: "enviado" }, p24)).toEqual([exito]);
     expect(avisosDeLaPagina({ revisado: "rechazado", correo: "fallo" }, p24)).toEqual([exito]);
-    // Si alguien ya cerró el caso cuando se pinta la página, ya no está en esa sección.
-    expect(avisosDeLaPagina({ revisado: "rechazado" }, { ...RECHAZADO, caso: "cerrado" })).toEqual([
-      { exito: true, texto: "Rechazaste el pago. Ya no aparece en tu bandeja." },
-    ]);
     // Un enlace viejo no anuncia un rechazo que no pasó.
     expect(avisosDeLaPagina({ revisado: "rechazado" }, { ...p24, estado: "aprobado" })).toEqual([]);
   });

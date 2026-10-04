@@ -43,6 +43,25 @@ isOneToOne: false
       referencedColumns: ["id_monitoria"]
     }
                   ]
+                },"aviso_rechazo_pago": {
+                  Row: {
+                    "caso": string,"creado_en": string,"id": string,"id_pago": string,"intentos": number,"procesado_en": string | null
+                  }
+                  Insert: {
+                    "caso": string,"creado_en"?: string,"id"?: string,"id_pago": string,"intentos"?: number,"procesado_en"?: string | null
+                  }
+                  Update: {
+                    "caso"?: string,"creado_en"?: string,"id"?: string,"id_pago"?: string,"intentos"?: number,"procesado_en"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "aviso_rechazo_pago_id_pago_fkey"
+      columns: ["id_pago"]
+isOneToOne: true
+      referencedRelation: "pago"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"cancelacion_cita": {
                   Row: {
                     "con_pago_en_revision": boolean,"correo_destino": string | null,"creada_en": string,"id": string,"id_monitoria": string,"intentos": number,"procesado_en": string | null,"reembolso_a_otro_contacto": boolean

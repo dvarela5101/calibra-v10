@@ -123,9 +123,22 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 
 - `public.revisar_pago(id, decision, observaciones)` (invoker, solo con sesión) sobre `privado.revisar_pago_de_la_sesion`, que llama a `privado.revisar_pago` con `now()`; la versión con `p_ahora` no tiene grant. Primero mira sin candado que la sesión sea el admin asignado (`no_asignado`), para que otro admin no tome la fila de la monitoría. Después bloquea la monitoría y el pago, en ese orden, como `registrar_pago` y `finalizar_monitoria`, y con la fila bloqueada vuelve a mirar el admin asignado y que el pago siga en revisión (`ya_revisado`). Las grupales responden `no_individual` hasta HU-038.
 - Al rechazar, la monitoría que aún no empieza pasa a `cancelada` con motivo `pago_rechazado` y su fecha queda libre. La que ya empezó (desde su inicio, con el borde incluido de P-40) o ya se realizó no se cancela (P-24): el admin anota en `pago.observaciones` qué se hará con ese cobro, y sin observaciones la base responde `observaciones_requeridas`. Con la cita ya cancelada por el estudiante solo cambia el pago. La función nunca crea reembolsos ni desembolsos: un pago rechazado no se reembolsa (RN-43), y el reembolso de un pago aprobado sobre una cita ya cancelada lo creará HU-024.
-- La acción (`src/app/admin/pagos/[id]/acciones.ts`) vuelve a la página con lo que pasó (`?revisado=`, `?correo=`, `?error=`). Si el rechazo canceló la cita, `avisarRechazoAlPagador()` (`src/lib/admin/pagos.ts`) le escribe al pagador a `pago.contacto` con la plantilla `pago_rechazado_individual`, con `CORREO_DATOS_PERSONALES` como contacto de soporte. La entidad es el id del pago, y si el correo falla lo reintenta HU-065 con `reconstruirPagoRechazado()`. Si no salió, o si el contacto no es un correo, la página se lo dice al admin. En P-24 y con la cita ya cancelada no se le escribe al pagador, y al monitor nunca: lo ve en su agenda (D-11).
+- La acción (`src/app/admin/pagos/[id]/acciones.ts`) ya no manda correos: vuelve a la página con lo que pasó (`?revisado=`, `?error=`) y, tras rechazar, dice que el pagador recibirá el correo en unos minutos. Los correos del rechazo salen por la bandeja de salida de HU-076 (ver "Correos del rechazo de un pago"). En P-24 no se le escribe al pagador, y al monitor solo si la cita futura se cancela.
 - "Ver comprobante" es un `<a>` a `/admin/pagos/<id>/comprobante`, un Route Handler que pide `enlaceDeComprobanteDePago()` con la sesión en el momento del clic y redirige (307) al enlace firmado de 60 segundos. Al pintar la página no se firma nada.
 - Los mensajes, qué le pasa a la cita según su estado y los datos del correo son funciones puras de `src/lib/admin/pagos-reglas.ts`.
+
+## Correos del rechazo de un pago
+
+HU-076 (D-38, D-39): al rechazar un pago, los avisos salen de la base, en la misma transacción del rechazo, y no de la acción del admin. Así no se pierden si la app falla justo después.
+
+- **Al monitor**, solo si el rechazo cancela una monitoría confirmada que aún no empieza: la transición `confirmada → cancelada` con motivo `pago_rechazado` suma un tercer evento a `public.aviso_monitor` (HU-051) y sale por `/api/procesos/avisar-monitores` con la plantilla `aviso_monitor_pago_rechazado` (materia, fecha y hora, enlace a su agenda; nunca el contacto del estudiante, P-37, ni montos). Al procesarlo se descarta si la sesión ya empezó o si el motivo cambió.
+- **Al pagador**, por la bandeja de salida `public.aviso_rechazo_pago` (una fila por pago). El trigger `pago_anota_aviso_rechazo` (`privado.anotar_aviso_rechazo_pago`, definer) la llena cuando el pago pasa de `en_revision` a `rechazado`, en la misma transacción: si el rechazo se revierte, no queda aviso. Para eso `privado.revisar_pago` cancela la monitoría antes de marcar el pago, y el trigger la lee ya cancelada.
+  - Cita cancelada por este rechazo (caso `cita_cancelada`): plantilla `pago_rechazado_individual` (HU-020).
+  - Cita que ya había cancelado el estudiante (caso `cita_ya_cancelada`): plantilla `pago_rechazado_sin_reembolso`, corta, que dice que no hay reembolso. Al monitor no se le escribe: ya lo avisó la cancelación del estudiante.
+  - P-24 (sesión ya empezada o realizada), grupales y otros motivos de cancelación: no se anota nada.
+- `privado.disparar_avisos_rechazo_pago()` pide el proceso con pg_net al confirmarse la transacción, y el trabajo de pg_cron `calibra-avisar-rechazos` lo repite cada 5 minutos si quedan avisos sin procesar. Si el pedido falla, el trigger lo deja en un aviso del log y el rechazo sigue. Usa los mismos secretos de Vault que HU-051 y HU-065.
+- La ruta `/api/procesos/avisar-rechazos` (`src/app/api/procesos/avisar-rechazos/route.ts`, solo con `CRON_SECRETO`) llama a `procesarAvisosDeRechazoDePago()` (`src/lib/admin/avisos-rechazo.ts`): toma hasta 10 avisos, manda cada correo con la entidad = id del pago (la clave única de `correo_envio` impide duplicarlo) y suma un intento en `aviso_rechazo_pago.intentos` si no puede procesarlo, hasta abandonarlo a los 5. Un correo que falla queda para los reintentos de HU-065, que lo reconstruyen con `reconstruirPagoRechazado()` o `reconstruirPagoRechazadoSinReembolso()`.
+- Antes de rechazar, la pantalla del admin dice a quién se le avisará (`consecuenciasDelRechazo`, `src/lib/admin/pagos-reglas.ts`). Si el contacto del pagador no es un correo, se le avisa el admin (P-22).
 
 ## Ejecutar un desembolso
 
@@ -308,6 +321,8 @@ Los comprobantes van en el bucket privado `comprobantes` de Supabase Storage (HU
 | `solicitud_llave_reembolso` | Reembolso creado cuya llave no pidió el correo de cancelación, o caso reabierto o reenviado: se pide la llave con el enlace `/reembolso?token=…` y el plazo (HU-025) | Pagador |
 | `recordatorio_llave_reembolso` | A los 3 días sin llave: se recuerda el enlace y el plazo de 7 días (HU-025, P-10) | Pagador |
 | `pago_rechazado_individual` | Pago rechazado en una individual: la cita se cancela | Pagador |
+| `pago_rechazado_sin_reembolso` | Pago rechazado con la cita ya cancelada por el estudiante: no hay reembolso (HU-076) | Pagador |
+| `aviso_monitor_pago_rechazado` | El rechazo de un pago cancela una monitoría confirmada de este monitor (HU-076) | Monitor |
 | `pago_rechazado_grupal` | Pago rechazado en una grupal: se anula ese cupo | Pagador |
 | `escalamiento_pago` | Pago sin revisar tras el plazo: pasa al siguiente admin | Admin |
 | `invitacion_monitor` | El admin invita a un aspirante tras la evaluación presencial (HU-013) | Aspirante a monitor |
