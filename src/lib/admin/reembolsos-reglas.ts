@@ -2,8 +2,8 @@ import { esFechaDeCalendario, esUuid } from "@/lib/agendar/reglas";
 import { avisoDeReenviar } from "@/lib/reembolsos/reglas";
 
 /**
- * Gestionar un reembolso (HU-026): el admin asignado transfiere por fuera de la app a la llave de quien pagó y registra
- * la referencia y la fecha; si todavía espera la llave, cualquier admin activo reenvía el enlace. Aquí va lo puro: qué
+ * Gestionar un reembolso (HU-026, HU-082): cualquier admin activo transfiere por fuera de la app a la llave de quien pagó
+ * y registra la referencia y la fecha (D-48); si todavía espera la llave, cualquier admin activo reenvía el enlace. Aquí va lo puro: qué
  * responde la base al registrar, qué se le dice al admin con cada resultado, la lectura del formulario y los avisos de
  * la página. Si se puede registrar lo decide `public.ejecutar_reembolso` con su propia hora y bajo candado; lo de aquí
  * solo lo anticipa en la pantalla. Ningún texto lleva cifras de comisión: el reembolso es el pago completo (RN-60).
@@ -22,7 +22,6 @@ export const RESULTADOS_DE_REGISTRO = [
   "reembolsado",
   "ya_reembolsado",
   "sin_llave",
-  "no_asignado",
   "fecha_invalida",
   "referencia_invalida",
   "no_encontrado",
@@ -39,7 +38,6 @@ export function esResultadoDeRegistro(valor: unknown): valor is ResultadoDeRegis
 export const MENSAJES_DE_REGISTRO: Record<Exclude<ResultadoDeRegistro, "reembolsado">, string> = {
   ya_reembolsado: "Este reembolso ya estaba registrado, así que no se registró otra vez. No lo transfieras de nuevo.",
   sin_llave: "Quien pagó todavía no nos ha enviado su llave: no hay a dónde transferir.",
-  no_asignado: "Este reembolso lo tiene asignado otro admin: solo esa persona registra la transferencia.",
   fecha_invalida: "La fecha de la transferencia no puede ser posterior a hoy ni anterior al día en que se creó el reembolso.",
   referencia_invalida: "Escribe la referencia de la transferencia, de hasta 100 caracteres.",
   no_encontrado: "No encontramos este reembolso.",
@@ -104,7 +102,7 @@ export function consecuenciasDeRegistrar(monto: string, llave: string): string {
  * Lo que cambió mientras el admin miraba: la acción vuelve a la página con `?error=` y la página se pinta como quedó.
  * `ya_reembolsado` dice que no lo transfiera otra vez; los demás, que revise cómo quedó.
  */
-export const CAMBIOS_DEL_REEMBOLSO = ["ya_reembolsado", "sin_llave", "no_asignado"] as const satisfies readonly ResultadoDeRegistro[];
+export const CAMBIOS_DEL_REEMBOLSO = ["ya_reembolsado", "sin_llave"] as const satisfies readonly ResultadoDeRegistro[];
 
 export const MENSAJE_DE_CAMBIO = "No registramos la transferencia: el reembolso cambió mientras lo mirabas. Revisa cómo quedó antes de transferir.";
 
@@ -113,20 +111,21 @@ export type AvisoDeLaPagina = { exito: boolean; texto: string };
 /**
  * Lo que se dice arriba de la página después de una acción: registrar vuelve con `?registrado=` o `?error=`, y reenviar
  * con `?reenvio=`. El éxito del registro solo se dice si el reembolso de verdad quedó reembolsado por el admin de la
- * sesión: un enlace viejo, escrito a mano o el de otro admin no anuncia una transferencia que no registró.
+ * sesión (`id_admin_registro`, no el asignado): un enlace viejo, escrito a mano o el de otro admin no anuncia una
+ * transferencia que no registró.
  */
 export function avisosDeLaPagina(
   consulta: Record<string, string | string[] | undefined>,
-  reembolso: { estado: EstadoDeLaVista; idAdmin: string | null },
+  reembolso: { estado: EstadoDeLaVista; idAdminRegistro: string | null },
   idSesion: string,
 ): AvisoDeLaPagina[] {
   const valor = (clave: string) => (typeof consulta[clave] === "string" ? (consulta[clave] as string) : null);
   const avisos: AvisoDeLaPagina[] = [];
 
-  if (valor("registrado") === "reembolsado" && reembolso.estado === "reembolsado" && reembolso.idAdmin === idSesion) {
+  if (valor("registrado") === "reembolsado" && reembolso.estado === "reembolsado" && reembolso.idAdminRegistro === idSesion) {
     avisos.push({
       exito: true,
-      texto: "Registraste la transferencia. El reembolso sale de tu bandeja y quien pagó ve en su enlace que ya le devolvimos el dinero.",
+      texto: "Registraste la transferencia. Quien pagó ve en su enlace que ya le devolvimos el dinero.",
     });
   }
 

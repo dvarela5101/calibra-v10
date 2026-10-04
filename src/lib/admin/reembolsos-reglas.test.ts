@@ -52,7 +52,7 @@ function resultadosDelComentario(sql: string, ...encabezados: string[]): string[
   return resultados;
 }
 
-describe("resultados (HU-026)", () => {
+describe("resultados (HU-026, HU-082)", () => {
   it.each(Object.entries(MENSAJES_DE_REGISTRO))("%s tiene un mensaje para el admin", (_clave, mensaje) => {
     expect(mensaje.trim().length).toBeGreaterThan(10);
     expect(mensaje).not.toMatch(/undefined|null|_/);
@@ -71,8 +71,8 @@ describe("resultados (HU-026)", () => {
     }
   });
 
-  it("los resultados van en el orden en que los mira public.ejecutar_reembolso (su migración)", () => {
-    const sql = readFileSync(join(__dirname, "../../../supabase/migrations/20261004055644_gestionar_reembolsos.sql"), "utf8");
+  it("los resultados van en el orden en que los mira public.ejecutar_reembolso (su migración vigente, HU-082)", () => {
+    const sql = readFileSync(join(__dirname, "../../../supabase/migrations/20261004205851_registrar_reembolso_cualquier_admin.sql"), "utf8");
     expect(resultadosDelComentario(sql, "Registrar la transferencia", "Resultado, en el orden en que se mira:")).toEqual([...RESULTADOS_DE_REGISTRO]);
   });
 
@@ -82,11 +82,17 @@ describe("resultados (HU-026)", () => {
     expect([...posiciones].sort((a, b) => a - b)).toEqual(posiciones);
   });
 
+  it("no_asignado ya no existe: cualquier admin activo registra (D-48), y si llegara no se reconoce", () => {
+    expect(esResultadoDeRegistro("no_asignado")).toBe(false);
+    expect([...RESULTADOS_DE_REGISTRO]).not.toContain("no_asignado");
+    expect(Object.keys(MENSAJES_DE_REGISTRO)).not.toContain("no_asignado");
+    expect([...CAMBIOS_DEL_REEMBOLSO]).toEqual(["ya_reembolsado", "sin_llave"]);
+  });
+
   it("los textos son los acordados (SPEC de HU-026, 4.7)", () => {
     expect(MENSAJES_DE_REGISTRO).toEqual({
       ya_reembolsado: "Este reembolso ya estaba registrado, así que no se registró otra vez. No lo transfieras de nuevo.",
       sin_llave: "Quien pagó todavía no nos ha enviado su llave: no hay a dónde transferir.",
-      no_asignado: "Este reembolso lo tiene asignado otro admin: solo esa persona registra la transferencia.",
       fecha_invalida: "La fecha de la transferencia no puede ser posterior a hoy ni anterior al día en que se creó el reembolso.",
       referencia_invalida: "Escribe la referencia de la transferencia, de hasta 100 caracteres.",
       no_encontrado: "No encontramos este reembolso.",
@@ -104,7 +110,7 @@ describe("resultados (HU-026)", () => {
       MENSAJE_DE_FALLO,
       MENSAJE_DE_CAMBIO,
       consecuenciasDeRegistrar("$ 25.000", "3001234567"),
-      ...avisosDeLaPagina({ registrado: "reembolsado", error: "sin_llave" }, { estado: "reembolsado", idAdmin: YO }, YO).map((a) => a.texto),
+      ...avisosDeLaPagina({ registrado: "reembolsado", error: "sin_llave" }, { estado: "reembolsado", idAdminRegistro: YO }, YO).map((a) => a.texto),
     ];
     for (const texto of textos) expect(texto.toLowerCase()).not.toMatch(/comisi|bruto/);
   });
@@ -175,25 +181,29 @@ describe("consecuenciasDeRegistrar", () => {
 });
 
 describe("avisosDeLaPagina", () => {
-  const REEMBOLSADO = { estado: "reembolsado" as const, idAdmin: YO };
-  const PENDIENTE = { estado: "pendiente" as const, idAdmin: YO };
+  const REEMBOLSADO = { estado: "reembolsado" as const, idAdminRegistro: YO };
+  const PENDIENTE = { estado: "pendiente" as const, idAdminRegistro: YO };
   const EXITO = {
     exito: true,
-    texto: "Registraste la transferencia. El reembolso sale de tu bandeja y quien pagó ve en su enlace que ya le devolvimos el dinero.",
+    texto: "Registraste la transferencia. Quien pagó ve en su enlace que ya le devolvimos el dinero.",
   };
 
   it("dice que se registró solo si el reembolso de verdad quedó reembolsado por el admin de la sesión", () => {
     expect(avisosDeLaPagina({ registrado: "reembolsado" }, REEMBOLSADO, YO)).toEqual([EXITO]);
     expect(avisosDeLaPagina({ registrado: "reembolsado" }, PENDIENTE, YO)).toEqual([]);
-    expect(avisosDeLaPagina({ registrado: "reembolsado" }, { estado: "esperando_llave", idAdmin: YO }, YO)).toEqual([]);
-    expect(avisosDeLaPagina({ registrado: "reembolsado" }, { ...REEMBOLSADO, idAdmin: OTRO }, YO)).toEqual([]);
-    expect(avisosDeLaPagina({ registrado: "reembolsado" }, { ...REEMBOLSADO, idAdmin: null }, YO)).toEqual([]);
+    expect(avisosDeLaPagina({ registrado: "reembolsado" }, { estado: "esperando_llave", idAdminRegistro: YO }, YO)).toEqual([]);
+    expect(avisosDeLaPagina({ registrado: "reembolsado" }, { ...REEMBOLSADO, idAdminRegistro: OTRO }, YO)).toEqual([]);
+    expect(avisosDeLaPagina({ registrado: "reembolsado" }, { ...REEMBOLSADO, idAdminRegistro: null }, YO)).toEqual([]);
     expect(avisosDeLaPagina({ registrado: "otro" }, REEMBOLSADO, YO)).toEqual([]);
     expect(avisosDeLaPagina({ registrado: ["reembolsado", "reembolsado"] }, REEMBOLSADO, YO)).toEqual([]);
   });
 
+  it("nunca anuncia el éxito si lo registró otro admin, aunque la sesión sea la del asignado", () => {
+    expect(avisosDeLaPagina({ registrado: "reembolsado" }, { estado: "reembolsado", idAdminRegistro: OTRO }, YO)).toEqual([]);
+  });
+
   it("si ya estaba registrado, pide no transferirlo de nuevo", () => {
-    expect(avisosDeLaPagina({ error: "ya_reembolsado" }, { ...REEMBOLSADO, idAdmin: OTRO }, YO)).toEqual([
+    expect(avisosDeLaPagina({ error: "ya_reembolsado" }, { ...REEMBOLSADO, idAdminRegistro: OTRO }, YO)).toEqual([
       { exito: false, texto: MENSAJES_DE_REGISTRO.ya_reembolsado },
     ]);
   });
@@ -208,11 +218,11 @@ describe("avisosDeLaPagina", () => {
     for (const error of ["<script>", "referencia_invalida", "fecha_invalida", "sin_permiso", "monto_cambio"]) {
       expect(avisosDeLaPagina({ error }, PENDIENTE, YO), error).toEqual([]);
     }
-    expect(avisosDeLaPagina({ error: ["sin_llave", "no_asignado"] }, PENDIENTE, YO)).toEqual([]);
+    expect(avisosDeLaPagina({ error: ["sin_llave", "ya_reembolsado"] }, PENDIENTE, YO)).toEqual([]);
   });
 
   it("también dice qué pasó al reenviar el enlace (?reenvio=)", () => {
-    expect(avisosDeLaPagina({ reenvio: "reenviado" }, { estado: "esperando_llave", idAdmin: OTRO }, YO)).toEqual([
+    expect(avisosDeLaPagina({ reenvio: "reenviado" }, { estado: "esperando_llave", idAdminRegistro: OTRO }, YO)).toEqual([
       { exito: true, texto: "Le mandamos otra vez el enlace a quien pagó. Le llega en unos minutos y el plazo no cambia." },
     ]);
     expect(avisosDeLaPagina({ reenvio: "ya_entregada" }, PENDIENTE, YO)).toEqual([{ exito: false, texto: "No hace falta: quien pagó ya nos envió su llave." }]);

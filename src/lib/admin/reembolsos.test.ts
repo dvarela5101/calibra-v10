@@ -9,11 +9,14 @@ import { cargarReembolso } from "./reembolsos";
 
 const ID = "70000000-0000-4000-8000-000000000026";
 const ADMIN = "a0a0a0a0-0000-4000-8000-000000000026";
+const REGISTRADOR = "a0a0a0a0-0000-4000-8000-000000002601";
 const LLAVE = "3001234567";
 
 type FilaDeReembolso = {
   estado: Database["public"]["Enums"]["estado_reembolso"];
   llave_destino: string | null;
+  id_admin_registro?: string | null;
+  registrador?: { nombre: string } | null;
   fecha_generacion: string;
   cerrado_en: string | null;
   fecha_reembolso: string | null;
@@ -43,6 +46,8 @@ function clienteQueResponde(fila: FilaDeReembolso | null, estado: { estado: stri
       motivo: "Cancelaste la monitoría dentro del plazo.",
       id_admin: ADMIN,
       admin: { nombre: "Admin Uno" },
+      id_admin_registro: null,
+      registrador: null,
       pago: {
         nombre_pagador: "Laura Pérez",
         contacto: "laura@uniandes.edu.co",
@@ -89,6 +94,27 @@ describe("cargarReembolso (HU-026): el estado sale de la misma foto que la llave
     const fila = { ...PENDIENTE, estado: "reembolsado" as const, referencia_transferencia: "REF-26-1", fecha_reembolso: "2030-01-09T17:00:00+00:00" };
     const r = await cargarReembolso(clienteQueResponde(fila, { estado: "reembolsado", vence_en: VENCE }), ID);
     expect(r).toMatchObject({ estadoVista: "reembolsado", transferencia: { referencia: "REF-26-1", fecha: new Date("2030-01-09T17:00:00.000Z") } });
+  });
+});
+
+describe("cargarReembolso (HU-082): quién lo registró", () => {
+  const REEMBOLSADO = { ...PENDIENTE, estado: "reembolsado" as const, referencia_transferencia: "REF-82", fecha_reembolso: "2030-01-09T17:00:00+00:00" };
+  const reembolsado = (extra: Partial<FilaDeReembolso>) =>
+    cargarReembolso(clienteQueResponde({ ...REEMBOLSADO, ...extra }, { estado: "reembolsado", vence_en: VENCE }), ID);
+
+  it("trae el admin que registró, distinto del asignado", async () => {
+    const r = await reembolsado({ id_admin_registro: REGISTRADOR, registrador: { nombre: "Admin Dos" } });
+    expect(r?.registradoPor).toEqual({ id: REGISTRADOR, nombre: "Admin Dos" });
+    expect(r?.asignado).toEqual({ id: ADMIN, nombre: "Admin Uno" });
+  });
+
+  it("un pendiente no lo trae", async () => {
+    const r = await cargarReembolso(clienteQueResponde(PENDIENTE, { estado: "pendiente", vence_en: VENCE }), ID);
+    expect(r?.registradoPor).toBeNull();
+  });
+
+  it("un reembolsado sin dato (id_admin_registro nulo) da null", async () => {
+    expect((await reembolsado({}))?.registradoPor).toBeNull();
   });
 });
 

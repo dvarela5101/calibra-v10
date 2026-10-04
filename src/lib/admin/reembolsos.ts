@@ -39,12 +39,14 @@ export type ReembolsoParaGestionar = {
   /** `pago.contacto`: a donde va el enlace (RN-44). */
   contacto: string;
   /**
-   * La llave que entregó quien pagó: nula mientras espera la llave. La página la pinta solo si la sesión es el admin
-   * asignado (supuesto 9).
+   * La llave que entregó quien pagó: nula mientras espera la llave. La página la pinta a cualquier admin activo en
+   * `pendiente` y `reembolsado` (D-48).
    */
   llaveDestino: string | null;
   /** El admin asignado; `null` si nació sin admin activo y el cron todavía no lo asigna (D-28). */
   asignado: { id: string; nombre: string } | null;
+  /** El admin que registró la transferencia (`id_admin_registro`); `null` si no se ha registrado o no hay dato (HU-082). */
+  registradoPor: { id: string; nombre: string } | null;
   /** El día en Bogotá en que se creó, `AAAA-MM-DD`: la transferencia no puede ser anterior. */
   fechaMinima: string;
   /** La referencia y la fecha registradas; `null` mientras no se reembolse. */
@@ -70,7 +72,7 @@ export async function cargarReembolso(cliente: Cliente, idReembolso: string): Pr
     cliente
       .from("reembolso")
       .select(
-        "id, estado, monto, motivo, llave_destino, id_admin, admin(nombre), fecha_generacion, cerrado_en, fecha_reembolso, referencia_transferencia, pago(nombre_pagador, contacto, monitoria(estado, motivo_cancelacion, fecha, id_franja, id_materia))",
+        "id, estado, monto, motivo, llave_destino, id_admin, admin!reembolso_id_admin_fkey(nombre), id_admin_registro, registrador:admin!reembolso_id_admin_registro_fkey(nombre), fecha_generacion, cerrado_en, fecha_reembolso, referencia_transferencia, pago(nombre_pagador, contacto, monitoria(estado, motivo_cancelacion, fecha, id_franja, id_materia))",
       )
       .eq("id", idReembolso)
       .maybeSingle(),
@@ -122,6 +124,7 @@ export async function cargarReembolso(cliente: Cliente, idReembolso: string): Pr
     nombrePagador: p.nombre_pagador,
     contacto: p.contacto,
     llaveDestino: r.llave_destino,
+    registradoPor: r.id_admin_registro ? { id: r.id_admin_registro, nombre: r.registrador?.nombre ?? "un admin" } : null,
     asignado: r.id_admin ? { id: r.id_admin, nombre: r.admin?.nombre ?? "un admin" } : null,
     fechaMinima: diaDelNegocio(new Date(r.fecha_generacion)),
     transferencia,
@@ -138,8 +141,8 @@ export async function cargarReembolso(cliente: Cliente, idReembolso: string): Pr
 
 /**
  * Registra la transferencia con la sesión de `cliente` (sin vuelta atrás). La base comprueba que la sesión sea un admin
- * activo y el asignado, revisa la referencia y la fecha con su hora, bloquea la fila del reembolso y vuelve a mirar el
- * estado y el admin.
+ * activo (cualquiera, no solo el asignado), revisa la referencia y la fecha con su hora, bloquea la fila del reembolso y
+ * vuelve a mirar el estado y que el admin siga activo.
  */
 export async function ejecutarReembolso(cliente: Cliente, pedido: PedidoDeRegistro): Promise<ResultadoDeRegistro> {
   const { data, error } = await cliente.rpc("ejecutar_reembolso", {

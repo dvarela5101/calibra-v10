@@ -5,9 +5,9 @@ import { MENSAJE_DE_CAMBIO, MENSAJES_DE_REGISTRO } from "@/lib/admin/reembolsos-
 import GestionarUnReembolso from "./page";
 
 // Sin navegador ni base: la página de un reembolso con la sesión y el reembolso inventados, y se lee el HTML. Aquí se
-// fija qué ve el admin en cada estado (criterios 1 a 3), que la llave de quien pagó solo se le pinta al asignado
-// (supuesto 9), que el formulario de registrar solo sale en pendiente y para el asignado, y que nunca hay cifras de
-// comisión. El recorrido con la base lo cubren la integración y la e2e.
+// fija qué ve el admin en cada estado (criterios 1 a 3), que la llave de quien pagó se le pinta a cualquier admin
+// activo en pendiente y reembolsado (HU-082, D-48), que el formulario de registrar sale en pendiente para cualquiera,
+// y que nunca hay cifras de comisión. El recorrido con la base lo cubren la integración y la e2e.
 
 const ID = "70000000-0000-4000-8000-000000000026";
 const YO = "a0a0a0a0-0000-4000-8000-000000000026";
@@ -57,6 +57,7 @@ function reembolso(cambios: Partial<Omit<ReembolsoParaGestionar, "monitoria">> =
     contacto: "laura@uniandes.edu.co",
     llaveDestino: LLAVE,
     asignado: { id: YO, nombre: "Admin Uno" },
+    registradoPor: null,
     fechaMinima: "2030-01-06",
     transferencia: null,
     monitoria: {
@@ -80,6 +81,7 @@ const REEMBOLSADO = reembolso({
   estadoVista: "reembolsado",
   // Mediodía en Bogotá del 9 de enero: así se guarda el día de la transferencia.
   transferencia: { referencia: "REF-26-1", fecha: new Date("2030-01-09T17:00:00.000Z") },
+  registradoPor: { id: YO, nombre: "Admin Uno" },
 });
 
 async function pintar(r: ReembolsoParaGestionar | null, consulta: Record<string, string> = {}, id = ID): Promise<string> {
@@ -186,29 +188,35 @@ describe("Gestionar un reembolso (HU-026): pendiente, del admin de la sesión (c
   });
 });
 
-describe("Gestionar un reembolso: pendiente de otro admin o sin admin (supuestos 1 y 9)", () => {
+describe("Gestionar un reembolso: pendiente de otro admin o sin admin (HU-082, D-48)", () => {
   it.each([
-    ["de otro admin", DE_OTRO, "Lo tiene asignado Admin Dos: solo esa persona registra la transferencia.", "Asignado a Admin Dos"],
-    [
-      "sin admin todavía (D-28)",
-      SIN_ADMIN,
-      "Todavía no tiene admin: en unos minutos se le asigna al primer admin activo y esa persona registra la transferencia.",
-      "Asignado a Nadie todavía: en unos minutos se asigna al primer admin activo.",
-    ],
-  ])("%s: dice quién la registra, sin formulario, sin subtítulo y sin la llave en el HTML", async (_caso, r, explicacion, asignado) => {
+    ["de otro admin", DE_OTRO, "Asignado a Admin Dos"],
+    ["sin admin todavía (D-28)", SIN_ADMIN, "Asignado a Nadie todavía: en unos minutos se asigna al primer admin activo."],
+  ])("%s: igual que al asignado, pinta la llave con «Copiar llave» y el formulario con su confirmación", async (_caso, r, asignado) => {
     const html = await pintar(r);
     const t = texto(html);
     expect(t).toContain("Transferir el reembolso");
-    expect(t).toContain(explicacion);
+    expect(t).toContain("Transfiere el monto a la llave de quien pagó desde la cuenta de Calibra y después registra la referencia y la fecha.");
     expect(t).toContain(asignado);
     expect(t).toContain("Estado Listo para transferir");
-    expect(html).not.toContain("<form");
-    expect(html).not.toContain("<details");
-    expect(t).not.toContain("Transfiere el monto");
-    expect(t).not.toContain("Copiar llave");
-    expect(t).not.toContain("Llave de quien pagó");
-    // La llave no está en ninguna parte de la página, ni en un componente de cliente.
-    expect(html).not.toContain(LLAVE);
+    expect(t).toContain("Transferir $ 25.000");
+    expect(t).toContain("Llave de quien pagó");
+    expect(t).toContain("Copiar llave");
+    expect(html).toMatch(new RegExp(`<input id="llave-destino" readOnly=""[^>]*value="${LLAVE}"`));
+    expect(html.match(/<details/g)).toHaveLength(1);
+    expect(html).toContain('name="referencia"');
+    expect(html).toContain('name="fecha"');
+    expect(t).toContain("Registra la transferencia de $ 25.000 a 3001234567. No se puede deshacer.");
+    expect(t).toContain("Sí, registrar la transferencia");
+  });
+
+  it("ya no dice que solo el asignado registra", async () => {
+    for (const r of [DE_OTRO, SIN_ADMIN]) {
+      const t = texto(await pintar(r));
+      expect(t).not.toContain("solo esa persona registra");
+      expect(t).not.toContain("Lo tiene asignado");
+      expect(t).not.toContain("esa persona registra la transferencia");
+    }
   });
 });
 
@@ -282,7 +290,7 @@ describe("Gestionar un reembolso: cerrado sin llave (supuesto 11)", () => {
 });
 
 describe("Gestionar un reembolso: reembolsado", () => {
-  it("muestra la referencia, la fecha y quién lo registró, sin formularios; la llave solo a quien lo registró", async () => {
+  it("muestra la referencia, la fecha y quién lo registró, sin formularios, y la llave", async () => {
     const html = sinScriptDeReact(await pintar(REEMBOLSADO));
     const t = texto(html);
     expect(t).toContain("Reembolso registrado");
@@ -294,29 +302,39 @@ describe("Gestionar un reembolso: reembolsado", () => {
     expect(t).toContain(`Llave de quien pagó ${LLAVE}`);
     expect(html).not.toContain("<form");
     expect(t).not.toContain("Copiar llave");
-    // En un reembolsado, el admin es quien lo registró: no se dice dos veces ni se promete una asignación.
+    // En un reembolsado se dice quién lo registró, no a quién estaba asignado (pregunta 2 de HU-082).
     expect(t).not.toContain("Asignado a");
   });
 
-  it("a otro admin no le pinta la llave", async () => {
-    const html = await pintar(reembolso({ ...REEMBOLSADO, asignado: { id: OTRO, nombre: "Admin Dos" } }));
-    expect(texto(html)).toContain("Registrado por Admin Dos");
-    expect(html).not.toContain(LLAVE);
+  it("lo registró otro admin: dice quién, distinto del asignado, y cualquier admin activo ve la llave", async () => {
+    const html = await pintar(reembolso({ ...REEMBOLSADO, registradoPor: { id: OTRO, nombre: "Admin Dos" } }));
+    const t = texto(html);
+    expect(t).toContain("Registrado por Admin Dos");
+    expect(t).not.toContain("Registrado por Admin Uno");
+    expect(t).toContain(`Llave de quien pagó ${LLAVE}`);
   });
 
-  it("sin admin guardado dice Sin dato, sin llave", async () => {
-    const html = await pintar(reembolso({ ...REEMBOLSADO, asignado: null }));
+  it("el asignado no registró (id_admin_registro de otro) y la sesión es el asignado: la llave se ve igual", async () => {
+    const html = await pintar(reembolso({ ...REEMBOLSADO, asignado: { id: OTRO, nombre: "Admin Dos" }, registradoPor: { id: YO, nombre: "Admin Uno" } }));
+    expect(texto(html)).toContain("Registrado por Admin Uno");
+    expect(texto(html)).toContain(`Llave de quien pagó ${LLAVE}`);
+  });
+
+  it("sin dato de quién lo registró dice Sin dato, aunque haya asignado", async () => {
+    const html = await pintar(reembolso({ ...REEMBOLSADO, registradoPor: null }));
     expect(texto(html)).toContain("Registrado por Sin dato");
-    expect(html).not.toContain(LLAVE);
+    expect(texto(html)).not.toContain("Registrado por Admin Uno");
   });
 
   it("tras registrarla, el éxito es un role=status; un enlace viejo o el de otro admin no lo anuncia", async () => {
     const exito = await pintar(REEMBOLSADO, { registrado: "reembolsado" });
     expect(exito).toMatch(
-      /<p role="status"[^>]*>Registraste la transferencia\. El reembolso sale de tu bandeja y quien pagó ve en su enlace que ya le devolvimos el dinero\.<\/p>/,
+      /<p role="status"[^>]*>Registraste la transferencia\. Quien pagó ve en su enlace que ya le devolvimos el dinero\.<\/p>/,
     );
     expect(await pintar(reembolso(), { registrado: "reembolsado" })).not.toContain("Registraste");
-    expect(await pintar(reembolso({ ...REEMBOLSADO, asignado: { id: OTRO, nombre: "Admin Dos" } }), { registrado: "reembolsado" })).not.toContain("Registraste");
+    // Lo registró otro admin: aunque la sesión sea la del asignado, no anuncia una transferencia que no registró.
+    expect(await pintar(reembolso({ ...REEMBOLSADO, registradoPor: { id: OTRO, nombre: "Admin Dos" } }), { registrado: "reembolsado" })).not.toContain("Registraste");
+    expect(await pintar(reembolso({ ...REEMBOLSADO, registradoPor: null }), { registrado: "reembolsado" })).not.toContain("Registraste");
   });
 
   it("si ya estaba registrado, la alerta pide no transferirlo de nuevo", async () => {
@@ -327,13 +345,15 @@ describe("Gestionar un reembolso: reembolsado", () => {
 });
 
 describe("Gestionar un reembolso: lo que cambió mientras el admin miraba", () => {
-  it.each([
-    ["sin_llave", ESPERANDO],
-    ["no_asignado", DE_OTRO],
-  ] as const)("%s vuelve como alerta y la página se pinta como quedó", async (error, r) => {
-    const html = await pintar(r, { error });
+  it("sin_llave vuelve como alerta y la página se pinta como quedó", async () => {
+    const html = await pintar(ESPERANDO, { error: "sin_llave" });
     expect(html).toMatch(/<p role="alert"/);
     expect(texto(html)).toContain(MENSAJE_DE_CAMBIO);
+  });
+
+  it("no_asignado ya no es un cambio que se diga: la base no lo responde", async () => {
+    const html = await pintar(DE_OTRO, { error: "no_asignado" });
+    expect(html).not.toContain('role="alert"');
   });
 });
 
