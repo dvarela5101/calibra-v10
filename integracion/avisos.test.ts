@@ -7,6 +7,7 @@ import {
   procesarAvisosAlMonitor,
   reconstruirAvisoCancelada,
   reconstruirAvisoConfirmada,
+  reconstruirAvisoPagoRechazado,
 } from "@/lib/avisos/servidor";
 import { claveDeCorreo } from "@/lib/correo/enviar";
 import { RECONSTRUCTORES } from "@/lib/correo/reconstructores";
@@ -18,7 +19,8 @@ import { exigirSupabaseLocal, exito, Fixtures } from "./utilidades";
 /**
  * HU-051 contra el Supabase local: el trigger de `monitoria` anota el aviso, `procesarAvisosAlMonitor` (el mismo
  * código de la ruta `/api/procesos/avisar-monitores`) lo manda por Mailpit al correo del monitor y lo marca
- * procesado. En local no hay configuración en Vault, así que la base no llama a la app: la prueba llama el proceso.
+ * procesado. HU-076 suma el tercer evento, `pago_rechazado` (`confirmada` que el rechazo de su pago cancela); el
+ * recorrido completo del rechazo, con el aviso al pagador, está en `integracion/avisos-rechazo.test.ts`. En local no hay configuración en Vault, así que la base no llama a la app: la prueba llama el proceso.
  *
  * El estado lo cambia service_role, como lo harán HU-018 (confirmar) y HU-024 (cancelar): el trigger reacciona al
  * cambio sin importar quién lo hace. Las monitorías son de un lunes a varias semanas, lejos de cualquier proceso
@@ -76,7 +78,11 @@ let semana = 0;
 /** Una monitoría pendiente de pago, cada una en un lunes distinto (una franja no tiene dos activas el mismo día). */
 async function pendiente() {
   const monitoria = await fx.crearMonitoria(e.contexto, { fecha: lunesLejano(semana++), estado: "pendiente_pago" });
-  claves.push(claveDeCorreo("aviso_monitor_confirmada", monitoria.id), claveDeCorreo("aviso_monitor_cancelada", monitoria.id));
+  claves.push(
+    claveDeCorreo("aviso_monitor_confirmada", monitoria.id),
+    claveDeCorreo("aviso_monitor_cancelada", monitoria.id),
+    claveDeCorreo("aviso_monitor_pago_rechazado", monitoria.id),
+  );
   return monitoria;
 }
 
@@ -196,16 +202,50 @@ describe("criterio 3: lo que no se avisa", () => {
     await cambiarEstado(vencida.id, "cancelada", "reserva_expirada");
     expect(await avisosDe(vencida.id)).toEqual([]);
 
-    const rechazada = await pendiente();
-    await cambiarEstado(rechazada.id, "confirmada");
-    await cambiarEstado(rechazada.id, "cancelada", "pago_rechazado");
-    expect((await avisosDe(rechazada.id)).map((a) => a.evento)).toEqual(["confirmada"]);
+    const noAsistio = await pendiente();
+    await cambiarEstado(noAsistio.id, "confirmada");
+    await cambiarEstado(noAsistio.id, "cancelada", "monitor_no_asistio");
+    expect((await avisosDe(noAsistio.id)).map((a) => a.evento)).toEqual(["confirmada"]);
 
     const realizada = await pendiente();
     await cambiarEstado(realizada.id, "confirmada");
     await cambiarEstado(realizada.id, "realizada");
     expect((await avisosDe(realizada.id)).map((a) => a.evento)).toEqual(["confirmada"]);
     await procesar();
+  });
+});
+
+describe("HU-076, criterios 1 y 3: una confirmada que se cancela porque su pago se rechazó", () => {
+  it("anota el aviso pago_rechazado; el proceso manda el correo corto con la frase del pago y descarta el de confirmada, que ya no vale; una reserva por pagar que el rechazo cancela no anota nada", async () => {
+    const porPagar = await pendiente();
+    await cambiarEstado(porPagar.id, "cancelada", "pago_rechazado");
+    expect(await avisosDe(porPagar.id)).toEqual([]);
+
+    const rechazada = await pendiente();
+    await cambiarEstado(rechazada.id, "confirmada");
+    await cambiarEstado(rechazada.id, "cancelada", "pago_rechazado");
+    expect((await avisosDe(rechazada.id)).map((a) => a.evento)).toEqual(["confirmada", "pago_rechazado"]);
+    const antes = (await correosDelMonitor()).length;
+
+    const resumen = await procesar();
+    expect(resumen.enviados).toBeGreaterThanOrEqual(1);
+    // El de confirmada se descarta: la cita ya no está confirmada. Solo sale el del rechazo.
+    expect(resumen.descartados).toBeGreaterThanOrEqual(1);
+
+    const correos = await correosDelMonitor();
+    expect(correos).toHaveLength(antes + 1);
+    const correo = correos.find((c) => c.Text.includes("Fue porque no se pudo verificar el pago."));
+    expect(correo, "debía llegar el aviso del pago rechazado").toBeDefined();
+    expect(correo!.Subject).toBe(`Se canceló tu monitoría de ${e.materia.nombre}`);
+    // P-37: nada del estudiante en el correo.
+    for (const privado of [e.lead.nombre, e.lead.correo, e.lead.numero_telefono].filter(Boolean)) {
+      expect(correo!.Text).not.toContain(privado);
+      expect(correo!.HTML).not.toContain(privado);
+    }
+    expect(
+      exito(await fx.admin.from("correo_envio").select("estado, destinatario").eq("clave", claveDeCorreo("aviso_monitor_pago_rechazado", rechazada.id)).single(), "leer el registro"),
+    ).toEqual({ estado: "enviado", destinatario: e.monitor.correo });
+    expect((await avisosDe(rechazada.id)).every((a) => a.procesado_en !== null)).toBe(true);
   });
 });
 
@@ -300,7 +340,27 @@ describe("criterio 4: el reintento (HU-065) reconstruye el aviso desde la monito
     await cambiarEstado(m.id, "cancelada", "estudiante");
     expect(await reconstruirAvisoConfirmada(m.id, fx.admin)).toBeNull();
     expect((await reconstruirAvisoCancelada(m.id, fx.admin))?.destinatario).toBe(e.monitor.correo);
+    expect(await reconstruirAvisoPagoRechazado(m.id, fx.admin)).toBeNull();
     expect(await reconstruirAvisoConfirmada("no-es-un-uuid", fx.admin)).toBeNull();
+    await procesar();
+  });
+
+  it("HU-076: el de pago_rechazado, mientras la cita siga cancelada por el rechazo del pago; con otro motivo no aplica", async () => {
+    const m = await pendiente();
+    await cambiarEstado(m.id, "confirmada");
+    expect(await reconstruirAvisoPagoRechazado(m.id, fx.admin)).toBeNull();
+
+    await cambiarEstado(m.id, "cancelada", "pago_rechazado");
+    const reconstruido = await reconstruirAvisoPagoRechazado(m.id, fx.admin);
+    expect(reconstruido?.destinatario).toBe(e.monitor.correo);
+    expect(reconstruido?.datos).toMatchObject({ materia: e.materia.nombre, nombreMonitor: "Monitor de prueba" });
+    // Los datos del correo al monitor no llevan nada del estudiante ni del pago (P-37).
+    expect(Object.keys(reconstruido!.datos).sort()).toEqual(["enlace", "inicio", "materia", "nombreMonitor"]);
+    expect(await reconstruirAvisoCancelada(m.id, fx.admin)).toBeNull();
+    expect(RECONSTRUCTORES.aviso_monitor_pago_rechazado).toBeDefined();
+
+    await cambiarEstado(m.id, "cancelada", "monitor_no_asistio");
+    expect(await reconstruirAvisoPagoRechazado(m.id, fx.admin)).toBeNull();
     await procesar();
   });
 });
