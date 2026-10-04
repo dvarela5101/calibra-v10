@@ -56,6 +56,8 @@ export async function reconstruirInvitacionResena(
 export type ResumenDeInvitaciones = {
   revisadas: number;
   enviadas: number;
+  /** Tiene un reporte de inasistencia abierto (HU-080, D-40): se salta sin marcarla ni sumar intento, y sale al rechazarse el reporte. */
+  enEspera: number;
   /** La invitación ya no valía (ya hay reseña, el pago se rechazó o no tiene datos): no se manda. */
   descartadas: number;
   /** El correo falló y quedó `fallido` en `correo_envio`: lo reintenta HU-065 o lo ve el admin. */
@@ -81,7 +83,7 @@ type Invitacion = { id: string; id_pago: string; intentos: number };
 /**
  * Manda las invitaciones pendientes (HU-035), de la más antigua a la más reciente. Cada una queda procesada cuando
  * su correo queda en `correo_envio` (enviado, o fallido para reintentar) o cuando ya no vale. Si no se pudo
- * procesar, suma un intento y se abandona al llegar a `MAXIMO_DE_INTENTOS`. Dos corridas a la vez no lo mandan dos
+ * procesar, suma un intento y se abandona al llegar a `MAXIMO_DE_INTENTOS`. Las que tienen un reporte abierto se saltan (HU-080). Dos corridas a la vez no lo mandan dos
  * veces: la clave del correo (`resena_individual:<id_pago>`) es única.
  */
 export async function procesarInvitacionesResena(dependencias?: Partial<DependenciasDeInvitaciones>): Promise<ResumenDeInvitaciones> {
@@ -89,14 +91,10 @@ export async function procesarInvitacionesResena(dependencias?: Partial<Dependen
   const enviar = dependencias?.enviar ?? enviarCorreoDesdeServidor;
   const reloj = dependencias?.reloj ?? Date.now;
   const inicio = reloj();
-  const resumen: ResumenDeInvitaciones = { revisadas: 0, enviadas: 0, descartadas: 0, fallidas: 0, tomadasPorOtro: 0, conError: 0, pospuestas: 0 };
+  const resumen: ResumenDeInvitaciones = { revisadas: 0, enviadas: 0, enEspera: 0, descartadas: 0, fallidas: 0, tomadasPorOtro: 0, conError: 0, pospuestas: 0 };
 
-  const { data: invitaciones, error } = await cliente
-    .from("invitacion_resena")
-    .select("id, id_pago, intentos")
-    .is("procesado_en", null)
-    .order("creada_en")
-    .limit(LOTE_DE_INVITACIONES);
+  // Sin las que están en espera por un reporte abierto: las excluye la base (HU-080).
+  const { data: invitaciones, error } = await cliente.rpc("invitaciones_resena_por_procesar", { p_limite: LOTE_DE_INVITACIONES });
   if (error) throw new Error(`No se pudieron leer las invitaciones: ${error.message}`);
 
   for (const invitacion of invitaciones ?? []) {
@@ -109,6 +107,11 @@ export async function procesarInvitacionesResena(dependencias?: Partial<Dependen
       const correo = await reconstruirInvitacionResena(invitacion.id_pago, cliente);
       const resultado = correo && (await enviar({ plantilla: "resena_individual", ...correo, entidad: invitacion.id_pago }));
       if (!resultado) {
+        // Un reporte abierto que llegó después del listado no descarta la invitación: queda para cuando se decida.
+        if (await invitacionEnEspera(cliente, invitacion.id_pago)) {
+          resumen.enEspera++;
+          continue;
+        }
         resumen.descartadas++;
       } else if (resultado.ok) {
         resumen.enviadas++;
@@ -131,6 +134,13 @@ export async function procesarInvitacionesResena(dependencias?: Partial<Dependen
   return resumen;
 }
 
+/** ¿La invitación sigue sin procesar y su monitoría tiene un reporte de inasistencia abierto? (HU-080) */
+async function invitacionEnEspera(cliente: Cliente, idPago: string): Promise<boolean> {
+  const { data, error } = await cliente.rpc("invitacion_resena_en_espera", { p_id_pago: idPago });
+  if (error) throw new Error(`No se pudo saber si la invitación está en espera: ${error.message}`);
+  return data === true;
+}
+
 async function marcar(cliente: Cliente, invitacion: Invitacion, cambios: { procesado_en?: string; intentos?: number }): Promise<void> {
   const { error } = await cliente.from("invitacion_resena").update(cambios).eq("id", invitacion.id);
   if (error) throw new Error(`No se pudo marcar la invitación: ${error.message}`);
@@ -151,7 +161,7 @@ async function sumarIntento(cliente: Cliente, invitacion: Invitacion, falla: unk
   }
 }
 
-const ESTADOS: readonly EstadoDeResena[] = ["disponible", "ya_resenada", "no_disponible"];
+const ESTADOS: readonly EstadoDeResena[] = ["disponible", "ya_resenada", "con_reporte", "no_disponible"];
 
 export type ResenaPorToken = { estado: EstadoDeResena; nombreMonitor: string; nombreMateria: string; inicio: string };
 
@@ -170,9 +180,9 @@ export async function leerResenaPorToken(token: string): Promise<ResenaPorToken 
   return { estado, nombreMonitor: fila.nombre_monitor, nombreMateria: fila.nombre_materia, inicio: new Date(fila.inicio).toISOString() };
 }
 
-export type ResultadoDeResena = "registrada" | "ya_resenada" | "no_disponible" | "no_existe";
+export type ResultadoDeResena = "registrada" | "ya_resenada" | "con_reporte" | "no_disponible" | "no_existe";
 
-const RESULTADOS: readonly ResultadoDeResena[] = ["registrada", "ya_resenada", "no_disponible", "no_existe"];
+const RESULTADOS: readonly ResultadoDeResena[] = ["registrada", "ya_resenada", "con_reporte", "no_disponible", "no_existe"];
 
 /**
  * Guarda la reseña del pago al que pertenece el token (RN-70). La base vuelve a revisar todo con el pago

@@ -37,6 +37,7 @@ let mailpit: string;
 let e: Awaited<ReturnType<typeof construirEscenario>>;
 let sesionMonitor: Cliente;
 const pagos: string[] = [];
+const monitoriasConReporte: string[] = [];
 const correos = new Set<string>();
 
 beforeAll(async () => {
@@ -62,6 +63,8 @@ afterAll(async () => {
     await fetch(`${mailpit}/api/v1/search?query=${encodeURIComponent(`to:"${correo}"`)}`, { method: "DELETE" }).catch(() => undefined);
   }
   if (fx) {
+    // Los reportes de HU-080 los insertó la prueba y la llave foránea impide borrar antes la monitoría.
+    if (monitoriasConReporte.length) await fx.admin.from("reporte_inasistencia").delete().in("id_monitoria", monitoriasConReporte);
     if (pagos.length) {
       await fx.admin.from("correo_envio").delete().in("clave", pagos.map((id) => claveDeCorreo("resena_individual", id)));
       // La reseña cuelga del pago sin cascada: antes de que la limpieza borre los pagos.
@@ -472,10 +475,89 @@ describe("la ruta /api/procesos/invitar-resenas", () => {
 
     expect(respuesta.status).toBe(200);
     const resumen = await respuesta.json();
-    expect(Object.keys(resumen).sort()).toEqual(["conError", "descartadas", "enviadas", "fallidas", "pospuestas", "revisadas", "tomadasPorOtro"]);
+    expect(Object.keys(resumen).sort()).toEqual(["conError", "descartadas", "enEspera", "enviadas", "fallidas", "pospuestas", "revisadas", "tomadasPorOtro"]);
     expect(resumen.revisadas).toBe(
-      resumen.enviadas + resumen.descartadas + resumen.fallidas + resumen.tomadasPorOtro + resumen.conError + resumen.pospuestas,
+      resumen.enviadas + resumen.enEspera + resumen.descartadas + resumen.fallidas + resumen.tomadasPorOtro + resumen.conError + resumen.pospuestas,
     );
     await procesarHasta(pago.id);
+  });
+});
+
+describe("HU-080: no se invita a reseñar a quien reportó que el monitor no llegó (D-40)", () => {
+  async function reportar(idMonitoria: string, estado: "en_revision" | "aceptado" | "rechazado" = "en_revision") {
+    exito(await fx.admin.from("reporte_inasistencia").insert({ id_monitoria: idMonitoria, id_admin: e.admin.id, estado, fecha_decision: estado === "en_revision" ? null : new Date().toISOString() }).select().single(), "crear el reporte");
+    monitoriasConReporte.push(idMonitoria);
+  }
+
+  async function decidir(idMonitoria: string, estado: "aceptado" | "rechazado") {
+    exito(
+      await fx.admin.from("reporte_inasistencia").update({ estado, fecha_decision: new Date().toISOString() }).eq("id_monitoria", idMonitoria).select().single(),
+      "decidir el reporte",
+    );
+  }
+
+  const conElEnlace = async (token: string) => (await correosDelLead()).filter((c) => c.Text.includes(rutaDeResena(token)));
+
+  it("con el reporte abierto antes de realizada, el proceso la deja en espera: no manda correo ni marca la invitación; al rechazarse se manda", async () => {
+    const { monitoria, pago } = await confirmada();
+    await reportar(monitoria.id);
+    await pasarARealizada(monitoria.id);
+    const token = await tokenDe(pago.id);
+
+    // El listado ya la deja fuera (reporte abierto): ni se revisa, ni se marca, ni suma intento.
+    await procesarInvitacionesResena({ cliente: fx.admin });
+
+    expect(await conElEnlace(token)).toHaveLength(0);
+    expect(await invitacionesDe(pago.id)).toEqual([expect.objectContaining({ procesado_en: null, intentos: 0 })]);
+
+    await decidir(monitoria.id, "rechazado");
+    await procesarHasta(pago.id);
+
+    expect(await conElEnlace(token)).toHaveLength(1);
+    expect((await invitacionesDe(pago.id))[0].procesado_en).not.toBeNull();
+  });
+
+  it("con la invitación ya enviada y un reporte después, el enlace da con_reporte y no se guarda reseña; tras el rechazo vuelve a poder calificar", async () => {
+    const { monitoria, pago } = await realizada();
+    const token = await tokenDe(pago.id);
+    await procesarHasta(pago.id);
+
+    await reportar(monitoria.id);
+
+    expect((await leerResenaPorToken(token))?.estado).toBe("con_reporte");
+    expect(await registrarResena(token, 5, "Excelente")).toBe("con_reporte");
+    expect(await resenasDe(pago.id)).toEqual([]);
+
+    await decidir(monitoria.id, "rechazado");
+
+    expect((await leerResenaPorToken(token))?.estado).toBe("disponible");
+    expect(await registrarResena(token, 4, null)).toBe("registrada");
+    expect(await resenasDe(pago.id)).toHaveLength(1);
+  });
+
+  it("un reporte aceptado también bloquea el enlace, aunque la monitoría quede cancelada", async () => {
+    const { monitoria, pago } = await realizada();
+    const token = await tokenDe(pago.id);
+    await procesarHasta(pago.id);
+
+    await reportar(monitoria.id, "aceptado");
+    exito(await fx.admin.from("monitoria").update({ estado: "cancelada", motivo_cancelacion: "monitor_no_asistio" }).eq("id", monitoria.id).select().single(), "cancelar la monitoría");
+
+    expect((await leerResenaPorToken(token))?.estado).toBe("con_reporte");
+    expect(await registrarResena(token, 3, null)).toBe("con_reporte");
+    expect(await resenasDe(pago.id)).toEqual([]);
+  });
+
+  it("una reseña ya guardada no se toca porque después llegue un reporte", async () => {
+    const { monitoria, pago } = await realizada();
+    const token = await tokenDe(pago.id);
+    expect(await registrarResena(token, 4, "Muy bien")).toBe("registrada");
+    const [antes] = await resenasDe(pago.id);
+    await procesarHasta(pago.id);
+
+    await reportar(monitoria.id);
+
+    expect(await resenasDe(pago.id)).toEqual([antes]);
+    expect((await leerResenaPorToken(token))?.estado).toBe("ya_resenada");
   });
 });

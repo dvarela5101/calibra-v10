@@ -8,7 +8,7 @@ import { registrarResena } from "@/lib/resenas/servidor";
  * los demás sustituyen al formulario por un mensaje. `valores` devuelve lo escrito para no vaciar los campos.
  */
 export type EstadoResena = {
-  resultado: "pendiente" | "registrada" | "ya_resenada" | "no_disponible" | "no_existe";
+  resultado: "pendiente" | "registrada" | "ya_resenada" | "con_reporte" | "no_disponible" | "no_existe";
   error: string | null;
   valores: { calificacion: string; comentario: string };
 };
