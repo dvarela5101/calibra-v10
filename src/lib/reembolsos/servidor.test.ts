@@ -2,14 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Database } from "@/lib/supabase/tipos";
 
-// HU-025 sin base: las tres puertas con un cliente falso que solo sabe `rpc`. Qué responde la base en cada caso lo fijan
-// supabase/tests/llave_reembolso.test.sql y la integración.
+// HU-025 sin base: las tres puertas con un cliente falso que solo sabe `rpc`, más la de reenviar el enlace que usa
+// HU-026. Qué responde la base en cada caso lo fijan supabase/tests/llave_reembolso.test.sql y la integración.
 
 const admin = vi.hoisted(() => ({ cliente: null as unknown }));
 vi.mock("@/lib/supabase/admin", () => ({ crearClienteAdmin: () => admin.cliente }));
 
-import { RESULTADOS_DE_ENTREGAR, RESULTADOS_DE_REABRIR } from "./reglas";
-import { entregarLlavePorToken, leerLlavePorToken, reabrirReembolso } from "./servidor";
+import { RESULTADOS_DE_ENTREGAR, RESULTADOS_DE_REABRIR, RESULTADOS_DE_REENVIAR } from "./reglas";
+import { entregarLlavePorToken, leerLlavePorToken, reabrirReembolso, reenviarPedidoDeLlave } from "./servidor";
 
 const TOKEN = "a".repeat(64);
 const LLAVE = "300 123 4567";
@@ -106,5 +106,36 @@ describe("reabrirReembolso (criterio 5, supuesto 4)", () => {
   it("si la base falla o responde algo que no conoce lanza", async () => {
     await expect(reabrirReembolso(clienteQueResponde(null, { message: "sin sesión" }).cliente, ID)).rejects.toThrow("No se pudo reabrir el reembolso: sin sesión");
     await expect(reabrirReembolso(clienteQueResponde("reenviado").cliente, ID)).rejects.toThrow("Respuesta inesperada al reabrir el reembolso");
+  });
+});
+
+describe("reenviarPedidoDeLlave (HU-026, criterio 3)", () => {
+  it("un id que no es un uuid es no_encontrado sin consultar", async () => {
+    const { cliente, rpc } = clienteQueResponde("reenviado");
+    for (const malo of ["", "no-es-un-id", `${ID}0`, "1 or 1=1"]) expect(await reenviarPedidoDeLlave(cliente, malo), malo).toBe("no_encontrado");
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("usa el cliente de la sesión, no la llave secreta, y devuelve el resultado tal cual", async () => {
+    admin.cliente = { rpc: () => Promise.reject(new Error("no debía usarse")) };
+    for (const resultado of RESULTADOS_DE_REENVIAR) {
+      const { cliente, rpc } = clienteQueResponde(resultado);
+      expect(await reenviarPedidoDeLlave(cliente, ID), resultado).toBe(resultado);
+      expect(rpc).toHaveBeenCalledExactlyOnceWith("reenviar_pedido_llave", { p_id_reembolso: ID });
+    }
+  });
+
+  it("si la base falla lanza, en vez de decir que se reenvió", async () => {
+    await expect(reenviarPedidoDeLlave(clienteQueResponde(null, { message: "sin sesión" }).cliente, ID)).rejects.toThrow(
+      "No se pudo reenviar el enlace: sin sesión",
+    );
+  });
+
+  it("si la base responde algo que no conoce lanza", async () => {
+    for (const raro of ["reabierto", "", null, 1]) {
+      await expect(reenviarPedidoDeLlave(clienteQueResponde(raro).cliente, ID), JSON.stringify(raro)).rejects.toThrow(
+        "Respuesta inesperada al reenviar el enlace",
+      );
+    }
   });
 });

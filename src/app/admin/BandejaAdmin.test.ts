@@ -142,6 +142,49 @@ describe("BandejaAdmin: reembolsos por estado", () => {
     expect(t).toContain("Ninguno está listo para transferir.");
     expect(t).not.toContain("Ninguno espera una llave.");
   });
+
+  it("cada reembolso de los dos estados lleva a su gestión, con el monto y el motivo dentro del enlace (HU-026)", () => {
+    const html = pintar({
+      ...VACIA,
+      reembolsos: {
+        esperandoLlave: [{ id: "r-1", monto: 25_000, motivo: "Motivo uno" }],
+        pendientes: [{ id: "r-2", monto: 32_000, motivo: "Motivo dos" }],
+      },
+      contadores: { ...VACIA.contadores, reembolsos: 2, reembolsosEsperandoLlave: 1, reembolsosPendientes: 1 },
+    });
+    for (const [id, monto, motivo] of [
+      ["r-1", "$ 25.000", "Motivo uno"],
+      ["r-2", "$ 32.000", "Motivo dos"],
+    ] as const) {
+      const enlace = html.match(new RegExp(`<a href="/admin/reembolsos/${id}"[^>]*>(.*?)</a>`))?.[1] ?? "";
+      expect(texto(enlace)).toContain(monto);
+      expect(texto(enlace)).toContain(motivo);
+    }
+    // Un enlace por reembolso y ninguno más; los de la bandeja de cada estado van en el suyo.
+    expect(html.match(/href="\/admin\/reembolsos\//g)).toHaveLength(2);
+    const t = texto(html);
+    expect(t.indexOf("Esperando la llave del pagador")).toBeLessThan(t.indexOf("Motivo uno"));
+    expect(t.indexOf("Motivo uno")).toBeLessThan(t.indexOf("Listos para transferir"));
+    expect(t.indexOf("Listos para transferir")).toBeLessThan(t.indexOf("Motivo dos"));
+  });
+
+  it("los cerrados sin llave no enlazan a la gestión: se reabren desde la bandeja (HU-025)", () => {
+    const html = pintar({
+      ...VACIA,
+      reembolsosCerrados: [
+        {
+          id: "c-1",
+          nombrePagador: "Pagador",
+          contacto: "pagador@uniandes.edu.co",
+          monto: 25_000,
+          motivo: "Motivo",
+          cerradoEn: new Date("2026-10-10T15:00:00.000Z"),
+        },
+      ],
+      contadores: { ...VACIA.contadores, reembolsosCerrados: 1 },
+    });
+    expect(html).not.toContain("/admin/reembolsos/");
+  });
 });
 
 describe("BandejaAdmin: lo que se ve en cada ítem", () => {

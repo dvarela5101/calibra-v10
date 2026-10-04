@@ -9,6 +9,8 @@
  * `public.datos_de_llave`, borde inclusivo de P-40): aquí no se recalcula. La llave nunca sale de la base hacia la
  * página ni hacia los correos (criterio 3). Aquí no hay cifras de comisión: el reembolso es siempre el valor completo
  * del pago.
+ *
+ * HU-026 agrega lo que se le dice al admin al reenviar el enlace desde la página del reembolso.
  */
 import type { MotivoDeCancelacion } from "@/lib/citas/reglas";
 import type { DatosPorPlantilla } from "@/lib/correo/plantillas";
@@ -323,4 +325,56 @@ export function avisoDeReabrir(consulta: Record<string, string | string[] | unde
   const valor = consulta.reembolso;
   if (typeof valor !== "string" || !Object.hasOwn(AVISOS_DE_REABRIR, valor)) return null;
   return AVISOS_DE_REABRIR[valor as DesenlaceDeReabrir];
+}
+
+// ---------------------------------------------------------------------------
+// Reenviar el enlace desde la página del reembolso (HU-026, criterio 3)
+// ---------------------------------------------------------------------------
+
+/** Lo que responde `public.reenviar_pedido_llave`, en el orden de su migración. Un doble clic deja un solo reenvío. */
+export const RESULTADOS_DE_REENVIAR = ["reenviado", "cerrado", "ya_entregada", "no_encontrado", "sin_permiso", "sin_sesion"] as const;
+export type ResultadoDeReenviar = (typeof RESULTADOS_DE_REENVIAR)[number];
+
+export function esResultadoDeReenviar(valor: unknown): valor is ResultadoDeReenviar {
+  return typeof valor === "string" && (RESULTADOS_DE_REENVIAR as readonly string[]).includes(valor);
+}
+
+/** Lo que la acción de reenviar le deja a la página del reembolso en `?reenvio=`: un resultado de la base o una falla. */
+export type DesenlaceDeReenviar = ResultadoDeReenviar | "fallo";
+
+export type AvisoDeReenviar = { exito: boolean; texto: string };
+
+const AVISOS_DE_REENVIAR: Record<DesenlaceDeReenviar, AvisoDeReenviar> = {
+  reenviado: { exito: true, texto: "Le mandamos otra vez el enlace a quien pagó. Le llega en unos minutos y el plazo no cambia." },
+  // Reabrir sigue en la bandeja (P-10, fuera de alcance de HU-026): la página solo remite allá.
+  cerrado: {
+    exito: false,
+    texto:
+      "No lo reenviamos: el plazo para enviar la llave ya terminó. Para darle el plazo completo otra vez, reabre el caso desde “Cerrados sin llave”, en tu bandeja.",
+  },
+  ya_entregada: { exito: false, texto: "No hace falta: quien pagó ya nos envió su llave." },
+  no_encontrado: { exito: false, texto: "No encontramos este reembolso." },
+  sin_permiso: { exito: false, texto: "Solo un admin activo puede reenviar el enlace." },
+  sin_sesion: { exito: false, texto: "Solo un admin activo puede reenviar el enlace." },
+  fallo: { exito: false, texto: "No pudimos reenviar el enlace. Intenta de nuevo; si sigue igual, avisa al equipo." },
+};
+
+/** El aviso de la página del reembolso tras reenviar (`?reenvio=`). Un valor que no conoce, o repetido, no muestra nada. */
+export function avisoDeReenviar(consulta: Record<string, string | string[] | undefined>): AvisoDeReenviar | null {
+  const valor = consulta.reenvio;
+  if (typeof valor !== "string" || !Object.hasOwn(AVISOS_DE_REENVIAR, valor)) return null;
+  return AVISOS_DE_REENVIAR[valor as DesenlaceDeReenviar];
+}
+
+/**
+ * Lo que la página del reembolso no puede decir: si no existe responde 404, y a quien ya no es un admin activo no lo deja
+ * entrar. Con estos desenlaces la acción vuelve a la bandeja (`/admin?reenvio=`), como reabrir.
+ */
+export const REENVIOS_PARA_LA_BANDEJA = ["no_encontrado", "sin_permiso", "sin_sesion"] as const satisfies readonly ResultadoDeReenviar[];
+
+/** El aviso de la bandeja tras reenviar (`?reenvio=`): solo los de `REENVIOS_PARA_LA_BANDEJA`; los demás van en la página. */
+export function avisoDeReenviarEnLaBandeja(consulta: Record<string, string | string[] | undefined>): AvisoDeReenviar | null {
+  const valor = consulta.reenvio;
+  if (typeof valor !== "string" || !(REENVIOS_PARA_LA_BANDEJA as readonly string[]).includes(valor)) return null;
+  return AVISOS_DE_REENVIAR[valor as DesenlaceDeReenviar];
 }

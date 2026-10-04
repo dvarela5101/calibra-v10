@@ -1,11 +1,16 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { renderizar } from "@/lib/correo/plantillas";
 import {
   avisoDeReabrir,
+  avisoDeReenviar,
+  avisoDeReenviarEnLaBandeja,
   datosDelPedido,
   datosDelRecordatorio,
   esResultadoDeEntregar,
   esResultadoDeReabrir,
+  esResultadoDeReenviar,
   LARGO_MAXIMO_LLAVE,
   llaveDeFila,
   mensajeDeEntregar,
@@ -16,6 +21,8 @@ import {
   plantillaDelPedido,
   RESULTADOS_DE_ENTREGAR,
   RESULTADOS_DE_REABRIR,
+  RESULTADOS_DE_REENVIAR,
+  REENVIOS_PARA_LA_BANDEJA,
   RUTA_DE_LLAVE,
   rutaDeLlave,
   TEXTO_PAGO_EN_REVISION_AL_CANCELAR,
@@ -327,6 +334,73 @@ describe("reabrir un caso cerrado desde la bandeja (supuesto 4)", () => {
   it("sin el parámetro, con uno que no conoce o repetido no muestra nada", () => {
     for (const consulta of [{}, { reembolso: "" }, { reembolso: "otro" }, { reembolso: "toString" }, { reembolso: ["reabierto", "reabierto"] }, { otro: "reabierto" }]) {
       expect(avisoDeReabrir(consulta), JSON.stringify(consulta)).toBeNull();
+    }
+  });
+});
+
+describe("reenviar el enlace desde la página del reembolso (HU-026, criterio 3)", () => {
+  it("reconoce los seis resultados de la base, en el orden de su migración, y nada más", () => {
+    const sql = readFileSync(join(__dirname, "../../../supabase/migrations/20261003211456_llave_reembolso.sql"), "utf8");
+    // El comentario de privado.reenviar_pedido_llave: `--   resultado   explicación`, con continuaciones más indentadas.
+    const lineas = sql.split(/\r?\n/);
+    const seccion = lineas.findIndex((linea) => linea.startsWith("-- Reenviar el enlace sin reabrir"));
+    const desde = lineas.findIndex((linea, i) => i > seccion && linea === "-- Resultado:");
+    expect(seccion).toBeGreaterThan(-1);
+    expect(desde).toBeGreaterThan(seccion);
+    const enLaBase: string[] = [];
+    for (const linea of lineas.slice(desde + 1)) {
+      const resultado = /^-- {3}([a-z_]+)\s/.exec(linea);
+      if (resultado) enLaBase.push(resultado[1]);
+      else if (!/^-- {6,}\S/.test(linea)) break;
+    }
+    expect(enLaBase).toEqual([...RESULTADOS_DE_REENVIAR]);
+    for (const resultado of RESULTADOS_DE_REENVIAR) expect(esResultadoDeReenviar(resultado)).toBe(true);
+    for (const raro of ["", "reabierto", "reenviada", null, 2]) expect(esResultadoDeReenviar(raro), JSON.stringify(raro)).toBe(false);
+  });
+
+  it("cada desenlace tiene su aviso: el éxito como estado y lo demás como error", () => {
+    expect(avisoDeReenviar({ reenvio: "reenviado" })).toEqual({
+      exito: true,
+      texto: "Le mandamos otra vez el enlace a quien pagó. Le llega en unos minutos y el plazo no cambia.",
+    });
+    // Reabrir sigue en la bandeja (P-10, fuera de alcance de HU-026): el aviso remite allá.
+    expect(avisoDeReenviar({ reenvio: "cerrado" })).toEqual({
+      exito: false,
+      texto:
+        "No lo reenviamos: el plazo para enviar la llave ya terminó. Para darle el plazo completo otra vez, reabre el caso desde “Cerrados sin llave”, en tu bandeja.",
+    });
+    expect(avisoDeReenviar({ reenvio: "ya_entregada" })).toEqual({ exito: false, texto: "No hace falta: quien pagó ya nos envió su llave." });
+    expect(avisoDeReenviar({ reenvio: "no_encontrado" })).toEqual({ exito: false, texto: "No encontramos este reembolso." });
+    for (const sinPermiso of ["sin_permiso", "sin_sesion"]) {
+      expect(avisoDeReenviar({ reenvio: sinPermiso })).toEqual({ exito: false, texto: "Solo un admin activo puede reenviar el enlace." });
+    }
+    expect(avisoDeReenviar({ reenvio: "fallo" })).toEqual({
+      exito: false,
+      texto: "No pudimos reenviar el enlace. Intenta de nuevo; si sigue igual, avisa al equipo.",
+    });
+  });
+
+  it("sin el parámetro, con uno que no conoce o repetido no muestra nada", () => {
+    for (const consulta of [{}, { reenvio: "" }, { reenvio: "otro" }, { reenvio: "toString" }, { reenvio: ["reenviado", "reenviado"] }, { reembolso: "reenviado" }]) {
+      expect(avisoDeReenviar(consulta), JSON.stringify(consulta)).toBeNull();
+    }
+  });
+
+  it("ningún aviso habla de bruto ni de comisión", () => {
+    for (const desenlace of [...RESULTADOS_DE_REENVIAR, "fallo"]) {
+      expect(avisoDeReenviar({ reenvio: desenlace })?.texto.toLowerCase(), desenlace).not.toMatch(/comisi|bruto/);
+    }
+  });
+
+  it("en la bandeja solo dice lo que la página del reembolso no puede decir: que no existe o que no es un admin activo", () => {
+    expect([...REENVIOS_PARA_LA_BANDEJA]).toEqual(["no_encontrado", "sin_permiso", "sin_sesion"]);
+    expect(avisoDeReenviarEnLaBandeja({ reenvio: "no_encontrado" })).toEqual({ exito: false, texto: "No encontramos este reembolso." });
+    for (const sinPermiso of ["sin_permiso", "sin_sesion"]) {
+      expect(avisoDeReenviarEnLaBandeja({ reenvio: sinPermiso })).toEqual({ exito: false, texto: "Solo un admin activo puede reenviar el enlace." });
+    }
+    // Los demás se dicen en la página del reembolso; un enlace a la bandeja con ellos no anuncia nada.
+    for (const consulta of [{}, { reenvio: "reenviado" }, { reenvio: "cerrado" }, { reenvio: "ya_entregada" }, { reenvio: "fallo" }, { reenvio: "toString" }, { reenvio: ["no_encontrado"] }]) {
+      expect(avisoDeReenviarEnLaBandeja(consulta), JSON.stringify(consulta)).toBeNull();
     }
   });
 });
