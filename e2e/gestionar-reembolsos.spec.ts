@@ -3,12 +3,14 @@ import type { Locator, Page } from "@playwright/test";
 import { ZONA_HORARIA_NEGOCIO } from "../src/config/regional";
 import { diaDelNegocio, formatearDia, formatearFechaHora } from "../src/lib/fechas";
 import { formatearPesos } from "../src/lib/moneda";
-import { enviarCredenciales, expect, test as base, type Cuenta } from "./utilidades";
+import { enviarCredenciales, expect, test as base, usarTurnstileDePrueba, type Cuenta } from "./utilidades";
 
 // HU-026: el admin abre desde su bandeja cada reembolso que tiene asignado y lo gestiona según su estado. En pendiente
 // copia la llave de quien pagó, transfiere por fuera y registra la referencia y la fecha (criterio 2); si todavía espera
 // la llave, reenvía el enlace (criterio 3); un caso cerrado sin llave solo se muestra y remite a la bandeja para
-// reabrirlo (supuesto 11). Otro admin activo ve el caso, pero sin la llave ni el formulario (supuesto 9). Corre contra el
+// reabrirlo (supuesto 11). HU-082 (D-48): cualquier admin activo, no solo el asignado, ve la llave y registra la
+// transferencia; «Registrado por» nombra a quien la registró y el pendiente de otro sale en «De otros admins» de la
+// bandeja. La llave sigue sin llegar a quien no es admin. Corre contra el
 // Supabase local (Auth y base) y el servidor de Next con la configuración de .env.local (`npm run db:env`).
 //
 // Cada prueba crea y borra su propio admin, el monitor, la materia, la franja, el Lead, las monitorías canceladas con su
@@ -25,7 +27,7 @@ const DIA = 24 * 60 * MINUTO;
 /** P-10: los días para entregar la llave (`public.parametros_reembolso`). */
 const DIAS_PARA_ENTREGAR = 7;
 
-const AVISO_REGISTRADO = "Registraste la transferencia. El reembolso sale de tu bandeja y quien pagó ve en su enlace que ya le devolvimos el dinero.";
+const AVISO_REGISTRADO = "Registraste la transferencia. Quien pagó ve en su enlace que ya le devolvimos el dinero.";
 const AVISO_REENVIADO = "Le mandamos otra vez el enlace a quien pagó. Le llega en unos minutos y el plazo no cambia.";
 const ERROR_ANTES_DE_CREARSE = "La fecha de la transferencia no puede ser anterior al día en que se creó el reembolso.";
 const REABRIR_DESDE_LA_BANDEJA =
@@ -63,6 +65,11 @@ type OpcionesDeReembolso = {
    * correo largo y un nombre largo. Así las reglas de 390 px miden algo más que textos cortos.
    */
   largo?: boolean;
+  /**
+   * Quién aparece como `id_admin_registro` de un reembolsado: por defecto el asignado, como lo deja el relleno de la
+   * migración de HU-082 en los de antes; `nadie` lo deja nulo (un reembolsado sin dato, «Sin dato»).
+   */
+  registradoPor?: "asignado" | "nadie";
 };
 
 type Reembolso = {
@@ -84,6 +91,7 @@ type Reembolso = {
 type FilaDeReembolso = {
   estado: string;
   id_admin: string | null;
+  id_admin_registro: string | null;
   llave_destino: string | null;
   referencia_transferencia: string | null;
   fecha_reembolso: string | null;
@@ -198,6 +206,7 @@ const test = base.extend<{ escenario: Escenario }>({
           cerrado_en: plazo === "cerrado" ? new Date(Date.now() - MINUTO).toISOString() : null,
           fecha_reembolso: estado === "reembolsado" ? new Date().toISOString() : null,
           referencia_transferencia: estado === "reembolsado" ? "REF-E2E" : null,
+          id_admin_registro: estado === "reembolsado" && opciones.registradoPor !== "nadie" ? admin.id : null,
           ...(opciones.creadoHaceDias ? { fecha_generacion: new Date(Date.now() - opciones.creadoHaceDias * DIA).toISOString() } : {}),
         });
         creados.reembolsos.push(id);
@@ -209,7 +218,7 @@ const test = base.extend<{ escenario: Escenario }>({
       async enBd(id) {
         const { data, error } = await cliente
           .from("reembolso")
-          .select("estado, id_admin, llave_destino, referencia_transferencia, fecha_reembolso, cerrado_en")
+          .select("estado, id_admin, id_admin_registro, llave_destino, referencia_transferencia, fecha_reembolso, cerrado_en")
           .eq("id", id)
           .single();
         if (error) throw new Error(`leer el reembolso: ${error.message}`);
@@ -421,6 +430,7 @@ test.describe("Criterios 1 y 2 · el admin asignado abre un reembolso pendiente 
       expect({ ...fila, fecha_reembolso: new Date(fila.fecha_reembolso!).getTime() }).toEqual({
         estado: "reembolsado",
         id_admin: admin.id,
+        id_admin_registro: admin.id,
         llave_destino: r.llave,
         referencia_transferencia: referencia,
         // Mediodía de Bogotá (UTC-5) del día de la transferencia.
@@ -547,52 +557,101 @@ test.describe("Criterio 3 · esperando la llave se reenvía el enlace; un caso c
 });
 
 // ---------------------------------------------------------------------------
-// Supuestos 1 y 9: otro admin activo
+// HU-082: otro admin activo registra la transferencia
 // ---------------------------------------------------------------------------
-test.describe("Supuestos 1 y 9 · otro admin activo ve el caso, pero sin la llave ni el formulario", () => {
-  test("su bandeja no los lista; el pendiente del otro admin se ve sin la llave (ni en el HTML ni en las respuestas) y sin formulario, con quién lo registra; el registrado, sin la llave; uno que espera la llave sí lo puede reenviar", async ({
+test.describe("HU-082 · otro admin activo ve la llave y registra la transferencia de un reembolso que no es suyo", () => {
+  test("su bandeja lo lista en «De otros admins»; el pendiente se abre con la llave, «Copiar llave» y el formulario; registra, queda «Registrado por» él, con el éxito nuevo, y el asignado ve lo mismo; un reembolsado de antes muestra al asignado y uno sin dato, «Sin dato»; quien no es admin no recibe la llave; esperando la llave se reenvía", async ({
     page,
+    browser,
+    baseURL,
     cuentas,
     escenario,
   }) => {
     const { admin } = escenario;
     const otro = await cuentas.crearAdmin();
-    const pendiente = await escenario.reembolso({ estado: "pendiente" });
-    const reembolsado = await escenario.reembolso({ estado: "reembolsado" });
+    const pendiente = await escenario.reembolso({ estado: "pendiente", largo: true });
+    const delAsignado = await escenario.reembolso({ estado: "reembolsado" });
+    const sinDato = await escenario.reembolso({ estado: "reembolsado", registradoPor: "nadie" });
     const esperando = await escenario.reembolso();
-    const respuestas = vigilarRespuestas(page);
     await entrarComoAdmin(page, otro);
 
-    await test.step("su bandeja no los lista: los tiene asignados otro admin", async () => {
+    await test.step("su bandeja: no tiene reembolsos propios, y el pendiente del otro sale en «De otros admins» con quién lo tiene; el reembolsado y el que espera la llave no", async () => {
       const reembolsos = reembolsosDeLaBandeja(page);
       await expect(reembolsos.getByText("No tienes reembolsos por atender.")).toBeVisible(ESPERA);
-      for (const r of [pendiente, reembolsado, esperando]) await expect(reembolsos.getByRole("link", { name: r.motivo })).toHaveCount(0);
+      await expect(reembolsos.getByRole("heading", { level: 3, name: /^De otros admins \(\d+\)$/ })).toBeVisible();
+      await expect(reembolsos.getByText("Los tiene asignados otra persona. Si quien pagó ya envió su llave, puedes registrar tú la transferencia.")).toBeVisible();
+      const deOtros = reembolsos.getByRole("list", { name: /^De otros admins/ });
+      const fila = deOtros.getByRole("link", { name: pendiente.motivo });
+      await expect(fila).toContainText(pesos(pendiente.monto));
+      await expect(fila).toContainText(`De ${admin.nombre}`);
+      for (const r of [delAsignado, sinDato, esperando]) await expect(reembolsos.getByRole("link", { name: r.motivo })).toHaveCount(0);
+      await expectReglasDelProducto(page, "la bandeja con «De otros admins»");
+      await fila.click();
+      await expect(page).toHaveURL(rutaDe(pendiente), ESPERA);
     });
 
-    await test.step("pendiente: quién lo tiene, sin la llave ni el formulario", async () => {
-      await page.goto(rutaDe(pendiente));
+    await test.step("criterio 1: el pendiente de otro se abre con la llave, «Copiar llave» y el formulario, y ya no dice que solo lo registra el asignado", async () => {
       await expect(titulo(page, "Transferir el reembolso")).toBeVisible(ESPERA);
-      await expect(dato(seccionReembolso(page), "Asignado a")).toHaveText(admin.nombre);
-      await expect(dato(seccionReembolso(page), "Monto")).toHaveText(pesos(pendiente.monto));
-      await expect(page.getByText(`Lo tiene asignado ${admin.nombre}: solo esa persona registra la transferencia.`)).toBeVisible();
-      await expect(page.getByText("Transfiere el monto a la llave de quien pagó")).toHaveCount(0);
-      await expect(page.locator("form")).toHaveCount(0);
-      await expect(abrirConfirmacion(page)).toHaveCount(0);
-      await expect(page.getByLabel("Llave de quien pagó")).toHaveCount(0);
-      await expect(page.getByRole("button", { name: "Copiar llave" })).toHaveCount(0);
-      expect(await page.content()).not.toContain(pendiente.llave!);
+      const datos = seccionReembolso(page);
+      await expect(dato(datos, "Asignado a")).toHaveText(admin.nombre);
+      await expect(dato(datos, "Monto")).toHaveText(pesos(pendiente.monto));
+      await expect(page.getByLabel("Llave de quien pagó")).toHaveValue(pendiente.llave!);
+      await expect(page.getByRole("button", { name: "Copiar llave" })).toBeVisible();
+      await expect(abrirConfirmacion(page)).toBeVisible();
+      await expect(page.getByText(/solo esa persona registra la transferencia/)).toHaveCount(0);
       await expectSinComision(page, pendiente);
       await expectReglasDelProducto(page, "un pendiente de otro admin");
     });
 
-    await test.step("reembolsado: quién lo registró, sin la llave", async () => {
-      await page.goto(rutaDe(reembolsado));
-      await expect(titulo(page, "Reembolso registrado")).toBeVisible(ESPERA);
+    await test.step("criterio 2: al confirmar queda reembolsado con id_admin del asignado e id_admin_registro de quien lo registró; la página lo dice arriba y nombra a quien lo registró", async () => {
+      await abrirConfirmacion(page).click();
+      await expect(page.getByText(`Registra la transferencia de ${pesos(pendiente.monto)} a ${pendiente.llave}. No se puede deshacer.`)).toBeVisible();
+      await page.getByLabel("Referencia de la transferencia").fill("TRX-OTRO-ADMIN");
+      await botonRegistrar(page).click();
+      await expect(aviso(page, "Registraste la transferencia.")).toHaveText(AVISO_REGISTRADO, ESPERA);
+      await expect(page).toHaveURL(`${rutaDe(pendiente)}?registrado=reembolsado`);
+      await expect(titulo(page, "Reembolso registrado")).toBeVisible();
       const datos = seccionReembolso(page);
-      await expect(dato(datos, "Registrado por")).toHaveText(admin.nombre);
-      await expect(dato(datos, "Referencia")).toHaveText("REF-E2E");
-      await expect(datos.locator("dt", { hasText: /^Llave de quien pagó$/ })).toHaveCount(0);
-      expect(await page.content()).not.toContain(reembolsado.llave!);
+      await expect(dato(datos, "Estado")).toHaveText("Reembolsado");
+      await expect(dato(datos, "Referencia")).toHaveText("TRX-OTRO-ADMIN");
+      await expect(dato(datos, "Registrado por")).toHaveText(otro.nombre);
+      await expect(dato(datos, "Llave de quien pagó")).toHaveText(pendiente.llave!);
+      await expect(datos.locator("dt", { hasText: /^Asignado a$/ })).toHaveCount(0);
+      await expect(page.locator("form")).toHaveCount(0);
+      await expectSinComision(page, pendiente);
+      await expectReglasDelProducto(page, "el reembolso registrado por otro admin");
+      expect(await escenario.enBd(pendiente.id)).toMatchObject({ estado: "reembolsado", id_admin: admin.id, id_admin_registro: otro.id, referencia_transferencia: "TRX-OTRO-ADMIN" });
+    });
+
+    await test.step("sale de «De otros admins» y el asignado, con su propia sesión, ve «Registrado por» el otro", async () => {
+      await page.getByRole("link", { name: "Volver a mi bandeja" }).click();
+      await expect(page).toHaveURL("/admin", ESPERA);
+      await expect(reembolsosDeLaBandeja(page).getByRole("link", { name: pendiente.motivo })).toHaveCount(0);
+
+      const delAdmin = await browser.newContext({ baseURL });
+      try {
+        await usarTurnstileDePrueba(delAdmin);
+        const suPagina = await delAdmin.newPage();
+        await entrarComoAdmin(suPagina, admin);
+        await suPagina.goto(rutaDe(pendiente));
+        await expect(titulo(suPagina, "Reembolso registrado")).toBeVisible(ESPERA);
+        await expect(dato(seccionReembolso(suPagina), "Registrado por")).toHaveText(otro.nombre);
+        await expect(dato(seccionReembolso(suPagina), "Llave de quien pagó")).toHaveText(pendiente.llave!);
+      } finally {
+        await delAdmin.close();
+      }
+    });
+
+    await test.step("un reembolsado de antes muestra quién lo registró (el asignado) y, sin dato, «Sin dato»; la llave se ve en los dos", async () => {
+      await page.goto(rutaDe(delAsignado));
+      await expect(titulo(page, "Reembolso registrado")).toBeVisible(ESPERA);
+      await expect(dato(seccionReembolso(page), "Registrado por")).toHaveText(admin.nombre);
+      await expect(dato(seccionReembolso(page), "Referencia")).toHaveText("REF-E2E");
+      await expect(dato(seccionReembolso(page), "Llave de quien pagó")).toHaveText(delAsignado.llave!);
+      await page.goto(rutaDe(sinDato));
+      await expect(titulo(page, "Reembolso registrado")).toBeVisible(ESPERA);
+      await expect(dato(seccionReembolso(page), "Registrado por")).toHaveText("Sin dato");
+      await expect(dato(seccionReembolso(page), "Llave de quien pagó")).toHaveText(sinDato.llave!);
     });
 
     await test.step("esperando la llave: reenviar es de cualquier admin activo", async () => {
@@ -604,10 +663,22 @@ test.describe("Supuestos 1 y 9 · otro admin activo ve el caso, pero sin la llav
       expect(await escenario.pedidosDe(esperando.id)).toEqual(["pedido", "reenvio"]);
     });
 
-    await test.step("ninguna llave llegó al navegador, en ninguna página ni respuesta", async () => {
-      const todo = await respuestas();
-      expect(todo).not.toContain(pendiente.llave!);
-      expect(todo).not.toContain(reembolsado.llave!);
+    await test.step("criterio 4: quien no es admin (sin sesión) no recibe la llave ni en la página ni en las respuestas", async () => {
+      const anonimo = await browser.newContext({ baseURL });
+      try {
+        await usarTurnstileDePrueba(anonimo);
+        const suPagina = await anonimo.newPage();
+        const respuestas = vigilarRespuestas(suPagina);
+        await suPagina.goto(rutaDe(delAsignado));
+        await expect(suPagina).toHaveURL(/\/ingresar/, ESPERA);
+        const todo = await respuestas();
+        for (const r of [pendiente, delAsignado, sinDato]) {
+          expect(todo).not.toContain(r.llave!);
+          expect(await suPagina.content()).not.toContain(r.llave!);
+        }
+      } finally {
+        await anonimo.close();
+      }
     });
   });
 });
