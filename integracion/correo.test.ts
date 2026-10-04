@@ -109,6 +109,13 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
     reembolsoAOtroContacto: false,
     enlaceCita: "https://calibra.example/cita?token=abc123",
   },
+  aviso_monitor_pago_rechazado: {
+    nombreMonitor: "Camilo Rojas",
+    materia: "Cálculo Integral",
+    inicio: "2020-01-13T15:00:00.000Z",
+    enlace: "https://calibra.example/monitor/agenda",
+  },
+  pago_rechazado_sin_reembolso: { nombre: "Ana", monto: 25_000, fechaSesion: "2020-01-06", contactoSoporte: "ayuda@calibra.example" },
 };
 
 const REMITENTE = "Calibra <no-responder@calibra.test>";

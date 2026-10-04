@@ -4,7 +4,16 @@ import type { Plantilla, Reconstruccion } from "@/lib/correo/plantillas";
 import { enviarCorreoDesdeServidor, urlDelSitio, type EntradaDeEnvio, type ResultadoEnvio } from "@/lib/correo/servidor";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/tipos";
-import { avisoVigente, datosDeCancelada, datosDeConfirmada, esEventoDeAviso, RUTA_DE_LA_AGENDA, type DatosDeAviso, type EventoDeAviso } from "./reglas";
+import {
+  avisoVigente,
+  datosDeCancelada,
+  datosDeConfirmada,
+  datosDePagoRechazado,
+  esEventoDeAviso,
+  RUTA_DE_LA_AGENDA,
+  type DatosDeAviso,
+  type EventoDeAviso,
+} from "./reglas";
 
 type Cliente = SupabaseClient<Database>;
 
@@ -70,6 +79,15 @@ export async function reconstruirAvisoCancelada(
   return d && { destinatario: d.correoMonitor, datos: datosDeCancelada(d, urlDelSitio(RUTA_DE_LA_AGENDA)) };
 }
 
+/** Para reintentar un aviso de cancelación por pago rechazado que falló (HU-076, HU-065). La entidad es el id de la monitoría. */
+export async function reconstruirAvisoPagoRechazado(
+  idMonitoria: string,
+  cliente: Cliente = crearClienteAdmin(),
+): Promise<Reconstruccion<"aviso_monitor_pago_rechazado"> | null> {
+  const d = await datosVigentes(cliente, "pago_rechazado", idMonitoria);
+  return d && { destinatario: d.correoMonitor, datos: datosDePagoRechazado(d, urlDelSitio(RUTA_DE_LA_AGENDA)) };
+}
+
 /** Manda el correo de un aviso, o `null` si ya no vale. */
 async function mandarAviso(
   cliente: Cliente,
@@ -80,6 +98,10 @@ async function mandarAviso(
   if (evento === "confirmada") {
     const correo = await reconstruirAvisoConfirmada(idMonitoria, cliente);
     return correo && enviar({ plantilla: "aviso_monitor_confirmada", ...correo, entidad: idMonitoria });
+  }
+  if (evento === "pago_rechazado") {
+    const correo = await reconstruirAvisoPagoRechazado(idMonitoria, cliente);
+    return correo && enviar({ plantilla: "aviso_monitor_pago_rechazado", ...correo, entidad: idMonitoria });
   }
   const correo = await reconstruirAvisoCancelada(idMonitoria, cliente);
   return correo && enviar({ plantilla: "aviso_monitor_cancelada", ...correo, entidad: idMonitoria });

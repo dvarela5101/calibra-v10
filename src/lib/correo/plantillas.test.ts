@@ -70,15 +70,22 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
     reembolsoAOtroContacto: false,
     enlaceCita: "https://calibra.example/cita?token=abc123",
   },
+  aviso_monitor_pago_rechazado: {
+    nombreMonitor: "Camilo Rojas",
+    materia: "Cálculo Integral",
+    inicio: "2020-01-13T15:00:00.000Z",
+    enlace: "https://calibra.example/monitor/agenda",
+  },
+  pago_rechazado_sin_reembolso: { nombre: "Ana", monto: 25_000, fechaSesion: "2020-01-06", contactoSoporte: "ayuda@calibra.example" },
 };
 
 const render = <P extends Plantilla>(plantilla: P, cambios: Partial<DatosPorPlantilla[P]> = {}) =>
   renderizar(plantilla, { ...EJEMPLOS[plantilla], ...cambios });
 
 describe("las plantillas de correo", () => {
-  it("son las que salen por correo: diagnóstico, reseña, llave y su recordatorio, dos rechazos, escalamiento, invitación de monitor, verificación del correo del Lead, dos avisos al monitor y la confirmación y la cancelación de la cita", () => {
+  it("son las que salen por correo: diagnóstico, reseña, llave y su recordatorio, dos rechazos, escalamiento, invitación de monitor, verificación del correo del Lead, tres avisos al monitor (confirmada, cancelada y pago rechazado), la confirmación y la cancelación de la cita y el pago rechazado con la cita ya cancelada", () => {
     expect([...PLANTILLAS].sort()).toEqual(Object.keys(EJEMPLOS).sort());
-    expect(PLANTILLAS).toHaveLength(13);
+    expect(PLANTILLAS).toHaveLength(15);
   });
 
   it.each(PLANTILLAS)("%s sale en español con HTML y texto plano", (plantilla) => {
@@ -207,7 +214,7 @@ describe("avisos al monitor (HU-051, D-16)", () => {
   });
 
   it("no lleva el contacto del estudiante: sus datos no lo incluyen (P-37)", () => {
-    for (const plantilla of ["aviso_monitor_confirmada", "aviso_monitor_cancelada"] as const) {
+    for (const plantilla of ["aviso_monitor_confirmada", "aviso_monitor_cancelada", "aviso_monitor_pago_rechazado"] as const) {
       expect(Object.keys(EJEMPLOS[plantilla]).filter((campo) => /correo|telefono|contacto/i.test(campo))).toEqual([]);
     }
   });
@@ -217,6 +224,143 @@ describe("avisos al monitor (HU-051, D-16)", () => {
     expect(() => render("aviso_monitor_cancelada", { inicio: "" })).toThrow(RangeError);
     expect(() => render("aviso_monitor_confirmada", { duracionMin: 0 })).toThrow(RangeError);
     expect(() => render("aviso_monitor_confirmada", { duracionMin: 1.5 })).toThrow(RangeError);
+  });
+});
+
+describe("aviso al monitor por un pago rechazado (HU-076, D-16, D-38, P-37)", () => {
+  const plano = (cambios: Partial<DatosPorPlantilla["aviso_monitor_pago_rechazado"]> = {}) =>
+    render("aviso_monitor_pago_rechazado", cambios).texto.replace(/[  ]/g, " ");
+
+  it("dice qué monitoría se cayó, cuándo era y por qué, con el enlace a su agenda", () => {
+    const { asunto, texto } = render("aviso_monitor_pago_rechazado");
+    expect(asunto).toBe("Se canceló tu monitoría de Cálculo Integral");
+    expect(texto).toContain("Se canceló una de tus monitorías");
+    const llano = plano();
+    expect(llano).toContain("Hola, Camilo Rojas.");
+    // 15:00 UTC son las 10:00 a. m. en Bogotá.
+    expect(llano).toContain("Se canceló la monitoría de Cálculo Integral del lunes, 13 de enero de 2020, 10:00 a. m.");
+    expect(llano).toContain("Fue porque no se pudo verificar el pago.");
+    expect(llano).toContain("No tienes que hacer nada: ya no aparece entre tus próximas monitorías.");
+    expect(llano).toContain("Ver mi agenda: https://calibra.example/monitor/agenda");
+    expect(render("aviso_monitor_pago_rechazado").html).toContain('href="https://calibra.example/monitor/agenda"');
+  });
+
+  it("no tiene pie: el botón es lo último", () => {
+    expect(plano().trimEnd().endsWith("Ver mi agenda: https://calibra.example/monitor/agenda")).toBe(true);
+  });
+
+  it("no lleva el nombre ni el contacto del estudiante ni montos: sus datos no los incluyen (P-37)", () => {
+    expect(Object.keys(EJEMPLOS.aviso_monitor_pago_rechazado).sort()).toEqual(["enlace", "inicio", "materia", "nombreMonitor"]);
+    const { asunto, html, texto } = render("aviso_monitor_pago_rechazado");
+    for (const contenido of [asunto, html, texto]) {
+      expect(contenido).not.toMatch(/\$|@|comisi|neto|reembolso/i);
+      expect(contenido).not.toContain("Ana");
+    }
+  });
+
+  it("no lee el reloj: el mismo dato da el mismo cuerpo hoy y dentro de un año (la Idempotency-Key lo exige)", () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2020-01-01T00:00:00Z"));
+      const antes = render("aviso_monitor_pago_rechazado");
+      vi.setSystemTime(new Date("2021-01-01T00:00:00Z"));
+      expect(render("aviso_monitor_pago_rechazado")).toEqual(antes);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("escapa en el HTML lo que viene de fuera: nombre del monitor y materia", () => {
+    const { html, texto } = render("aviso_monitor_pago_rechazado", { nombreMonitor: "<b>Camilo</b> & Co", materia: "Cálculo <script>" });
+    expect(html).not.toContain("<b>");
+    expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;b&gt;Camilo&lt;/b&gt; &amp; Co");
+    expect(html).toContain("Cálculo &lt;script&gt;");
+    expect(texto).toContain("Hola, <b>Camilo</b> & Co.");
+  });
+
+  it("un salto de línea en la materia no parte el asunto ni cuela una cabecera", () => {
+    const salto = String.fromCharCode(13, 10);
+    const { asunto } = render("aviso_monitor_pago_rechazado", { materia: `Cálculo${salto}Bcc: alguien@otro.co` });
+    expect(asunto).not.toMatch(/[\r\n]/);
+    expect(asunto).toBe("Se canceló tu monitoría de Cálculo Bcc: alguien@otro.co");
+  });
+
+  it("un enlace peligroso falla en vez de armar el correo", () => {
+    expect(() => render("aviso_monitor_pago_rechazado", { enlace: "javascript:alert(1)" })).toThrow(RangeError);
+  });
+
+  it.each<[string, Partial<DatosPorPlantilla["aviso_monitor_pago_rechazado"]>]>([
+    ["nombreMonitor", { nombreMonitor: "  " }],
+    ["materia", { materia: " \n " }],
+    ["inicio", { inicio: "mañana" }],
+    ["inicio", { inicio: "" }],
+  ])("%s inválido es un error de quien llama, no un correo con hueco", (_campo, cambios) => {
+    expect(() => render("aviso_monitor_pago_rechazado", cambios)).toThrow(RangeError);
+  });
+});
+
+describe("pago rechazado con la cita ya cancelada (HU-076, D-39 d)", () => {
+  const plano = (cambios: Partial<DatosPorPlantilla["pago_rechazado_sin_reembolso"]> = {}) =>
+    render("pago_rechazado_sin_reembolso", cambios).texto.replace(/[  ]/g, " ");
+
+  it("dice que no se pudo verificar el comprobante, que la cita ya estaba cancelada y que no hay reembolso", () => {
+    const { asunto, texto } = render("pago_rechazado_sin_reembolso");
+    expect(asunto).toBe("No pudimos verificar tu pago y no hay reembolso");
+    expect(texto).toContain("No pudimos verificar tu pago\n");
+    const llano = plano();
+    expect(llano).toContain("Hola, Ana.");
+    expect(llano).toContain("No pudimos verificar tu comprobante de $ 25.000 para la monitoría del 6 de enero de 2020, que ya estaba cancelada.");
+    expect(llano).toContain("Como el pago no se aprobó, no hay reembolso.");
+    expect(llano).toContain("Si crees que fue un error, escríbenos a ayuda@calibra.example.");
+    expect(llano.trimEnd().endsWith("Puedes agendar otra monitoría cuando quieras.")).toBe(true);
+  });
+
+  it("no tiene botón ni enlaces", () => {
+    const { html, texto } = render("pago_rechazado_sin_reembolso");
+    expect(html).not.toContain("<a ");
+    expect(texto).not.toContain("https://");
+  });
+
+  it.each([undefined, "", "   "])("con %j de soporte no se promete ningún canal", (contactoSoporte) => {
+    const { texto } = renderizar("pago_rechazado_sin_reembolso", { nombre: "Ana", monto: 25_000, fechaSesion: "2020-01-06", contactoSoporte });
+    expect(texto).not.toContain("escríbenos");
+    expect(texto).toContain("Puedes agendar otra monitoría cuando quieras.");
+  });
+
+  it("el contacto de soporte se escribe sin espacios sobrantes", () => {
+    expect(plano({ contactoSoporte: "  ayuda@calibra.example  " })).toContain("escríbenos a ayuda@calibra.example.");
+  });
+
+  it("no lleva comisión", () => {
+    const { asunto, html, texto } = render("pago_rechazado_sin_reembolso");
+    for (const contenido of [asunto, html, texto]) expect(contenido).not.toMatch(/comisi|neto/i);
+    expect(Object.keys(EJEMPLOS.pago_rechazado_sin_reembolso).filter((campo) => /comisi|neto/i.test(campo))).toEqual([]);
+  });
+
+  it("es determinista y no lee el reloj", () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2020-01-01T00:00:00Z"));
+      const antes = render("pago_rechazado_sin_reembolso");
+      vi.setSystemTime(new Date("2021-01-01T00:00:00Z"));
+      expect(render("pago_rechazado_sin_reembolso")).toEqual(antes);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("escapa en el HTML lo que viene de fuera: el nombre y el soporte", () => {
+    const { html, texto } = render("pago_rechazado_sin_reembolso", { nombre: '<img src=x onerror="alert(1)"> & Co', contactoSoporte: "a<b>@x.co" });
+    expect(html).not.toContain("<img");
+    expect(html).not.toContain("<b>");
+    expect(html).toContain("&lt;img src=x onerror=&quot;alert(1)&quot;&gt; &amp; Co");
+    expect(texto).toContain('Hola, <img src=x onerror="alert(1)"> & Co.');
+  });
+
+  it("un nombre vacío o una fecha inválida es un error de quien llama, no un correo con hueco", () => {
+    expect(() => render("pago_rechazado_sin_reembolso", { nombre: "  " })).toThrow(RangeError);
+    expect(() => render("pago_rechazado_sin_reembolso", { fechaSesion: "2020-02-30" })).toThrow(RangeError);
   });
 });
 

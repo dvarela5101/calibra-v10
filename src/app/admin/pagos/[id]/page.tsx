@@ -195,7 +195,12 @@ export default async function RevisarPago({ params, searchParams }: PageProps<"/
             {aviso && <p className={formulario.ayuda}>{aviso}</p>}
             <RevisionDelPago
               idPago={pago.id}
-              consecuencias={consecuenciasDelRechazo(caso, { fechaSesion: m.fecha, nombrePagador: pago.nombrePagador, contacto: pago.contacto })}
+              consecuencias={consecuenciasDelRechazo(caso, {
+                fechaSesion: m.fecha,
+                nombrePagador: pago.nombrePagador,
+                contacto: pago.contacto,
+                monitoria: { estado: m.estado, motivoCancelacion: m.motivoCancelacion },
+              })}
               observacionesObligatorias={pideObservaciones(caso)}
               ayudaObservaciones={ayudaDeObservaciones(caso)}
             />

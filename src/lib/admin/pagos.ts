@@ -2,7 +2,6 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { esUuid } from "@/lib/agendar/reglas";
 import type { Reconstruccion } from "@/lib/correo/plantillas";
-import { enviarCorreoDesdeServidor } from "@/lib/correo/servidor";
 import { revisionHasta } from "@/lib/plazos/motor";
 import { cargarParametros } from "@/lib/plazos/parametros";
 import { describirTiempoRestante, type TiempoRestante } from "@/lib/plazos/restante";
@@ -10,12 +9,12 @@ import { correoConsultasDatos } from "@/lib/privacidad/consentimiento";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/tipos";
 import { esCierre, type CierreDeCaso } from "./casos-p24-reglas";
+import { correoDeRechazoSinReembolso } from "./avisos-rechazo-reglas";
 import {
-  avisoDelEnvio,
   correoDeRechazo,
   esResultadoDeRevision,
-  type AvisoAlPagador,
   type EstadoDePago,
+  type PagoParaElCorreo,
   type PedidoDeRevision,
   type ResultadoDeRevision,
 } from "./pagos-reglas";
@@ -24,7 +23,8 @@ import {
  * Revisar un pago (HU-020) con la sesión del admin. Nada de la llave secreta para leer ni para revisar: las políticas
  * dejan leer los pagos a cualquier admin activo, y `public.revisar_pago` toma la identidad de la sesión
  * (`auth.uid()`, que tiene que ser la del admin asignado o, pasada su hora, la de cualquier admin activo: HU-077) y
- * la hora de la base. Solo el correo al pagador usa la llave secreta, porque su reintento (HU-065) corre sin sesión.
+ * la hora de la base. Solo la reconstrucción del correo al pagador usa la llave secreta, porque corre sin sesión
+ * (el procesador de `avisos-rechazo.ts` y el reintento de HU-065).
  */
 
 type Cliente = SupabaseClient<Database>;
@@ -190,6 +190,25 @@ export async function revisarPago(cliente: Cliente, pedido: PedidoDeRevision): P
   return { resultado: fila.resultado, canceloMonitoria: fila.cancelo_monitoria === true };
 }
 
+/** El pago con lo que necesita el correo de su rechazo, o `null` si no existe. Con la llave secreta de `cliente`. */
+async function leerPagoParaElCorreo(cliente: Cliente, idPago: string): Promise<PagoParaElCorreo | null> {
+  const { data, error } = await cliente
+    .from("pago")
+    .select("estado, contacto, nombre_pagador, monto, monitoria(estado, motivo_cancelacion, fecha)")
+    .eq("id", idPago)
+    .maybeSingle();
+  if (error) throw new Error(`No se pudo leer el pago rechazado: ${error.message}`);
+  if (!data) return null;
+  const m = data.monitoria;
+  return {
+    estado: data.estado,
+    contacto: data.contacto,
+    nombrePagador: data.nombre_pagador,
+    monto: data.monto,
+    monitoria: m && { estado: m.estado, motivoCancelacion: m.motivo_cancelacion, fecha: m.fecha },
+  };
+}
+
 /**
  * Para mandar o reintentar el correo del rechazo (HU-065). La entidad es el id del pago. Es `null` si ya no aplica:
  * el pago no está rechazado o su cita no se canceló por `pago_rechazado` (`correoDeRechazo`).
@@ -199,41 +218,19 @@ export async function reconstruirPagoRechazado(
   cliente: Cliente = crearClienteAdmin(),
 ): Promise<Reconstruccion<"pago_rechazado_individual"> | null> {
   if (!esUuid(idPago)) return null;
-  const { data, error } = await cliente
-    .from("pago")
-    .select("estado, contacto, nombre_pagador, monto, monitoria(estado, motivo_cancelacion, fecha)")
-    .eq("id", idPago)
-    .maybeSingle();
-  if (error) throw new Error(`No se pudo leer el pago rechazado: ${error.message}`);
-  if (!data) return null;
-  const m = data.monitoria;
-  return correoDeRechazo(
-    {
-      estado: data.estado,
-      contacto: data.contacto,
-      nombrePagador: data.nombre_pagador,
-      monto: data.monto,
-      monitoria: m && { estado: m.estado, motivoCancelacion: m.motivo_cancelacion, fecha: m.fecha },
-    },
-    correoConsultasDatos(),
-  );
+  const pago = await leerPagoParaElCorreo(cliente, idPago);
+  return pago && correoDeRechazo(pago, correoConsultasDatos());
 }
 
 /**
- * Le avisa al pagador que su pago no se aprobó y su cita se canceló (criterio 3, RN-44, §8). Se llama después de que
- * el rechazo canceló la cita. La clave del correo (`pago_rechazado_individual:<id del pago>`) impide mandarlo dos
- * veces, y si falla lo reintenta HU-065 con el mismo reconstructor. Nunca lanza: el pago ya quedó rechazado, y un
- * correo caído no debe ocultarlo. `null` si el correo ya no aplica.
+ * Para mandar o reintentar el correo del rechazo de un pago cuya cita ya estaba cancelada por el estudiante
+ * (HU-076, D-39 d). La entidad es el id del pago. Es `null` si ya no aplica (`correoDeRechazoSinReembolso`).
  */
-export async function avisarRechazoAlPagador(idPago: string): Promise<AvisoAlPagador | null> {
-  try {
-    const correo = await reconstruirPagoRechazado(idPago);
-    if (!correo) return null;
-    const envio = await enviarCorreoDesdeServidor({ plantilla: "pago_rechazado_individual", ...correo, entidad: idPago });
-    if (!envio.ok) console.error(`[pagos] el aviso del rechazo del pago ${idPago} no salió: ${envio.motivo}`);
-    return avisoDelEnvio(envio);
-  } catch (error) {
-    console.error(`[pagos] no se pudo avisar el rechazo del pago ${idPago}:`, error instanceof Error ? error.message : error);
-    return "fallo";
-  }
+export async function reconstruirPagoRechazadoSinReembolso(
+  idPago: string,
+  cliente: Cliente = crearClienteAdmin(),
+): Promise<Reconstruccion<"pago_rechazado_sin_reembolso"> | null> {
+  if (!esUuid(idPago)) return null;
+  const pago = await leerPagoParaElCorreo(cliente, idPago);
+  return pago && correoDeRechazoSinReembolso(pago, correoConsultasDatos());
 }

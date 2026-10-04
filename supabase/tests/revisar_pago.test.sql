@@ -318,9 +318,10 @@ select lives_ok(
     values ('50000000-0000-0000-0000-000000002099', '30000000-0000-0000-0000-000000002001',
             '10000000-0000-0000-0000-000000002001', '40000000-0000-0000-0000-000000002001', '2030-01-14', 25000)$$,
   'Y otra monitoría se puede agendar en esa franja y fecha: el índice único tampoco la cuenta');
-select is(
-  (select count(*)::int from public.aviso_monitor where id_monitoria = '50000000-0000-0000-0000-000000002002'),
-  0, 'Supuesto 5: al monitor no se le anota aviso por el rechazo (lo ve en su agenda, D-11)');
+select results_eq(
+  $$select evento from public.aviso_monitor where id_monitoria = '50000000-0000-0000-0000-000000002002'$$,
+  $$values ('pago_rechazado'::text)$$,
+  'HU-076 (D-38): al monitor se le anota el aviso pago_rechazado en la misma transacción del rechazo (antes no, D-11)');
 select is(
   (select resultado from privado.revisar_pago('60000000-0000-0000-0000-000000002002', 'aprobar', null, now())),
   'ya_revisado', '§5.2: el rechazado no se puede aprobar después: ya_revisado');

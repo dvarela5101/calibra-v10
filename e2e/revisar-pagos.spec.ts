@@ -46,6 +46,7 @@ function diaIso(fecha: string): number {
 const normalizar = (texto: string) => texto.replace(/\s+/g, " ");
 
 const clave = (idPago: string) => `pago_rechazado_individual:${idPago}`;
+const claveSinReembolso = (idPago: string) => `pago_rechazado_sin_reembolso:${idPago}`;
 
 // ---------------------------------------------------------------------------
 // Fixture `escenario`: lo que crea cada prueba, que se borra al terminar
@@ -71,8 +72,12 @@ type Escenario = {
   leerPago(id: string): Promise<FilaDePago>;
   leerMonitoria(id: string): Promise<FilaDeMonitoria>;
   reembolsosDe(idPago: string): Promise<{ id: string }[]>;
-  /** Lo que quedó en `correo_envio` del aviso de rechazo de un pago. */
+  /** Lo que quedó en `correo_envio` de los avisos de rechazo de un pago (el de la cita cancelada y el de «no hay reembolso»). */
   correosDe(idPago: string): Promise<{ estado: string; destinatario: string }[]>;
+  /** HU-076: la fila de la bandeja de salida del pagador que la base anota al rechazar el pago (cae en cascada con el pago). */
+  avisosDeRechazo(idPago: string): Promise<{ caso: string; procesado_en: string | null }[]>;
+  /** HU-076: los eventos que la base anotó para avisarle al monitor de esa monitoría. */
+  avisosAlMonitor(idMonitoria: string): Promise<string[]>;
 };
 
 const test = base.extend<{ escenario: Escenario; visitante: Page }>({
@@ -176,11 +181,20 @@ const test = base.extend<{ escenario: Escenario; visitante: Page }>({
       leerMonitoria: (id) => una<FilaDeMonitoria>(cliente.from("monitoria").select("estado, motivo_cancelacion").eq("id", id), "leer monitoría"),
       reembolsosDe: (idPago) => leer<{ id: string }>(cliente.from("reembolso").select("id").eq("id_pago", idPago), "leer reembolsos"),
       correosDe: (idPago) =>
-        leer<{ estado: string; destinatario: string }>(cliente.from("correo_envio").select("estado, destinatario").eq("clave", clave(idPago)), "leer correo_envio"),
+        leer<{ estado: string; destinatario: string }>(
+          cliente.from("correo_envio").select("estado, destinatario").in("clave", [clave(idPago), claveSinReembolso(idPago)]),
+          "leer correo_envio",
+        ),
+      avisosDeRechazo: (idPago) =>
+        leer<{ caso: string; procesado_en: string | null }>(cliente.from("aviso_rechazo_pago").select("caso, procesado_en").eq("id_pago", idPago), "leer aviso_rechazo_pago"),
+      avisosAlMonitor: async (idMonitoria) =>
+        (await leer<{ evento: string }>(cliente.from("aviso_monitor").select("evento").eq("id_monitoria", idMonitoria).order("creado_en"), "leer aviso_monitor")).map(
+          (a) => a.evento,
+        ),
     });
 
     // Limpieza, antes de que `cuentas` borre a los admins (pago.id_admin no cae en cascada) y al monitor: los correos
-    // del rechazo (registro y buzón), los pagos, sus comprobantes (el Storage no deja borrar por SQL: con su API) y sus
+    // del rechazo (registro y buzón; la fila de la bandeja de salida cae en cascada con el pago), los pagos, sus comprobantes (el Storage no deja borrar por SQL: con su API) y sus
     // revisados, las monitorías, el Lead, la franja, el certificado y la materia. Se intenta todo y se avisa de lo que falle.
     const fallos: string[] = [];
     const borrar = async (contexto: string, consulta: PromiseLike<{ error: { message: string } | null }>) => {
@@ -190,7 +204,7 @@ const test = base.extend<{ escenario: Escenario; visitante: Page }>({
     const pagos = creados.pagos.filter((p) => p.id);
     const rutas = creados.pagos.map((p) => p.ruta);
     if (pagos.length) {
-      await borrar("correo_envio", cliente.from("correo_envio").delete().in("clave", pagos.map((p) => clave(p.id))));
+      await borrar("correo_envio", cliente.from("correo_envio").delete().in("clave", pagos.flatMap((p) => [clave(p.id), claveSinReembolso(p.id)])));
       await borrar("pagos", cliente.from("pago").delete().in("id", pagos.map((p) => p.id)));
     }
     for (const { contacto } of creados.pagos) {
@@ -397,7 +411,7 @@ test.describe("Criterios 1, 2 y 6 · el admin abre su pago, ve el comprobante y 
 // Criterios 3, 5 y 7: rechazar
 // ---------------------------------------------------------------------------
 test.describe("Criterios 3, 5 y 7 · el admin rechaza un pago", () => {
-  test("rechazar pide confirmar y dice qué pasa; cancela la cita, libera la fecha y avisa al pagador por correo, sin reembolso; si la monitoría ya se realizó, exige observaciones y no la cancela (P-24)", async ({
+  test("rechazar pide confirmar y dice qué pasa; cancela la cita, libera la fecha y deja anotados los avisos al pagador y al monitor, sin reembolso; si la monitoría ya se realizó, exige observaciones, no la cancela y no anota ningún aviso (P-24)", async ({
     page,
     escenario,
     visitante,
@@ -431,7 +445,7 @@ test.describe("Criterios 3, 5 y 7 · el admin rechaza un pago", () => {
       await expect(botonRechazar(page)).toBeVisible();
       await expect(
         page.getByText(
-          `Se cancela la monitoría del ${formatearDia(fecha)} y esa fecha queda libre para otra persona. Un pago rechazado no se reembolsa. Le avisamos a ${porCancelar.nombrePagador} por correo, a ${porCancelar.contacto}.`,
+          `Se cancela la monitoría del ${formatearDia(fecha)} y esa fecha queda libre para otra persona. Un pago rechazado no se reembolsa. Le avisaremos a ${porCancelar.nombrePagador} por correo, a ${porCancelar.contacto}. También le avisaremos al monitor.`,
         ),
       ).toBeVisible();
       await expect(page.getByLabel("Observaciones (opcionales)")).toBeEditable();
@@ -441,7 +455,7 @@ test.describe("Criterios 3, 5 y 7 · el admin rechaza un pago", () => {
     await test.step("criterios 3 y 5: confirma; el pago queda rechazado, la cita cancelada por el pago y no hay reembolso", async () => {
       await botonRechazar(page).click();
       await expect(aviso(page, "Rechazaste el pago.")).toHaveText(
-        "Rechazaste el pago. Ya no aparece en tu bandeja. Le avisamos al pagador por correo.",
+        "Rechazaste el pago. Ya no aparece en tu bandeja. Le avisaremos al pagador por correo en unos minutos.",
         ESPERA,
       );
       await expect(titulo(page, "Pago rechazado")).toBeVisible();
@@ -466,16 +480,12 @@ test.describe("Criterios 3, 5 y 7 · el admin rechaza un pago", () => {
       await expect(fechasLibres.first()).toContainText(formatearDiaConSemana(fecha));
     });
 
-    await test.step("criterio 3: al pagador le llega un solo correo, a su contacto", async () => {
-      await expect.poll(async () => (await buzonDe(porCancelar.contacto)).length, { timeout: 30_000 }).toBe(1);
-      const [correo] = await buzonDe(porCancelar.contacto);
-      expect(correo.asunto).toBe("No pudimos verificar tu pago y la monitoría se canceló");
-      expect(correo.texto).toContain(`Hola, ${porCancelar.nombrePagador}`);
-      expect(correo.texto).toContain(
-        `No pudimos verificar tu pago de ${normalizar(formatearPesos(PRECIO))}, así que la monitoría del ${formatearDia(fecha)} quedó cancelada.`,
-      );
-      expect(correo.texto).toContain("Como el pago no se aprobó, no hay reembolso.");
-      expect(await escenario.correosDe(porCancelar.id)).toEqual([{ estado: "enviado", destinatario: porCancelar.contacto }]);
+    await test.step("HU-076, criterio 4: la base anotó con el rechazo la fila del pagador y el aviso del monitor; el correo no sale en la acción", async () => {
+      expect(await escenario.avisosDeRechazo(porCancelar.id)).toEqual([{ caso: "cita_cancelada", procesado_en: null }]);
+      expect(await escenario.avisosAlMonitor(idCita)).toEqual(["pago_rechazado"]);
+      // `CRON_SECRETO` no está en el entorno del servidor de la prueba y la base local no tiene Vault: nadie corrió el proceso.
+      expect(await escenario.correosDe(porCancelar.id)).toEqual([]);
+      expect(await buzonDe(porCancelar.contacto)).toEqual([]);
     });
 
     await test.step("criterio 7 (P-24): con la monitoría ya realizada, sin observaciones no se rechaza", async () => {
@@ -515,13 +525,68 @@ test.describe("Criterios 3, 5 y 7 · el admin rechaza un pago", () => {
       expect(await escenario.leerPago(deRealizada.id)).toMatchObject({ estado: "rechazado", observaciones: OBSERVACIONES });
       expect(await escenario.leerMonitoria(idRealizada)).toEqual({ estado: "realizada", motivo_cancelacion: null });
       expect(await escenario.reembolsosDe(deRealizada.id)).toEqual([]);
-      // El correo se manda antes de volver a la página: si saliera, ya estaría anotado.
+      // HU-076, criterio 6: la base no anota aviso para el pagador ni para el monitor, y el correo no sale.
+      expect(await escenario.avisosDeRechazo(deRealizada.id)).toEqual([]);
+      expect(await escenario.avisosAlMonitor(idRealizada)).toEqual([]);
       expect(await escenario.correosDe(deRealizada.id)).toEqual([]);
       expect(await buzonDe(deRealizada.contacto)).toEqual([]);
 
       await page.getByRole("link", { name: "Volver a mi bandeja" }).click();
       await expect(page).toHaveURL("/admin", ESPERA);
       await expect(page.getByText("No tienes pagos por revisar.")).toBeVisible();
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// HU-076, criterio 5: rechazar el pago de una cita que el estudiante ya canceló
+// ---------------------------------------------------------------------------
+test.describe("HU-076 · el admin rechaza el pago de una cita que el estudiante ya canceló", () => {
+  test("dice que solo cambia el pago y que se le avisa al pagador que no hay reembolso; la cita no cambia, no hay reembolso, queda anotada la fila «cita ya cancelada» y el monitor no recibe aviso del pago", async ({
+    page,
+    escenario,
+  }) => {
+    const { admin } = escenario;
+    const fecha = escenario.fecha(1);
+    const idCita = await escenario.monitoria(fecha, { estado: "cancelada", motivo_cancelacion: "estudiante" });
+    const pago = await escenario.pago(idCita, { idAdmin: admin.id, haceMin: 10 });
+    await entrarComoAdmin(page, admin);
+
+    await test.step("antes: la revisión dice que la monitoría ya estaba cancelada y a quién se le avisa", async () => {
+      await abrirDesdeLaBandeja(page, pago);
+      await expect(titulo(page, "Revisar el pago")).toBeVisible(ESPERA);
+      await expect(dato(seccionMonitoria(page), "Estado")).toHaveText("Cancelada: la canceló el estudiante");
+
+      await abrirRechazo(page).click();
+      await expect(
+        page.getByText(
+          `La monitoría ya estaba cancelada: solo cambia el pago. Un pago rechazado no se reembolsa. Le avisaremos a ${pago.nombrePagador} por correo, a ${pago.contacto}, que no hay reembolso.`,
+        ),
+      ).toBeVisible();
+      await expect(page.getByText("También le avisaremos al monitor.")).toHaveCount(0);
+      await expectReglasDelProducto(page, "el rechazo de una cita ya cancelada");
+    });
+
+    await test.step("confirma: el pago queda rechazado y la página promete el correo en unos minutos", async () => {
+      await botonRechazar(page).click();
+      await expect(aviso(page, "Rechazaste el pago.")).toHaveText(
+        "Rechazaste el pago. Ya no aparece en tu bandeja. Le avisaremos al pagador por correo en unos minutos.",
+        ESPERA,
+      );
+      await expect(titulo(page, "Pago rechazado")).toBeVisible();
+      await expect(dato(seccionPago(page), "Estado")).toHaveText("Rechazado");
+      await expect(dato(seccionMonitoria(page), "Estado")).toHaveText("Cancelada: la canceló el estudiante");
+      await expectReglasDelProducto(page, "el pago rechazado de una cita ya cancelada");
+    });
+
+    await test.step("en la base: la cita sigue igual, sin reembolso, con la fila para el correo «no hay reembolso» y sin aviso al monitor", async () => {
+      expect(await escenario.leerPago(pago.id)).toMatchObject({ estado: "rechazado", observaciones: null });
+      expect(await escenario.leerMonitoria(idCita)).toEqual({ estado: "cancelada", motivo_cancelacion: "estudiante" });
+      expect(await escenario.reembolsosDe(pago.id)).toEqual([]);
+      expect(await escenario.avisosDeRechazo(pago.id)).toEqual([{ caso: "cita_ya_cancelada", procesado_en: null }]);
+      expect(await escenario.avisosAlMonitor(idCita)).toEqual([]);
+      expect(await escenario.correosDe(pago.id)).toEqual([]);
+      expect(await buzonDe(pago.contacto)).toEqual([]);
     });
   });
 });

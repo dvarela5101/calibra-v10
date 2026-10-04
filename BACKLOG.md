@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-04 14:15. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-04 14:27. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -39,8 +39,8 @@ _Generado automaticamente: 2026-10-04 14:15. No editar a mano; usa `scripts/back
 | [HU-045](backlog/HU-045.md) | [Estudiante] Reportar inasistencia del monitor en mi grupal | Lista | P1 | XS | HU-029, HU-036 |
 | [HU-046](backlog/HU-046.md) | [Monitor] Finalizar una grupal y entregar el enlace de reseña | Lista | P1 | S | HU-023, HU-036 |
 | [HU-047](backlog/HU-047.md) | [Integrante] Reseñar la sesión grupal eligiendo mi nombre | Lista | P1 | M | HU-046, HU-038, HU-035 |
-| [HU-076](backlog/HU-076.md) | [Sistema] Correos del rechazo de un pago: al monitor y al pagador, sin que se pierdan | En progreso | P0 | M | HU-020, HU-051, HU-024 |
 | [HU-080](backlog/HU-080.md) | [Lead] No invitar a reseñar a quien reportó que el monitor no llegó | En progreso | P1 | S | HU-029, HU-035 |
+| [HU-076](backlog/HU-076.md) | [Sistema] Correos del rechazo de un pago: al monitor y al pagador, sin que se pierdan | En revision | P0 | M | HU-020, HU-051, HU-024 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |

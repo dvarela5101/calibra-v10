@@ -3,11 +3,9 @@ import pg from "pg";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { ZONA_HORARIA_NEGOCIO } from "@/config/regional";
 import { cargarBandeja } from "@/lib/admin/bandeja";
-import { avisarRechazoAlPagador, cargarAsignacion, cargarPagoParaRevisar, revisarPago } from "@/lib/admin/pagos";
+import { cargarAsignacion, cargarPagoParaRevisar, reconstruirPagoRechazadoSinReembolso, revisarPago } from "@/lib/admin/pagos";
 import { casoDeRechazo, pideObservaciones, puedeRevisar, type CasoDeRechazo, type Decision } from "@/lib/admin/pagos-reglas";
 import { claveDeCorreo } from "@/lib/correo/enviar";
-import { renderizar } from "@/lib/correo/plantillas";
-import { reintentarCorreosDesdeServidor } from "@/lib/correo/procesos";
 import { RECONSTRUCTORES } from "@/lib/correo/reconstructores";
 import { SEMANAS_DEL_HORIZONTE } from "@/lib/disponibilidad/reglas";
 import { cargarFechasLibres } from "@/lib/disponibilidad/servidor";
@@ -17,10 +15,13 @@ import { crearCliente, exigirSupabaseLocal, exito, Fixtures, type Cliente, type 
 
 /**
  * HU-020 contra el Supabase local, por la misma ruta que la acción `revisar` de la página del pago: `revisarPago` llama
- * a `public.revisar_pago` con la sesión de verdad del admin y, si el rechazo canceló la cita, `avisarRechazoAlPagador`
- * manda el correo por Mailpit y lo anota en `correo_envio`. La acción hace lo mismo y además `exigirRol`,
+ * a `public.revisar_pago` con la sesión de verdad del admin. La acción hace lo mismo y además `exigirRol`,
  * `revalidatePath` y `redirect`, que necesitan a Next. La página lee el pago con `cargarPagoParaRevisar`. Los bordes de
  * cada resultado, con una hora fija, están en `supabase/tests/revisar_pago.test.sql`.
+ *
+ * HU-076: la acción ya no manda el correo del rechazo. La base lo anota en la misma transacción del rechazo (la fila de
+ * `aviso_rechazo_pago` para el pagador y el aviso `pago_rechazado` de `aviso_monitor`) y lo mandan los procesos: aquí
+ * solo se comprueba lo anotado; el envío, el reintento y las rutas están en `integracion/avisos-rechazo.test.ts`.
  *
  * Las monitorías se insertan con la llave secreta, ya confirmadas, y los pagos con `crearPagoDe`, asignados al admin de
  * la prueba: `registrar_pago` (HU-018) los asignaría al primer admin activo de la base. La cita futura cae dentro de 2
@@ -215,6 +216,10 @@ const correosDe = async (idPago: string) =>
 const avisosDe = async (idMonitoria: string) =>
   exito(await fx.admin.from("aviso_monitor").select("evento").eq("id_monitoria", idMonitoria), "leer los avisos al monitor");
 
+/** HU-076: la fila de la bandeja de salida del pagador que la base anota al rechazar el pago (D-39 d). */
+const avisosDeRechazo = async (idPago: string) =>
+  exito(await fx.admin.from("aviso_rechazo_pago").select("caso, procesado_en, intentos").eq("id_pago", idPago), "leer aviso_rechazo_pago");
+
 /** Los pagos que el admin asignado ve en su bandeja (HU-012). */
 const pagosDeLaBandeja = async () => (await cargarBandeja(asignado.cliente, asignado.usuario.id)).pagos.map((p) => p.id);
 
@@ -255,10 +260,6 @@ async function mensajesPara(correo: string): Promise<Mensaje[]> {
   const { messages } = (await busqueda.json()) as { messages?: { ID: string }[] };
   return Promise.all((messages ?? []).map(async ({ ID }) => (await (await fetch(`${mailpit}/api/v1/message/${ID}`)).json()) as Mensaje));
 }
-
-/** El correo que debe recibir el pagador de un pago del escenario (lo arma la plantilla, igual que al enviarlo). */
-const correoEsperado = (fechaSesion: string) =>
-  renderizar("pago_rechazado_individual", { nombre: "Pagador de prueba", monto: 25_000, fechaSesion, contactoSoporte: SOPORTE });
 
 // ---------------------------------------------------------------------------------------------------------------
 // Con `pg`: dos conexiones a la vez, cada una como la sesión del admin
@@ -463,7 +464,7 @@ describe("criterio 2: el admin aprueba un pago en revisión", () => {
 });
 
 describe("criterios 3 y 5: el admin rechaza el pago de una cita que aún no empieza", () => {
-  it("el pago queda rechazado, la cita cancelada por pago_rechazado y su fecha vuelve a la lista; sin reembolso ni aviso al monitor, y al pagador le llega el correo con la clave del pago", async () => {
+  it("el pago queda rechazado, la cita cancelada por pago_rechazado y su fecha vuelve a la lista; sin reembolso, y en la misma transacción se anotan el aviso del monitor y la fila del pagador (el correo lo manda el proceso, HU-076)", async () => {
     const e = await escenario();
     const monitoria = await fx.crearMonitoria(e.contexto, { fecha: e.fecha() });
     const pago = await pagoEnRevision(monitoria.id);
@@ -482,30 +483,21 @@ describe("criterios 3 y 5: el admin rechaza el pago de una cita que aún no empi
     expect(revisado).toBeLessThanOrEqual(despues);
     expect(await monitoriaEnBd(monitoria.id)).toEqual({ estado: "cancelada", motivo_cancelacion: "pago_rechazado", fecha_finalizacion: null });
 
-    // Lo que hace la acción después: el aviso al pagador (supuesto 4), solo porque el rechazo canceló la cita.
-    expect(await avisarRechazoAlPagador(pago.id)).toBe("enviado");
-
-    const [fila, ...otras] = await correosDe(pago.id);
-    expect(otras).toEqual([]);
-    expect(fila).toMatchObject({ plantilla: "pago_rechazado_individual", destinatario: pago.contacto, estado: "enviado", intentos: 1, ultimo_error: null });
-    const mensajes = await mensajesPara(pago.contacto);
-    expect(mensajes).toHaveLength(1);
-    expect(fila.id_proveedor).toBe(mensajes[0].ID);
-    expect(mensajes[0].To.map((t) => t.Address)).toEqual([pago.contacto]);
-    const esperado = correoEsperado(e.fecha());
-    expect(mensajes[0].Subject).toBe(esperado.asunto);
-    // El correo viaja con saltos de línea CRLF (retorno de carro más salto); el contenido es el mismo.
-    expect(mensajes[0].Text.split(String.fromCharCode(13)).join("").trim()).toBe(esperado.texto.trim());
+    // HU-076 (criterio 4): la acción ya no manda el correo. La base anotó, con el rechazo, la fila del pagador (cita
+    // cancelada por este rechazo) y, para el monitor, el aviso `pago_rechazado` de la cita que estaba confirmada. Nada
+    // salió todavía: ni correo registrado ni mensaje en el buzón.
+    expect(await avisosDeRechazo(pago.id)).toEqual([{ caso: "cita_cancelada", procesado_en: null, intentos: 0 }]);
+    expect(await avisosDe(monitoria.id)).toEqual([{ evento: "pago_rechazado" }]);
+    expect(await correosDe(pago.id)).toEqual([]);
+    expect(await mensajesPara(pago.contacto)).toEqual([]);
 
     // La fecha quedó libre para otra persona: el índice y la lista solo cuentan las que no están canceladas.
     expect(await fechasLibresDe(e)).toEqual(e.todas);
     expect(await reembolsosDe(pago.id)).toEqual([]);
-    // Supuesto 5: al monitor no se le avisa del rechazo; lo ve en su agenda.
-    expect(await avisosDe(monitoria.id)).toEqual([]);
     expect(await pagosDeLaBandeja()).toEqual([]);
   });
 
-  it("guarda las observaciones si el admin las escribe, y un segundo aviso (la acción repetida) no manda otro correo", async () => {
+  it("guarda las observaciones si el admin las escribe, y repetir la acción (ya_revisado) no anota un segundo aviso", async () => {
     const e = await escenario();
     const monitoria = await fx.crearMonitoria(e.contexto, { fecha: e.fecha() });
     const pago = await pagoEnRevision(monitoria.id);
@@ -513,11 +505,12 @@ describe("criterios 3 y 5: el admin rechaza el pago de una cita que aún no empi
     expect(await revisar(asignado.cliente, pago.id, "rechazar", "  El comprobante es de otra cuenta.  ")).toEqual({ resultado: "rechazado", canceloMonitoria: true });
     expect(await pagoEnBd(pago.id)).toMatchObject({ estado: "rechazado", observaciones: "El comprobante es de otra cuenta." });
 
-    expect(await avisarRechazoAlPagador(pago.id)).toBe("enviado");
-    expect(await avisarRechazoAlPagador(pago.id)).toBe("enviado");
+    expect(await revisar(asignado.cliente, pago.id, "rechazar", "  El comprobante es de otra cuenta.  ")).toEqual({ resultado: "ya_revisado", canceloMonitoria: false });
 
-    expect(await mensajesPara(pago.contacto)).toHaveLength(1);
-    expect(await correosDe(pago.id)).toMatchObject([{ estado: "enviado", intentos: 1 }]);
+    expect(await avisosDeRechazo(pago.id)).toHaveLength(1);
+    expect(await avisosDe(monitoria.id)).toEqual([{ evento: "pago_rechazado" }]);
+    expect(await correosDe(pago.id)).toEqual([]);
+    expect(await mensajesPara(pago.contacto)).toEqual([]);
   });
 });
 
@@ -532,7 +525,7 @@ describe("criterio 7 (P-24, supuestos 2 y 3): rechazar el pago de una monitoría
   ];
 
   it.each(casos)(
-    "%s: sin observaciones responde observaciones_requeridas y no toca nada; con ellas el pago queda rechazado con el caso anotado, la monitoría no cambia y no se escribe al pagador",
+    "%s: sin observaciones responde observaciones_requeridas y no toca nada; con ellas el pago queda rechazado con el caso anotado, la monitoría no cambia y no se anota ningún aviso, ni al pagador ni al monitor",
     async (_monitoria, crear, caso) => {
       const e = await escenario();
       const monitoria = await crear(e);
@@ -553,8 +546,12 @@ describe("criterio 7 (P-24, supuestos 2 y 3): rechazar el pago de una monitoría
       expect(enBd.fecha_revision).not.toBeNull();
       expect(await monitoriaEnBd(monitoria.id)).toEqual(antes);
 
-      // La acción no llama al aviso (no canceló la cita); aunque se llamara, o lo reintentara HU-065, no aplica.
-      expect(await avisarRechazoAlPagador(pago.id)).toBeNull();
+      // HU-076 (criterio 6): la base no anota nada (la cita no se canceló), así que ningún proceso escribe; y aunque
+      // HU-065 lo intentara, el reconstructor da null con una cita que no está cancelada.
+      expect(await avisosDeRechazo(pago.id)).toEqual([]);
+      expect(await avisosDe(monitoria.id)).toEqual([]);
+      expect(await RECONSTRUCTORES.pago_rechazado_individual?.(pago.id)).toBeNull();
+      expect(await RECONSTRUCTORES.pago_rechazado_sin_reembolso?.(pago.id)).toBeNull();
       expect(await correosDe(pago.id)).toEqual([]);
       expect(await mensajesPara(pago.contacto)).toEqual([]);
       expect(await reembolsosDe(pago.id)).toEqual([]);
@@ -652,7 +649,7 @@ describe("HU-077 (D-38): pasada la hora del asignado, cualquier admin activo rev
     expect(await pagoEnBd(vencido.id)).toEqual(enBd);
   });
 
-  it("criterio 1, con las mismas reglas que el asignado: el rechazo cancela la cita que no empezó y se le avisa al pagador; con la monitoría realizada (P-24) pide observaciones, que tienen que caber, y no la cancela", async () => {
+  it("criterio 1, con las mismas reglas que el asignado: el rechazo cancela la cita que no empezó y se anota el aviso al pagador; con la monitoría realizada (P-24) pide observaciones, que tienen que caber, y no la cancela", async () => {
     const e = await escenario();
     const futura = await fx.crearMonitoria(e.contexto, { fecha: e.fecha(0) });
     const deFutura = await pagoEnRevision(futura.id, asignadoHace(2 * HORA));
@@ -662,11 +659,9 @@ describe("HU-077 (D-38): pasada la hora del asignado, cualquier admin activo rev
     expect(await revisar(otroAdmin.cliente, deFutura.id, "rechazar")).toEqual({ resultado: "rechazado", canceloMonitoria: true });
     expect(await pagoEnBd(deFutura.id)).toMatchObject({ estado: "rechazado", observaciones: null, id_admin: asignado.usuario.id, id_admin_revisor: otroAdmin.usuario.id });
     expect(await monitoriaEnBd(futura.id)).toEqual({ estado: "cancelada", motivo_cancelacion: "pago_rechazado", fecha_finalizacion: null });
-    // Lo que hace la acción después, igual que si lo hubiera rechazado el asignado.
-    expect(await avisarRechazoAlPagador(deFutura.id)).toBe("enviado");
-    const mensajes = await mensajesPara(deFutura.contacto);
-    expect(mensajes).toHaveLength(1);
-    expect(mensajes[0].Subject).toBe(correoEsperado(e.fecha(0)).asunto);
+    // Igual que si lo hubiera rechazado el asignado: la base anota el aviso al pagador (D-38: quién rechaza no cambia el correo).
+    expect(await avisosDeRechazo(deFutura.id)).toEqual([{ caso: "cita_cancelada", procesado_en: null, intentos: 0 }]);
+    expect(await avisosDe(futura.id)).toEqual([{ evento: "pago_rechazado" }]);
     expect(await reembolsosDe(deFutura.id)).toEqual([]);
 
     const antes = await monitoriaEnBd(realizada.id);
@@ -683,7 +678,8 @@ describe("HU-077 (D-38): pasada la hora del asignado, cualquier admin activo rev
       id_admin_revisor: otroAdmin.usuario.id,
     });
     expect(await monitoriaEnBd(realizada.id)).toEqual(antes);
-    expect(await avisarRechazoAlPagador(deRealizada.id)).toBeNull();
+    expect(await avisosDeRechazo(deRealizada.id)).toEqual([]);
+    expect(await avisosDe(realizada.id)).toEqual([]);
     expect(await mensajesPara(deRealizada.contacto)).toEqual([]);
     expect(await reembolsosDe(deRealizada.id)).toEqual([]);
   });
@@ -856,8 +852,8 @@ describe("dos revisiones del mismo pago a la vez (doble clic, dos pestañas o, d
   );
 });
 
-describe("HU-065: el correo del rechazo se reconstruye para reintentarlo", () => {
-  it("el reconstructor registrado arma el correo del pago rechazado; da null para uno aprobado, uno con la cita ya cancelada por el estudiante y uno que no existe", async () => {
+describe("HU-065 y HU-076: los correos del rechazo se reconstruyen para mandarlos o reintentarlos", () => {
+  it("el reconstructor de la cita cancelada por el rechazo arma el correo (también con el rechazo de un segundo pago de la misma cita) y da null para uno aprobado, uno con la cita cancelada por el estudiante y uno que no existe", async () => {
     const reconstruir = RECONSTRUCTORES.pago_rechazado_individual;
     if (!reconstruir) throw new Error("pago_rechazado_individual no tiene reconstructor.");
     const e = await escenario();
@@ -869,13 +865,21 @@ describe("HU-065: el correo del rechazo se reconstruye para reintentarlo", () =>
       destinatario: rechazado.contacto,
       datos: { nombre: "Pagador de prueba", monto: 25_000, fechaSesion: e.fecha(0), contactoSoporte: SOPORTE },
     });
+    // Supuesto 2 de HU-076: el segundo pago de una cita que ya canceló el rechazo del primero también recibe este correo.
+    const segundo = await pagoEnRevision(cancelada.id);
+    expect(await revisar(asignado.cliente, segundo.id, "rechazar")).toEqual({ resultado: "rechazado", canceloMonitoria: false });
+    expect(await avisosDeRechazo(segundo.id)).toMatchObject([{ caso: "cita_cancelada" }]);
+    expect(await reconstruir(segundo.id)).toEqual({
+      destinatario: segundo.contacto,
+      datos: { nombre: "Pagador de prueba", monto: 25_000, fechaSesion: e.fecha(0), contactoSoporte: SOPORTE },
+    });
 
     const confirmada = await fx.crearMonitoria(e.contexto, { fecha: e.fecha(1) });
     const aprobado = await pagoEnRevision(confirmada.id);
     expect((await revisar(asignado.cliente, aprobado.id, "aprobar")).resultado).toBe("aprobado");
     expect(await reconstruir(aprobado.id)).toBeNull();
 
-    // docs/reparto.md (2-oct): con la cita ya cancelada por el estudiante solo cambia el pago, y no se le escribe.
+    // Con la cita cancelada por el estudiante solo cambia el pago: este correo no aplica (le toca el de «no hay reembolso»).
     const delEstudiante = await fx.crearMonitoria(e.contexto, { fecha: e.fecha(2), estado: "cancelada" });
     const deCanceladaPorEstudiante = await pagoEnRevision(delEstudiante.id);
     expect(await revisar(asignado.cliente, deCanceladaPorEstudiante.id, "rechazar")).toEqual({ resultado: "rechazado", canceloMonitoria: false });
@@ -887,39 +891,32 @@ describe("HU-065: el correo del rechazo se reconstruye para reintentarlo", () =>
     expect(await reconstruir("no-es-un-uuid")).toBeNull();
   });
 
-  it("si el correo no sale (sin proveedor), queda por reintentar y la corrida de HU-065 lo manda una sola vez, sobre la misma fila", async () => {
-    // Los fallos esperados (proveedor sin configurar) se anotan en la consola; aquí no ensucian la salida.
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
+  it("D-39 d: el reconstructor del correo «no hay reembolso» lo arma solo con la cita cancelada por el estudiante y el pago rechazado, y da null para la cancelada por el rechazo, uno aprobado y uno que no existe", async () => {
+    const reconstruir = RECONSTRUCTORES.pago_rechazado_sin_reembolso;
+    if (!reconstruir) throw new Error("pago_rechazado_sin_reembolso no tiene reconstructor.");
     const e = await escenario();
-    const monitoria = await fx.crearMonitoria(e.contexto, { fecha: e.fecha() });
-    const pago = await pagoEnRevision(monitoria.id);
-    expect((await revisar(asignado.cliente, pago.id, "rechazar")).canceloMonitoria).toBe(true);
 
-    vi.stubEnv("MAILPIT_URL", "");
-    expect(await avisarRechazoAlPagador(pago.id)).toBe("por_reintentar");
-    vi.stubEnv("MAILPIT_URL", mailpit);
-    const [fallida] = await correosDe(pago.id);
-    expect(fallida).toMatchObject({ estado: "fallido", reintentable: true, intentos: 0, destinatario: pago.contacto, enviado_en: null });
-    expect(await mensajesPara(pago.contacto)).toEqual([]);
+    const delEstudiante = await fx.crearMonitoria(e.contexto, { fecha: e.fecha(0), estado: "cancelada" });
+    const enRevision = await pagoEnRevision(delEstudiante.id);
+    // Sin rechazar todavía: el pago sigue en revisión y no hay nada que avisar.
+    expect(await reconstruir(enRevision.id)).toBeNull();
+    expect(await revisar(asignado.cliente, enRevision.id, "rechazar")).toEqual({ resultado: "rechazado", canceloMonitoria: false });
+    const datos = { nombre: "Pagador de prueba", monto: 25_000, fechaSesion: e.fecha(0), contactoSoporte: SOPORTE };
+    expect(await reconstruir(enRevision.id)).toEqual({ destinatario: enRevision.contacto, datos });
+    // Lo mismo por la función que usa el procesador, con la llave secreta de la prueba.
+    expect(await reconstruirPagoRechazadoSinReembolso(enRevision.id, fx.admin)).toEqual({ destinatario: enRevision.contacto, datos });
 
-    // El proceso solo toma un fallido que lleva 2 minutos sin tocarse.
-    exito(
-      await fx.admin
-        .from("correo_envio")
-        .update({ actualizado_en: new Date(Date.now() - 3 * MINUTO).toISOString() })
-        .eq("id", fallida.id)
-        .select("id")
-        .single(),
-      "envejecer el correo",
-    );
-    const resumen = await reintentarCorreosDesdeServidor();
+    const porElRechazo = await fx.crearMonitoria(e.contexto, { fecha: e.fecha(1) });
+    const rechazado = await pagoEnRevision(porElRechazo.id);
+    expect((await revisar(asignado.cliente, rechazado.id, "rechazar")).canceloMonitoria).toBe(true);
+    expect(await reconstruir(rechazado.id)).toBeNull();
 
-    expect(resumen.enviados).toBeGreaterThanOrEqual(1);
-    const filas = await correosDe(pago.id);
-    expect(filas).toHaveLength(1);
-    expect(filas[0]).toMatchObject({ id: fallida.id, estado: "enviado", intentos: 1, ultimo_error: null });
-    const mensajes = await mensajesPara(pago.contacto);
-    expect(mensajes).toHaveLength(1);
-    expect(mensajes[0].Subject).toBe(correoEsperado(e.fecha()).asunto);
+    const confirmada = await fx.crearMonitoria(e.contexto, { fecha: e.fecha(2) });
+    const aprobado = await pagoEnRevision(confirmada.id);
+    expect((await revisar(asignado.cliente, aprobado.id, "aprobar")).resultado).toBe("aprobado");
+    expect(await reconstruir(aprobado.id)).toBeNull();
+
+    expect(await reconstruir(randomUUID())).toBeNull();
+    expect(await reconstruir("no-es-un-uuid")).toBeNull();
   });
 });
