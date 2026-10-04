@@ -1,15 +1,16 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-03 20:54. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-04 03:09. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
-| [HU-009](backlog/HU-009.md) | [Visitante] Tomar el diagnóstico sin iniciar sesión | Backlog | P0 | L | HU-004, HU-005, HU-060 |
+| [HU-009](backlog/HU-009.md) | [Visitante] Tomar el diagnóstico sin iniciar sesión | Backlog | P0 | L | HU-004, HU-005, HU-060, HU-081 |
 | [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | Backlog | P0 | S | HU-009 |
 | [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | Backlog | P0 | L | HU-021, HU-009 |
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | Backlog | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-040, HU-043, HU-044, HU-045, HU-047, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056 |
-| [HU-060](backlog/HU-060.md) | [Técnica] Motor del diagnóstico adaptativo con nivel por habilidad | Backlog | P0 | L | HU-005 |
-| [HU-061](backlog/HU-061.md) | [Técnica] Instructivo y skill para reprocesar el banco de una materia con IA | Backlog | P0 | M | HU-005 |
+| [HU-060](backlog/HU-060.md) | [Técnica] Motor del diagnóstico adaptativo con nivel por habilidad | Backlog | P0 | M | HU-005 |
+| [HU-061](backlog/HU-061.md) | [Técnica] Instructivo y skill para reprocesar el banco de una materia con IA | Backlog | P0 | L | HU-005 |
+| [HU-081](backlog/HU-081.md) | [Técnica] Servidor del diagnóstico: diagnóstico en curso, guardado y lo que recibe el navegador | Backlog | P0 | M | HU-060, HU-004, HU-005 |
 | [HU-031](backlog/HU-031.md) | [Lead] Recuperar mis resultados desde otro dispositivo con un enlace | Backlog | P1 | M | HU-010, HU-006 |
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | Backlog | P1 | M | HU-010, HU-004 |
 | [HU-033](backlog/HU-033.md) | [Estudiante] Gestionar mis citas y diagnósticos desde mi cuenta | Backlog | P1 | M | HU-032, HU-019, HU-024 |
@@ -36,11 +37,10 @@ _Generado automaticamente: 2026-10-03 20:54. No editar a mano; usa `scripts/back
 | [HU-079](backlog/HU-079.md) | [Técnica] Unificar los procesadores de la bandeja de salida de correos | Backlog | P2 | S | HU-025 |
 | [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | Backlog | P3 | S | HU-010 |
 | [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | Lista | P0 | M | HU-009, HU-008, HU-068 |
-| [HU-026](backlog/HU-026.md) | [Admin] Gestionar reembolsos | Lista | P0 | M | HU-025, HU-012 |
 | [HU-030](backlog/HU-030.md) | [Admin] Resolver reportes de inasistencia | Lista | P0 | M | HU-029, HU-026, HU-028 |
 | [HU-080](backlog/HU-080.md) | [Lead] No invitar a reseñar a quien reportó que el monitor no llegó | Lista | P1 | S | HU-029, HU-035 |
+| [HU-026](backlog/HU-026.md) | [Admin] Gestionar reembolsos | En progreso | P0 | M | HU-025, HU-012 |
 | [HU-076](backlog/HU-076.md) | [Sistema] Correos del rechazo de un pago: al monitor y al pagador, sin que se pierdan | En progreso | P0 | M | HU-020, HU-051, HU-024 |
-| [HU-025](backlog/HU-025.md) | [Pagador] Entregar mi llave para recibir un reembolso | En revision | P0 | M | HU-024, HU-006 |
 | [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | En revision | P2 | S | HU-004 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
@@ -62,6 +62,7 @@ _Generado automaticamente: 2026-10-03 20:54. No editar a mano; usa `scripts/back
 | [HU-021](backlog/HU-021.md) | [Monitor] Ver mi agenda de monitorías | Hecha | P0 | M | HU-015, HU-017 |
 | [HU-023](backlog/HU-023.md) | [Monitor] Finalizar una sesión | Hecha | P0 | S | HU-021 |
 | [HU-024](backlog/HU-024.md) | [Lead] Cancelar mi monitoría individual hasta 12 h antes | Hecha | P0 | M | HU-019, HU-003 |
+| [HU-025](backlog/HU-025.md) | [Pagador] Entregar mi llave para recibir un reembolso | Hecha | P0 | M | HU-024, HU-006 |
 | [HU-027](backlog/HU-027.md) | [Sistema] Expirar reservas sin comprobante a los 10 minutos | Hecha | P0 | S | HU-017 |
 | [HU-028](backlog/HU-028.md) | [Admin] Ejecutar desembolsos a monitores | Hecha | P0 | M | HU-023, HU-020 |
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | Hecha | P0 | M | HU-019 |
