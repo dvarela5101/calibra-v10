@@ -18,6 +18,8 @@ const RUTA = "/resena";
 const TITULO_NO_SIRVE = "Este enlace no sirve";
 const TITULO_YA_CALIFICASTE = "Ya calificaste esta monitoría";
 const TITULO_NO_SE_PUEDE = "No se puede calificar";
+const MENSAJE_CON_REPORTE =
+  "Reportaste que el monitor no asistió. Mientras el reporte esté en revisión, o si lo aceptamos, esta monitoría no se puede calificar.";
 const MENSAJE_SIN_CALIFICACION = "Elige una calificación de 1 a 5.";
 
 // ---------------------------------------------------------------------------
@@ -40,6 +42,7 @@ function diaIso(fecha: string): number {
 // ---------------------------------------------------------------------------
 type Realizada = {
   idPago: string;
+  idMonitoria: string;
   token: string;
   monitor: string;
   materia: string;
@@ -50,6 +53,8 @@ type Realizada = {
 type Escenario = {
   /** Una individual realizada hace una semana (a las 10:00 de Bogotá) con su pago en ese estado y su invitación. */
   realizada(estadoDelPago: "aprobado" | "rechazado"): Promise<Realizada>;
+  /** HU-080: el reporte de inasistencia de esa monitoría, en el estado dado (lo inserta o cambia la llave secreta). */
+  reportar(idMonitoria: string, estado: "en_revision" | "rechazado"): Promise<void>;
   /** Lo que dice la base de la reseña de ese pago. */
   resenasDe(idPago: string): Promise<{ calificacion: number; comentario: string | null; fecha: string }[]>;
 };
@@ -61,6 +66,7 @@ const test = base.extend<{ escenario: Escenario }>({
     const materias: string[] = [];
     const leads: string[] = [];
     const pagos: string[] = [];
+    const monitoriasConReporte: string[] = [];
     const comprobantes: string[] = [];
     let idAdmin: string | undefined;
 
@@ -141,11 +147,28 @@ const test = base.extend<{ escenario: Escenario }>({
         if (error) throw new Error(`leer la invitación: ${error.message}`);
         return {
           idPago: pago.id,
+          idMonitoria: monitoria.id,
           token: (data as { token: string }).token,
           monitor: monitor.nombre,
           materia: nombreMateria,
           sesion: formatearFechaHora(new Date(`${fecha}T15:00:00Z`)),
         };
+      },
+      async reportar(idMonitoria, estado) {
+        const existente = await cliente.from("reporte_inasistencia").select("id").eq("id_monitoria", idMonitoria).maybeSingle();
+        if (existente.error) throw new Error(`leer el reporte: ${existente.error.message}`);
+        if (existente.data) {
+          const { error } = await cliente
+            .from("reporte_inasistencia")
+            .update({ estado, fecha_decision: estado === "en_revision" ? null : new Date().toISOString() })
+            .eq("id", existente.data.id);
+          if (error) throw new Error(`cambiar el reporte: ${error.message}`);
+          return;
+        }
+        if (!idAdmin) throw new Error("Falta el admin del escenario: crea primero la monitoría realizada.");
+        const { error } = await cliente.from("reporte_inasistencia").insert({ id_monitoria: idMonitoria, id_admin: idAdmin, estado });
+        if (error) throw new Error(`insertar el reporte: ${error.message}`);
+        monitoriasConReporte.push(idMonitoria);
       },
       async resenasDe(idPago) {
         const { data, error } = await cliente.from("resena").select("calificacion, comentario, fecha").eq("id_pago", idPago);
@@ -162,6 +185,7 @@ const test = base.extend<{ escenario: Escenario }>({
       const { error } = await consulta;
       if (error) fallos.push(`${contexto}: ${error.message}`);
     };
+    if (monitoriasConReporte.length) await borrar("reportes", cliente.from("reporte_inasistencia").delete().in("id_monitoria", monitoriasConReporte));
     if (pagos.length) {
       await borrar("reseñas", cliente.from("resena").delete().in("id_pago", pagos));
       await borrar("pagos", cliente.from("pago").delete().in("id", pagos));
@@ -308,6 +332,43 @@ test.describe("Criterio 3 · enlaces que no permiten reseñar", () => {
     await botonEnviar(page).click();
 
     await expect(page.getByText("Esta monitoría no se puede calificar.")).toBeVisible(ESPERA);
+    expect(await escenario.resenasDe(r.idPago)).toEqual([]);
+  });
+
+  test("HU-080: con un reporte de inasistencia en revisión dice No se puede calificar y explica por qué, sin formulario; al rechazarse el reporte vuelve el formulario", async ({
+    page,
+    escenario,
+  }) => {
+    const r = await escenario.realizada("aprobado");
+    await escenario.reportar(r.idMonitoria, "en_revision");
+
+    await page.goto(`${RUTA}?token=${r.token}`);
+
+    await expect(titulo(page, TITULO_NO_SE_PUEDE)).toBeVisible(ESPERA);
+    await expect(page.getByText(MENSAJE_CON_REPORTE)).toBeVisible();
+    await expect(page.getByRole("radio")).toHaveCount(0);
+    await expect(botonEnviar(page)).toHaveCount(0);
+    await expectReglasDelProducto(page, "con reporte");
+    expect(await escenario.resenasDe(r.idPago)).toEqual([]);
+
+    await escenario.reportar(r.idMonitoria, "rechazado");
+    await abrirEnlace(page, r.token);
+    await expect(botonEnviar(page)).toBeVisible();
+  });
+
+  test("HU-080: si el reporte llega mientras el formulario está abierto, al enviar sale el mensaje del reporte y no se guarda la reseña", async ({
+    page,
+    escenario,
+  }) => {
+    const r = await escenario.realizada("aprobado");
+    await abrirEnlace(page, r.token);
+    await escenario.reportar(r.idMonitoria, "en_revision");
+
+    await page.locator("label").filter({ has: calificacion(page, 2) }).click();
+    await botonEnviar(page).click();
+
+    await expect(page.getByRole("status").filter({ hasText: MENSAJE_CON_REPORTE })).toBeVisible(ESPERA);
+    await expect(botonEnviar(page)).toHaveCount(0);
     expect(await escenario.resenasDe(r.idPago)).toEqual([]);
   });
 
