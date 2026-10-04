@@ -108,7 +108,8 @@
   box-shadow: var(--sombra-carta);
 }
 
-/* Un pago por revisar o un desembolso ejecutable: toda la tarjeta lleva a su página (HU-020, HU-028). */
+/* Un pago por revisar, un reembolso propio o un desembolso ejecutable: toda la tarjeta lleva a su página (HU-020,
+   HU-026, HU-028). */
 .filaEnlace {
   composes: fila;
   color: var(--text);
@@ -153,4 +154,15 @@
   composes: meta;
   white-space: pre-line;
   overflow-wrap: anywhere;
+}
+
+/* Un caso cerrado sin llave (HU-025): el correo de quien pagó y el motivo pueden ser largos y no desbordan la tarjeta. */
+.metaLarga {
+  composes: meta;
+  overflow-wrap: anywhere;
+}
+
+/* El botón para reabrir, separado de los datos del caso. */
+.accionDeFila {
+  margin-block-start: var(--e2);
 }

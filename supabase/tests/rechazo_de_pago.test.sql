@@ -2,7 +2,7 @@
 -- Corre con: npx supabase test db
 -- Todo ocurre en una transacción que termina en rollback: no deja datos.
 --
--- Qué cubre la migración 20261003234151_rechazo_de_pago_correos.sql:
+-- Qué cubre la migración 20261004181723_rechazo_de_pago_correos.sql:
 --   * public.aviso_rechazo_pago, la bandeja de salida de los avisos al pagador: RLS sin políticas y permisos mínimos,
 --     como aviso_monitor (HU-051).
 --   * privado.anotar_aviso_rechazo_pago, el trigger pago_anota_aviso_rechazo y privado.disparar_avisos_rechazo_pago,

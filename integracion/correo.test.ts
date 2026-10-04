@@ -64,7 +64,8 @@ const ENLACE = "https://calibra.example/x?token=abc123";
 const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
   recuperacion_diagnostico: { nombre: "Ana", materia: "Cálculo Integral", enlace: ENLACE },
   resena_individual: { nombre: "Ana", monitor: "Camilo Rojas", enlace: ENLACE },
-  solicitud_llave_reembolso: { nombre: "Ana", monto: 25_000, motivo: "Cancelaste a tiempo", enlace: ENLACE },
+  solicitud_llave_reembolso: { nombre: "Ana", monto: 25_000, motivo: "Cancelaste a tiempo", enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z", reporteAceptado: false },
+  recordatorio_llave_reembolso: { nombre: "Ana", monto: 25_000, motivo: "Cancelaste a tiempo", enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
   pago_rechazado_individual: { nombre: "Ana", monto: 25_000, fechaSesion: "2020-01-06" },
   pago_rechazado_grupal: { nombre: "Ana", monto: 20_000, fechaSesion: "2020-01-13", enlace: ENLACE },
   escalamiento_pago: { nombreAdmin: "Admin Uno", nombrePagador: "Ana Pérez", monto: 25_000, enlace: "https://calibra.example/admin" },

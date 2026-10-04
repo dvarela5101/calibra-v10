@@ -17,6 +17,7 @@ export const PLANTILLAS = [
   "recuperacion_diagnostico",
   "resena_individual",
   "solicitud_llave_reembolso",
+  "recordatorio_llave_reembolso",
   "pago_rechazado_individual",
   "pago_rechazado_grupal",
   "escalamiento_pago",
@@ -37,6 +38,7 @@ export const NOMBRE_DE_PLANTILLA: Record<Plantilla, string> = {
   recuperacion_diagnostico: "Resultados del diagnóstico",
   resena_individual: "Reseña de la monitoría",
   solicitud_llave_reembolso: "Pedido de llave para reembolso",
+  recordatorio_llave_reembolso: "Recordatorio de llave para reembolso",
   pago_rechazado_individual: "Pago rechazado (individual)",
   pago_rechazado_grupal: "Pago rechazado (grupal)",
   escalamiento_pago: "Pago escalado a otro admin",
@@ -59,8 +61,24 @@ export type DatosPorPlantilla = {
   recuperacion_diagnostico: { nombre: string; materia: string; enlace: string };
   /** Monitoría individual realizada: enlace a la reseña, sin límite de tiempo (RN-72). Al Lead. */
   resena_individual: { nombre: string; monitor: string; enlace: string };
-  /** Reembolso creado: se pide la llave para devolver el dinero (RN-61). Al pagador. */
-  solicitud_llave_reembolso: { nombre: string; monto: number; motivo: string; enlace: string };
+  /**
+   * Se pide la llave para devolver el dinero de un reembolso (RN-61, P-10, HU-025): al crearse, al reabrirlo un admin
+   * o cuando un admin reenvía el enlace. Al pagador. `venceEn` es un instante ISO, el fin del plazo para entregarla:
+   * una foto del ciclo del pedido, así que el reintento dice lo mismo aunque el caso se reabra después.
+   * `reporteAceptado`: el reembolso viene de un reporte de inasistencia aceptado, y el correo lo dice (D-37).
+   * `contactoSoporte`, si se conoce, para pedir que se reabra un caso que se cerró.
+   */
+  solicitud_llave_reembolso: {
+    nombre: string;
+    monto: number;
+    motivo: string;
+    enlace: string;
+    venceEn: string;
+    reporteAceptado: boolean;
+    contactoSoporte?: string;
+  };
+  /** Pasó parte del plazo y la llave no llega: el recordatorio (P-10, HU-025). Al pagador. Los datos son los del pedido. */
+  recordatorio_llave_reembolso: { nombre: string; monto: number; motivo: string; enlace: string; venceEn: string; contactoSoporte?: string };
   /** Pago rechazado en una individual: la cita se cancela y no hay reembolso (RN-43). Al pagador. */
   pago_rechazado_individual: { nombre: string; monto: number; fechaSesion: string; contactoSoporte?: string };
   /** Pago rechazado en una grupal: se anula solo ese cupo y puede volver a intentar (RN-43). Al pagador. */
@@ -164,6 +182,17 @@ function instante(valor: string, campo: string): Date {
 /** Cierra una oración con punto, salvo que el texto ya termine en punto, exclamación, interrogación o puntos suspensivos. */
 const cerrar = (texto: string) => (/[.!?…]$/.test(texto) ? texto : `${texto}.`);
 
+/**
+ * Hasta cuándo se puede enviar la llave de un reembolso y qué pasa si no llega (P-10). La fecha es la del dato, no la
+ * del envío. Con el contacto de soporte dice cómo pedir que se reabra el caso; sin él, no promete un canal.
+ */
+function plazoDeLaLlave(venceEn: string, contactoSoporte: string | undefined): string {
+  const hasta = formatearFechaHora(instante(venceEn, "venceEn"));
+  const soporte = contactoSoporte?.trim();
+  const cierre = soporte ? `cerramos el caso; para reabrirlo, escríbenos a ${linea(soporte, "contactoSoporte")}.` : "cerramos el caso.";
+  return `Tienes hasta el ${hasta} para enviarla. Si no nos llega a tiempo, ${cierre}`;
+}
+
 function contenidoDe<P extends Plantilla>(plantilla: P, datos: DatosPorPlantilla[P]): { asunto: string; contenido: Contenido } {
   // Los tipos garantizan la forma de `datos` para cada plantilla; el switch la estrecha.
   switch (plantilla as Plantilla) {
@@ -202,17 +231,41 @@ function contenidoDe<P extends Plantilla>(plantilla: P, datos: DatosPorPlantilla
     case "solicitud_llave_reembolso": {
       const d = datos as DatosPorPlantilla["solicitud_llave_reembolso"];
       const monto = formatearPesos(d.monto);
+      const parrafos = [`Hola, ${cerrar(linea(d.nombre, "nombre"))}`];
+      // D-37: quien pagó se entera por este correo de que se aceptó el reporte de inasistencia.
+      if (d.reporteAceptado) {
+        parrafos.push("Revisamos el reporte de que el monitor no asistió a la monitoría y lo aceptamos: la monitoría quedó cancelada.");
+      }
+      parrafos.push(
+        `Vamos a devolverte ${monto} de tu pago en Calibra. Motivo: ${cerrar(linea(d.motivo, "motivo"))}`,
+        "Para hacer la transferencia necesitamos tu llave, por ejemplo tu celular o tu correo registrado en el banco.",
+        plazoDeLaLlave(d.venceEn, d.contactoSoporte),
+      );
       return {
         asunto: `Necesitamos tu llave para devolverte ${monto}`,
         contenido: {
           titulo: `Te vamos a devolver ${monto}`,
-          parrafos: [
-            `Hola, ${cerrar(linea(d.nombre, "nombre"))}`,
-            `Vamos a devolverte ${monto} de tu pago en Calibra. Motivo: ${cerrar(linea(d.motivo, "motivo"))}`,
-            "Para hacer la transferencia necesitamos tu llave, por ejemplo tu celular o tu correo registrado en el banco.",
-          ],
+          parrafos,
           boton: { texto: "Enviar mi llave", enlace: d.enlace },
           pie: "Solo te pedimos la llave. Calibra nunca te pide claves del banco ni datos de tu tarjeta.",
+        },
+      };
+    }
+    case "recordatorio_llave_reembolso": {
+      const d = datos as DatosPorPlantilla["recordatorio_llave_reembolso"];
+      const monto = formatearPesos(d.monto);
+      return {
+        asunto: `Todavía necesitamos tu llave para devolverte ${monto}`,
+        contenido: {
+          titulo: "Todavía no tenemos tu llave",
+          parrafos: [
+            `Hola, ${cerrar(linea(d.nombre, "nombre"))}`,
+            `Te pedimos tu llave para devolverte ${monto} de tu pago en Calibra y todavía no nos llega. Motivo: ${cerrar(linea(d.motivo, "motivo"))}`,
+            "Tu llave puede ser tu celular o tu correo registrado en el banco.",
+            plazoDeLaLlave(d.venceEn, d.contactoSoporte),
+          ],
+          boton: { texto: "Enviar mi llave", enlace: d.enlace },
+          pie: "Si ya nos la enviaste, ignora este correo. Calibra nunca te pide claves del banco ni datos de tu tarjeta.",
         },
       };
     }

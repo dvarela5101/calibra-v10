@@ -633,6 +633,25 @@ isOneToOne: false
       referencedColumns: ["id_monitoria"]
     }
                   ]
+                },"pedido_llave": {
+                  Row: {
+                    "creada_en": string,"id": string,"id_reembolso": string,"intentos": number,"plazo_desde": string,"procesado_en": string | null,"tipo": string
+                  }
+                  Insert: {
+                    "creada_en"?: string,"id"?: string,"id_reembolso": string,"intentos"?: number,"plazo_desde": string,"procesado_en"?: string | null,"tipo": string
+                  }
+                  Update: {
+                    "creada_en"?: string,"id"?: string,"id_reembolso"?: string,"intentos"?: number,"plazo_desde"?: string,"procesado_en"?: string | null,"tipo"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "pedido_llave_id_reembolso_fkey"
+      columns: ["id_reembolso"]
+isOneToOne: false
+      referencedRelation: "reembolso"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"perfil_monitor": {
                   Row: {
                     "id_monitor": string
@@ -698,13 +717,13 @@ isOneToOne: false
                   ]
                 },"reembolso": {
                   Row: {
-                    "estado": Database["public"]['Enums']["estado_reembolso"],"fecha_generacion": string,"fecha_reembolso": string | null,"id": string,"id_admin": string | null,"id_pago": string,"llave_destino": string | null,"monto": number,"motivo": string,"referencia_transferencia": string | null
+                    "cerrado_en": string | null,"estado": Database["public"]['Enums']["estado_reembolso"],"fecha_generacion": string,"fecha_reembolso": string | null,"id": string,"id_admin": string | null,"id_pago": string,"llave_destino": string | null,"monto": number,"motivo": string,"plazo_llave_desde": string,"referencia_transferencia": string | null
                   }
                   Insert: {
-                    "estado"?: Database["public"]['Enums']["estado_reembolso"],"fecha_generacion"?: string,"fecha_reembolso"?: string | null,"id"?: string,"id_admin"?: string | null,"id_pago": string,"llave_destino"?: string | null,"monto": number,"motivo": string,"referencia_transferencia"?: string | null
+                    "cerrado_en"?: string | null,"estado"?: Database["public"]['Enums']["estado_reembolso"],"fecha_generacion"?: string,"fecha_reembolso"?: string | null,"id"?: string,"id_admin"?: string | null,"id_pago": string,"llave_destino"?: string | null,"monto": number,"motivo": string,"plazo_llave_desde"?: string,"referencia_transferencia"?: string | null
                   }
                   Update: {
-                    "estado"?: Database["public"]['Enums']["estado_reembolso"],"fecha_generacion"?: string,"fecha_reembolso"?: string | null,"id"?: string,"id_admin"?: string | null,"id_pago"?: string,"llave_destino"?: string | null,"monto"?: number,"motivo"?: string,"referencia_transferencia"?: string | null
+                    "cerrado_en"?: string | null,"estado"?: Database["public"]['Enums']["estado_reembolso"],"fecha_generacion"?: string,"fecha_reembolso"?: string | null,"id"?: string,"id_admin"?: string | null,"id_pago"?: string,"llave_destino"?: string | null,"monto"?: number,"motivo"?: string,"plazo_llave_desde"?: string,"referencia_transferencia"?: string | null
                   }
                   Relationships: [
                     {
@@ -979,6 +998,16 @@ isOneToOne: true
               "correo_lead": string,"disponible": boolean,"nombre_lead": string,"nombre_monitor": string,"token": string
             }[]
                            },
+"datos_de_llave":
+{ Args: { "p_token": string }; Returns: {
+              "estado": string,"monto": number,"motivo": string,"vence_en": string
+            }[]
+                           },
+"datos_de_pedido_llave":
+{ Args: { "p_id": string }; Returns: {
+              "cerrado_en": string,"contacto": string,"en_correo_de_cancelacion": boolean,"estado": Database["public"]['Enums']["estado_reembolso"],"monto": number,"motivo": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_pagador": string,"plazo_desde": string,"plazo_llave_desde": string,"tipo": string,"token": string,"vence_en": string
+            }[]
+                           },
 "dentro_de_plazo":
 { Args: { "p_ahora": string,"p_limite": string }; Returns: boolean
                            },
@@ -991,9 +1020,23 @@ isOneToOne: true
 "ejecutar_desembolso":
 { Args: { "p_fecha": string,"p_id_desembolso": string,"p_neto_esperado": number,"p_referencia": string }; Returns: string
                            },
+"ejecutar_reembolso":
+{ Args: { "p_fecha": string,"p_id_reembolso": string,"p_referencia": string }; Returns: string
+                           },
+"entrega_de_llave_hasta":
+{ Args: { "p_desde": string }; Returns: string
+                           },
+"entregar_llave":
+{ Args: { "p_llave": string,"p_token": string }; Returns: string
+                           },
 "equipo_de_admins":
 { Args: Record<PropertyKey, never>; Returns: {
               "activo": boolean,"casos_abiertos": number,"correo": string,"id": string,"nombre": string,"orden_revision": number
+            }[]
+                           },
+"estado_de_reembolso":
+{ Args: { "p_id_reembolso": string }; Returns: {
+              "estado": string,"vence_en": string
             }[]
                            },
 "estado_para_ejecutar":
@@ -1075,11 +1118,25 @@ isOneToOne: true
               "antelacion_grupal_min": number,"antelacion_individual_min": number,"cancelacion_grupal_min": number,"cancelacion_individual_min": number,"cierre_automatico_min": number,"desembolso_min": number,"diferencia_min": number,"pago_integrantes_min": number,"reporte_inasistencia_min": number,"resena_grupal_min": number,"reserva_min": number,"revision_min": number
             }[]
                            },
+"parametros_reembolso":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "plazo_llave_min": number,"recordatorio_llave_min": number
+            }[]
+                           },
 "plazo_alcanzado":
 { Args: { "p_ahora": string,"p_desde": string }; Returns: boolean
                            },
+"reabrir_reembolso":
+{ Args: { "p_id_reembolso": string }; Returns: string
+                           },
 "reasignar_casos_de_admin":
 { Args: { "p_id_admin": string }; Returns: number
+                           },
+"recordatorio_de_llave_desde":
+{ Args: { "p_desde": string }; Returns: string
+                           },
+"reenviar_pedido_llave":
+{ Args: { "p_id_reembolso": string }; Returns: string
                            },
 "registrar_lead":
 { Args: { "p_acepta_contacto": boolean,"p_correo": string,"p_fecha_consentimiento": string,"p_id_sesion": string,"p_nombre": string,"p_numero_telefono": string,"p_origen": string }; Returns: string

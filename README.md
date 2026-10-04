@@ -113,7 +113,7 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 - Un admin desactivado (RN-23) no ve nada de la bandeja: ni la vista ni las tablas que lee (`supabase/tests/bandeja_admin.test.sql`, HU-064).
 - Los textos de ayuda no prometen lo que aún no existe: el orden por vencimiento se anuncia solo en los pagos, y el paso al siguiente admin cuando vence un pago se anunciará con el escalamiento (HU-034).
 - El tiempo restante de un pago sale del motor de plazos (HU-003) y respeta el borde inclusivo de P-40.
-- Cada pago lleva a su revisión (HU-020, ver "Revisar un pago") y cada desembolso ejecutable a su ejecución (HU-028, ver "Ejecutar un desembolso"). Las demás secciones se vuelven accionables cuando llegan HU-026 (reembolsos) y HU-030 (reportes).
+- Cada pago lleva a su revisión (HU-020, ver "Revisar un pago") y cada desembolso ejecutable a su ejecución (HU-028, ver "Ejecutar un desembolso"). En Reembolsos, los casos que se cerraron sin llave a los 7 días (HU-025, P-10) aparecen en «Cerrados sin llave», para todos los admins, con el botón «Reabrir y reenviar el enlace». Cada reembolso propio abre su gestión (HU-026, ver "Gestionar un reembolso"). Resolver un reporte llega con HU-030.
 
 ## Revisar un pago
 
@@ -149,7 +149,19 @@ HU-076 (D-38, D-39): al rechazar un pago, los avisos salen de la base, en la mis
 - `public.ejecutar_desembolso(id, referencia, fecha, neto_esperado)` (invoker, solo con sesión) bloquea la monitoría y después el desembolso, en el orden de `revisar_pago`, vuelve a mirar todo con `estado_para_ejecutar` y recalcula los montos con los pagos aprobados de ese momento (P-29). Si el neto ya no es el que vio el admin, responde `monto_cambio` sin tocar nada. Si dos admins registran el mismo, el segundo recibe `ya_desembolsado`. Queda `desembolsado` con el id del admin de la sesión, la referencia y la fecha, guardada a mediodía en Bogotá. Las versiones con `p_ahora` no tienen grant.
 - La acción (`src/app/admin/desembolsos/[id]/acciones.ts`) vuelve a la página con `?ejecutado=` o `?error=`. Con `monto_cambio` se queda en el formulario con lo escrito, y la página se vuelve a pintar con el monto nuevo. La carga y la ejecución están en `src/lib/admin/desembolsos.ts`, con la sesión del admin; los mensajes, la lectura del formulario y los avisos son funciones puras de `src/lib/admin/desembolsos-reglas.ts`.
 - Nunca se muestran la comisión ni el bruto (CLAUDE.md, P-32). La página no los lee de la base, y tampoco los montos de los pagos, de los que se podría deducir la comisión. Quedan en la tabla para auditoría.
-- `BotonCopiar` está en `src/components/`: lo usan el pago por Llave de la reserva (HU-018) y esta página.
+- `BotonCopiar` está en `src/components/`: lo usan el pago por Llave de la reserva (HU-018), esta página y la de un reembolso (HU-026).
+
+## Gestionar un reembolso
+
+`/admin/reembolsos/<id>` (HU-026, enlazada desde cada reembolso de «Esperando la llave del pagador» y «Listos para transferir» en la bandeja): el pagador, su correo, el monto, el motivo, el estado, a quién está asignado y la monitoría. Lo ve cualquier admin activo. Lo que ofrece depende del estado de la fila, leída en la misma consulta que la llave y la transferencia. `public.estado_de_reembolso(id)` (invoker) solo agrega, con la hora de la base, si un caso que espera la llave ya pasó los 7 días: se muestra cerrado aunque el cierre de pg_cron todavía no haya corrido.
+
+- Pendiente: solo el admin asignado ve la llave de quien pagó, con un botón para copiarla, y el formulario para registrar la transferencia. Transfiere el monto completo del pago (RN-60) desde la cuenta de Calibra y después registra la referencia (de 1 a 100 caracteres) y la fecha, que no puede ser posterior a hoy en Bogotá ni anterior al día en que se creó el reembolso. Registrar pide confirmación y no se deshace: como en "Ejecutar un desembolso", el formulario entero va dentro de un `<details>`. A otro admin la página le dice quién lo tiene, sin la llave; si el reembolso nació sin admin activo (D-28), le dice que el cron se lo asigna en unos minutos.
+- Esperando la llave: cualquier admin activo reenvía el enlace al correo del pago con «Reenviar el enlace», un formulario común que funciona sin JavaScript. Llama a `public.reenviar_pedido_llave(id)` de HU-025, que no cambia el plazo y deja un solo correo en cola aunque llegue un doble clic. La página vuelve con `?reenvio=`. Si el reembolso no existe, o quien lo pide ya no es un admin activo, la acción vuelve a la bandeja (`/admin?reenvio=`): la página del reembolso daría 404 o no lo dejaría entrar.
+- Cerrado: solo se muestra. Reabrir sigue en «Cerrados sin llave» de la bandeja (HU-025, P-10), donde un caso recién vencido puede tardar hasta 15 minutos en aparecer.
+- Reembolsado: la referencia, la fecha de la transferencia y quién la registró. La llave solo la ve ese admin.
+- `public.ejecutar_reembolso(id, referencia, fecha)` (invoker, solo con sesión) sobre `privado.ejecutar_reembolso_de_la_sesion`, que llama a `privado.ejecutar_reembolso` con `now()`; la versión con `p_ahora` no tiene grant. Primero mira, sin candado, la sesión y que sea un admin activo y el asignado (`no_asignado`); después la referencia y la fecha; al final bloquea la fila del reembolso y vuelve a mirar el estado y el admin. Responde `reembolsado`, `ya_reembolsado` (ya estaba registrado), `sin_llave` (todavía espera la llave), `no_asignado`, `fecha_invalida`, `referencia_invalida`, `no_encontrado`, `sin_permiso` o `sin_sesion`. Guarda la fecha a mediodía en Bogotá y no cambia `id_admin`, porque el asignado es quien registra.
+- La acción (`src/app/admin/reembolsos/[id]/acciones.ts`) vuelve a la página con `?registrado=` o `?error=`. La carga y el registro están en `src/lib/admin/reembolsos.ts`, con la sesión del admin; los mensajes, la lectura del formulario y los avisos son funciones puras de `src/lib/admin/reembolsos-reglas.ts`.
+- A quien pagó no le llega correo al registrar la transferencia: la página de su enlace pasa a «Ya te devolvimos el dinero» y su cita dice lo mismo. La página del admin no lee el desembolso ni los montos de los pagos, y no muestra cifras de comisión.
 
 ## Equipo de admins
 
@@ -304,7 +316,8 @@ Los comprobantes van en el bucket privado `comprobantes` de Supabase Storage (HU
 | `resena_individual` | Monitoría individual realizada: enlace a la reseña, sin límite de tiempo | Lead |
 | `confirmacion_cita` | Monitoría individual confirmada: resumen y enlace para gestionar la cita (HU-019) | Lead |
 | `cancelacion_cita` | El Lead canceló a tiempo: confirma la cancelación y, si hay reembolso, pide la llave (HU-024) | Lead |
-| `solicitud_llave_reembolso` | Reembolso creado: se pide la llave para devolver el dinero | Pagador |
+| `solicitud_llave_reembolso` | Reembolso creado cuya llave no pidió el correo de cancelación, o caso reabierto o reenviado: se pide la llave con el enlace `/reembolso?token=…` y el plazo (HU-025) | Pagador |
+| `recordatorio_llave_reembolso` | A los 3 días sin llave: se recuerda el enlace y el plazo de 7 días (HU-025, P-10) | Pagador |
 | `pago_rechazado_individual` | Pago rechazado en una individual: la cita se cancela | Pagador |
 | `pago_rechazado_sin_reembolso` | Pago rechazado con la cita ya cancelada por el estudiante: no hay reembolso (HU-076) | Pagador |
 | `aviso_monitor_pago_rechazado` | El rechazo de un pago cancela una monitoría confirmada de este monitor (HU-076) | Monitor |
