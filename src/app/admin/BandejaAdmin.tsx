@@ -145,9 +145,13 @@ function GrupoDeReembolsos({
       ) : (
         <ul className={estilos.lista}>
           {reembolsos.map((reembolso) => (
-            <li key={reembolso.id} className={estilos.fila}>
-              <span className={estilos.nombre}>{formatearPesos(reembolso.monto)}</span>
-              <span className={estilos.meta}>{reembolso.motivo}</span>
+            <li key={reembolso.id}>
+              {/* HU-026: cada reembolso abre su gestión, con un <a> como los desembolsos. El motivo de HU-030 trae el
+                  comentario del admin, sin tope en la base: se parte donde haga falta. */}
+              <a href={`/admin/reembolsos/${reembolso.id}`} className={estilos.filaEnlace}>
+                <span className={estilos.nombre}>{formatearPesos(reembolso.monto)}</span>
+                <span className={estilos.metaLarga}>{reembolso.motivo}</span>
+              </a>
             </li>
           ))}
         </ul>

@@ -1,0 +1,82 @@
+/* Gestionar un reembolso (HU-026), como ejecutar un desembolso (HU-028). Colores solo de tokens.css; ningún texto por
+   debajo de 14 px. */
+
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin-block-start: var(--e3);
+}
+
+.titulo {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+/* Etiqueta y valor en dos columnas, como la revisión de un pago. */
+.datos {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--e2) var(--e3);
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+.dato {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* El motivo de HU-030 trae el comentario del admin y la base no le pone tope: se parte donde haga falta. */
+.valor {
+  font-size: 16px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* La llave se lee cifra por cifra: mismo ancho para todos los dígitos, como la de Calibra al pagar. */
+.llave {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* Por qué no hay formulario (otro admin, caso cerrado) o qué hace el botón de reenviar: se lee, no es una ayuda. */
+.explicacion {
+  margin-block-start: var(--e3);
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+/* Dentro de una sección ya la separa el gap. */
+.seccion > .explicacion {
+  margin-block-start: 0;
+}
+
+.campos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+.confirmar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+/* list-item conserva el triángulo que dice si está abierto. */
+.resumen {
+  display: list-item;
+  min-block-size: var(--toque-min);
+  padding-block: var(--e2);
+  font-size: 16px;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.consecuencias {
+  font-size: 15px;
+}

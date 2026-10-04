@@ -5,7 +5,7 @@ import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { cargarBandeja, type Bandeja } from "@/lib/admin/bandeja";
 import { exigirRol } from "@/lib/auth/sesion";
-import { avisoDeReabrir } from "@/lib/reembolsos/reglas";
+import { avisoDeReabrir, avisoDeReenviarEnLaBandeja } from "@/lib/reembolsos/reglas";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { BandejaAdmin } from "./BandejaAdmin";
 import estilos from "./bandeja.module.css";
@@ -14,8 +14,10 @@ export const metadata: Metadata = { title: "Administración · Calibra" };
 
 export default async function PanelAdmin({ searchParams }: PageProps<"/admin">) {
   const sesion = await exigirRol("admin", "/admin");
-  // HU-025: lo que pasó al reabrir un caso cerrado sin llave (`?reembolso=`, lo deja la acción).
-  const aviso = avisoDeReabrir(await searchParams);
+  // HU-025: lo que pasó al reabrir un caso cerrado sin llave (`?reembolso=`, lo deja la acción). HU-026: lo que la página
+  // de un reembolso no puede decir tras reenviar su enlace (`?reenvio=`): que no existe o que no es un admin activo.
+  const consulta = await searchParams;
+  const aviso = avisoDeReabrir(consulta) ?? avisoDeReenviarEnLaBandeja(consulta);
   const supabase = await crearClienteServidor();
   const { data: admin } = await supabase!.from("admin").select("nombre").eq("id", sesion.idUsuario).maybeSingle();
 

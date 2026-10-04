@@ -6,11 +6,13 @@ import type { Database } from "@/lib/supabase/tipos";
 import {
   esResultadoDeEntregar,
   esResultadoDeReabrir,
+  esResultadoDeReenviar,
   llaveDeFila,
   tieneFormaDeTokenDeLlave,
   type LlaveDeReembolso,
   type ResultadoDeEntregar,
   type ResultadoDeReabrir,
+  type ResultadoDeReenviar,
 } from "./reglas";
 
 type Cliente = SupabaseClient<Database>;
@@ -61,5 +63,22 @@ export async function reabrirReembolso(cliente: Cliente, idReembolso: string): P
   const { data, error } = await cliente.rpc("reabrir_reembolso", { p_id_reembolso: idReembolso });
   if (error) throw new Error(`No se pudo reabrir el reembolso: ${error.message}`);
   if (!esResultadoDeReabrir(data)) throw new Error(`Respuesta inesperada al reabrir el reembolso: ${JSON.stringify(data ?? null)}`);
+  return data;
+}
+
+// ---------------------------------------------------------------------------
+// El admin reenvía el enlace sin reabrir (HU-026, criterio 3)
+// ---------------------------------------------------------------------------
+
+/**
+ * Vuelve a mandar el enlace para entregar la llave de un reembolso que la espera, sin reabrir ni cambiar el plazo. Con
+ * la sesión del admin, sin la llave secreta: la base exige un admin activo, decide con su hora si el caso ya se cerró y
+ * deja un solo reenvío en cola aunque llegue un doble clic. Un id que no es un uuid es `no_encontrado` sin consultar.
+ */
+export async function reenviarPedidoDeLlave(cliente: Cliente, idReembolso: string): Promise<ResultadoDeReenviar> {
+  if (!esUuid(idReembolso)) return "no_encontrado";
+  const { data, error } = await cliente.rpc("reenviar_pedido_llave", { p_id_reembolso: idReembolso });
+  if (error) throw new Error(`No se pudo reenviar el enlace: ${error.message}`);
+  if (!esResultadoDeReenviar(data)) throw new Error(`Respuesta inesperada al reenviar el enlace: ${JSON.stringify(data ?? null)}`);
   return data;
 }
