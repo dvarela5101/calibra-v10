@@ -7,6 +7,8 @@ import { calificar, type EstadoResena } from "./acciones";
 import estilos from "./resena.module.css";
 
 export const MENSAJE_YA_RESENADA = "Ya dejaste tu calificación de esta monitoría. Gracias por ayudar a otros estudiantes.";
+export const MENSAJE_CON_REPORTE =
+  "Reportaste que el monitor no asistió. Mientras el reporte esté en revisión, o si lo aceptamos, esta monitoría no se puede calificar.";
 export const MENSAJE_NO_DISPONIBLE = "Esta monitoría no se puede calificar.";
 const MENSAJE_NO_EXISTE = "Este enlace no sirve. Abre de nuevo el enlace del correo que te mandamos.";
 
@@ -29,6 +31,7 @@ export function FormularioResena({ token }: { token: string }) {
   if (estado.resultado !== "pendiente") {
     const mensaje = {
       ya_resenada: MENSAJE_YA_RESENADA,
+      con_reporte: MENSAJE_CON_REPORTE,
       no_disponible: MENSAJE_NO_DISPONIBLE,
       no_existe: MENSAJE_NO_EXISTE,
     }[estado.resultado];

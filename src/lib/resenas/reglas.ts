@@ -27,8 +27,11 @@ export function tieneFormaDeTokenDeResena(valor: unknown): valor is string {
   return typeof valor === "string" && FORMATO_TOKEN.test(valor);
 }
 
-/** Lo que muestra la página según la base: si se puede reseñar, o por qué no. */
-export type EstadoDeResena = "disponible" | "ya_resenada" | "no_disponible";
+/**
+ * Lo que muestra la página según la base: si se puede reseñar, o por qué no. `con_reporte`: el Lead reportó que el
+ * monitor no asistió y el reporte está en revisión o aceptado (HU-080, D-40).
+ */
+export type EstadoDeResena = "disponible" | "ya_resenada" | "con_reporte" | "no_disponible";
 
 export type LecturaDeResena = { ok: true; calificacion: number; comentario: string | null } | { ok: false; error: string };
 

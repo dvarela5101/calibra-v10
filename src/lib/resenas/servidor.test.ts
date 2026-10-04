@@ -26,28 +26,22 @@ type Cambio = { id: string; cambios: { procesado_en?: string; intentos?: number 
 
 function clienteFalso(
   filas: FilaDeInvitacion[],
-  opciones: { datos?: (idPago: string) => DatosDeRpc | null; errorAlLeer?: string; errorAlMarcar?: string } = {},
+  opciones: { datos?: (idPago: string) => DatosDeRpc | null; enEspera?: (idPago: string) => boolean; errorAlLeer?: string; errorAlMarcar?: string } = {},
 ) {
   const consultas: string[] = [];
   const cambios: Cambio[] = [];
-  const rpc = vi.fn(async (nombre: string, args: { p_id_pago: string }) => {
+  const rpc = vi.fn(async (nombre: string, args: { p_id_pago?: string; p_limite?: number }) => {
     consultas.push(`rpc:${nombre}`);
-    const fila = opciones.datos ? opciones.datos(args.p_id_pago) : DATOS;
+    if (nombre === "invitaciones_resena_por_procesar") {
+      return opciones.errorAlLeer ? { data: null, error: { message: opciones.errorAlLeer } } : { data: filas, error: null };
+    }
+    if (nombre === "invitacion_resena_en_espera") return { data: opciones.enEspera ? opciones.enEspera(args.p_id_pago!) : false, error: null };
+    const fila = opciones.datos ? opciones.datos(args.p_id_pago!) : DATOS;
     return { data: fila ? [fila] : [], error: null };
   });
   const cliente = {
     rpc,
-    from: (tabla: string) => ({
-      select: (columnas: string) => ({
-        is: (columna: string, valor: null) => ({
-          order: (orden: string) => ({
-            limit: async (limite: number) => {
-              consultas.push(`${tabla}.select(${columnas}).is(${columna},${valor}).order(${orden}).limit(${limite})`);
-              return opciones.errorAlLeer ? { data: null, error: { message: opciones.errorAlLeer } } : { data: filas, error: null };
-            },
-          }),
-        }),
-      }),
+    from: () => ({
       update: (campos: Cambio["cambios"]) => ({
         eq: async (_columna: string, valor: string) => {
           cambios.push({ id: valor, cambios: campos });
@@ -95,11 +89,12 @@ describe("reconstruirInvitacionResena (HU-035)", () => {
 
 describe("procesarInvitacionesResena (HU-035)", () => {
   it("manda la invitación pendiente, con el id del pago como entidad, y la marca procesada", async () => {
-    const { cliente, consultas, cambios } = clienteFalso([{ id: id(10), id_pago: id(1), intentos: 0 }]);
+    const { cliente, consultas, cambios, rpc } = clienteFalso([{ id: id(10), id_pago: id(1), intentos: 0 }]);
     const { dependencias, enviar } = dependenciasCon(cliente);
     const resumen = await procesarInvitacionesResena(dependencias);
-    expect(resumen).toEqual({ revisadas: 1, enviadas: 1, descartadas: 0, fallidas: 0, tomadasPorOtro: 0, conError: 0, pospuestas: 0 });
-    expect(consultas[0]).toBe(`invitacion_resena.select(id, id_pago, intentos).is(procesado_en,null).order(creada_en).limit(${LOTE_DE_INVITACIONES})`);
+    expect(resumen).toEqual({ revisadas: 1, enviadas: 1, enEspera: 0, descartadas: 0, fallidas: 0, tomadasPorOtro: 0, conError: 0, pospuestas: 0 });
+    expect(consultas[0]).toBe("rpc:invitaciones_resena_por_procesar");
+    expect(rpc.mock.calls[0]).toEqual(["invitaciones_resena_por_procesar", { p_limite: LOTE_DE_INVITACIONES }]);
     expect(enviar).toHaveBeenCalledOnce();
     const entrada = (enviar.mock.calls as unknown as [{ plantilla: string; entidad: string; destinatario: string }][])[0][0];
     expect(entrada).toMatchObject({ plantilla: "resena_individual", entidad: id(1), destinatario: "ana@calibra.test" });
@@ -116,6 +111,34 @@ describe("procesarInvitacionesResena (HU-035)", () => {
     const resumen = await procesarInvitacionesResena(dependencias);
     expect(resumen).toMatchObject({ revisadas: 1, descartadas: 1, enviadas: 0 });
     expect(enviar).not.toHaveBeenCalled();
+    expect(cambios.map((c) => c.id)).toEqual([id(10)]);
+  });
+
+  it("deja en espera la que tiene un reporte abierto: no la marca ni suma intento, y sigue con las demás", async () => {
+    const filas = [
+      { id: id(10), id_pago: id(1), intentos: 0 },
+      { id: id(11), id_pago: id(2), intentos: 0 },
+    ];
+    const { cliente, cambios } = clienteFalso(filas, {
+      datos: (idPago) => ({ ...DATOS, disponible: idPago !== id(1) }),
+      enEspera: (idPago) => idPago === id(1),
+    });
+    const { dependencias, enviar } = dependenciasCon(cliente);
+    const resumen = await procesarInvitacionesResena(dependencias);
+    expect(resumen).toMatchObject({ revisadas: 2, enEspera: 1, enviadas: 1, descartadas: 0, conError: 0 });
+    expect(enviar).toHaveBeenCalledOnce();
+    expect(cambios.map((c) => c.id)).toEqual([id(11)]);
+  });
+
+  it("si no está en espera y ya no vale, la descarta como siempre", async () => {
+    const { cliente, consultas, cambios } = clienteFalso([{ id: id(10), id_pago: id(1), intentos: 0 }], {
+      datos: () => ({ ...DATOS, disponible: false }),
+      enEspera: () => false,
+    });
+    const { dependencias } = dependenciasCon(cliente);
+    const resumen = await procesarInvitacionesResena(dependencias);
+    expect(resumen).toMatchObject({ descartadas: 1, enEspera: 0 });
+    expect(consultas).toContain("rpc:invitacion_resena_en_espera");
     expect(cambios.map((c) => c.id)).toEqual([id(10)]);
   });
 
@@ -206,7 +229,7 @@ describe("procesarInvitacionesResena (HU-035)", () => {
     const { cliente, cambios } = clienteFalso([]);
     const { dependencias, enviar } = dependenciasCon(cliente);
     const resumen = await procesarInvitacionesResena(dependencias);
-    expect(resumen).toEqual({ revisadas: 0, enviadas: 0, descartadas: 0, fallidas: 0, tomadasPorOtro: 0, conError: 0, pospuestas: 0 });
+    expect(resumen).toEqual({ revisadas: 0, enviadas: 0, enEspera: 0, descartadas: 0, fallidas: 0, tomadasPorOtro: 0, conError: 0, pospuestas: 0 });
     expect(enviar).not.toHaveBeenCalled();
     expect(cambios).toEqual([]);
   });

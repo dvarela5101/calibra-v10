@@ -4,7 +4,7 @@ import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { formatearFechaHora } from "@/lib/fechas";
 import { leerResenaPorToken } from "@/lib/resenas/servidor";
-import { FormularioResena, MENSAJE_NO_DISPONIBLE, MENSAJE_YA_RESENADA } from "./FormularioResena";
+import { FormularioResena, MENSAJE_CON_REPORTE, MENSAJE_NO_DISPONIBLE, MENSAJE_YA_RESENADA } from "./FormularioResena";
 import estilos from "./resena.module.css";
 
 export const metadata: Metadata = {
@@ -41,6 +41,16 @@ export default async function Resena({ searchParams }: PageProps<"/resena">) {
   if (resena.estado === "ya_resenada") {
     return (
       <Pantalla eyebrow="Tu monitoría" titulo="Ya calificaste esta monitoría" subtitulo={MENSAJE_YA_RESENADA}>
+        <Link href="/" className={formulario.enlace}>
+          Ir al inicio
+        </Link>
+      </Pantalla>
+    );
+  }
+
+  if (resena.estado === "con_reporte") {
+    return (
+      <Pantalla eyebrow="Tu monitoría" titulo="No se puede calificar" subtitulo={MENSAJE_CON_REPORTE}>
         <Link href="/" className={formulario.enlace}>
           Ir al inicio
         </Link>

@@ -1045,6 +1045,14 @@ isOneToOne: true
 "inicio_sesion":
 { Args: { "p_fecha": string,"p_hora": string }; Returns: string
                            },
+"invitacion_resena_en_espera":
+{ Args: { "p_id_pago": string }; Returns: boolean
+                           },
+"invitaciones_resena_por_procesar":
+{ Args: { "p_limite": number }; Returns: {
+              "id": string,"id_pago": string,"intentos": number
+            }[]
+                           },
 "llaves_de_cancelacion":
 { Args: { "p_id_monitoria": string }; Returns: {
               "id_reembolso": string,"monto": number,"token": string
