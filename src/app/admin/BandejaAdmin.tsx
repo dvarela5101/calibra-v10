@@ -162,6 +162,38 @@ function GrupoDeReembolsos({
 }
 
 /**
+ * HU-082 (pregunta 1): los listos para transferir que tiene asignados otro admin, o ninguno, después de los propios.
+ * Cualquier admin activo registra la transferencia. No suman a la tarjeta «Reembolsos». Si no hay ninguno, no se
+ * muestra nada.
+ */
+function ReembolsosDeOtros({ bandeja }: { bandeja: Bandeja }) {
+  const total = bandeja.contadores.reembolsosPendientesDeOtros;
+  if (total === 0) return null;
+  return (
+    <>
+      <h3 id="reembolsos-de-otros-titulo" className={estilos.subtitulo}>
+        De otros admins <span className={estilos.cuenta}>({total})</span>
+      </h3>
+      <p className={estilos.ayuda}>
+        Los tiene asignados otra persona. Si quien pagó ya envió su llave, puedes registrar tú la transferencia.
+      </p>
+      <ul aria-labelledby="reembolsos-de-otros-titulo" className={estilos.lista}>
+        {bandeja.reembolsos.pendientesDeOtros.map((reembolso) => (
+          <li key={reembolso.id}>
+            <a href={`/admin/reembolsos/${reembolso.id}`} className={estilos.filaEnlace}>
+              <span className={estilos.nombre}>{formatearPesos(reembolso.monto)}</span>
+              <span className={estilos.meta}>{reembolso.nombreAdmin ? `De ${reembolso.nombreAdmin}` : "De nadie todavía"}</span>
+              <span className={estilos.metaLarga}>{reembolso.motivo}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <AvisoDeCorte mostrados={bandeja.reembolsos.pendientesDeOtros.length} total={total} />
+    </>
+  );
+}
+
+/**
  * HU-025 (supuesto 4): los reembolsos que se cerraron porque pasó el plazo sin llave, de todos los admins, después de
  * los propios. Cada uno se reabre con su formulario, que funciona sin JavaScript: quien pagó vuelve a tener el plazo
  * completo y le llega de nuevo el enlace. Si no hay ninguno, no se muestra nada.
@@ -276,7 +308,12 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
         total={contadores.reembolsos}
         ayuda="Los que te asignaron y aún no se han devuelto, por estado."
         vacio="No tienes reembolsos por atender."
-        despues={<ReembolsosCerrados bandeja={bandeja} />}
+        despues={
+          <>
+            <ReembolsosDeOtros bandeja={bandeja} />
+            <ReembolsosCerrados bandeja={bandeja} />
+          </>
+        }
       >
         <GrupoDeReembolsos
           titulo="Esperando la llave del pagador"

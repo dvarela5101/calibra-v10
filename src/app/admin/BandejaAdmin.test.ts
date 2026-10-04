@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
-import type { Bandeja, PagoPorCobrarOAsumir, PagoPorRevisar, PagoVencidoDeOtro, ReembolsoCerrado } from "@/lib/admin/bandeja";
+import type { Bandeja, PagoPorCobrarOAsumir, PagoPorRevisar, PagoVencidoDeOtro, ReembolsoCerrado, ReembolsoDeOtro } from "@/lib/admin/bandeja";
 import { BandejaAdmin } from "./BandejaAdmin";
 
 // La acción de reabrir (HU-025) vive en el servidor: aquí solo se pinta el formulario que la usa.
@@ -15,7 +15,7 @@ const VACIA: Bandeja = {
   pagos: [],
   pagosVencidosDeOtros: [],
   pagosPorCobrarOAsumir: [],
-  reembolsos: { esperandoLlave: [], pendientes: [] },
+  reembolsos: { esperandoLlave: [], pendientes: [], pendientesDeOtros: [] },
   reembolsosCerrados: [],
   reportes: [],
   desembolsos: [],
@@ -27,6 +27,7 @@ const VACIA: Bandeja = {
     reembolsos: 0,
     reembolsosEsperandoLlave: 0,
     reembolsosPendientes: 0,
+    reembolsosPendientesDeOtros: 0,
     reembolsosCerrados: 0,
     reportes: 0,
     desembolsos: 0,
@@ -103,7 +104,7 @@ describe("BandejaAdmin: el corte de las listas", () => {
     const t = texto(
       pintar({
         ...VACIA,
-        reembolsos: { esperandoLlave: filas(3, "e"), pendientes: filas(2, "p") },
+        reembolsos: { esperandoLlave: filas(3, "e"), pendientes: filas(2, "p"), pendientesDeOtros: [] },
         contadores: { ...VACIA.contadores, reembolsos: 9, reembolsosEsperandoLlave: 7, reembolsosPendientes: 2 },
       }),
     );
@@ -121,7 +122,7 @@ describe("BandejaAdmin: reembolsos por estado", () => {
     const t = texto(
       pintar({
         ...VACIA,
-        reembolsos: { esperandoLlave: [], pendientes: [reembolso] },
+        reembolsos: { esperandoLlave: [], pendientes: [reembolso], pendientesDeOtros: [] },
         contadores: { ...VACIA.contadores, reembolsos: 1, reembolsosPendientes: 1 },
       }),
     );
@@ -135,7 +136,7 @@ describe("BandejaAdmin: reembolsos por estado", () => {
     const t = texto(
       pintar({
         ...VACIA,
-        reembolsos: { esperandoLlave: [reembolso], pendientes: [] },
+        reembolsos: { esperandoLlave: [reembolso], pendientes: [], pendientesDeOtros: [] },
         contadores: { ...VACIA.contadores, reembolsos: 1, reembolsosEsperandoLlave: 1 },
       }),
     );
@@ -149,6 +150,7 @@ describe("BandejaAdmin: reembolsos por estado", () => {
       reembolsos: {
         esperandoLlave: [{ id: "r-1", monto: 25_000, motivo: "Motivo uno" }],
         pendientes: [{ id: "r-2", monto: 32_000, motivo: "Motivo dos" }],
+        pendientesDeOtros: [],
       },
       contadores: { ...VACIA.contadores, reembolsos: 2, reembolsosEsperandoLlave: 1, reembolsosPendientes: 1 },
     });
@@ -439,6 +441,62 @@ describe("BandejaAdmin: pagos por cobrar o asumir (HU-078)", () => {
   });
 });
 
+describe("BandejaAdmin: reembolsos listos de otros admins (HU-082, pregunta 1)", () => {
+  const deOtro = (n: number, nombreAdmin: string | null = "Admin Dos"): ReembolsoDeOtro => ({
+    id: `otro-${n}`,
+    monto: 25_000 + n,
+    motivo: `Motivo ${n}`,
+    nombreAdmin,
+  });
+  const con = (otros: ReembolsoDeOtro[], total = otros.length) =>
+    pintar({
+      ...VACIA,
+      reembolsos: { ...VACIA.reembolsos, pendientesDeOtros: otros },
+      contadores: { ...VACIA.contadores, reembolsosPendientesDeOtros: total },
+    });
+  const seccion = (html: string) => html.slice(html.indexOf('<section id="reembolsos"'), html.indexOf('<section id="reportes"'));
+
+  it("van en Reembolsos, después de Listos para transferir, con De <nombre> o De nadie todavía y enlace a su gestión", () => {
+    const html = con([deOtro(1), deOtro(2, null)]);
+    const s = seccion(html);
+    expect(s).toMatch(/<h3 id="reembolsos-de-otros-titulo"[^>]*>/);
+    expect(s).toContain('<ul aria-labelledby="reembolsos-de-otros-titulo"');
+    const t = texto(s);
+    expect(t).toContain("De otros admins (2)");
+    expect(t).toContain("Los tiene asignados otra persona. Si quien pagó ya envió su llave, puedes registrar tú la transferencia.");
+    expect(t.indexOf("Listos para transferir")).toBeLessThan(t.indexOf("De otros admins"));
+    const enlace = (id: string) => html.match(new RegExp(`<a href="/admin/reembolsos/${id}"[^>]*>(.*?)</a>`))?.[1] ?? "";
+    expect(texto(enlace("otro-1"))).toContain("$ 25.001 De Admin Dos Motivo 1");
+    expect(texto(enlace("otro-2"))).toContain("De nadie todavía");
+  });
+
+  it("no suman a la tarjeta ni al total de Reembolsos, y sin propios dice que no tiene pero los muestra", () => {
+    const html = con([deOtro(1)]);
+    expect(html).toMatch(/<a href="#reembolsos"[^>]*><span[^>]*>0<\/span><span[^>]*>Reembolsos<\/span><\/a>/);
+    expect(texto(html)).toContain("Reembolsos (0)");
+    expect(texto(html)).toContain("No tienes reembolsos por atender.");
+    expect(texto(html)).toContain("De otros admins (1)");
+  });
+
+  it("sin ninguno no aparece nada de ellos", () => {
+    const html = con([]);
+    expect(html).not.toContain("reembolsos-de-otros-titulo");
+    expect(texto(html)).not.toContain("De otros admins");
+  });
+
+  it("su lista se corta por su cuenta y lo avisa", () => {
+    const t = texto(con([deOtro(1)], 4));
+    expect(t).toContain("De otros admins (4)");
+    expect(t).toContain("Se muestran los primeros 1 de 4.");
+  });
+
+  it("escapa el nombre del admin asignado", () => {
+    const html = con([deOtro(1, '<img src=x onerror="alert(1)">')]);
+    expect(html).not.toContain("<img");
+    expect(html).toContain("De &lt;img");
+  });
+});
+
 describe("BandejaAdmin: reembolsos cerrados sin llave (HU-025, supuesto 4)", () => {
   const cerrado = (n: number, extra: Partial<ReembolsoCerrado> = {}): ReembolsoCerrado => ({
     id: `0000000${n}-0000-4000-8000-000000000025`,
@@ -463,7 +521,7 @@ describe("BandejaAdmin: reembolsos cerrados sin llave (HU-025, supuesto 4)", () 
   it("van en Reembolsos, después de los propios, con su contador, el pagador, su correo, el motivo y cuándo se cerró", () => {
     const propio = { id: "r", monto: 10_000, motivo: "Motivo propio" };
     const html = conCerrados([cerrado(1)], 1, {
-      reembolsos: { esperandoLlave: [propio], pendientes: [] },
+      reembolsos: { esperandoLlave: [propio], pendientes: [], pendientesDeOtros: [] },
       contadores: { ...VACIA.contadores, reembolsos: 1, reembolsosEsperandoLlave: 1 },
     });
     const s = seccion(html);
@@ -524,7 +582,7 @@ describe("BandejaAdmin: lo que viene de la base no se interpreta como HTML", () 
     const html = pintar({
       ...VACIA,
       pagos: [pago(1, { nombrePagador: '<img src=x onerror="alert(1)">' })],
-      reembolsos: { esperandoLlave: [{ id: "r", monto: 25_000, motivo: '"><script>alert(2)</script>' }], pendientes: [] },
+      reembolsos: { esperandoLlave: [{ id: "r", monto: 25_000, motivo: '"><script>alert(2)</script>' }], pendientes: [], pendientesDeOtros: [] },
       contadores: { ...VACIA.contadores, pagos: 1, reembolsos: 1, reembolsosEsperandoLlave: 1 },
     });
     expect(html).not.toContain("<img");
