@@ -57,6 +57,8 @@ describe("criterio 3: la semilla deja los admins iniciales con su orden de revis
       reembolsos: 0,
       reembolsosEsperandoLlave: 0,
       reembolsosPendientes: 0,
+      // HU-025: los cerrados sin llave también son de todos: puede haber de otras pruebas.
+      reembolsosCerrados: bandeja.reembolsosCerrados.length,
       reportes: 0,
       desembolsos: bandeja.desembolsos.length, // los ejecutables son de todos: puede haber de otras pruebas
       correosSinEnviar: bandeja.correosSinEnviar.length, // los correos sin enviar también: puede haber de otras pruebas
@@ -326,6 +328,7 @@ describe("quién puede leer la bandeja", () => {
     // HU-078: el mundo tiene un caso P-24 abierto (mCasoAbierto) y un monitor no lo ve.
     expect(bandeja.pagosPorCobrarOAsumir).toEqual([]);
     expect(bandeja.reembolsos).toEqual({ esperandoLlave: [], pendientes: [] });
+    expect(bandeja.reembolsosCerrados).toEqual([]);
     expect(bandeja.reportes).toEqual([]);
     expect(bandeja.desembolsos).toEqual([]);
     expect(bandeja.correosSinEnviar).toEqual([]);
@@ -336,6 +339,7 @@ describe("quién puede leer la bandeja", () => {
       reembolsos: 0,
       reembolsosEsperandoLlave: 0,
       reembolsosPendientes: 0,
+      reembolsosCerrados: 0,
       reportes: 0,
       desembolsos: 0,
       correosSinEnviar: 0,

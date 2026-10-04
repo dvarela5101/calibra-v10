@@ -9,7 +9,7 @@ import { crearClienteAdmin, exigirSupabaseLocal, TOKEN_CAPTCHA_DE_PRUEBA, variab
  *     visita y, en paralelo (móvil y escritorio), esa espera agotaría los tiempos de las pruebas.
  */
 
-const RUTAS = ["/", "/ingresar", "/restablecer", "/restablecer/nueva", "/monitor", "/monitor/agenda", "/admin", "/admin/equipo", "/auth/confirmar", "/monitores", "/agendar", "/agendar/contacto", "/agendar/reserva/00000000-0000-4000-8000-000000000000", "/cita", "/admin/pagos/00000000-0000-4000-8000-000000000000", "/admin/pagos/00000000-0000-4000-8000-000000000000/comprobante", "/admin/desembolsos/00000000-0000-4000-8000-000000000000"];
+const RUTAS = ["/", "/ingresar", "/restablecer", "/restablecer/nueva", "/monitor", "/monitor/agenda", "/admin", "/admin/equipo", "/auth/confirmar", "/monitores", "/agendar", "/agendar/contacto", "/agendar/reserva/00000000-0000-4000-8000-000000000000", "/cita", "/admin/pagos/00000000-0000-4000-8000-000000000000", "/admin/pagos/00000000-0000-4000-8000-000000000000/comprobante", "/admin/desembolsos/00000000-0000-4000-8000-000000000000", "/reembolso"];
 
 async function comprobar(nombre: string, url: string, cabeceras: Record<string, string> = {}): Promise<void> {
   const respuesta = await fetch(url, { headers: cabeceras, signal: AbortSignal.timeout(10_000) }).catch((error: unknown) => {
