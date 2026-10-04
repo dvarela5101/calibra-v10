@@ -1,6 +1,21 @@
 # Reparto de trabajo
 
-**Actualizado:** 3 de octubre de 2026 (ver "Ajuste del 3-oct-2026"; después vienen el ajuste del 2-oct en la noche, la revisión de HU-020, el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+**Actualizado:** 4 de octubre de 2026 (ver "Ajuste del 4-oct-2026"; después vienen el ajuste del 3-oct, el ajuste del 2-oct en la noche, la revisión de HU-020, el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+
+## Ajuste del 4-oct-2026
+
+- **Hechas desde el ajuste anterior:** HU-025, HU-026 y HU-058 (Juzou04). **En revisión:** HU-076 (dvarela5101, [PR #45](https://github.com/dvarela5101/calibra-v10/pull/45)).
+- **Decisiones del 4-oct (D-41 a D-51):** las grupales (HU-036 a HU-047) pasan a Lista, pero salen después del corte (D-47). HU-060, HU-061, HU-081 y la nueva HU-082 pasan a Lista.
+
+| Persona | Siguiente, en orden |
+|---|---|
+| dvarela5101 | Cerrar [HU-076](../backlog/HU-076.md); [HU-080](../backlog/HU-080.md) (S) y [HU-082](../backlog/HU-082.md) (S). En paralelo, refinar las dependencias del corte que no tienen dueño: HU-031, HU-034, HU-048, HU-049, HU-050, HU-052, HU-053, HU-055 y HU-056 |
+| Juzou04 | [HU-030](../backlog/HU-030.md) y la cadena del diagnóstico: [HU-060](../backlog/HU-060.md) y [HU-061](../backlog/HU-061.md) (piloto con Cálculo Diferencial, D-50), después [HU-081](../backlog/HU-081.md), y al refinarlas HU-009, HU-011 y HU-022 |
+
+Posibles choques:
+- **HU-080 y HU-030:** HU-080 lee el estado del reporte de inasistencia; HU-030 lo cambia. Si HU-030 cambia los estados de `reporte_inasistencia`, avisa en el PR.
+- **HU-082 y HU-030:** HU-030 crea reembolsos al aceptar un reporte; HU-082 cambia quién registra su transferencia. No redefinen la misma función.
+- **HU-076 y HU-030:** HU-030 redefinirá `anotar_aviso_monitor` y su check, que HU-076 amplía con `pago_rechazado`: parte de la versión de `main`.
 
 ## Ajuste del 3-oct-2026
 
