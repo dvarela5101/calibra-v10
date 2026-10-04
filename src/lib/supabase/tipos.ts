@@ -1001,6 +1001,9 @@ isOneToOne: true
 "ejecutar_desembolso":
 { Args: { "p_fecha": string,"p_id_desembolso": string,"p_neto_esperado": number,"p_referencia": string }; Returns: string
                            },
+"ejecutar_reembolso":
+{ Args: { "p_fecha": string,"p_id_reembolso": string,"p_referencia": string }; Returns: string
+                           },
 "entrega_de_llave_hasta":
 { Args: { "p_desde": string }; Returns: string
                            },
@@ -1010,6 +1013,11 @@ isOneToOne: true
 "equipo_de_admins":
 { Args: Record<PropertyKey, never>; Returns: {
               "activo": boolean,"casos_abiertos": number,"correo": string,"id": string,"nombre": string,"orden_revision": number
+            }[]
+                           },
+"estado_de_reembolso":
+{ Args: { "p_id_reembolso": string }; Returns: {
+              "estado": string,"vence_en": string
             }[]
                            },
 "estado_para_ejecutar":
