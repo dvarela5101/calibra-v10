@@ -31,6 +31,8 @@ const TITULO_CERRADO = "Este caso se cerró";
 const TITULO_NO_SIRVE = "Este enlace no sirve";
 const ERROR_VACIA = "Escribe tu llave para que podamos devolverte el dinero.";
 const ERROR_LARGA = "La llave es demasiado larga: puede tener hasta 200 caracteres.";
+/** Supuesto 3: otra llave cuando ya teníamos una. El correo de soporte va solo si `CORREO_DATOS_PERSONALES` lo trae. */
+const AVISO_OTRA_LLAVE = /^Ya teníamos una llave para este reembolso y no la cambiamos\.( Si quieres corregirla, escríbenos a \S+@\S+\.)?$/;
 const AVISO_REABIERTO =
   "Reabriste el caso: quien pagó tiene otra vez el plazo completo y le mandamos de nuevo el enlace para enviar su llave.";
 
@@ -402,7 +404,7 @@ test.describe("Criterios 1 a 3 · quien pagó entrega su llave con el enlace", (
     });
   });
 
-  test("dos pestañas con el formulario abierto: la primera guarda; la segunda termina en «Recibimos tu llave» sin error y no cambia la llave guardada", async ({
+  test("dos pestañas con el formulario abierto: la primera guarda; si la segunda manda otra llave, el formulario dice que no se cambió (no «Recibimos tu llave») y la base conserva la primera; con la misma llave, la segunda termina en «Recibimos tu llave»", async ({
     page,
     context,
     escenario,
@@ -410,23 +412,41 @@ test.describe("Criterios 1 a 3 · quien pagó entrega su llave con el enlace", (
     await sinAltaAnonima(page);
     const otraPestana = await context.newPage();
     await sinAltaAnonima(otraPestana);
-    const errores = [...vigilarErrores(page), ...vigilarErrores(otraPestana)];
+    // Cada pestaña anota en su propio arreglo: copiarlos ahora daría una lista vacía que nunca cambia.
+    const erroresA = vigilarErrores(page);
+    const erroresB = vigilarErrores(otraPestana);
     const r = await escenario.reembolso();
 
     for (const pestana of [page, otraPestana]) {
       await pestana.goto(rutaDe(r.token));
       await expectFormulario(pestana, r);
     }
-    await campoLlave(page).fill("primera-llave");
-    await botonEnviar(page).click();
-    await expectRecibida(page, r);
 
-    await campoLlave(otraPestana).fill("segunda-llave");
-    await botonEnviar(otraPestana).click();
-    await expectRecibida(otraPestana, r);
-    await expect(otraPestana).toHaveURL(direccionDe(r.token));
+    await test.step("la primera pestaña guarda su llave", async () => {
+      await campoLlave(page).fill("primera-llave");
+      await botonEnviar(page).click();
+      await expectRecibida(page, r);
+    });
 
-    expect(errores).toEqual([]);
+    await test.step("la segunda, con otra llave: se queda en el formulario con el aviso y lo escrito, y la base conserva la primera", async () => {
+      await campoLlave(otraPestana).fill("segunda-llave");
+      await botonEnviar(otraPestana).click();
+      await expect(alertas(otraPestana)).toHaveText(AVISO_OTRA_LLAVE, ESPERA);
+      await expect(titulo(otraPestana, TITULO_RECIBIDA)).toHaveCount(0);
+      await expect(titulo(otraPestana, TITULO_FORMULARIO)).toBeVisible();
+      await expect(campoLlave(otraPestana)).toHaveValue("segunda-llave");
+      await expect(otraPestana).toHaveURL(direccionDe(r.token));
+      expect(await escenario.enBd(r.id)).toMatchObject({ estado: "pendiente", llave_destino: "primera-llave" });
+    });
+
+    await test.step("la segunda, con la misma llave (con otros espacios): termina en «Recibimos tu llave»", async () => {
+      await campoLlave(otraPestana).fill("  primera-llave ");
+      await botonEnviar(otraPestana).click();
+      await expectRecibida(otraPestana, r);
+      await expect(otraPestana).toHaveURL(direccionDe(r.token));
+    });
+
+    expect([...erroresA, ...erroresB], "ninguna pestaña debía lanzar errores de JavaScript").toEqual([]);
     expect(await escenario.enBd(r.id)).toMatchObject({ estado: "pendiente", llave_destino: "primera-llave" });
   });
 

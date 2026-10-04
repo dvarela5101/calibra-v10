@@ -2,10 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { resumenDeError } from "@/lib/leads/reglas";
+import { identidadDelProveedor } from "@/lib/pagos/configuracion";
 import {
   MENSAJE_ENLACE_QUE_NO_SIRVE,
   MENSAJE_FALLO_AL_ENTREGAR,
-  MENSAJES_DE_ENTREGAR,
+  mensajeDeEntregar,
   normalizarLlave,
   rutaDeLlave,
   tieneFormaDeTokenDeLlave,
@@ -42,9 +43,10 @@ export async function entregarLlave(_anterior: EstadoEntregar, datos: FormData):
     return { error: MENSAJE_FALLO_AL_ENTREGAR, valor: llave };
   }
 
-  // `redirect` lanza: va fuera del `try`. Con la llave guardada (ahora o antes) o el caso cerrado, la página ya cuenta
-  // qué pasó. Volver a ella saca la llave del estado del navegador, y `replace` no deja la misma dirección dos veces en
-  // el historial.
+  // `redirect` lanza: va fuera del `try`. Con la llave guardada (ahora, o antes y es la misma) o el caso cerrado, la
+  // página ya cuenta qué pasó. Volver a ella saca la llave del estado del navegador, y `replace` no deja la misma
+  // dirección dos veces en el historial. Si ya teníamos otra llave, el formulario dice que no se cambió y a quién
+  // escribirle (el correo de soporte que muestra la página), en vez de «Recibimos tu llave».
   if (vuelveALaPagina(resultado)) redirect(rutaDeLlave(token), "replace");
-  return { error: MENSAJES_DE_ENTREGAR[resultado], valor: llave };
+  return { error: mensajeDeEntregar(resultado, identidadDelProveedor().correo), valor: llave };
 }

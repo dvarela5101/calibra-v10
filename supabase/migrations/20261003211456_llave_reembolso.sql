@@ -13,7 +13,8 @@
 --   2. El pedido aparte sale solo para los reembolsos cuya llave no pidió el correo de cancelación; el recordatorio va a
 --      todos los que siguen esperando.
 --   3. La llave es texto libre (celular, correo o alias del banco) de 1 a 200 caracteres, como la del monitor; una vez
---      entregada, el enlace no deja cambiarla.
+--      entregada, el enlace no deja cambiarla (quien se equivocó escribe a soporte). Si llega otra distinta, se le dice
+--      que no se cambió, sin mostrarle la guardada.
 --   4. Un caso cerrado lo reabre cualquier admin activo: vuelven a correr los 7 días y sale el mismo enlace.
 --   5. Reenviar el enlace sin reabrir queda como función de la base para la pantalla de HU-026.
 --   6. La página de la cita no cambia por el cierre: HU-029 toca cita_por_token, mi_cita y mis_citas.
@@ -339,10 +340,15 @@ revoke all on function privado.vencer_pedidos_de_llave(timestamptz) from public,
 --   llave_invalida   vacía o de más de 200 caracteres una vez normalizados los espacios (supuesto 3).
 --   cerrado          el caso se cerró, o ya pasaron los 7 días aunque el cierre todavía no haya corrido (P-40: con 7 días
 --                    exactos todavía se entrega). Sin p_ahora, también: falla cerrado.
---   ya_entregada     ya tiene llave (pendiente o reembolsado): el enlace no deja cambiarla (supuesto 3).
+--   ya_entregada     ya tiene llave (pendiente o reembolsado) y es la misma que llega, una vez normalizados los espacios:
+--                    un doble clic, otra pestaña o un reintento tras perder la respuesta.
+--   ya_entregada_otra ya tiene llave y la que llega es otra (o vacía): el enlace no deja cambiarla (supuesto 3) y quien
+--                    la manda tiene que saberlo, para escribir a soporte en vez de creer que la corrigió.
 --   no_existe        el token no es de ningún reembolso.
--- Nunca devuelve la llave. Bloquea solo la fila del reembolso: dos envíos a la vez quedan en fila y el segundo ve lo
--- que dejó el primero; el cierre de pg_cron la salta mientras tanto.
+-- Nunca devuelve la llave guardada: solo dice si coincide con la que llega, que quien tiene el enlace ya conoce. La
+-- comparación es exacta (mayúsculas incluidas): ante la duda se dice que no se cambió, nunca que se recibió.
+-- Bloquea solo la fila del reembolso: dos envíos a la vez quedan en fila y el segundo ve lo que dejó el primero; el
+-- cierre de pg_cron la salta mientras tanto.
 create or replace function privado.entregar_llave(p_token text, p_llave text, p_ahora timestamptz)
 returns text
 language plpgsql
@@ -357,9 +363,10 @@ declare
   v_estado public.estado_reembolso;
   v_cerrado_en timestamptz;
   v_desde timestamptz;
+  v_guardada text;
 begin
-  select r.id, r.estado, r.cerrado_en, r.plazo_llave_desde
-    into v_id, v_estado, v_cerrado_en, v_desde
+  select r.id, r.estado, r.cerrado_en, r.plazo_llave_desde, r.llave_destino
+    into v_id, v_estado, v_cerrado_en, v_desde, v_guardada
   from public.solicitud_llave s
   join public.reembolso r on r.id = s.id_reembolso
   where s.token = p_token
@@ -368,8 +375,12 @@ begin
     return 'no_existe';
   end if;
 
+  -- Ya tiene llave (reembolso_llave_segun_estado). La guardada se normaliza igual por si no entró por aquí.
   if v_estado <> 'esperando_llave' then
-    return 'ya_entregada';
+    if v_llave = btrim(regexp_replace(v_guardada, '[[:space:]]+', ' ', 'g')) then
+      return 'ya_entregada';
+    end if;
+    return 'ya_entregada_otra';
   end if;
   if v_cerrado_en is not null
      or public.dentro_de_plazo(public.entrega_de_llave_hasta(v_desde), p_ahora) is not true then

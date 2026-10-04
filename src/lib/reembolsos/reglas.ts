@@ -63,8 +63,12 @@ export function validarLlaveDeReembolso(llave: string): string | null {
   return null;
 }
 
-/** Lo que responde `public.entregar_llave`. Nunca trae la llave. */
-export const RESULTADOS_DE_ENTREGAR = ["entregada", "ya_entregada", "cerrado", "llave_invalida", "no_existe"] as const;
+/**
+ * Lo que responde `public.entregar_llave`. Nunca trae la llave. Con la llave ya guardada, `ya_entregada` dice que la que
+ * llegó es la misma (un doble clic, otra pestaña, un reintento) y `ya_entregada_otra`, que es distinta y no se cambió
+ * (supuesto 3).
+ */
+export const RESULTADOS_DE_ENTREGAR = ["entregada", "ya_entregada", "ya_entregada_otra", "cerrado", "llave_invalida", "no_existe"] as const;
 export type ResultadoDeEntregar = (typeof RESULTADOS_DE_ENTREGAR)[number];
 
 export function esResultadoDeEntregar(valor: unknown): valor is ResultadoDeEntregar {
@@ -73,7 +77,8 @@ export function esResultadoDeEntregar(valor: unknown): valor is ResultadoDeEntre
 
 /**
  * Con estos resultados la página ya cuenta qué pasó (la llave recibida o el caso cerrado): la acción vuelve a ella en
- * vez de mostrar un error.
+ * vez de mostrar un error. `ya_entregada_otra` no vuelve: la página diría «Recibimos tu llave» y la persona creería que
+ * corrigió la que tenemos.
  */
 export const RESULTADOS_QUE_VUELVEN_A_LA_PAGINA = ["entregada", "ya_entregada", "cerrado"] as const satisfies readonly ResultadoDeEntregar[];
 
@@ -81,14 +86,33 @@ export function vuelveALaPagina(resultado: ResultadoDeEntregar): resultado is (t
   return (RESULTADOS_QUE_VUELVEN_A_LA_PAGINA as readonly string[]).includes(resultado);
 }
 
+/** Los resultados que se quedan en el formulario, con un mensaje. */
+export type ResultadoQueSeExplica = Exclude<ResultadoDeEntregar, (typeof RESULTADOS_QUE_VUELVEN_A_LA_PAGINA)[number]>;
+
 export const MENSAJE_ENLACE_QUE_NO_SIRVE = "Este enlace no sirve. Abre de nuevo el enlace del correo que te mandamos.";
 
-/** Qué se le dice con los resultados que se quedan en el formulario. */
-export const MENSAJES_DE_ENTREGAR: Record<Exclude<ResultadoDeEntregar, (typeof RESULTADOS_QUE_VUELVEN_A_LA_PAGINA)[number]>, string> = {
+/** Qué se le dice con los resultados que se quedan en el formulario y no dependen del correo de soporte. */
+export const MENSAJES_DE_ENTREGAR: Record<Exclude<ResultadoQueSeExplica, "ya_entregada_otra">, string> = {
   llave_invalida: `Revisa tu llave: no puede quedar vacía y puede tener hasta ${LARGO_MAXIMO_LLAVE} caracteres.`,
   // No distingue un token inventado de uno que ya no existe.
   no_existe: MENSAJE_ENLACE_QUE_NO_SIRVE,
 };
+
+/**
+ * Qué se le dice a quien manda una llave distinta de la que ya tenemos (supuesto 3): que no la cambiamos y, si hay
+ * correo de soporte, a dónde escribir para corregirla. Nunca muestra la llave guardada. Sin correo no promete un canal
+ * que no existe.
+ */
+export function textoDeLlaveYaEntregadaOtra(contactoSoporte: string | null = null): string {
+  const soporte = contactoSoporte?.trim();
+  const base = "Ya teníamos una llave para este reembolso y no la cambiamos.";
+  return soporte ? `${base} Si quieres corregirla, escríbenos a ${soporte}.` : base;
+}
+
+/** El mensaje del formulario para un resultado que no vuelve a la página. */
+export function mensajeDeEntregar(resultado: ResultadoQueSeExplica, contactoSoporte: string | null = null): string {
+  return resultado === "ya_entregada_otra" ? textoDeLlaveYaEntregadaOtra(contactoSoporte) : MENSAJES_DE_ENTREGAR[resultado];
+}
 
 export const MENSAJE_FALLO_AL_ENTREGAR = "No pudimos guardar tu llave. Intenta de nuevo.";
 

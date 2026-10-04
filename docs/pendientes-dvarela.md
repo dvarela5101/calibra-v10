@@ -140,6 +140,7 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   - la llave es texto libre (celular, correo o alias del banco) de 1 a 200 caracteres. No se pide repetirla y, una vez entregada, el enlace no deja cambiarla: quien se equivocó escribe a soporte;
   - un caso cerrado lo reabre cualquier admin activo desde la bandeja; si el admin asignado ya no está activo, el caso pasa al siguiente (D-26);
   - el formulario de la llave necesita JavaScript, como cancelar la cita. Si lo quieres sin JavaScript, como la reseña, es un cambio chico;
+  - «Cerrados sin llave» muestra los 100 cerrados más recientes y es la única pantalla para reabrir. Con más de 100, los más viejos no se ven; si el volumen crece, se agrega búsqueda o paginación (puede ir en HU-026);
   - la página de la cita todavía no sabe que un caso se cerró (lo dejó para después, porque HU-029 tocaba esas funciones), y el aviso de privacidad no menciona la llave del pagador.
 - [ ] **Correo que ya tiene cuenta (HU-013).** Si invitas a un correo que ya tiene cuenta de Calibra (por ejemplo, de estudiante), hoy el registro no la convierte en monitor y le pide escribir al equipo. Confirma que así está bien, o pide que se pueda convertir.
 

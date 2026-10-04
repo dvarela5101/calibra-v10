@@ -10,15 +10,17 @@
 --   * Los triggers de reembolso: un pedido por reembolso que nace esperando la llave (venga de HU-024, de P-07 o de un
 --     INSERT directo) y una sola petición a la app por sentencia. El pedido de un reembolso cuya llave ya pidió el correo
 --     de cancelación se anota igual, con la marca a la vista para que la app lo descarte (supuesto 2).
---   * privado.entregar_llave: sus cinco resultados, los bordes de los 7 días con p_ahora (con 7 días exactos todavía se
---     entrega, P-40), la llave normalizada y que el enlace no deja cambiarla. La puerta del servidor (service_role).
+--   * privado.entregar_llave: sus seis resultados, los bordes de los 7 días con p_ahora (con 7 días exactos todavía se
+--     entrega, P-40), la llave normalizada y que el enlace no deja cambiarla: la misma llave otra vez es ya_entregada y
+--     otra distinta, ya_entregada_otra. La puerta del servidor (service_role).
 --   * public.datos_de_llave y public.datos_de_pedido_llave: lo que ven la página y el correo, nunca la llave.
 --   * Criterio 3: nadie salvo un admin activo lee la llave guardada.
 --   * privado.vencer_pedidos_de_llave: el recordatorio a los 3 días y el cierre a los 7, con sus bordes.
 --   * privado.reabrir_reembolso y privado.reenviar_pedido_llave (con sesión de admin activo), con sus puertas.
 --   * Los cerrados no cuentan como casos abiertos ni impiden desactivar al último admin (equipo_de_admins y
 --     reasignar_casos_de_admin, HU-074).
---   * privado.disparar_pedidos_llave y los trabajos de pg_cron; si el pedido a la app falla, nada se cae.
+--   * privado.disparar_pedidos_llave y los trabajos de pg_cron; el recordatorio, reabrir y reenviar le piden a la app
+--     que mande el correo (una petición a pg_net cada uno); si el pedido a la app falla, nada se cae.
 --
 -- No depende del reloj: los plazos de las pruebas de entrega viven en 2005 y los del cierre en 2001, y cada función se
 -- llama con p_ahora. Así ningún reembolso de la base (de otras pruebas o de desarrollo, todos de ahora) entra en los
@@ -39,15 +41,16 @@
 --     7 días exactos y 09 desde hace 7 días y un microsegundo (la página)   10 esperando desde T0 (reenviar)
 --     11 esperando desde V0 (admin B)   12 esperando desde V0 (admin D, desactivado; su llave la pidió el correo de
 --     cancelación)   13 esperando desde V0 - 5 días   14 pendiente desde V0   15 esperando, cerrado en 2000
---     16 reembolsado desde V0   17 esperando desde V0, cerrado a mano al día siguiente   20 esperando desde T0 y 21
---     cerrado (admin C, casos abiertos)   40 esperando de la 03
+--     16 reembolsado desde V0   17 esperando desde V0, cerrado a mano al día siguiente (se reabre con Vault configurado)
+--     20 esperando desde T0 y 21 cerrado (admin C, casos abiertos)   40 esperando de la 03 (se le reenvía el enlace con
+--     Vault configurado)
 --     50, 51 y 52: los que se insertan con Vault configurado (una petición por sentencia)   53: el que se crea con el pedido
 --     a la app fallando.
 
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(163);
+select plan(176);
 
 -- ---------------------------------------------------------------------------
 -- El reembolso: columnas nuevas y restricciones
@@ -570,16 +573,31 @@ select results_eq(
   $$select estado::text, llave_destino, cerrado_en, plazo_llave_desde from public.reembolso where id = pg_temp.r('01')$$,
   $$values ('pendiente'::text, 'Mi llave de prueba'::text, null::timestamptz, timestamptz '2005-01-03 10:00-05')$$,
   'Criterio 2: guarda la llave con los espacios normalizados y pasa a pendiente en el mismo cambio; el plazo no se toca');
-select is(privado.entregar_llave(pg_temp.t('01'), 'otra-llave', timestamptz '2005-01-04 10:00-05'), 'ya_entregada',
-  'Supuesto 3: una vez entregada, el enlace no deja cambiarla: ya_entregada');
-select is(privado.entregar_llave(pg_temp.t('01'), '', timestamptz '2005-01-04 10:00-05'), 'ya_entregada',
-  'Aunque la llave nueva sea inválida, primero se dice que ya la tenemos');
+select is(privado.entregar_llave(pg_temp.t('01'), E' Mi llave\tde  prueba\n', timestamptz '2005-01-04 10:00-05'), 'ya_entregada',
+  'La misma llave otra vez (un doble clic, otra pestaña), con otros espacios: ya_entregada');
+select is(privado.entregar_llave(pg_temp.t('01'), 'otra-llave', timestamptz '2005-01-04 10:00-05'), 'ya_entregada_otra',
+  'Supuesto 3: una llave distinta no cambia la guardada y se dice: ya_entregada_otra, no ya_entregada');
+select is(privado.entregar_llave(pg_temp.t('01'), 'mi llave de prueba', timestamptz '2005-01-04 10:00-05'), 'ya_entregada_otra',
+  'La comparación es exacta: con otras mayúsculas es otra llave (ante la duda, se dice que no se cambió)');
+select is(privado.entregar_llave(pg_temp.t('01'), '', timestamptz '2005-01-04 10:00-05'), 'ya_entregada_otra',
+  'Aunque la llave nueva sea inválida, primero se dice que ya teníamos otra');
+select is(privado.entregar_llave(pg_temp.t('01'), null, timestamptz '2005-01-04 10:00-05'), 'ya_entregada_otra',
+  'Y una nula, también');
 select is((select llave_destino from public.reembolso where id = pg_temp.r('01')), 'Mi llave de prueba',
   'La llave guardada no cambió');
-select is(privado.entregar_llave(pg_temp.t('04'), 'otra-llave', timestamptz '2005-01-04 10:00-05'), 'ya_entregada',
-  'Un reembolso pendiente: ya_entregada');
-select is(privado.entregar_llave(pg_temp.t('05'), 'otra-llave', timestamptz '2005-01-04 10:00-05'), 'ya_entregada',
-  'Uno reembolsado: ya_entregada');
+select is(privado.entregar_llave(pg_temp.t('04'), 'otra-llave', timestamptz '2005-01-04 10:00-05'), 'ya_entregada_otra',
+  'Un reembolso pendiente, con otra llave: ya_entregada_otra');
+select is(privado.entregar_llave(pg_temp.t('04'), 'llave-04', timestamptz '2005-01-04 10:00-05'), 'ya_entregada',
+  'Y con la suya: ya_entregada');
+select is(privado.entregar_llave(pg_temp.t('05'), 'otra-llave', timestamptz '2005-01-04 10:00-05'), 'ya_entregada_otra',
+  'Uno reembolsado, con otra llave: ya_entregada_otra');
+select is(privado.entregar_llave(pg_temp.t('05'), 'llave-05', timestamptz '2005-01-04 10:00-05'), 'ya_entregada',
+  'Y con la suya: ya_entregada');
+select results_eq(
+  $$select right(id::text, 2), estado::text, llave_destino from public.reembolso
+    where id in (pg_temp.r('04'), pg_temp.r('05')) order by id$$,
+  $$values ('04'::text, 'pendiente'::text, 'llave-04'::text), ('05', 'reembolsado', 'llave-05')$$,
+  'Ninguno de esos envíos cambió el estado ni la llave');
 
 select is(
   privado.entregar_llave(pg_temp.t('02'), 'mi-llave', timestamptz '2005-01-10 10:00-05' + interval '1 microsecond'), 'cerrado',
@@ -605,8 +623,10 @@ select is((select char_length(llave_destino) from public.reembolso where id = pg
 set local role service_role;
 select is(public.entregar_llave('2507' || repeat('a', 60), '  llave   del servidor '), 'entregada',
   'Por la puerta (service_role), con la hora de la base: entregada');
-select is(public.entregar_llave('2507' || repeat('a', 60), 'otra'), 'ya_entregada',
-  'Un segundo envío (un doble clic, otra pestaña) responde ya_entregada');
+select is(public.entregar_llave('2507' || repeat('a', 60), 'llave del servidor'), 'ya_entregada',
+  'Un segundo envío con la misma llave (un doble clic, otra pestaña) responde ya_entregada');
+select is(public.entregar_llave('2507' || repeat('a', 60), 'otra'), 'ya_entregada_otra',
+  'Uno con otra llave responde ya_entregada_otra');
 select is(public.entregar_llave(repeat('f', 64), 'mi-llave'), 'no_existe', 'Un token que no es de nadie: no_existe');
 reset role;
 select is((select llave_destino from public.reembolso where id = pg_temp.r('07')), 'llave del servidor',
@@ -850,8 +870,36 @@ select ok(
      and headers ->> 'Authorization' = 'Bearer secreto-de-prueba-con-al-menos-treinta-y-dos-caracteres'),
   'La petición va a /api/procesos/pedir-llaves de la dirección de la app, con el secreto');
 
+-- Cada paso que anota un correo le pide a la app que lo mande (privado.disparar_pedidos_llave): el recordatorio del
+-- trabajo de pg_cron, reabrir y reenviar. Cada uno suma una petición a la cola de pg_net, aunque anote varios correos.
+-- `cola` guarda cuántas había antes de cada paso.
 create temporary table cola (antes integer);
 insert into cola select count(*) from net.http_request_queue where url = 'https://calibra.test/api/procesos/pedir-llaves';
+select results_eq($$select * from privado.vencer_pedidos_de_llave(timestamptz '2005-01-06 10:00-05')$$, $$values (1, 3)$$,
+  'Control: a los 3 días de T0 el trabajo anota el recordatorio del 10, del 20 y del 40 (y cierra el 12, reabierto en 2001)');
+select is(
+  (select count(*)::int from net.http_request_queue where url = 'https://calibra.test/api/procesos/pedir-llaves')
+    - (select antes from cola),
+  1, 'Criterio 4: el recordatorio le pide a la app que lo mande: una sola petición, aunque anote tres');
+
+set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-0000000025a0","role":"authenticated"}';
+update cola set antes = (select count(*) from net.http_request_queue where url = 'https://calibra.test/api/procesos/pedir-llaves');
+select is(privado.reabrir_reembolso(pg_temp.r('17'), timestamptz '2001-01-11 10:00-05'), 'reabierto',
+  'Control: A reabre el 17, que se cerró en 2001');
+select is(
+  (select count(*)::int from net.http_request_queue where url = 'https://calibra.test/api/procesos/pedir-llaves')
+    - (select antes from cola),
+  1, 'Supuesto 4: reabrir le pide a la app que mande el enlace: una petición');
+
+update cola set antes = (select count(*) from net.http_request_queue where url = 'https://calibra.test/api/procesos/pedir-llaves');
+select is(privado.reenviar_pedido_llave(pg_temp.r('40'), timestamptz '2005-01-06 10:00-05'), 'reenviado',
+  'Control: A reenvía el enlace del 40');
+select is(
+  (select count(*)::int from net.http_request_queue where url = 'https://calibra.test/api/procesos/pedir-llaves')
+    - (select antes from cola),
+  1, 'Supuesto 5: reenviar le pide a la app que mande el enlace: una petición');
+
+update cola set antes = (select count(*) from net.http_request_queue where url = 'https://calibra.test/api/procesos/pedir-llaves');
 insert into public.reembolso (id, id_pago, id_admin, monto, motivo) values
   (pg_temp.r('50'), '60000000-0000-0000-0000-000000002550', 'a0000000-0000-0000-0000-0000000025a0', 20000, 'Prueba 50'),
   (pg_temp.r('51'), '60000000-0000-0000-0000-000000002551', 'a0000000-0000-0000-0000-0000000025a0', 20000, 'Prueba 51');

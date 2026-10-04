@@ -324,10 +324,14 @@ async function envejecer(idReembolso: string, minutos: number): Promise<Date> {
   return rows[0].desde;
 }
 
-/** El trabajo de pg_cron `calibra-vencer-llaves`, con la hora de la base. */
-async function vencer(): Promise<{ cerrados: number; recordatorios: number }> {
-  const { rows } = await bd.query<{ cerrados: number; recordatorios: number }>("select cerrados, recordatorios from privado.vencer_pedidos_de_llave(now())");
-  return rows[0];
+/**
+ * El trabajo de pg_cron `calibra-vencer-llaves`, con la hora de la base. No devuelve sus conteos a propósito: el pg_cron
+ * local corre el mismo trabajo cada 15 minutos y puede cerrar o recordar la fila envejecida antes que esta llamada (entre
+ * `envejecer` y `vencer` cada sentencia se confirma sola). Las pruebas afirman el estado que queda, que es el mismo
+ * corra quien corra; los conteos y los bordes exactos los cubre el pgTAP, con p_ahora y sin carrera.
+ */
+async function vencer(): Promise<void> {
+  await bd.query("select privado.vencer_pedidos_de_llave(now())");
 }
 
 async function horaDeLaBase(): Promise<Date> {
@@ -492,7 +496,7 @@ describe("criterio 1: al crearse el reembolso, quien pagó recibe en su contacto
 // ---------------------------------------------------------------------------------------------------------------
 
 describe("criterio 2: quien pagó escribe su llave en la página del enlace", () => {
-  it("la página muestra el monto, el motivo y hasta cuándo; la acción guarda la llave normalizada, el reembolso pasa a pendiente y vuelve a la página con replace; después el enlace ya no la cambia", async () => {
+  it("la página muestra el monto, el motivo y hasta cuándo; la acción guarda la llave normalizada, el reembolso pasa a pendiente y vuelve a la página con replace; después el enlace ya no la cambia: la misma llave vuelve a la página y otra distinta se queda en el formulario diciendo que no se cambió", async () => {
     const r = await esperando();
     const { plazo_llave_desde } = await reembolsoEnBd(r.id);
     expect(await leerLlavePorToken(r.token)).toEqual({ estado: "esperando_llave", monto: PRECIO, motivo: r.motivo, venceEn: venceDe(plazo_llave_desde) });
@@ -506,12 +510,23 @@ describe("criterio 2: quien pagó escribe su llave en la página del enlace", ()
     expect(vista).toMatchObject({ estado: "pendiente", monto: PRECIO, motivo: r.motivo });
     expect(JSON.stringify(vista)).not.toContain("300 123 4567");
 
-    // Otra pestaña o el doble clic: vuelve a la página, que dice que ya la recibimos, y la llave no cambia (supuesto 3).
-    expect(await enviarFormulario({ token: r.token, llave: "otra-llave" })).toEqual({
+    // Otra pestaña o el doble clic con la misma llave: vuelve a la página, que dice que ya la recibimos.
+    expect(await enviarFormulario({ token: r.token, llave: "300 123 4567" })).toEqual({
       estado: null,
       redireccion: { tipo: "replace", ruta: rutaDeLlave(r.token) },
     });
-    expect(await entregarLlavePorToken(r.token, "otra-llave")).toBe("ya_entregada");
+    expect(await entregarLlavePorToken(r.token, " 300  123 4567 ")).toBe("ya_entregada");
+    // Con otra llave (quien quiere corregirla), no la cambia y se lo dice en el formulario, con el correo de soporte, en
+    // vez de «Recibimos tu llave» (supuesto 3). La guardada nunca vuelve.
+    vi.stubEnv("CORREO_DATOS_PERSONALES", "ayuda@calibra.test");
+    expect(await enviarFormulario({ token: r.token, llave: "otra-llave" })).toEqual({
+      estado: {
+        error: "Ya teníamos una llave para este reembolso y no la cambiamos. Si quieres corregirla, escríbenos a ayuda@calibra.test.",
+        valor: "otra-llave",
+      },
+      redireccion: null,
+    });
+    expect(await entregarLlavePorToken(r.token, "otra-llave")).toBe("ya_entregada_otra");
     expect(await reembolsoEnBd(r.id)).toMatchObject({ estado: "pendiente", llave_destino: "300 123 4567" });
     // Entregar no anota ningún correo, y el token no cambia.
     expect((await pedidosDe(r.id)).map((p) => p.tipo)).toEqual(["pedido"]);
@@ -614,7 +629,8 @@ describe("criterio 4: a los 3 días sin llave sale un recordatorio", () => {
     expect((await pedidosDe(r.id)).map((p) => p.tipo)).toEqual(["pedido"]);
 
     const desde = await envejecer(r.id, DIAS_PARA_RECORDAR * 24 * 60 + 1);
-    expect((await vencer()).recordatorios).toBeGreaterThanOrEqual(1);
+    await vencer();
+    // Uno solo, lo haya anotado esta corrida o el pg_cron local.
     const recordatorio = await pedidoDe(r.id, "recordatorio");
     expect(new Date(recordatorio.plazo_desde).getTime()).toBe(desde.getTime());
     await procesarHasta(recordatorio.id);
@@ -669,11 +685,12 @@ describe("criterio 5: a los 7 días sin llave el caso se cierra y un admin puede
     const desde = await envejecer(r.id, DIAS_PARA_ENTREGAR * 24 * 60 + 1);
     expect(await leerLlavePorToken(r.token)).toEqual({ estado: "cerrado", monto: PRECIO, motivo: r.motivo, venceEn: venceDe(desde) });
     expect(await entregarLlavePorToken(r.token, "3001234567")).toBe("cerrado");
-    // La acción vuelve a la página, que dice que se cerró; no guarda nada.
+    // La acción vuelve a la página, que dice que se cerró; no guarda nada. (Que entregar tarde no cierra el caso lo prueba
+    // el pgTAP: aquí el pg_cron local puede haberlo cerrado ya.)
     expect((await enviarFormulario({ token: r.token, llave: "3001234567" })).redireccion).toEqual({ tipo: "replace", ruta: rutaDeLlave(r.token) });
-    expect(await reembolsoEnBd(r.id)).toMatchObject({ estado: "esperando_llave", llave_destino: null, cerrado_en: null });
+    expect(await reembolsoEnBd(r.id)).toMatchObject({ estado: "esperando_llave", llave_destino: null });
 
-    expect((await vencer()).cerrados).toBeGreaterThanOrEqual(1);
+    await vencer();
     const cerrado = await reembolsoEnBd(r.id);
     expect(cerrado).toMatchObject({ estado: "esperando_llave", llave_destino: null });
     expect(cerrado.cerrado_en).not.toBeNull();

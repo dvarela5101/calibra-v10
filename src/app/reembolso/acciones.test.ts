@@ -49,6 +49,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
 });
 
 describe("entregarLlave (criterio 2): lo que vuelve a la página", () => {
@@ -92,6 +93,26 @@ describe("entregarLlave: lo que se queda en el formulario", () => {
     const { estado, redireccion } = await enviar({ token: TOKEN, llave: "3001234567" });
     expect(redireccion).toBeNull();
     expect(estado).toEqual({ error: mensaje, valor: "3001234567" });
+  });
+
+  it("supuesto 3: si ya teníamos otra llave no vuelve a la página (diría «Recibimos tu llave»): dice que no se cambió y a qué correo escribir, y conserva lo escrito", async () => {
+    vi.stubEnv("CORREO_DATOS_PERSONALES", "ayuda@calibra.test");
+    falsos.entregar.mockResolvedValue("ya_entregada_otra");
+    const { estado, redireccion } = await enviar({ token: TOKEN, llave: "otra-llave" });
+    expect(redireccion).toBeNull();
+    expect(estado).toEqual({
+      error: "Ya teníamos una llave para este reembolso y no la cambiamos. Si quieres corregirla, escríbenos a ayuda@calibra.test.",
+      valor: "otra-llave",
+    });
+    expect(falsos.entregar).toHaveBeenCalledExactlyOnceWith(TOKEN, "otra-llave");
+  });
+
+  it("sin correo de soporte configurado, el mismo aviso no promete un canal que no existe", async () => {
+    vi.stubEnv("CORREO_DATOS_PERSONALES", "");
+    falsos.entregar.mockResolvedValue("ya_entregada_otra");
+    const { estado, redireccion } = await enviar({ token: TOKEN, llave: "otra-llave" });
+    expect(redireccion).toBeNull();
+    expect(estado).toEqual({ error: "Ya teníamos una llave para este reembolso y no la cambiamos.", valor: "otra-llave" });
   });
 
   it.each([

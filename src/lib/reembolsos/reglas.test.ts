@@ -8,6 +8,7 @@ import {
   esResultadoDeReabrir,
   LARGO_MAXIMO_LLAVE,
   llaveDeFila,
+  mensajeDeEntregar,
   MENSAJES_DE_ENTREGAR,
   MOTIVO_CANCELACION_A_TIEMPO,
   normalizarLlave,
@@ -18,6 +19,7 @@ import {
   RUTA_DE_LLAVE,
   rutaDeLlave,
   TEXTO_PAGO_EN_REVISION_AL_CANCELAR,
+  textoDeLlaveYaEntregadaOtra,
   tieneFormaDeTokenDeLlave,
   TIPOS_DE_PEDIDO,
   validarLlaveDeReembolso,
@@ -90,20 +92,37 @@ describe("la llave (HU-025, supuesto 3)", () => {
 });
 
 describe("lo que responde la base al entregar la llave (criterio 2)", () => {
-  it("reconoce los cinco resultados y nada más", () => {
-    expect([...RESULTADOS_DE_ENTREGAR].sort()).toEqual(["cerrado", "entregada", "llave_invalida", "no_existe", "ya_entregada"]);
+  it("reconoce los seis resultados y nada más", () => {
+    expect([...RESULTADOS_DE_ENTREGAR].sort()).toEqual(["cerrado", "entregada", "llave_invalida", "no_existe", "ya_entregada", "ya_entregada_otra"]);
     for (const resultado of RESULTADOS_DE_ENTREGAR) expect(esResultadoDeEntregar(resultado)).toBe(true);
-    for (const raro of ["", "pendiente", "ENTREGADA", null, undefined, 1, ["entregada"]]) {
+    for (const raro of ["", "pendiente", "ENTREGADA", "ya_entregada_otro", null, undefined, 1, ["entregada"]]) {
       expect(esResultadoDeEntregar(raro), JSON.stringify(raro)).toBe(false);
     }
   });
 
-  it("con la llave guardada (ahora o antes) o el caso cerrado se vuelve a la página; con lo demás se explica", () => {
+  it("con la llave guardada (ahora, o antes y es la misma) o el caso cerrado se vuelve a la página; con lo demás se explica", () => {
     expect(RESULTADOS_DE_ENTREGAR.filter(vuelveALaPagina).sort()).toEqual(["cerrado", "entregada", "ya_entregada"]);
     expect(MENSAJES_DE_ENTREGAR).toEqual({
       llave_invalida: "Revisa tu llave: no puede quedar vacía y puede tener hasta 200 caracteres.",
       no_existe: "Este enlace no sirve. Abre de nuevo el enlace del correo que te mandamos.",
     });
+    expect(mensajeDeEntregar("llave_invalida", "ayuda@calibra.test")).toBe(MENSAJES_DE_ENTREGAR.llave_invalida);
+    expect(mensajeDeEntregar("no_existe")).toBe(MENSAJES_DE_ENTREGAR.no_existe);
+  });
+
+  it("supuesto 3: una llave distinta de la guardada no vuelve a la página (diría «Recibimos tu llave»): dice que no se cambió y a quién escribir", () => {
+    expect(vuelveALaPagina("ya_entregada_otra")).toBe(false);
+    expect(mensajeDeEntregar("ya_entregada_otra", "ayuda@calibra.test")).toBe(
+      "Ya teníamos una llave para este reembolso y no la cambiamos. Si quieres corregirla, escríbenos a ayuda@calibra.test.",
+    );
+    expect(textoDeLlaveYaEntregadaOtra("  ayuda@calibra.test  ")).toBe(
+      "Ya teníamos una llave para este reembolso y no la cambiamos. Si quieres corregirla, escríbenos a ayuda@calibra.test.",
+    );
+    // Sin correo de soporte no promete un canal que no existe.
+    for (const vacio of [null, "", "   ", undefined]) {
+      expect(mensajeDeEntregar("ya_entregada_otra", vacio), JSON.stringify(vacio)).toBe("Ya teníamos una llave para este reembolso y no la cambiamos.");
+    }
+    expect(mensajeDeEntregar("ya_entregada_otra")).not.toMatch(/recibimos/i);
   });
 });
 
