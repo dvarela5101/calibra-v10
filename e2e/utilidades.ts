@@ -94,8 +94,12 @@ export function leerSesion(cookies: Cookie[]): SesionEnCookie | null {
   }
 }
 
-/** Espera a que el navegador reciba la cookie de sesión (la sesión anónima nace en el cliente). */
-export async function esperarSesion(context: BrowserContext): Promise<SesionEnCookie> {
+/**
+ * Espera a que el navegador reciba la cookie de sesión (la sesión anónima nace en el cliente). Los 20 s por defecto
+ * bastan con el stub de Turnstile; con el script real de Cloudflare, quien llama pasa un plazo no menor que el que se
+ * da la propia app (ver `ESPERA_CON_TURNSTILE_REAL` en e2e/captcha.spec.ts).
+ */
+export async function esperarSesion(context: BrowserContext, timeout = 20_000): Promise<SesionEnCookie> {
   let sesion: SesionEnCookie | null = null;
   await expect
     .poll(
@@ -103,7 +107,7 @@ export async function esperarSesion(context: BrowserContext): Promise<SesionEnCo
         sesion = leerSesion(await context.cookies());
         return sesion !== null;
       },
-      { message: "el navegador debía recibir la cookie de sesión", timeout: 20_000 },
+      { message: "el navegador debía recibir la cookie de sesión", timeout },
     )
     .toBe(true);
   return sesion!;
@@ -209,13 +213,23 @@ const SCRIPT_DE_TURNSTILE = `(() => {
   };
 })();`;
 
+/**
+ * Pone el stub de Turnstile en un contexto. La fixture `context` lo hace con todos los suyos; un contexto que la prueba
+ * crea con `browser.newContext` no lo hereda y, sin esto, corre el reto REAL de Cloudflare, que con la máquina cargada
+ * no entrega el token dentro de los 20 s que se da la app (`ESPERA_DEL_TOKEN_MS`) y la sesión no nace. Solo
+ * e2e/captcha.spec.ts prueba a propósito el script real.
+ */
+export async function usarTurnstileDePrueba(context: BrowserContext): Promise<void> {
+  await context.route("**/challenges.cloudflare.com/turnstile/v0/api.js*", (ruta) =>
+    ruta.fulfill({ status: 200, contentType: "text/javascript; charset=utf-8", body: SCRIPT_DE_TURNSTILE }),
+  );
+}
+
 export const test = base.extend<{ cuentas: Cuentas }>({
   // Todo contexto de la fixture `page` trae el stub de Turnstile. Los que una prueba crea con `browser.newContext` no
-  // lo heredan y usan el script real de Cloudflare (lo esperado, p. ej. al reabrir el navegador con lo guardado).
+  // lo heredan y usan el script real de Cloudflare, salvo que llamen `usarTurnstileDePrueba`.
   context: async ({ context }, entregar) => {
-    await context.route("**/challenges.cloudflare.com/turnstile/v0/api.js*", (ruta) =>
-      ruta.fulfill({ status: 200, contentType: "text/javascript; charset=utf-8", body: SCRIPT_DE_TURNSTILE }),
-    );
+    await usarTurnstileDePrueba(context);
     await entregar(context);
   },
   // Playwright exige desestructurar el primer argumento, aunque no dependa de nada. El segundo

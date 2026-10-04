@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, test as base, type BrowserContext, type Locator, type Page, type Request } from "@playwright/test";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { ESPERA_DEL_SCRIPT_MS, ESPERA_DEL_TOKEN_MS } from "../src/lib/captcha/config";
 import { contrasenaAleatoria, correoUnico, crearClienteAdmin, enviarCredenciales, esperarSesion, leerSesion, variable } from "./utilidades";
 
 // HU-058: CAPTCHA de Cloudflare Turnstile en el inicio de sesión anónimo y en el ingreso. A diferencia del resto de la
@@ -10,6 +11,12 @@ import { contrasenaAleatoria, correoUnico, crearClienteAdmin, enviarCredenciales
 // pública gasta una sesión anónima del Auth local (ver `[auth.rate_limit]` de supabase/config.toml).
 
 const ESPERA = { timeout: 30_000 };
+/**
+ * Con el script real, la app se da hasta `ESPERA_DEL_SCRIPT_MS` para cargarlo y `ESPERA_DEL_TOKEN_MS` para el token antes
+ * de rendirse, y luego hace el alta en Auth (que valida el token contra Cloudflare). La prueba espera la sesión al menos
+ * ese tiempo, más un margen para el alta: con 20 s declaraba el fallo mientras la app seguía esperando el token.
+ */
+const ESPERA_CON_TURNSTILE_REAL = ESPERA_DEL_SCRIPT_MS + ESPERA_DEL_TOKEN_MS + 10_000;
 const AVISO_SIN_VERIFICACION = "No pudimos verificar tu navegador. Revisa tu conexión y vuelve a intentarlo.";
 const AVISO_DE_AUTH = "No pudimos verificar que eres una persona. Recarga la página e intenta de nuevo.";
 const REINTENTAR = "Reintentar la verificación";
@@ -134,7 +141,7 @@ test.describe("Criterio 1 · el CAPTCHA invisible se resuelve solo y la sesión 
     });
 
     await page.goto("/");
-    const sesion = await esperarSesion(context);
+    const sesion = await esperarSesion(context, ESPERA_CON_TURNSTILE_REAL);
     limpieza.borrarAlFinal(sesion.id);
     await page.waitForLoadState("networkidle");
 

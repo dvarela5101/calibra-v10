@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import type { BrowserContext, Locator, Page } from "@playwright/test";
 import { diaDelNegocio, formatearDiaConSemana, formatearFechaHora } from "../src/lib/fechas";
 import { formatearPesos } from "../src/lib/moneda";
-import { borrarDesembolsosDeMonitores, esperarSesion, leerSesion, test as base, expect, type SesionEnCookie } from "./utilidades";
+import { borrarDesembolsosDeMonitores, esperarSesion, leerSesion, test as base, expect, usarTurnstileDePrueba, type SesionEnCookie } from "./utilidades";
 
 // HU-019 (P-04, D-19 a D-25): la cita confirmada y su enlace de gestión. El Lead abre el enlace del correo
 // (`/cita?token=...`) sin sesión, o vuelve con el mismo navegador con el que agendó (`/cita` y `/cita/[id]`). Corre
@@ -608,6 +608,8 @@ test.describe("Criterio 4 · el mismo navegador con el que agendó", () => {
         viewport: page.viewportSize() ?? undefined,
       });
       try {
+        // Esta prueba no es del CAPTCHA: sin el stub, el contexto nuevo correría el reto real de Cloudflare (HU-058).
+        await usarTurnstileDePrueba(otroContexto);
         const otraPagina = await otroContexto.newPage();
         await otraPagina.goto("/monitores");
         await otraPagina.waitForLoadState("networkidle");
