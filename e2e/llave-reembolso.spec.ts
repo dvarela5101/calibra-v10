@@ -655,21 +655,37 @@ test.describe("Criterio 5 · reabrir desde la bandeja un caso cerrado sin llave"
 });
 
 test.describe("Criterio 5 · reabrir sin JavaScript", () => {
-  test.use({ javaScriptEnabled: false });
-
-  test("el botón de la bandeja es un formulario común: sin JavaScript también reabre el caso y vuelve con el aviso", async ({ page, cuentas, escenario }) => {
+  test("el botón de la bandeja es un formulario común: sin JavaScript también reabre el caso y vuelve con el aviso", async ({ page, context, browser, baseURL, cuentas, escenario }) => {
     const admin = await cuentas.crearAdmin();
     const r = await escenario.reembolso({ plazo: "cerrado", idAdmin: admin.id });
+    // El ingreso necesita JavaScript: /ingresar manda el token de Turnstile que Auth exige (HU-058, D-30). Lo que se
+    // prueba sin JavaScript es el botón de la bandeja, así que se entra con el navegador normal y se sigue con la misma
+    // sesión en un contexto sin JavaScript.
     await entrarComoAdmin(page, admin.correo, admin.contrasena);
+    const sinJavaScript = await browser.newContext({
+      baseURL,
+      storageState: await context.storageState(),
+      javaScriptEnabled: false,
+      viewport: page.viewportSize() ?? undefined,
+      locale: "es-CO",
+      timezoneId: "America/Bogota",
+    });
+    try {
+      const pagina = await sinJavaScript.newPage();
+      await pagina.goto("/admin");
+      await expect(pagina).toHaveURL("/admin", ESPERA);
 
-    const fila = page.getByRole("list", { name: /Cerrados sin llave/ }).getByRole("listitem").filter({ hasText: r.nombrePagador });
-    await expect(fila).toHaveCount(1, ESPERA);
-    await fila.getByRole("button", { name: "Reabrir y reenviar el enlace" }).click();
+      const fila = pagina.getByRole("list", { name: /Cerrados sin llave/ }).getByRole("listitem").filter({ hasText: r.nombrePagador });
+      await expect(fila).toHaveCount(1, ESPERA);
+      await fila.getByRole("button", { name: "Reabrir y reenviar el enlace" }).click();
 
-    await expect(page).toHaveURL("/admin?reembolso=reabierto", ESPERA);
-    await expect(page.getByText(AVISO_REABIERTO)).toBeVisible();
-    await expect(fila).toHaveCount(0);
-    expect(await escenario.enBd(r.id)).toMatchObject({ estado: "esperando_llave", cerrado_en: null });
+      await expect(pagina).toHaveURL("/admin?reembolso=reabierto", ESPERA);
+      await expect(pagina.getByText(AVISO_REABIERTO)).toBeVisible();
+      await expect(fila).toHaveCount(0);
+      expect(await escenario.enBd(r.id)).toMatchObject({ estado: "esperando_llave", cerrado_en: null });
+    } finally {
+      await sinJavaScript.close();
+    }
   });
 });
 
