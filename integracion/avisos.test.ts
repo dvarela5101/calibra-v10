@@ -20,7 +20,8 @@ import { exigirSupabaseLocal, exito, Fixtures } from "./utilidades";
  * HU-051 contra el Supabase local: el trigger de `monitoria` anota el aviso, `procesarAvisosAlMonitor` (el mismo
  * código de la ruta `/api/procesos/avisar-monitores`) lo manda por Mailpit al correo del monitor y lo marca
  * procesado. HU-076 suma el tercer evento, `pago_rechazado` (`confirmada` que el rechazo de su pago cancela); el
- * recorrido completo del rechazo, con el aviso al pagador, está en `integracion/avisos-rechazo.test.ts`. En local no hay configuración en Vault, así que la base no llama a la app: la prueba llama el proceso.
+ * recorrido completo del rechazo, con el aviso al pagador, está en `integracion/avisos-rechazo.test.ts`. En local no hay
+ * configuración en Vault, así que la base no llama a la app: la prueba llama el proceso.
  *
  * El estado lo cambia service_role, como lo harán HU-018 (confirmar) y HU-024 (cancelar): el trigger reacciona al
  * cambio sin importar quién lo hace. Las monitorías son de un lunes a varias semanas, lejos de cualquier proceso
@@ -216,7 +217,10 @@ describe("criterio 3: lo que no se avisa", () => {
 });
 
 describe("HU-076, criterios 1 y 3: una confirmada que se cancela porque su pago se rechazó", () => {
-  it("anota el aviso pago_rechazado; el proceso manda el correo corto con la frase del pago y descarta el de confirmada, que ya no vale; una reserva por pagar que el rechazo cancela no anota nada", async () => {
+  const titulo =
+    "anota el aviso pago_rechazado; el proceso manda el correo corto con la frase del pago y descarta el de " +
+    "confirmada, que ya no vale; una reserva por pagar que el rechazo cancela no anota nada";
+  it(titulo, async () => {
     const porPagar = await pendiente();
     await cambiarEstado(porPagar.id, "cancelada", "pago_rechazado");
     expect(await avisosDe(porPagar.id)).toEqual([]);

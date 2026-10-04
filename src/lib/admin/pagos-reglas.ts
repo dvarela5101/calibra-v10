@@ -9,9 +9,9 @@ import type { EstadoDelCaso } from "./casos-p24-reglas";
 /**
  * Revisar un pago (HU-020): el admin asignado lo aprueba o lo rechaza contra su comprobante y, pasada su hora,
  * cualquier admin activo (HU-077, D-38). Aquí va lo puro: quién puede revisar, qué responde la base, qué se le dice
- * al admin con cada resultado, qué pasa con la monitoría si lo rechaza, a quién se le avisa y los datos del correo al pagador. Quién puede
- * revisar, el borde de P-24 y los cambios los decide `public.revisar_pago` con su propia hora; lo de aquí solo lo
- * anticipa en la pantalla.
+ * al admin con cada resultado, qué pasa con la monitoría si lo rechaza, a quién se le avisa y los datos del correo al
+ * pagador. Quién puede revisar, el borde de P-24 y los cambios los decide `public.revisar_pago` con su propia hora; lo
+ * de aquí solo lo anticipa en la pantalla.
  */
 
 type EstadoMonitoria = Database["public"]["Enums"]["estado_monitoria"];
@@ -217,7 +217,10 @@ export function consecuenciasDelRechazo(
       : avisarleTu(pago.nombrePagador, pago.contacto);
   switch (caso) {
     case "cancela_la_cita":
-      return `Se cancela la monitoría del ${formatearDia(pago.fechaSesion)} y esa fecha queda libre para otra persona. ${SIN_REEMBOLSO}. ${aviso()}${monitor ? " También le avisaremos al monitor." : ""}`;
+      return (
+        `Se cancela la monitoría del ${formatearDia(pago.fechaSesion)} y esa fecha queda libre para otra persona. ` +
+        `${SIN_REEMBOLSO}. ${aviso()}${monitor ? " También le avisaremos al monitor." : ""}`
+      );
     case "ya_empezo":
       return `La sesión ya empezó, así que la monitoría no se cancela y ${QUEDA_POR_COBRAR}. ${SIN_REEMBOLSO} y al pagador no le escribimos.`;
     case "ya_realizada":

@@ -369,5 +369,6 @@ begin
 end;
 $$;
 
--- Como en HU-020 y HU-077: la versión con p_ahora queda interna, sin grant.
+-- Como en HU-020 y HU-077: la versión con p_ahora queda interna, sin grant. La usan revisar_pago_de_la_sesion, con now(), y
+-- las pruebas, como postgres.
 revoke all on function privado.revisar_pago(uuid, text, text, timestamptz) from public, anon, authenticated, service_role;
