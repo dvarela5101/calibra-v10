@@ -1,8 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
+import { useExigirSesionAnonima } from "@/components/captcha/useExigirSesionAnonima";
 import { CasillasConsentimiento } from "@/components/CasillasConsentimiento";
 import formulario from "@/components/formulario.module.css";
+import { TEXTO_VERIFICANDO } from "@/lib/captcha/textos";
 import { dejarContacto, type EstadoContacto } from "./acciones";
 
 export type ValoresDeContacto = { nombre: string; correo: string; numero_telefono: string };
@@ -12,12 +14,14 @@ const estadoInicial: EstadoContacto = { error: null, aviso: null, valores: {} };
 /** HU-068: nombre, correo y teléfono opcional (P-21, P-22), con la autorización de datos (RN-13). */
 export function FormularioContacto({ siguiente, iniciales }: { siguiente: string; iniciales: ValoresDeContacto }) {
   const [estado, accion, enviando] = useActionState(dejarContacto, estadoInicial);
+  // HU-058: sin sesión lista, el envío espera la verificación; el aviso solo sale si no se logra.
+  const sesion = useExigirSesionAnonima();
   const valor = (campo: keyof ValoresDeContacto) => estado.valores[campo] ?? iniciales[campo];
   // La llave remonta los campos cuando cambian los valores devueltos (React vacía el formulario al enviar).
   const llave = JSON.stringify(estado.valores);
 
   return (
-    <form key={llave} action={accion} className={formulario.formulario} noValidate>
+    <form key={llave} action={accion} onSubmit={sesion.alEnviar} className={formulario.formulario} noValidate>
       <input type="hidden" name="siguiente" value={siguiente} />
 
       <div className={formulario.campo}>
@@ -76,9 +80,10 @@ export function FormularioContacto({ siguiente, iniciales }: { siguiente: string
           {estado.aviso}
         </p>
       )}
+      {sesion.aviso}
 
-      <button type="submit" className={formulario.boton} disabled={enviando}>
-        {enviando ? "Guardando…" : "Seguir"}
+      <button type="submit" className={formulario.boton} disabled={enviando || sesion.verificando}>
+        {sesion.verificando ? TEXTO_VERIFICANDO : enviando ? "Guardando…" : "Seguir"}
       </button>
     </form>
   );

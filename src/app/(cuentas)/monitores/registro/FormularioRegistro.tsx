@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useActionState, type ReactNode } from "react";
+import { CampoCaptcha } from "@/components/captcha/CampoCaptcha";
+import { useTokenCaptcha } from "@/components/captcha/useTokenCaptcha";
 import formulario from "@/components/formulario.module.css";
+import { TEXTO_VERIFICANDO } from "@/lib/captcha/textos";
 import { RUTA_AVISO } from "@/lib/privacidad/consentimiento";
 import { registrarse, type EstadoRegistro } from "./acciones";
 
@@ -42,6 +45,8 @@ const CAMPOS: Campo[] = [
 
 export function FormularioRegistro({ token, correo }: { token: string; correo: string }) {
   const [estado, accion, enviando] = useActionState(registrarse, estadoInicial);
+  // HU-058 (D-30): al terminar el registro la acción inicia sesión con contraseña, y Auth exige el token.
+  const captcha = useTokenCaptcha("registro_monitor", enviando);
 
   if (estado.invitacionNoSirve) {
     return (
@@ -52,7 +57,7 @@ export function FormularioRegistro({ token, correo }: { token: string; correo: s
   }
 
   return (
-    <form action={accion} className={formulario.formulario} noValidate>
+    <form action={accion} onSubmit={captcha.alEnviar} className={formulario.formulario} noValidate>
       <input type="hidden" name="token" value={token} />
 
       <div className={formulario.campo}>
@@ -86,14 +91,16 @@ export function FormularioRegistro({ token, correo }: { token: string; correo: s
         </div>
       ))}
 
+      <CampoCaptcha captcha={captcha} />
+
       {estado.error && (
         <p role="alert" className={formulario.error}>
           {estado.error}
         </p>
       )}
 
-      <button type="submit" className={formulario.boton} disabled={enviando}>
-        {enviando ? "Creando tu cuenta…" : "Crear mi cuenta"}
+      <button type="submit" className={formulario.boton} disabled={enviando || captcha.verificando}>
+        {captcha.verificando ? TEXTO_VERIFICANDO : enviando ? "Creando tu cuenta…" : "Crear mi cuenta"}
       </button>
     </form>
   );
