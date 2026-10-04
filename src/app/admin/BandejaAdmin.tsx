@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
+import formulario from "@/components/formulario.module.css";
 import type { Bandeja, PagoPorCobrarOAsumir, PagoPorRevisar, ReembolsoActivo } from "@/lib/admin/bandeja";
 import { formatearDia, formatearFechaHora } from "@/lib/fechas";
 import { formatearPesos } from "@/lib/moneda";
+import { reabrir } from "./acciones";
 import estilos from "./bandeja.module.css";
 
 /** Si la lista no muestra todo, lo dice: el contador de arriba cuenta todo. */
@@ -155,7 +157,52 @@ function GrupoDeReembolsos({
   );
 }
 
-/** Lo que tiene asignado el admin: contadores arriba y una lista por sección. Sin JavaScript en el navegador. */
+/**
+ * HU-025 (supuesto 4): los reembolsos que se cerraron porque pasó el plazo sin llave, de todos los admins, después de
+ * los propios. Cada uno se reabre con su formulario, que funciona sin JavaScript: quien pagó vuelve a tener el plazo
+ * completo y le llega de nuevo el enlace. Si no hay ninguno, no se muestra nada.
+ */
+function ReembolsosCerrados({ bandeja }: { bandeja: Bandeja }) {
+  const total = bandeja.contadores.reembolsosCerrados;
+  if (total === 0) return null;
+  return (
+    <>
+      <h3 id="reembolsos-cerrados-titulo" className={estilos.subtitulo}>
+        Cerrados sin llave <span className={estilos.cuenta}>({total})</span>
+      </h3>
+      <p className={estilos.ayuda}>
+        Pasó el plazo sin que quien pagó enviara su llave. Si te escribe, reabre su caso: vuelve a tener el plazo completo
+        y le mandamos de nuevo el enlace. Son los mismos para todos los admins y el que se cerró último va arriba.
+      </p>
+      <ul aria-labelledby="reembolsos-cerrados-titulo" className={estilos.lista}>
+        {bandeja.reembolsosCerrados.map((reembolso) => (
+          <li key={reembolso.id} className={estilos.fila}>
+            <span id={`cerrado-${reembolso.id}`} className={estilos.nombre}>
+              {reembolso.nombrePagador} · {formatearPesos(reembolso.monto)}
+            </span>
+            <span className={estilos.metaLarga}>{reembolso.contacto}</span>
+            <span className={estilos.metaLarga}>{reembolso.motivo}</span>
+            <span className={estilos.meta}>
+              Se cerró el <time dateTime={reembolso.cerradoEn.toISOString()}>{formatearFechaHora(reembolso.cerradoEn)}</time>
+            </span>
+            <form action={reabrir} className={estilos.accionDeFila}>
+              <input type="hidden" name="reembolso" value={reembolso.id} />
+              <button type="submit" aria-describedby={`cerrado-${reembolso.id}`} className={formulario.botonSecundario}>
+                Reabrir y reenviar el enlace
+              </button>
+            </form>
+          </li>
+        ))}
+      </ul>
+      <AvisoDeCorte mostrados={bandeja.reembolsosCerrados.length} total={total} />
+    </>
+  );
+}
+
+/**
+ * Lo que tiene asignado el admin: contadores arriba y una lista por sección. Sin JavaScript en el navegador: los casos
+ * cerrados sin llave se reabren con un formulario común (HU-025).
+ */
 export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
   const { contadores } = bandeja;
 
@@ -225,6 +272,7 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
         total={contadores.reembolsos}
         ayuda="Los que te asignaron y aún no se han devuelto, por estado."
         vacio="No tienes reembolsos por atender."
+        despues={<ReembolsosCerrados bandeja={bandeja} />}
       >
         <GrupoDeReembolsos
           titulo="Esperando la llave del pagador"

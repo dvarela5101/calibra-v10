@@ -49,6 +49,20 @@ export type PagoPorCobrarOAsumir = {
 
 export type ReembolsoActivo = { id: string; monto: number; motivo: string };
 
+/**
+ * Un reembolso que se cerró porque pasó el plazo sin que quien pagó enviara su llave (P-10, HU-025). Cualquier admin
+ * activo lo reabre (supuesto 4), así que todos ven los mismos. Del pago, quién es y su correo: así el admin lo reconoce
+ * cuando le escriben. Nunca la llave (un caso cerrado no la tiene).
+ */
+export type ReembolsoCerrado = {
+  id: string;
+  nombrePagador: string;
+  contacto: string;
+  monto: number;
+  motivo: string;
+  cerradoEn: Date;
+};
+
 export type ReporteEnRevision = { id: string; fechaReporte: Date; fechaSesion: string | null };
 
 export type DesembolsoEjecutable = {
@@ -78,6 +92,8 @@ export type Bandeja = {
   pagosPorCobrarOAsumir: PagoPorCobrarOAsumir[];
   /** Cada estado activo tiene su propia lista y su propio corte: una larga no tapa a la otra. */
   reembolsos: { esperandoLlave: ReembolsoActivo[]; pendientes: ReembolsoActivo[] };
+  /** HU-025: los cerrados sin llave de todos los admins, el más reciente arriba. No cuentan como reembolsos por atender. */
+  reembolsosCerrados: ReembolsoCerrado[];
   reportes: ReporteEnRevision[];
   desembolsos: DesembolsoEjecutable[];
   /** Correos que fallaron de forma definitiva o siguieron fallando 24 horas (HU-065). Los ven todos los admins. */
@@ -90,6 +106,7 @@ export type Bandeja = {
     reembolsos: number;
     reembolsosEsperandoLlave: number;
     reembolsosPendientes: number;
+    reembolsosCerrados: number;
     reportes: number;
     desembolsos: number;
     correosSinEnviar: number;
@@ -164,7 +181,8 @@ async function cargarPagosPorCobrarOAsumir(cliente: Cliente, maxFilas: number) {
  * Lo que tiene asignado un admin (RN-07): pagos en revisión por vencimiento, reembolsos activos por
  * estado, reportes en revisión y desembolsos ejecutables. Los desembolsos no tienen admin hasta que
  * se ejecutan (RN-80), así que todos ven los mismos ejecutables; lo mismo pasa con los pagos por cobrar o asumir
- * (HU-078, supuesto 2), que cierra cualquier admin activo. Lo que tienen asignado otros admins
+ * (HU-078, supuesto 2), que cierra cualquier admin activo, y con los reembolsos cerrados sin llave (HU-025, supuesto 4),
+ * que reabre cualquier admin activo. Lo que tienen asignado otros admins
  * no entra, salvo los pagos en revisión a los que ya se les pasó la hora (HU-077, supuesto 2): van
  * aparte, después de los propios. Las políticas de la base ya dejan leer estas tablas solo a los
  * admins: con la sesión de cualquier otro rol las listas salen vacías.
@@ -184,6 +202,8 @@ export async function cargarBandeja(
       .select("id, monto, motivo", { count: "exact" })
       .eq("id_admin", idAdmin)
       .eq("estado", estado)
+      // HU-025: un caso cerrado sin llave ya no espera nada (los listos para transferir nunca están cerrados).
+      .is("cerrado_en", null)
       .order("fecha_generacion", { ascending: true })
       .limit(maxFilas);
 
@@ -194,7 +214,7 @@ export async function cargarBandeja(
   // los parámetros; las demás no.
   const parametrosLeidos = cargarParametros(cliente);
 
-  const [parametros, pagos, vencidosDeOtros, porCobrar, esperandoLlave, pendientes, reportes, desembolsos, correos] = await Promise.all([
+  const [parametros, pagos, vencidosDeOtros, porCobrar, esperandoLlave, pendientes, cerrados, reportes, desembolsos, correos] = await Promise.all([
     parametrosLeidos,
     cliente
       .from("pago")
@@ -222,6 +242,14 @@ export async function cargarBandeja(
     cargarPagosPorCobrarOAsumir(cliente, maxFilas),
     reembolsosDe("esperando_llave"),
     reembolsosDe("pendiente"),
+    cliente
+      .from("reembolso")
+      .select("id, monto, motivo, cerrado_en, pago(nombre_pagador, contacto)", { count: "exact" })
+      .eq("estado", "esperando_llave")
+      .not("cerrado_en", "is", null)
+      // La lista solo crece (un cerrado sale de ella al reabrirlo): el más reciente arriba, que es el que más se reabre.
+      .order("cerrado_en", { ascending: false })
+      .limit(maxFilas),
     cliente
       .from("reporte_inasistencia")
       .select("id, fecha_reporte, monitoria(fecha)", { count: "exact" })
@@ -252,6 +280,7 @@ export async function cargarBandeja(
   const v = exigir("los pagos vencidos de otros admins", vencidosDeOtros);
   const e = exigir("los reembolsos que esperan la llave", esperandoLlave);
   const r = exigir("los reembolsos listos para transferir", pendientes);
+  const z = exigir("los reembolsos cerrados sin llave", cerrados);
   const i = exigir("los reportes de inasistencia", reportes);
   const d = exigir("los desembolsos", desembolsos);
   const c = exigir("los correos que no salieron", correos);
@@ -278,6 +307,18 @@ export async function cargarBandeja(
     pagosVencidosDeOtros: v.filas.map((fila) => ({ ...pagoPorRevisar(fila), nombreAdmin: fila.admin.nombre })),
     pagosPorCobrarOAsumir: porCobrar.filas,
     reembolsos: { esperandoLlave: e.filas.map(reembolso), pendientes: r.filas.map(reembolso) },
+    reembolsosCerrados: z.filas.map((fila): ReembolsoCerrado => {
+      // reembolso_id_pago_fkey es obligatoria: el pago siempre viene, y un cerrado siempre tiene su fecha de cierre.
+      if (!fila.pago || !fila.cerrado_en) throw new Error(`No se pudo cargar los reembolsos cerrados sin llave: el reembolso ${fila.id} está incompleto`);
+      return {
+        id: fila.id,
+        nombrePagador: fila.pago.nombre_pagador,
+        contacto: fila.pago.contacto,
+        monto: fila.monto,
+        motivo: fila.motivo,
+        cerradoEn: new Date(fila.cerrado_en),
+      };
+    }),
     reportes: i.filas.map((fila) => ({
       id: fila.id,
       fechaReporte: new Date(fila.fecha_reporte),
@@ -310,6 +351,7 @@ export async function cargarBandeja(
       reembolsos: e.total + r.total,
       reembolsosEsperandoLlave: e.total,
       reembolsosPendientes: r.total,
+      reembolsosCerrados: z.total,
       reportes: i.total,
       desembolsos: d.total,
       correosSinEnviar: c.total,

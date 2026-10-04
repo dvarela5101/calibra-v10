@@ -113,7 +113,7 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 - Un admin desactivado (RN-23) no ve nada de la bandeja: ni la vista ni las tablas que lee (`supabase/tests/bandeja_admin.test.sql`, HU-064).
 - Los textos de ayuda no prometen lo que aún no existe: el orden por vencimiento se anuncia solo en los pagos, y el paso al siguiente admin cuando vence un pago se anunciará con el escalamiento (HU-034).
 - El tiempo restante de un pago sale del motor de plazos (HU-003) y respeta el borde inclusivo de P-40.
-- Cada pago lleva a su revisión (HU-020, ver "Revisar un pago") y cada desembolso ejecutable a su ejecución (HU-028, ver "Ejecutar un desembolso"). Las demás secciones se vuelven accionables cuando llegan HU-026 (reembolsos) y HU-030 (reportes).
+- Cada pago lleva a su revisión (HU-020, ver "Revisar un pago") y cada desembolso ejecutable a su ejecución (HU-028, ver "Ejecutar un desembolso"). En Reembolsos, los casos que se cerraron sin llave a los 7 días (HU-025, P-10) aparecen en «Cerrados sin llave», para todos los admins, con el botón «Reabrir y reenviar el enlace». Transferir un reembolso llega con HU-026 y resolver un reporte con HU-030.
 
 ## Revisar un pago
 
@@ -291,7 +291,8 @@ Los comprobantes van en el bucket privado `comprobantes` de Supabase Storage (HU
 | `resena_individual` | Monitoría individual realizada: enlace a la reseña, sin límite de tiempo | Lead |
 | `confirmacion_cita` | Monitoría individual confirmada: resumen y enlace para gestionar la cita (HU-019) | Lead |
 | `cancelacion_cita` | El Lead canceló a tiempo: confirma la cancelación y, si hay reembolso, pide la llave (HU-024) | Lead |
-| `solicitud_llave_reembolso` | Reembolso creado: se pide la llave para devolver el dinero | Pagador |
+| `solicitud_llave_reembolso` | Reembolso creado cuya llave no pidió el correo de cancelación, o caso reabierto o reenviado: se pide la llave con el enlace `/reembolso?token=…` y el plazo (HU-025) | Pagador |
+| `recordatorio_llave_reembolso` | A los 3 días sin llave: se recuerda el enlace y el plazo de 7 días (HU-025, P-10) | Pagador |
 | `pago_rechazado_individual` | Pago rechazado en una individual: la cita se cancela | Pagador |
 | `pago_rechazado_grupal` | Pago rechazado en una grupal: se anula ese cupo | Pagador |
 | `escalamiento_pago` | Pago sin revisar tras el plazo: pasa al siguiente admin | Admin |

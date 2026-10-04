@@ -110,11 +110,13 @@ as $$
   where id in ('a0000000-0000-0000-0000-00000000540a', 'a0000000-0000-0000-0000-00000000540b', 'a0000000-0000-0000-0000-00000000540c',
                'a0000000-0000-0000-0000-00000000540d', 'a0000000-0000-0000-0000-00000000540e');
 $$;
--- abiertos(id): casos abiertos de un admin (reembolsos activos + reportes en revisión + pagos en revisión, HU-074).
+-- abiertos(id): casos abiertos de un admin (reembolsos activos sin cerrar, HU-025 + reportes en revisión + pagos en
+-- revisión, HU-074).
 create function pg_temp.abiertos(p_id uuid) returns integer
 language sql stable security definer set search_path = ''
 as $$
-  select ((select count(*) from public.reembolso where id_admin = p_id and estado in ('esperando_llave', 'pendiente'))
+  select ((select count(*) from public.reembolso
+           where id_admin = p_id and estado in ('esperando_llave', 'pendiente') and cerrado_en is null)
         + (select count(*) from public.reporte_inasistencia where id_admin = p_id and estado = 'en_revision')
         + (select count(*) from public.pago where id_admin = p_id and estado = 'en_revision'))::integer;
 $$;

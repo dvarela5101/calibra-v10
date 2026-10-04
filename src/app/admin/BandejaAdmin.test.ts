@@ -1,8 +1,11 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
-import type { Bandeja, PagoPorCobrarOAsumir, PagoPorRevisar, PagoVencidoDeOtro } from "@/lib/admin/bandeja";
+import { describe, expect, it, vi } from "vitest";
+import type { Bandeja, PagoPorCobrarOAsumir, PagoPorRevisar, PagoVencidoDeOtro, ReembolsoCerrado } from "@/lib/admin/bandeja";
 import { BandejaAdmin } from "./BandejaAdmin";
+
+// La acción de reabrir (HU-025) vive en el servidor: aquí solo se pinta el formulario que la usa.
+vi.mock("./acciones", () => ({ reabrir: async () => {} }));
 
 // Sin navegador ni base: se pinta la pantalla con una bandeja inventada y se lee el HTML. Lo que
 // necesita datos reales (orden, estados, políticas) lo cubren integracion/bandeja.test.ts y
@@ -13,6 +16,7 @@ const VACIA: Bandeja = {
   pagosVencidosDeOtros: [],
   pagosPorCobrarOAsumir: [],
   reembolsos: { esperandoLlave: [], pendientes: [] },
+  reembolsosCerrados: [],
   reportes: [],
   desembolsos: [],
   correosSinEnviar: [],
@@ -23,6 +27,7 @@ const VACIA: Bandeja = {
     reembolsos: 0,
     reembolsosEsperandoLlave: 0,
     reembolsosPendientes: 0,
+    reembolsosCerrados: 0,
     reportes: 0,
     desembolsos: 0,
     correosSinEnviar: 0,
@@ -388,6 +393,86 @@ describe("BandejaAdmin: pagos por cobrar o asumir (HU-078)", () => {
     for (const etiqueta of ["<img", "<script", "<b>", "<i>", "<u>"]) expect(html).not.toContain(etiqueta);
     expect(html).toContain("&lt;img");
     expect(html).toContain("&lt;script&gt;");
+  });
+});
+
+describe("BandejaAdmin: reembolsos cerrados sin llave (HU-025, supuesto 4)", () => {
+  const cerrado = (n: number, extra: Partial<ReembolsoCerrado> = {}): ReembolsoCerrado => ({
+    id: `0000000${n}-0000-4000-8000-000000000025`,
+    nombrePagador: `Pagador ${n}`,
+    contacto: `pagador${n}@uniandes.edu.co`,
+    monto: 25_000,
+    motivo: "Cancelaste la monitoría dentro del plazo.",
+    cerradoEn: new Date("2026-10-10T15:00:00.000Z"),
+    ...extra,
+  });
+  const conCerrados = (cerrados: ReembolsoCerrado[], total = cerrados.length, extra: Partial<Bandeja> = {}) =>
+    pintar({ ...VACIA, reembolsosCerrados: cerrados, ...extra, contadores: { ...VACIA.contadores, ...extra.contadores, reembolsosCerrados: total } });
+  const seccion = (html: string) => html.slice(html.indexOf('<section id="reembolsos"'), html.indexOf('<section id="reportes"'));
+
+  it("sin cerrados no aparece nada de ellos", () => {
+    const html = pintar(VACIA);
+    expect(html).not.toContain("reembolsos-cerrados-titulo");
+    expect(texto(html)).not.toContain("Cerrados sin llave");
+    expect(html).not.toContain("<form");
+  });
+
+  it("van en Reembolsos, después de los propios, con su contador, el pagador, su correo, el motivo y cuándo se cerró", () => {
+    const propio = { id: "r", monto: 10_000, motivo: "Motivo propio" };
+    const html = conCerrados([cerrado(1)], 1, {
+      reembolsos: { esperandoLlave: [propio], pendientes: [] },
+      contadores: { ...VACIA.contadores, reembolsos: 1, reembolsosEsperandoLlave: 1 },
+    });
+    const s = seccion(html);
+    expect(s).toMatch(/<h3 id="reembolsos-cerrados-titulo"[^>]*>/);
+    expect(s).toContain('<ul aria-labelledby="reembolsos-cerrados-titulo"');
+    const t = texto(s);
+    expect(t).toContain("Cerrados sin llave (1)");
+    expect(t.indexOf("Motivo propio")).toBeLessThan(t.indexOf("Cerrados sin llave"));
+    expect(t).toContain("Pagador 1 · $ 25.000");
+    expect(t).toContain("pagador1@uniandes.edu.co");
+    expect(t).toContain("Cancelaste la monitoría dentro del plazo.");
+    // 10:00 en Bogotá: la fecha sale en la zona del negocio.
+    expect(t).toContain("Se cerró el sábado, 10 de octubre de 2026, 10:00 a. m.");
+    expect(s).toContain('<time dateTime="2026-10-10T15:00:00.000Z">');
+    expect(t).toContain("Son los mismos para todos los admins");
+  });
+
+  it("cada uno tiene su formulario para reabrirlo, con su id oculto y un botón que nombra el caso", () => {
+    const html = conCerrados([cerrado(1), cerrado(2)]);
+    expect(html.match(/<form/g)).toHaveLength(2);
+    for (const n of [1, 2]) {
+      const id = cerrado(n).id;
+      expect(html).toMatch(new RegExp(`<input type="hidden" name="reembolso" value="${id}"/>`));
+      // El botón dice a qué caso se refiere: lo describe la línea con el pagador y el monto.
+      expect(html).toMatch(new RegExp(`<button type="submit" aria-describedby="cerrado-${id}"[^>]*>Reabrir y reenviar el enlace</button>`));
+      expect(html).toContain(`id="cerrado-${id}"`);
+    }
+  });
+
+  it("no cuentan en el contador de reembolsos por atender, y sin reembolsos propios igual se muestran", () => {
+    const html = conCerrados([cerrado(1)], 1);
+    expect(html).toMatch(/<a href="#reembolsos"[^>]*><span[^>]*>0<\/span><span[^>]*>Reembolsos<\/span><\/a>/);
+    const t = texto(seccion(html));
+    expect(t).toContain("Reembolsos (0)");
+    expect(t).toContain("No tienes reembolsos por atender.");
+    expect(t).toContain("Cerrados sin llave (1)");
+  });
+
+  it("su lista se corta por su cuenta y lo avisa", () => {
+    const t = texto(conCerrados([cerrado(1)], 5));
+    expect(t).toContain("Cerrados sin llave (5)");
+    expect(t).toContain("Se muestran los primeros 1 de 5.");
+  });
+
+  it("escapa lo que viene de la base", () => {
+    const html = conCerrados([cerrado(1, { nombrePagador: '<img src=x onerror="alert(1)">', contacto: "<b>c</b>", motivo: "<script>alert(2)</script>" })]);
+    // Solo la sección: con un formulario, React agrega al final su propio <script> para reenviar lo que se envíe antes de
+    // hidratar.
+    const s = seccion(html);
+    for (const etiqueta of ["<img", "<script", "<b>"]) expect(s).not.toContain(etiqueta);
+    expect(s).toContain("&lt;img");
+    expect(s).toContain("&lt;script&gt;");
   });
 });
 

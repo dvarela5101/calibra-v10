@@ -199,6 +199,7 @@ function reconstructoresCon(cambios: Partial<Reconstructores> = {}): Reconstruct
     recuperacion_diagnostico: null,
     resena_individual: null,
     solicitud_llave_reembolso: null,
+    recordatorio_llave_reembolso: null,
     pago_rechazado_individual: null,
     pago_rechazado_grupal: null,
     escalamiento_pago: null,
@@ -347,7 +348,14 @@ describe("reintentarCorreosFallidos: reconstruir y volver a mandar", () => {
     const deInvitacion = vi.fn(async () => RECONSTRUCCION_INVITACION);
     const deReembolso = vi.fn(async () => ({
       destinatario: "ana@calibra.test",
-      datos: { nombre: "Ana", monto: 25_000, motivo: "Cancelaste a tiempo", enlace: "https://calibra.test/x" },
+      datos: {
+        nombre: "Ana",
+        monto: 25_000,
+        motivo: "Cancelaste a tiempo",
+        enlace: "https://calibra.test/x",
+        venceEn: "2026-10-12T15:00:00.000Z",
+        reporteAceptado: false,
+      },
     }));
     const { enviar, recibidas } = enviarFalso(OK);
 

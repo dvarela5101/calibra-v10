@@ -1,0 +1,40 @@
+/* La página de la llave del reembolso (HU-025): qué se devuelve, por qué y hasta cuándo, y el formulario. */
+
+.resumen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin: 0;
+  margin-block-start: var(--e3);
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+.dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+}
+
+.rotulo {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* El motivo lo escribe un admin (D-37): una palabra larga no desborda la tarjeta. */
+.valor {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Lo que acompaña al formulario o al estado: que solo se pide la llave y a quién escribirle. */
+.nota {
+  font-size: 15px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}

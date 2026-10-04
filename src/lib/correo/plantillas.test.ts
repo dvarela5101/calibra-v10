@@ -10,7 +10,23 @@ const ENLACE = "https://calibra.example/resultados?token=abc123";
 const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
   recuperacion_diagnostico: { nombre: "Ana", materia: "Cálculo Integral", enlace: ENLACE },
   resena_individual: { nombre: "Ana", monitor: "Camilo Rojas", enlace: ENLACE },
-  solicitud_llave_reembolso: { nombre: "Ana", monto: 25_000, motivo: "Cancelaste la monitoría a tiempo", enlace: ENLACE },
+  solicitud_llave_reembolso: {
+    nombre: "Ana",
+    monto: 25_000,
+    motivo: "Cancelaste la monitoría a tiempo",
+    enlace: ENLACE,
+    venceEn: "2020-01-13T15:00:00.000Z",
+    reporteAceptado: false,
+    contactoSoporte: "ayuda@calibra.example",
+  },
+  recordatorio_llave_reembolso: {
+    nombre: "Ana",
+    monto: 25_000,
+    motivo: "Cancelaste la monitoría a tiempo",
+    enlace: ENLACE,
+    venceEn: "2020-01-13T15:00:00.000Z",
+    contactoSoporte: "ayuda@calibra.example",
+  },
   pago_rechazado_individual: { nombre: "Ana", monto: 25_000, fechaSesion: "2020-01-06", contactoSoporte: "ayuda@calibra.example" },
   pago_rechazado_grupal: { nombre: "Ana", monto: 20_000, fechaSesion: "2020-01-13", enlace: ENLACE },
   escalamiento_pago: { nombreAdmin: "Admin Uno", nombrePagador: "Ana Pérez", monto: 25_000, enlace: "https://calibra.example/admin" },
@@ -60,9 +76,9 @@ const render = <P extends Plantilla>(plantilla: P, cambios: Partial<DatosPorPlan
   renderizar(plantilla, { ...EJEMPLOS[plantilla], ...cambios });
 
 describe("las plantillas de correo", () => {
-  it("son las que salen por correo: diagnóstico, reseña, llave, dos rechazos, escalamiento, invitación de monitor, verificación del correo del Lead, dos avisos al monitor y la confirmación y la cancelación de la cita", () => {
+  it("son las que salen por correo: diagnóstico, reseña, llave y su recordatorio, dos rechazos, escalamiento, invitación de monitor, verificación del correo del Lead, dos avisos al monitor y la confirmación y la cancelación de la cita", () => {
     expect([...PLANTILLAS].sort()).toEqual(Object.keys(EJEMPLOS).sort());
-    expect(PLANTILLAS).toHaveLength(12);
+    expect(PLANTILLAS).toHaveLength(13);
   });
 
   it.each(PLANTILLAS)("%s sale en español con HTML y texto plano", (plantilla) => {
@@ -627,6 +643,8 @@ describe("todo texto libre que llega al asunto se limpia de saltos de línea, y 
     ["resena_individual", "monitor"],
     ["escalamiento_pago", "nombrePagador"],
     ["solicitud_llave_reembolso", "motivo"],
+    ["recordatorio_llave_reembolso", "motivo"],
+    ["recordatorio_llave_reembolso", "nombre"],
   ] as const)("%s: %s vacío o en blanco es un error, no un correo con hueco", (plantilla, campo) => {
     for (const vacio of ["", "   ", String.fromCharCode(10, 9)]) {
       const cambios = { [campo]: vacio } as Partial<DatosPorPlantilla[typeof plantilla]>;
@@ -715,5 +733,60 @@ describe("verificación del correo del Lead (HU-068, P-23)", () => {
   it("un nombre vacío o una fecha inválida es un error", () => {
     expect(() => render("verificacion_lead", { nombre: "  " })).toThrow(RangeError);
     expect(() => render("verificacion_lead", { venceEn: "mañana" })).toThrow(RangeError);
+  });
+});
+
+describe("el pedido de la llave y su recordatorio (HU-025, P-10, D-37)", () => {
+  const plano = (texto: string) => texto.replace(/[\u00a0\u202f]/g, " ");
+
+  it.each(["solicitud_llave_reembolso", "recordatorio_llave_reembolso"] as const)(
+    "%s dice hasta cuándo se puede enviar la llave, en Bogotá, y qué pasa si no llega, con el correo de soporte",
+    (plantilla) => {
+      const texto = plano(render(plantilla).texto);
+      // 15:00 UTC son las 10:00 a. m. en Bogotá.
+      expect(texto).toContain(
+        "Tienes hasta el lunes, 13 de enero de 2020, 10:00 a. m. para enviarla. Si no nos llega a tiempo, cerramos el caso; para reabrirlo, escríbenos a ayuda@calibra.example.",
+      );
+      expect(texto).toContain(`Enviar mi llave: ${ENLACE}`);
+      expect(texto).toContain("Calibra nunca te pide claves del banco");
+    },
+  );
+
+  it.each(["solicitud_llave_reembolso", "recordatorio_llave_reembolso"] as const)("%s sin contacto de soporte no promete ningún canal", (plantilla) => {
+    for (const contactoSoporte of [undefined, "", "   "]) {
+      const texto = plano(render(plantilla, { contactoSoporte }).texto);
+      expect(texto, JSON.stringify(contactoSoporte)).toContain("Si no nos llega a tiempo, cerramos el caso.\n");
+      expect(texto).not.toContain("escríbenos");
+    }
+  });
+
+  it.each(["solicitud_llave_reembolso", "recordatorio_llave_reembolso"] as const)("%s: una fecha de vencimiento inválida es un error", (plantilla) => {
+    expect(() => render(plantilla, { venceEn: "en una semana" })).toThrow(/venceEn/);
+  });
+
+  it("el pedido de una inasistencia dice que se aceptó el reporte (D-37), y el de una cancelación no", () => {
+    const aceptado = render("solicitud_llave_reembolso", { reporteAceptado: true, motivo: "El monitor no asistió a la monitoría." }).texto;
+    expect(aceptado).toContain("Revisamos el reporte de que el monitor no asistió a la monitoría y lo aceptamos: la monitoría quedó cancelada.");
+    expect(aceptado).toContain("Motivo: El monitor no asistió a la monitoría.");
+    // El aviso del reporte va antes del monto.
+    expect(aceptado.indexOf("Revisamos el reporte")).toBeLessThan(aceptado.indexOf("Vamos a devolverte"));
+    expect(render("solicitud_llave_reembolso").texto).not.toContain("reporte");
+  });
+
+  it("el recordatorio dice que la llave todavía no llega, con el monto y el motivo", () => {
+    const { asunto, texto } = render("recordatorio_llave_reembolso");
+    expect(plano(asunto)).toBe("Todavía necesitamos tu llave para devolverte $ 25.000");
+    expect(plano(texto)).toContain(
+      "Te pedimos tu llave para devolverte $ 25.000 de tu pago en Calibra y todavía no nos llega. Motivo: Cancelaste la monitoría a tiempo.",
+    );
+    expect(texto).toContain("Todavía no tenemos tu llave");
+    expect(texto).toContain("Si ya nos la enviaste, ignora este correo.");
+  });
+
+  it("los dos llevan un solo enlace, el de la página de la llave", () => {
+    for (const plantilla of ["solicitud_llave_reembolso", "recordatorio_llave_reembolso"] as const) {
+      const { html } = render(plantilla);
+      expect([...html.matchAll(/<a href="([^"]+)"/g)].map((m) => m[1]), plantilla).toEqual([ENLACE]);
+    }
   });
 });
