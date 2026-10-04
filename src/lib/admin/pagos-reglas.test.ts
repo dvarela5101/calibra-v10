@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ResultadoEnvio } from "@/lib/correo/servidor";
 import { renderizar } from "@/lib/correo/plantillas";
 import {
+  avisoDeQuienRevisa,
   avisoDelEnvio,
   avisosDeLaPagina,
   ayudaDeObservaciones,
@@ -14,7 +15,10 @@ import {
   leerRevision,
   MENSAJE_DEL_COMPROBANTE,
   MENSAJES_DE_REVISION,
+  observacionesValidas,
   pideObservaciones,
+  puedeRevisar,
+  quienRevisa,
   RESULTADOS_DE_REVISION,
   type PagoParaElCorreo,
 } from "./pagos-reglas";
@@ -66,14 +70,11 @@ describe("leerRevision", () => {
     });
   });
 
-  it("cuenta caracteres como la base, no unidades de JavaScript: 500 caracteres de dos unidades caben", () => {
-    // U+1D11E (clave de sol) ocupa dos unidades de JavaScript y es un solo carácter para char_length.
-    const quinientos = "\u{1D11E}".repeat(LARGO_MAXIMO_OBSERVACIONES);
-    expect(quinientos.length).toBe(2 * LARGO_MAXIMO_OBSERVACIONES);
-    expect(leerRevision(formulario({ id_pago: ID, decision: "rechazar", observaciones: quinientos })).ok).toBe(true);
-    expect(leerRevision(formulario({ id_pago: ID, decision: "rechazar", observaciones: `${quinientos}a` }))).toEqual({
-      ok: false,
-      error: MENSAJES_DE_REVISION.observaciones_invalidas,
+  it("HU-077 (nota de D-39): no juzga el largo de las observaciones, que se mira después de saber quién revisa", () => {
+    const largas = "a".repeat(LARGO_MAXIMO_OBSERVACIONES + 1);
+    expect(leerRevision(formulario({ id_pago: ID, decision: "rechazar", observaciones: ` ${largas} ` }))).toEqual({
+      ok: true,
+      datos: { idPago: ID, decision: "rechazar", observaciones: largas },
     });
   });
 
@@ -90,6 +91,71 @@ describe("leerRevision", () => {
     const datos = formulario({ id_pago: ID, decision: "rechazar" });
     datos.set("observaciones", new Blob(["texto"]));
     expect(leerRevision(datos)).toEqual({ ok: true, datos: { idPago: ID, decision: "rechazar", observaciones: null } });
+  });
+});
+
+describe("observacionesValidas", () => {
+  it("cuenta caracteres como la base, no unidades de JavaScript: 500 caracteres de dos unidades caben", () => {
+    // U+1D11E (clave de sol) ocupa dos unidades de JavaScript y es un solo carácter para char_length.
+    const quinientos = "\u{1D11E}".repeat(LARGO_MAXIMO_OBSERVACIONES);
+    expect(quinientos.length).toBe(2 * LARGO_MAXIMO_OBSERVACIONES);
+    expect(observacionesValidas(quinientos)).toBe(true);
+    expect(observacionesValidas(`${quinientos}a`)).toBe(false);
+  });
+
+  it("sin observaciones, o con 500 caracteres, valen; con 501 no", () => {
+    expect(observacionesValidas(null)).toBe(true);
+    expect(observacionesValidas("a".repeat(LARGO_MAXIMO_OBSERVACIONES))).toBe(true);
+    expect(observacionesValidas("a".repeat(LARGO_MAXIMO_OBSERVACIONES + 1))).toBe(false);
+  });
+});
+
+describe("quién revisa (HU-077, D-38)", () => {
+  const YO = "a0a0a0a0-0000-4000-8000-000000000077";
+  const OTRO = "a0a0a0a0-0000-4000-8000-000000007701";
+  const LIMITE = new Date("2030-01-07T14:30:00.000Z");
+  const DE_OTRO = { idAdmin: OTRO, revisionHasta: LIMITE };
+  const antes = new Date(LIMITE.getTime() - 60_000);
+  const despues = new Date(LIMITE.getTime() + 1);
+
+  it("supuesto 5: el asignado revisa antes y después de su hora", () => {
+    const mio = { idAdmin: YO, revisionHasta: LIMITE };
+    for (const ahora of [antes, LIMITE, despues]) {
+      expect(quienRevisa(mio, YO, ahora)).toBe("asignado");
+      expect(puedeRevisar(mio, YO, ahora)).toBe(true);
+    }
+  });
+
+  it("criterio 2: otro admin dentro de la hora del asignado no puede", () => {
+    expect(quienRevisa(DE_OTRO, YO, antes)).toBe("en_hora");
+    expect(puedeRevisar(DE_OTRO, YO, antes)).toBe(false);
+  });
+
+  it("supuesto 1 (P-40): justo en el límite el pago todavía es solo del asignado; un milisegundo después, de cualquiera", () => {
+    expect(quienRevisa(DE_OTRO, YO, LIMITE)).toBe("en_hora");
+    expect(puedeRevisar(DE_OTRO, YO, LIMITE)).toBe(false);
+    expect(quienRevisa(DE_OTRO, YO, despues)).toBe("hora_vencida");
+    expect(puedeRevisar(DE_OTRO, YO, despues)).toBe(true);
+  });
+
+  it("criterio 2: a otro admin en la hora le dice de quién es y hasta cuándo; al asignado no le dice nada", () => {
+    const pago = { nombreAdmin: "Admin Dos", revisionHasta: LIMITE };
+    // 9:30 en Bogotá; la hora lleva espacios duros.
+    expect(avisoDeQuienRevisa("en_hora", pago)?.replace(/\xa0/g, " ")).toBe(
+      "Este pago está asignado a Admin Dos hasta el lunes, 7 de enero de 2030, 9:30 a. m. Si para entonces no lo ha revisado, podrás aprobarlo o rechazarlo tú.",
+    );
+    expect(avisoDeQuienRevisa("asignado", pago)).toBeNull();
+  });
+
+  it("criterio 1: con la hora vencida le dice a quién está asignado, desde cuándo venció y que puede revisarlo él", () => {
+    expect(avisoDeQuienRevisa("hora_vencida", { nombreAdmin: "Admin Dos", revisionHasta: LIMITE })?.replace(/\xa0/g, " ")).toBe(
+      "Este pago está asignado a Admin Dos, pero se le pasó la hora el lunes, 7 de enero de 2030, 9:30 a. m. Puedes aprobarlo o rechazarlo tú.",
+    );
+  });
+
+  it("no_asignado ya no le dice a quien lo intenta que el pago era suyo: es de otro admin y su hora no ha pasado", () => {
+    expect(MENSAJES_DE_REVISION.no_asignado).not.toMatch(/ya no está asignado a ti/);
+    expect(MENSAJES_DE_REVISION.no_asignado).toMatch(/otro admin/);
   });
 });
 
@@ -148,10 +214,14 @@ describe("consecuenciasDelRechazo (supuestos 4 y 7)", () => {
     expect(texto).not.toMatch(/Se cancela|queda libre|Le avisamos/);
   });
 
-  it("P-24: el pago queda fuera del desembolso del monitor", () => {
-    expect(consecuenciasDelRechazo("ya_empezo", PAGO)).toMatch(/^La sesión ya empezó, así que la monitoría no se cancela y el pago queda fuera del desembolso/);
-    expect(consecuenciasDelRechazo("ya_realizada", PAGO)).toMatch(/^La monitoría ya se realizó, así que no se cancela/);
+  it("P-24 (HU-078, D-39): el caso queda por cobrar o asumir y cuenta en el desembolso solo cuando alguien lo cierra", () => {
+    const porCobrar =
+      "el caso queda en «Pagos por cobrar o asumir»: el pago cuenta en el desembolso del monitor solo cuando alguien lo cierre como cobrado o asumido. Un pago rechazado no se reembolsa y al pagador no le escribimos.";
+    expect(consecuenciasDelRechazo("ya_empezo", PAGO)).toBe(`La sesión ya empezó, así que la monitoría no se cancela y ${porCobrar}`);
+    expect(consecuenciasDelRechazo("ya_realizada", PAGO)).toBe(`La monitoría ya se realizó, así que no se cancela y ${porCobrar}`);
+    // Con la monitoría ya cancelada no hay caso (supuesto 1 de HU-078).
     expect(consecuenciasDelRechazo("ya_cancelada", PAGO)).toMatch(/^La monitoría ya estaba cancelada: solo cambia el pago\./);
+    expect(consecuenciasDelRechazo("ya_cancelada", PAGO)).not.toMatch(/cobrar o asumir|desembolso/);
   });
 });
 
@@ -218,7 +288,8 @@ describe("avisoDelEnvio", () => {
 });
 
 describe("avisosDeLaPagina", () => {
-  const RECHAZADO = { estado: "rechazado" as const, contacto: "camila@uniandes.edu.co" };
+  // Sin caso: la monitoría se canceló (el rechazo la canceló o el estudiante ya lo había hecho).
+  const RECHAZADO = { estado: "rechazado" as const, contacto: "camila@uniandes.edu.co", caso: null };
 
   it("dice que se aprobó solo si el pago de verdad está aprobado", () => {
     expect(avisosDeLaPagina({ revisado: "aprobado" }, { ...RECHAZADO, estado: "aprobado" })).toEqual([
@@ -244,6 +315,24 @@ describe("avisosDeLaPagina", () => {
       { exito: true, texto: "Rechazaste el pago. Ya no aparece en tu bandeja." },
       { exito: false, texto },
     ]);
+  });
+
+  it("HU-078, criterio 5: tras un rechazo en P-24 dice que el caso quedó en Pagos por cobrar o asumir, y no que salió de la bandeja", () => {
+    const p24 = { ...RECHAZADO, caso: "abierto" as const };
+    const exito = {
+      exito: true,
+      texto: "Rechazaste el pago. El caso quedó en «Pagos por cobrar o asumir» de la bandeja hasta que alguien lo cierre como cobrado o asumido.",
+    };
+    expect(avisosDeLaPagina({ revisado: "rechazado" }, p24)).toEqual([exito]);
+    // En P-24 no se le escribe al pagador: un ?correo= escrito a mano no inventa avisos del correo.
+    expect(avisosDeLaPagina({ revisado: "rechazado", correo: "enviado" }, p24)).toEqual([exito]);
+    expect(avisosDeLaPagina({ revisado: "rechazado", correo: "fallo" }, p24)).toEqual([exito]);
+    // Si alguien ya cerró el caso cuando se pinta la página, ya no está en esa sección.
+    expect(avisosDeLaPagina({ revisado: "rechazado" }, { ...RECHAZADO, caso: "cerrado" })).toEqual([
+      { exito: true, texto: "Rechazaste el pago. Ya no aparece en tu bandeja." },
+    ]);
+    // Un enlace viejo no anuncia un rechazo que no pasó.
+    expect(avisosDeLaPagina({ revisado: "rechazado" }, { ...p24, estado: "aprobado" })).toEqual([]);
   });
 
   it("los errores que vuelven a la página se dicen como alerta; los desconocidos no", () => {

@@ -86,6 +86,7 @@ const FILA_DE_CITA = {
   estado_pago: "en_revision",
   estado_reembolso: null,
   estado_reporte: null,
+  observaciones_reporte: null,
 };
 
 type Cambio = { id: string; cambios: { procesado_en?: string; intentos?: number } };
@@ -399,6 +400,20 @@ describe("leerCitaPorToken (criterio 3 de HU-019)", () => {
     expect(cita?.inicio).toEqual(new Date("2099-01-13T15:00:00.000Z"));
     expect(cita?.cancelableHasta).toEqual(new Date("2099-01-13T03:00:00.000Z"));
     expect(Object.keys(cita!).filter((campo) => /comisi|correo|telefono|contacto|lead/i.test(campo))).toEqual([]);
+  });
+
+  it("las tres lecturas devuelven observacionesReporte (D-37 de HU-029): el texto del admin y nulo", async () => {
+    const rechazada = { ...FILA_DE_CITA, estado_reporte: "rechazado", observaciones_reporte: "El monitor sí estuvo en el salón." };
+    admin.cliente = clienteFalso([], { rpc: () => ({ data: [rechazada], error: null }) }).cliente;
+    expect(await leerCitaPorToken(TOKEN)).toMatchObject({ estadoReporte: "rechazado", observacionesReporte: "El monitor sí estuvo en el salón." });
+
+    const sesion = clienteFalso([], { rpc: () => ({ data: [rechazada, FILA_DE_CITA], error: null }) }).cliente;
+    expect(await leerMiCita(sesion, id(1))).toMatchObject({ estadoReporte: "rechazado", observacionesReporte: "El monitor sí estuvo en el salón." });
+    const citas = await leerMisCitas(sesion);
+    expect(citas.map((c) => c.observacionesReporte)).toEqual(["El monitor sí estuvo en el salón.", null]);
+
+    admin.cliente = clienteFalso([], { rpc: () => ({ data: [FILA_DE_CITA], error: null }) }).cliente;
+    expect((await leerCitaPorToken(TOKEN))?.observacionesReporte).toBeNull();
   });
 
   it("si la base falla lanza, sin repetir el token en el mensaje", async () => {

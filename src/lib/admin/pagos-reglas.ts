@@ -3,15 +3,17 @@ import { esCorreo } from "@/lib/correo/contacto";
 import type { Reconstruccion } from "@/lib/correo/plantillas";
 // Solo el tipo: se borra al compilar, así que este módulo puro no arrastra el servidor de correo a ningún lado.
 import type { ResultadoEnvio } from "@/lib/correo/servidor";
-import { formatearDia } from "@/lib/fechas";
-import { plazoAlcanzado } from "@/lib/plazos/motor";
+import { formatearDia, formatearFechaHora } from "@/lib/fechas";
+import { dentroDePlazo, plazoAlcanzado } from "@/lib/plazos/motor";
 import type { Database } from "@/lib/supabase/tipos";
+import type { EstadoDelCaso } from "./casos-p24-reglas";
 
 /**
- * Revisar un pago (HU-020): el admin asignado lo aprueba o lo rechaza contra su comprobante. Aquí va lo puro: qué
- * responde la base, qué se le dice al admin con cada resultado, qué pasa con la monitoría si lo rechaza y los datos
- * del correo al pagador. Quién puede revisar, el borde de P-24 y los cambios los decide `public.revisar_pago` con su
- * propia hora; lo de aquí solo lo anticipa en la pantalla.
+ * Revisar un pago (HU-020): el admin asignado lo aprueba o lo rechaza contra su comprobante y, pasada su hora,
+ * cualquier admin activo (HU-077, D-38). Aquí va lo puro: quién puede revisar, qué responde la base, qué se le dice
+ * al admin con cada resultado, qué pasa con la monitoría si lo rechaza y los datos del correo al pagador. Quién puede
+ * revisar, el borde de P-24 y los cambios los decide `public.revisar_pago` con su propia hora; lo de aquí solo lo
+ * anticipa en la pantalla.
  */
 
 type EstadoMonitoria = Database["public"]["Enums"]["estado_monitoria"];
@@ -50,7 +52,9 @@ export const MENSAJES_DE_REVISION: Record<Exclude<ResultadoDeRevision, "aprobado
     "La sesión de esta monitoría ya empezó, así que no se cancela. Para rechazar el pago escribe en observaciones qué se hará con ese cobro: cobrarlo por fuera o asumirlo.",
   observaciones_invalidas: "Las observaciones pueden tener hasta 500 caracteres.",
   ya_revisado: "Este pago ya se revisó, y una revisión no se puede cambiar.",
-  no_asignado: "Este pago ya no está asignado a ti, así que no puedes revisarlo.",
+  // HU-077: la base responde no_asignado cuando el pago es de otro admin y su hora no ha pasado, también si se lo
+  // reasignaron con una hora nueva mientras se revisaba.
+  no_asignado: "Este pago está asignado a otro admin y su hora para revisarlo no ha pasado, así que todavía no puedes revisarlo.",
   no_individual: "Los pagos de las monitorías grupales todavía no se revisan aquí.",
   no_encontrado: "No encontramos este pago.",
   decision_invalida: "Elige si apruebas o rechazas el pago.",
@@ -70,8 +74,9 @@ export type PedidoDeRevision = { idPago: string; decision: Decision; observacion
 export type LecturaDeRevision = { ok: true; datos: PedidoDeRevision } | { ok: false; error: string };
 
 /**
- * El formulario de la revisión. Las observaciones se recortan y, vacías, cuentan como ninguna. Se cuentan por
- * caracteres, como `char_length` en la base, no por unidades de JavaScript. Si hacen falta (P-24) lo dice la base.
+ * El formulario de la revisión. Las observaciones se recortan y, vacías, cuentan como ninguna. Su largo no se mira
+ * aquí sino con `observacionesValidas`, después de saber que la sesión puede revisar (nota de D-39, HU-077). Si hacen
+ * falta (P-24) lo dice la base.
  */
 export function leerRevision(datos: FormData): LecturaDeRevision {
   const texto = (campo: string) => {
@@ -82,9 +87,55 @@ export function leerRevision(datos: FormData): LecturaDeRevision {
   if (!esUuid(idPago)) return { ok: false, error: MENSAJES_DE_REVISION.no_encontrado };
   const decision = texto("decision");
   if (!esDecision(decision)) return { ok: false, error: MENSAJES_DE_REVISION.decision_invalida };
-  const observaciones = texto("observaciones");
-  if ([...observaciones].length > LARGO_MAXIMO_OBSERVACIONES) return { ok: false, error: MENSAJES_DE_REVISION.observaciones_invalidas };
-  return { ok: true, datos: { idPago, decision, observaciones: observaciones || null } };
+  return { ok: true, datos: { idPago, decision, observaciones: texto("observaciones") || null } };
+}
+
+/**
+ * Las observaciones caben en `pago.observaciones`. Se cuentan por caracteres, como `char_length` en la base, no por
+ * unidades de JavaScript.
+ */
+export function observacionesValidas(observaciones: string | null): boolean {
+  return observaciones === null || [...observaciones].length <= LARGO_MAXIMO_OBSERVACIONES;
+}
+
+/**
+ * Quién es la sesión frente a un pago en revisión (D-38, HU-077):
+ * - `asignado`: el admin asignado. Revisa aunque se le haya pasado la hora (supuesto 5).
+ * - `hora_vencida`: otro admin, y la hora del asignado ya pasó. Puede aprobarlo o rechazarlo.
+ * - `en_hora`: otro admin, y la hora del asignado no ha pasado. No puede revisarlo.
+ * P-40 (supuesto 1): en `revisionHasta` exacto el pago todavía es solo del asignado. Que la sesión sea un admin
+ * activo lo exige quien llama (`exigirRol`); la base lo vuelve a decidir todo con su propia hora.
+ */
+export type QuienRevisa = "asignado" | "hora_vencida" | "en_hora";
+
+export function quienRevisa(pago: { idAdmin: string; revisionHasta: Date }, idSesion: string, ahora: Date): QuienRevisa {
+  if (pago.idAdmin === idSesion) return "asignado";
+  return dentroDePlazo(pago.revisionHasta, ahora) ? "en_hora" : "hora_vencida";
+}
+
+export function puedeRevisar(pago: { idAdmin: string; revisionHasta: Date }, idSesion: string, ahora: Date): boolean {
+  return quienRevisa(pago, idSesion, ahora) !== "en_hora";
+}
+
+/**
+ * Lo que lee otro admin sobre el pago en revisión (criterios 1 y 2): hasta cuándo es del asignado, o que su hora ya
+ * pasó y lo puede revisar él. `null` para el asignado, que no necesita aviso.
+ */
+export function avisoDeQuienRevisa(quien: QuienRevisa, pago: { nombreAdmin: string; revisionHasta: Date }): string | null {
+  const limite = formatearFechaHora(pago.revisionHasta);
+  switch (quien) {
+    case "asignado":
+      return null;
+    case "en_hora":
+      return `${conPunto(`Este pago está asignado a ${pago.nombreAdmin} hasta el ${limite}`)} Si para entonces no lo ha revisado, podrás aprobarlo o rechazarlo tú.`;
+    case "hora_vencida":
+      return `${conPunto(`Este pago está asignado a ${pago.nombreAdmin}, pero se le pasó la hora el ${limite}`)} Puedes aprobarlo o rechazarlo tú.`;
+  }
+}
+
+/** La frase con su punto final. Si ya termina en la abreviatura de la hora (`a. m.`), ese punto sirve de cierre. */
+function conPunto(frase: string): string {
+  return frase.endsWith(".") ? frase : `${frase}.`;
 }
 
 /**
@@ -114,6 +165,10 @@ export function pideObservaciones(caso: CasoDeRechazo): boolean {
 
 const SIN_REEMBOLSO = "Un pago rechazado no se reembolsa";
 
+/** HU-078 (D-39): en P-24 el rechazo deja un caso abierto, que cuenta en el desembolso cuando alguien lo cierra. */
+const QUEDA_POR_COBRAR =
+  "el caso queda en «Pagos por cobrar o asumir»: el pago cuenta en el desembolso del monitor solo cuando alguien lo cierre como cobrado o asumido";
+
 /**
  * Lo que se lee antes de "Sí, rechazar el pago" (supuesto 7): qué pasa con la cita y su fecha, que no hay reembolso
  * (RN-43) y si se le escribe al pagador (supuesto 4). Solo se le escribe cuando el rechazo cancela la cita, y solo
@@ -131,9 +186,9 @@ export function consecuenciasDelRechazo(
       return `Se cancela la monitoría del ${formatearDia(pago.fechaSesion)} y esa fecha queda libre para otra persona. ${SIN_REEMBOLSO}. ${aviso}`;
     }
     case "ya_empezo":
-      return `La sesión ya empezó, así que la monitoría no se cancela y el pago queda fuera del desembolso del monitor. ${SIN_REEMBOLSO} y al pagador no le escribimos.`;
+      return `La sesión ya empezó, así que la monitoría no se cancela y ${QUEDA_POR_COBRAR}. ${SIN_REEMBOLSO} y al pagador no le escribimos.`;
     case "ya_realizada":
-      return `La monitoría ya se realizó, así que no se cancela y el pago queda fuera del desembolso del monitor. ${SIN_REEMBOLSO} y al pagador no le escribimos.`;
+      return `La monitoría ya se realizó, así que no se cancela y ${QUEDA_POR_COBRAR}. ${SIN_REEMBOLSO} y al pagador no le escribimos.`;
     case "ya_cancelada":
       return `La monitoría ya estaba cancelada: solo cambia el pago. ${SIN_REEMBOLSO} y al pagador no le escribimos.`;
   }
@@ -202,11 +257,13 @@ const ERRORES_DE_LA_PAGINA = ["ya_revisado", "no_asignado", "no_individual"] as 
 /**
  * Lo que se dice arriba de la revisión después de una acción: la acción vuelve a la página con `?revisado=`,
  * `?correo=` o `?error=`. El éxito solo se dice si el pago de verdad quedó así: un enlace viejo o escrito a mano no
- * anuncia una revisión que no pasó.
+ * anuncia una revisión que no pasó. `caso` es el de `estadoDelCaso` (HU-078): un rechazo en P-24 no cancela la
+ * monitoría (`revisar_pago` responde lo mismo que cuando el estudiante ya la había cancelado), así que se mira el caso
+ * como quedó y no el resultado.
  */
 export function avisosDeLaPagina(
   consulta: Record<string, string | string[] | undefined>,
-  pago: { estado: EstadoDePago; contacto: string },
+  pago: { estado: EstadoDePago; contacto: string; caso: EstadoDelCaso | null },
 ): AvisoDeLaPagina[] {
   const valor = (clave: string) => (typeof consulta[clave] === "string" ? (consulta[clave] as string) : null);
   const avisos: AvisoDeLaPagina[] = [];
@@ -215,6 +272,12 @@ export function avisosDeLaPagina(
 
   if (revisado === "aprobado" && pago.estado === "aprobado") {
     avisos.push({ exito: true, texto: "Aprobaste el pago. Ya no aparece en tu bandeja." });
+  } else if (revisado === "rechazado" && pago.estado === "rechazado" && pago.caso === "abierto") {
+    // HU-078, criterio 5: el pago sigue en la bandeja, en otra sección, hasta que alguien cierre el caso.
+    avisos.push({
+      exito: true,
+      texto: "Rechazaste el pago. El caso quedó en «Pagos por cobrar o asumir» de la bandeja hasta que alguien lo cierre como cobrado o asumido.",
+    });
   } else if (revisado === "rechazado" && pago.estado === "rechazado") {
     const enviado = correo === "enviado" ? " Le avisamos al pagador por correo." : "";
     avisos.push({ exito: true, texto: `Rechazaste el pago. Ya no aparece en tu bandeja.${enviado}` });

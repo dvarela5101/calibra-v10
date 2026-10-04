@@ -21,7 +21,7 @@ type Mundo = {
 
 /**
  * Datos de un admin: tres pagos en revisión (uno con la hora vencida y dos vigentes), dos reembolsos
- * (uno por estado), un reporte en revisión y un desembolso ejecutable. Se borran al terminar, antes
+ * (uno por estado), un reporte en revisión y un desembolso ejecutable con su pago aprobado. Se borran al terminar, antes
  * de que la fixture `cuentas` borre al admin y al monitor.
  */
 const test = base.extend<{ mundo: (admin: Cuenta) => Promise<Mundo> }>({
@@ -120,6 +120,8 @@ const test = base.extend<{ mundo: (admin: Cuenta) => Promise<Mundo> }>({
       await insertar("reporte_inasistencia", { id_monitoria: conReporte.id, id_admin: admin.id, estado: "en_revision" });
 
       const ejecutable = await monitoria("2020-01-06", { estado: "realizada", fecha_finalizacion: "2020-01-06T16:30:00+00:00" });
+      // Sin un pago aprobado no hay nada que transferir y la bandeja no lo lista (HU-028): el de la foto.
+      await pago({ id_monitoria: ejecutable.id, monto: netoDesembolso + 2_000, estado: "aprobado", fecha_revision: hace(1) });
       await insertar("desembolso", {
         id_monitoria: ejecutable.id,
         monto_bruto: netoDesembolso + 2_000,
@@ -172,9 +174,10 @@ test.describe("Criterios 1 y 2 · el admin ve lo que tiene asignado y cuánto le
     await expect(resumen.getByRole("link", { name: "1 Reportes en revisión" })).toBeVisible();
     await expect(resumen.getByRole("link", { name: /^\d+ Desembolsos ejecutables$/ })).toBeVisible();
 
-    // Pagos por vencimiento: el que se asignó hace más va primero, ya vencido; los otros todavía tienen tiempo.
+    // Pagos por vencimiento: el que se asignó hace más va primero, ya vencido; los otros todavía tienen tiempo. Solo
+    // la lista de los suyos: debajo puede haber pagos vencidos de los admins de otras pruebas (HU-077).
     const pagos = page.getByRole("region", { name: /Pagos por revisar/ });
-    const filas = pagos.getByRole("listitem");
+    const filas = pagos.getByRole("list", { name: "Asignados a ti" }).getByRole("listitem");
     await expect(filas).toHaveCount(3);
     await expect(filas.nth(0)).toContainText(nombrePagadorVencido);
     await expect(filas.nth(0)).toContainText("$ 25.000");
@@ -296,6 +299,38 @@ test.describe("Criterios 1 y 2 · el admin ve lo que tiene asignado y cuánto le
     await page.getByRole("navigation", { name: "Resumen de tu bandeja" }).getByRole("link", { name: "1 Reportes en revisión" }).click();
     await expect(page).toHaveURL("/admin#reportes");
     await expect(page.getByRole("heading", { level: 2, name: /Reportes en revisión/ })).toBeInViewport();
+  });
+});
+
+test.describe("HU-077 · los pagos vencidos de otros admins", () => {
+  test("otro admin los ve después de los suyos, con de quién son y desde cuándo están vencidos; los que siguen en hora no", async ({
+    page,
+    cuentas,
+    mundo,
+  }) => {
+    const asignado = await cuentas.crearAdmin();
+    const { nombrePagadorVencido, nombrePagadorIntermedio, nombrePagadorVigente } = await mundo(asignado);
+    const otro = await cuentas.crearAdmin();
+    await entrarComoAdmin(page, otro.correo, otro.contrasena);
+
+    // Nada asignado a este admin: el contador de arriba y la lista propia lo dicen.
+    await expect(page.getByRole("navigation", { name: "Resumen de tu bandeja" }).getByRole("link", { name: "0 Pagos por revisar" })).toBeVisible();
+    const pagos = page.getByRole("region", { name: /Pagos por revisar/ });
+    await expect(pagos.getByText("No tienes pagos por revisar.")).toBeVisible();
+
+    // Debajo, en la misma sección, el vencido del otro admin. Puede haber de otras pruebas: se busca el de este mundo.
+    await expect(pagos.getByRole("heading", { level: 3, name: /^Vencidos de otros admins \(\d+\)$/ })).toBeVisible();
+    const deOtros = pagos.getByRole("list", { name: /Vencidos de otros admins/ });
+    const fila = deOtros.getByRole("link", { name: new RegExp(nombrePagadorVencido) });
+    await expect(fila).toContainText("$ 25.000");
+    await expect(fila).toContainText(new RegExp(`De ${asignado.nombre} · Vencido hace (29|30|31|32) min`));
+    await expect(pagos).not.toContainText(nombrePagadorIntermedio);
+    await expect(pagos).not.toContainText(nombrePagadorVigente);
+
+    // Lleva a la revisión del pago, que le dice que ya puede revisarlo él.
+    await fila.click();
+    await expect(page).toHaveURL(/\/admin\/pagos\/[0-9a-f-]{36}$/, ESPERA);
+    await expect(page.getByText(new RegExp(`^Este pago está asignado a ${asignado.nombre}, pero se le pasó la hora el .*Puedes aprobarlo o rechazarlo tú\\.$`))).toBeVisible(ESPERA);
   });
 });
 

@@ -1,6 +1,39 @@
 # Reparto de trabajo
 
-**Actualizado:** 2 de octubre de 2026, tarde (ver "Ajuste del 2-oct-2026, revisión de HU-020"; después vienen el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+**Actualizado:** 3 de octubre de 2026 (ver "Ajuste del 3-oct-2026"; después vienen el ajuste del 2-oct en la noche, la revisión de HU-020, el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+
+## Ajuste del 3-oct-2026
+
+- **Hechas:** HU-024 ([PR #36](https://github.com/dvarela5101/calibra-v10/pull/36)) y HU-029 ([PR #40](https://github.com/dvarela5101/calibra-v10/pull/40)), las dos cerradas por Juzou04 con el código de dvarela5101. **En progreso, de Juzou04:** HU-025 (llave del reembolso, traspasada) y HU-058 (CAPTCHA).
+- **Nueva:** [HU-080](../backlog/HU-080.md) (no invitar a reseñar a quien reportó, D-40), en Lista. Sale de la pregunta 4 de HU-029.
+- **La cadena del diagnóstico pasa a Juzou04** (decisión de dvarela5101): [HU-060](../backlog/HU-060.md) (motor adaptativo) y [HU-061](../backlog/HU-061.md) (reprocesar el banco de una materia con IA) primero; después [HU-009](../backlog/HU-009.md) (tomar el diagnóstico), [HU-011](../backlog/HU-011.md) (ver el último diagnóstico) y [HU-022](../backlog/HU-022.md) (el diagnóstico en el hub del monitor). Las cinco siguen en Backlog: antes de tomarlas hay que refinarlas y pasar a dvarela5101 las preguntas de negocio que salgan.
+- **Material de las materias (HU-061):** el material fuente (parciales, talleres, guías, notas de monitores) está en el PC de Juzou04, en carpetas por materia. Cuando Juzou04 trabaje la cadena, **agrega esa carpeta a la sesión de Claude Code** (en la app, agregar la carpeta a la sesión; en la terminal, `/add-dir <ruta>`) para que Claude la pueda leer. La carpeta queda fuera del repo: ningún archivo del material se comitea (criterio de HU-061).
+
+| Persona | Siguiente, en orden |
+|---|---|
+| dvarela5101 | [HU-080](../backlog/HU-080.md) (S); después [HU-076](../backlog/HU-076.md) (correos del rechazo), cuando HU-025 esté fusionada |
+| Juzou04 | Cerrar [HU-025](../backlog/HU-025.md) y [HU-058](../backlog/HU-058.md); después [HU-026](../backlog/HU-026.md) y [HU-030](../backlog/HU-030.md); y la cadena del diagnóstico: HU-060 y HU-061, luego HU-009, HU-011 y HU-022 |
+
+Posibles choques:
+- **HU-076 y HU-025:** las dos tocan las plantillas y los reconstructores de correos (`src/lib/correo/`). Por eso HU-076 espera a que HU-025 esté fusionada.
+- **HU-080 y HU-030:** HU-080 lee el estado del reporte de inasistencia; HU-030 lo cambia al resolverlo. Si HU-030 cambia los estados de `reporte_inasistencia`, avisa en el PR.
+
+## Ajuste del 2-oct-2026, noche
+
+- **Traspaso de dvarela5101 a Juzou04:** HU-024 (cancelar) y HU-058 (CAPTCHA) las cierra Juzou04, con permiso de dvarela5101 (la reserva en `main` sigue a nombre de dvarela5101 hasta que Juzou04 la pase a su nombre con `log`). El código está completo y revisado en las ramas `hu-024-cancelar` y `hu-058-captcha`; lo que falta está en el registro de cada HU. Orden: HU-024 primero y HU-058 después (el CAPTCHA cambia el stack local de las dos personas).
+- **dvarela5101 sigue con HU-029** (reportar inasistencia) en la rama `hu-029-reportar`, que **parte de `hu-024-cancelar`**: usa el botón y la migración de HU-024. No se abre su PR hasta que HU-024 esté fusionada; entonces se integra `main`.
+- **HU-025** (llave del reembolso) tiene plan, pero espera a que HU-024 esté `Hecha`. HU-076 sigue después de HU-025.
+
+| Persona | Ahora | Después |
+|---|---|---|
+| dvarela5101 | [HU-029](../backlog/HU-029.md) (rama `hu-029-reportar`) | [HU-025](../backlog/HU-025.md) (cuando HU-024 esté `Hecha`) y [HU-076](../backlog/HU-076.md) |
+| Juzou04 | Cerrar [HU-024](../backlog/HU-024.md) y luego [HU-058](../backlog/HU-058.md) (traspasadas); [HU-028](../backlog/HU-028.md) y [HU-075](../backlog/HU-075.md) (en curso) | Lo mismo del ajuste anterior: HU-078, HU-026 (espera a HU-025), HU-030 y, en el hueco, HU-077 |
+
+Posibles choques:
+- **Rama `hu-024-cancelar`:** la tocan las dos personas (Juzou04 la cierra y `hu-029-reportar` parte de ella). Juzou04 no reescribe su historia (sin `rebase` ni `push --force`), para que dvarela5101 pueda integrarla.
+- **HU-029 y HU-024:** las dos usan la página de la cita (`src/app/cita/`) y las funciones `cita_por_token`, `mi_cita` y `mis_citas`. HU-029 les agrega una columna de salida (D-37). Si Juzou04 cambia algo de eso al cerrar HU-024, avisa en el PR.
+- **HU-058 y HU-075:** las dos tocan el formulario de contacto. El PR que llegue segundo integra al otro.
+- **HU-024 y HU-020:** HU-024 ajusta `supabase/tests/revisar_pago.test.sql` (de HU-020): el pago aprobado de una cita ya cancelada por el estudiante ahora sí tiene reembolso (P-07).
 
 ## Ajuste del 2-oct-2026, revisión de HU-020
 

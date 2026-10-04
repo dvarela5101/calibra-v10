@@ -13,6 +13,7 @@ import type { DatosPorPlantilla } from "@/lib/correo/plantillas";
 import { formatearFechaHora } from "@/lib/fechas";
 import { dentroDePlazo, plazoAlcanzado } from "@/lib/plazos/motor";
 import { describirTiempoRestante } from "@/lib/plazos/restante";
+import { TEXTO_PAGO_EN_REVISION_AL_CANCELAR } from "@/lib/reembolsos/reglas";
 
 /** La lista de las citas del navegador y la base del enlace del correo. */
 export const RUTA_DE_CITAS = "/cita";
@@ -89,6 +90,8 @@ export type Cita = {
   estadoPago: EstadoDePagoDeCita;
   estadoReembolso: EstadoDeReembolsoDeCita | null;
   estadoReporte: EstadoDeReporteDeCita | null;
+  /** Lo que escribió el admin al decidir el reporte (HU-030), recortado y sin vacíos; `null` si no hay reporte decidido o no escribió nada (D-37). */
+  observacionesReporte: string | null;
 };
 
 /** Una fila de `public.cita_por_token`, `public.mi_cita` o `public.mis_citas` (con o sin otras columnas). */
@@ -113,6 +116,7 @@ export type FilaDeCita = {
   estado_pago: string;
   estado_reembolso: string | null;
   estado_reporte: string | null;
+  observaciones_reporte: string | null;
 };
 
 function uno<T extends string>(valores: readonly T[], valor: string, campo: string): T {
@@ -154,6 +158,7 @@ export function citaDeFila(fila: FilaDeCita): Cita {
     estadoPago: uno(ESTADOS_DE_PAGO_DE_CITA, fila.estado_pago, "estado_pago"),
     estadoReembolso: opcional(ESTADOS_DE_REEMBOLSO_DE_CITA, fila.estado_reembolso, "estado_reembolso"),
     estadoReporte: opcional(ESTADOS_DE_REPORTE_DE_CITA, fila.estado_reporte, "estado_reporte"),
+    observacionesReporte: fila.observaciones_reporte,
   };
 }
 
@@ -215,6 +220,46 @@ function textoDelPago(estado: EstadoDePagoDeCita): string | null {
   }
 }
 
+/** Qué se dice de la cita que el estudiante canceló con el pago rechazado: no hubo reembolso (RN-43). */
+export const TEXTO_PAGO_NO_APROBADO_AL_CANCELAR = "Tu pago no se aprobó, así que no hay reembolso.";
+
+/** La nota del paso de confirmación al cancelar con el pago aprobado (D-26): el reembolso es por el valor completo. */
+export const TEXTO_DEVOLUCION_AL_CANCELAR = "Te devolvemos el valor completo: te pedimos la llave por correo.";
+
+/**
+ * Qué se le avisa del dinero antes de cancelar, en el paso de confirmación (HU-024, D-27). Con el pago aprobado, que
+ * se devuelve completo; con el pago en revisión, que el reembolso depende de que el admin lo apruebe (P-07). Sin
+ * pago aprobado ni en revisión no hay nada que devolver: `null`.
+ */
+export function textoDelDineroAlCancelar(estado: EstadoDePagoDeCita): string | null {
+  switch (estado) {
+    case "aprobado":
+      return TEXTO_DEVOLUCION_AL_CANCELAR;
+    case "en_revision":
+      return TEXTO_PAGO_EN_REVISION_AL_CANCELAR;
+    case "rechazado":
+    case "sin_pagar":
+      return null;
+  }
+}
+
+/**
+ * Qué se dice del pago de una cita que el estudiante canceló y no tiene reembolso (todavía): con el pago en revisión,
+ * que si se aprueba se le pide la llave (D-27, P-07); con el pago rechazado, que no hay reembolso. Con el pago
+ * aprobado ya hay reembolso y lo dice `textoDelReembolso`.
+ */
+function textoDelPagoDeLaCancelada(estado: EstadoDePagoDeCita): string | null {
+  switch (estado) {
+    case "en_revision":
+      return TEXTO_PAGO_EN_REVISION_AL_CANCELAR;
+    case "rechazado":
+      return TEXTO_PAGO_NO_APROBADO_AL_CANCELAR;
+    case "aprobado":
+    case "sin_pagar":
+      return null;
+  }
+}
+
 /**
  * Lo que la página le dice al Lead de una cita (§2.5 del plan). Los textos ya vienen armados; la página solo los
  * ordena. Las acciones (cancelar, reportar) las ofrecen HU-024 y HU-029: aquí solo se dice si caben.
@@ -229,18 +274,27 @@ export type VistaDeCita = {
   textoDelEstado: string | null;
   /** Hasta cuándo se puede cancelar, o que el plazo terminó. Solo en una confirmada antes del inicio. */
   textoDelPlazo: string | null;
-  /** Qué hay del pago (D-22). Solo en una confirmada, mientras no haya terminado. */
+  /**
+   * Qué hay del pago (D-22). En una confirmada, mientras no haya terminado; en una cancelada por el estudiante sin
+   * reembolso, por qué no lo hay todavía (pago en revisión) o no lo habrá (pago rechazado).
+   */
   textoDelPago: string | null;
   /** Qué hay del reembolso, si lo hay. */
   textoDelReembolso: string | null;
   /** El motivo de la cancelación, solo en una cancelada. */
   textoDelMotivo: string | null;
-  /** Hay plazo para cancelar y la cita sigue confirmada. HU-024 pone el botón; sin ella, solo se informa. */
+  /** Hay plazo para cancelar y la cita sigue confirmada: la página pone el botón (HU-024). */
   puedeCancelar: boolean;
+  /** Confirmada, antes del inicio y sin plazo para cancelar: se explica que los casos de fuerza mayor los resuelve un admin (criterio 3). */
+  mostrarCasosExtremos: boolean;
   /** Ya empezó, no pasó el plazo de reporte, no hay reporte y está confirmada o realizada. HU-029 pone el botón. */
   puedeReportar: boolean;
   /** ¿Se muestran el lugar o el enlace de la videollamada (D-21)? Solo en una confirmada que no ha terminado y con el pago no rechazado. */
   mostrarLugarYEnlace: boolean;
+  /** Qué hay del reporte de inasistencia (HU-029): cómo reportar si se puede, o en qué quedó el que ya se hizo. `null` si no hay nada que decir. */
+  textoDelReporte: string | null;
+  /** Lo que escribió el admin al rechazar el reporte (D-37), tal cual. Solo con el reporte `rechazado` y no vacío; si no, `null`. */
+  observacionesDelReporte: string | null;
 };
 
 /** Fecha y hora en la zona del negocio. Termina en "a. m." o "p. m.", así que la frase que la cierra no repite el punto. */
@@ -248,6 +302,33 @@ const cuando = (instante: Date) => formatearFechaHora(instante);
 
 /** Cierra una frase con punto, salvo que ya termine en punto, exclamación o interrogación. */
 const cerrar = (texto: string) => (/[.!?…]$/.test(texto) ? texto : `${texto}.`);
+
+/**
+ * Qué se le dice del reporte de inasistencia (HU-029, D-37). Con el reporte posible, cómo hacerlo y hasta cuándo; con
+ * uno hecho, en qué va. Una cita cancelada porque se aceptó el reporte ya lo dice su motivo: no se repite. Las
+ * observaciones del admin solo se muestran con el reporte rechazado (la base las entrega con cualquier decisión).
+ */
+function vistaDelReporte(cita: Cita, puedeReportar: boolean): Pick<VistaDeCita, "textoDelReporte" | "observacionesDelReporte"> {
+  let textoDelReporte: string | null = null;
+  switch (cita.estadoReporte) {
+    case null:
+      if (puedeReportar) {
+        textoDelReporte = `${cerrar(`¿El monitor no llegó? Puedes reportarlo hasta el ${cuando(cita.reporteHasta)}`)} Un admin revisa el caso. Si lo acepta, la monitoría se cancela y te devolvemos el dinero de tu pago.`;
+      }
+      break;
+    case "en_revision":
+      textoDelReporte = "Recibimos tu reporte. Un admin lo está revisando y aquí verás su decisión.";
+      break;
+    case "aceptado":
+      textoDelReporte = cita.motivoCancelacion === "monitor_no_asistio" ? null : "Un admin aceptó tu reporte.";
+      break;
+    case "rechazado":
+      textoDelReporte = "Un admin revisó tu reporte y no lo aceptó: la monitoría sigue como estaba.";
+      break;
+  }
+  const observaciones = cita.estadoReporte === "rechazado" && cita.observacionesReporte?.trim() ? cita.observacionesReporte : null;
+  return { textoDelReporte, observacionesDelReporte: observaciones };
+}
 
 /**
  * Qué ve el Lead de su cita ahora. Pura: `ahora` es del llamador. Los plazos se comparan con el motor, con borde
@@ -278,14 +359,17 @@ export function vistaDeCita(cita: Cita, ahora: Date): VistaDeCita {
         tipo: "confirmada",
         momento,
         titulo: titulos[momento],
-        textoDelEstado: momento === "terminada" ? "El monitor la marcará como realizada." : null,
+        // Con un reporte hecho ese texto contradice lo que el Lead dijo: el reporte lo explica.
+        textoDelEstado: momento === "terminada" && sinReporte ? "El monitor la marcará como realizada." : null,
         textoDelPlazo,
         textoDelPago: momento === "terminada" ? null : textoDelPago(cita.estadoPago),
         textoDelReembolso: reembolso,
         textoDelMotivo: null,
         puedeCancelar,
+        mostrarCasosExtremos: momento === "antes" && !puedeCancelar,
         puedeReportar: alcanzaElReporte,
         mostrarLugarYEnlace: momento !== "terminada" && cita.estadoPago !== "rechazado",
+        ...vistaDelReporte(cita, alcanzaElReporte),
       };
     }
     case "realizada":
@@ -299,8 +383,10 @@ export function vistaDeCita(cita: Cita, ahora: Date): VistaDeCita {
         textoDelReembolso: reembolso,
         textoDelMotivo: null,
         puedeCancelar: false,
+        mostrarCasosExtremos: false,
         puedeReportar: alcanzaElReporte,
         mostrarLugarYEnlace: false,
+        ...vistaDelReporte(cita, alcanzaElReporte),
       };
     case "cancelada":
       return {
@@ -309,12 +395,14 @@ export function vistaDeCita(cita: Cita, ahora: Date): VistaDeCita {
         titulo: "Esta monitoría se canceló",
         textoDelEstado: null,
         textoDelPlazo: null,
-        textoDelPago: null,
+        textoDelPago: cita.motivoCancelacion === "estudiante" && cita.estadoReembolso === null ? textoDelPagoDeLaCancelada(cita.estadoPago) : null,
         textoDelReembolso: reembolso,
         textoDelMotivo: textoDelMotivo(cita.motivoCancelacion),
         puedeCancelar: false,
+        mostrarCasosExtremos: false,
         puedeReportar: false,
         mostrarLugarYEnlace: false,
+        ...vistaDelReporte(cita, false),
       };
     case "pendiente_pago":
       // La página manda estas al apartado de la reserva (donde se paga); esta vista es solo el respaldo.
@@ -328,8 +416,10 @@ export function vistaDeCita(cita: Cita, ahora: Date): VistaDeCita {
         textoDelReembolso: null,
         textoDelMotivo: null,
         puedeCancelar: false,
+        mostrarCasosExtremos: false,
         puedeReportar: false,
         mostrarLugarYEnlace: false,
+        ...vistaDelReporte(cita, false),
       };
   }
 }

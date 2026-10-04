@@ -1,9 +1,9 @@
+import { BotonCopiar } from "@/components/BotonCopiar";
 import formulario from "@/components/formulario.module.css";
 import { formatearPesos } from "@/lib/moneda";
 import { configuracionDeLlave, identidadDelProveedor } from "@/lib/pagos/configuracion";
 import { dentroDePlazo } from "@/lib/plazos/motor";
 import { describirTiempoRestante } from "@/lib/plazos/restante";
-import { BotonCopiar } from "./BotonCopiar";
 import { FormularioPago } from "./FormularioPago";
 import estilos from "./pago.module.css";
 import { TiempoRestante } from "./TiempoRestante";

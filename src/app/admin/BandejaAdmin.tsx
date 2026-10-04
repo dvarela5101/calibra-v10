@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Bandeja, ReembolsoActivo } from "@/lib/admin/bandeja";
+import type { Bandeja, PagoPorCobrarOAsumir, PagoPorRevisar, ReembolsoActivo } from "@/lib/admin/bandeja";
 import { formatearDia, formatearFechaHora } from "@/lib/fechas";
 import { formatearPesos } from "@/lib/moneda";
 import estilos from "./bandeja.module.css";
@@ -21,6 +21,7 @@ function Seccion({
   ayuda,
   vacio,
   children,
+  despues,
 }: {
   id: string;
   titulo: string;
@@ -28,6 +29,8 @@ function Seccion({
   ayuda: string;
   vacio: string;
   children: ReactNode;
+  /** Lo que va al final de la sección aunque su lista esté vacía. */
+  despues?: ReactNode;
 }) {
   return (
     <section id={id} aria-labelledby={`${id}-titulo`} className={estilos.seccion}>
@@ -36,7 +39,85 @@ function Seccion({
       </h2>
       <p className={estilos.ayuda}>{ayuda}</p>
       {total === 0 ? <p className={estilos.vacio}>{vacio}</p> : children}
+      {despues}
     </section>
+  );
+}
+
+/**
+ * HU-020: cada pago abre su revisión. Un <a>, como los contadores: la bandeja no necesita JavaScript. Con
+ * `asignadoA` (HU-077) dice de quién es el pago antes del tiempo.
+ */
+function EnlaceAlPago({ pago, asignadoA }: { pago: PagoPorRevisar; asignadoA?: string }) {
+  const tiempo = (
+    <span className={pago.restante.vencido ? estilos.vencido : estilos.meta}>
+      <time dateTime={pago.revisionHasta.toISOString()}>{pago.restante.texto}</time>
+    </span>
+  );
+  return (
+    <a href={`/admin/pagos/${pago.id}`} className={estilos.filaEnlace}>
+      <span className={estilos.nombre}>
+        {pago.nombrePagador} · {formatearPesos(pago.monto)}
+      </span>
+      {asignadoA ? (
+        <span className={estilos.meta}>
+          De {asignadoA} · {tiempo}
+        </span>
+      ) : (
+        tiempo
+      )}
+    </a>
+  );
+}
+
+/**
+ * HU-077 (supuesto 2): los pagos de otros admins a los que ya se les pasó la hora, después de los propios, con de
+ * quién son y desde cuándo están vencidos. Si no hay ninguno, no se muestra nada.
+ */
+function PagosVencidosDeOtros({ bandeja }: { bandeja: Bandeja }) {
+  const total = bandeja.contadores.pagosVencidosDeOtros;
+  if (total === 0) return null;
+  return (
+    <>
+      <h3 id="pagos-de-otros-titulo" className={estilos.subtitulo}>
+        Vencidos de otros admins <span className={estilos.cuenta}>({total})</span>
+      </h3>
+      <p className={estilos.ayuda}>
+        Al admin asignado se le pasó la hora para revisarlos: ya puedes aprobarlos o rechazarlos tú. El que lleva más tiempo
+        vencido va arriba.
+      </p>
+      <ul aria-labelledby="pagos-de-otros-titulo" className={estilos.lista}>
+        {bandeja.pagosVencidosDeOtros.map((pago) => (
+          <li key={pago.id}>
+            <EnlaceAlPago pago={pago} asignadoA={pago.nombreAdmin} />
+          </li>
+        ))}
+      </ul>
+      <AvisoDeCorte mostrados={bandeja.pagosVencidosDeOtros.length} total={total} />
+    </>
+  );
+}
+
+/**
+ * HU-078: cada caso P-24 abre la página de su pago, donde se cierra (supuesto 3). Un <a>, como los pagos por revisar:
+ * dentro van el pagador, su contacto, el monto, la monitoría y las observaciones del rechazo (criterio 1).
+ */
+function EnlaceAlCaso({ pago }: { pago: PagoPorCobrarOAsumir }) {
+  const m = pago.monitoria;
+  return (
+    <a href={`/admin/pagos/${pago.id}`} className={estilos.filaEnlace}>
+      <span className={estilos.nombre}>
+        {pago.nombrePagador} · {formatearPesos(pago.monto)}
+      </span>
+      <span className={estilos.meta}>{pago.contacto}</span>
+      <span className={estilos.meta}>
+        {m.nombreMateria} con {m.nombreMonitor} · Sesión del {formatearDia(m.fecha)}
+      </span>
+      <span className={estilos.meta}>
+        Rechazado el <time dateTime={pago.rechazadoEn.toISOString()}>{formatearFechaHora(pago.rechazadoEn)}</time>
+      </span>
+      {pago.observaciones && <span className={estilos.observaciones}>Observaciones: {pago.observaciones}</span>}
+    </a>
   );
 }
 
@@ -80,6 +161,7 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
 
   const resumen = [
     { id: "pagos", rotulo: "Pagos por revisar", cifra: contadores.pagos },
+    { id: "por-cobrar", rotulo: "Pagos por cobrar o asumir", cifra: contadores.pagosPorCobrarOAsumir },
     { id: "reembolsos", rotulo: "Reembolsos", cifra: contadores.reembolsos },
     { id: "reportes", rotulo: "Reportes en revisión", cifra: contadores.reportes },
     { id: "desembolsos", rotulo: "Desembolsos ejecutables", cifra: contadores.desembolsos },
@@ -107,23 +189,34 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
         total={contadores.pagos}
         ayuda="Cada pago tiene un plazo para revisarse: el que vence primero va arriba y en cada fila ves cuánto le queda."
         vacio="No tienes pagos por revisar."
+        despues={<PagosVencidosDeOtros bandeja={bandeja} />}
       >
-        <ul className={estilos.lista}>
+        {/* Con nombre: la lista de otros admins (HU-077) puede ir debajo, en la misma sección. */}
+        <ul aria-label="Asignados a ti" className={estilos.lista}>
           {bandeja.pagos.map((pago) => (
             <li key={pago.id}>
-              {/* HU-020: cada pago abre su revisión. Un <a>, como los contadores: la bandeja no necesita JavaScript. */}
-              <a href={`/admin/pagos/${pago.id}`} className={estilos.filaEnlace}>
-                <span className={estilos.nombre}>
-                  {pago.nombrePagador} · {formatearPesos(pago.monto)}
-                </span>
-                <span className={pago.restante.vencido ? estilos.vencido : estilos.meta}>
-                  <time dateTime={pago.revisionHasta.toISOString()}>{pago.restante.texto}</time>
-                </span>
-              </a>
+              <EnlaceAlPago pago={pago} />
             </li>
           ))}
         </ul>
         <AvisoDeCorte mostrados={bandeja.pagos.length} total={contadores.pagos} />
+      </Seccion>
+
+      <Seccion
+        id="por-cobrar"
+        titulo="Pagos por cobrar o asumir"
+        total={contadores.pagosPorCobrarOAsumir}
+        ayuda="Pagos rechazados cuando la sesión ya había empezado: la monitoría no se canceló. Abre cada uno y ciérralo como cobrado si el pagador pagó por fuera, o asumido si Calibra no lo cobra; mientras siga abierto, el desembolso de esa monitoría espera. El más antiguo va arriba. Son los mismos para todos los admins."
+        vacio="No hay pagos por cobrar ni por asumir."
+      >
+        <ul className={estilos.lista}>
+          {bandeja.pagosPorCobrarOAsumir.map((pago) => (
+            <li key={pago.id}>
+              <EnlaceAlCaso pago={pago} />
+            </li>
+          ))}
+        </ul>
+        <AvisoDeCorte mostrados={bandeja.pagosPorCobrarOAsumir.length} total={contadores.pagosPorCobrarOAsumir} />
       </Seccion>
 
       <Seccion
@@ -171,16 +264,19 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
         id="desembolsos"
         titulo="Desembolsos ejecutables"
         total={contadores.desembolsos}
-        ayuda="Ya venció la ventana para reportar inasistencia y la monitoría no tiene un reporte en revisión ni aceptado. Son los mismos para todos los admins."
+        ayuda="Ya venció la ventana para reportar inasistencia, la monitoría no tiene un reporte en revisión ni aceptado, ni pagos en revisión ni casos por cobrar o asumir abiertos, y tiene algo que transferir. Son los mismos para todos los admins."
         vacio="No hay desembolsos listos para ejecutar."
       >
         <ul className={estilos.lista}>
           {bandeja.desembolsos.map((desembolso) => (
-            <li key={desembolso.id} className={estilos.fila}>
-              <span className={estilos.nombre}>Transferir {formatearPesos(desembolso.montoNeto)}</span>
-              <span className={estilos.meta}>
-                Sesión del {formatearDia(desembolso.fechaSesion)} · ejecutable después del {formatearFechaHora(desembolso.desembolsableDesde)}
-              </span>
+            <li key={desembolso.id}>
+              {/* HU-028: cada desembolso abre su ejecución, con un <a> como los pagos. */}
+              <a href={`/admin/desembolsos/${desembolso.id}`} className={estilos.filaEnlace}>
+                <span className={estilos.nombre}>Transferir {formatearPesos(desembolso.montoNeto)}</span>
+                <span className={estilos.meta}>
+                  Sesión del {formatearDia(desembolso.fechaSesion)} · ejecutable después del {formatearFechaHora(desembolso.desembolsableDesde)}
+                </span>
+              </a>
             </li>
           ))}
         </ul>

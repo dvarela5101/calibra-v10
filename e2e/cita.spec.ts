@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import type { BrowserContext, Locator, Page } from "@playwright/test";
 import { diaDelNegocio, formatearDiaConSemana, formatearFechaHora } from "../src/lib/fechas";
 import { formatearPesos } from "../src/lib/moneda";
-import { esperarSesion, leerSesion, test as base, expect, type SesionEnCookie } from "./utilidades";
+import { borrarDesembolsosDeMonitores, esperarSesion, leerSesion, test as base, expect, type SesionEnCookie } from "./utilidades";
 
 // HU-019 (P-04, D-19 a D-25): la cita confirmada y su enlace de gestión. El Lead abre el enlace del correo
 // (`/cita?token=...`) sin sesión, o vuelve con el mismo navegador con el que agendó (`/cita` y `/cita/[id]`). Corre
@@ -252,6 +252,8 @@ const test = base.extend<{ escenario: Escenario }>({
     if (pagos.length) await borrar("pagos", cliente.from("pago").delete().in("id", pagos));
     if (comprobantes.length) await borrar("comprobantes revisados", cliente.from("comprobante_revisado").delete().in("ruta", comprobantes));
     if (monitores.length) {
+      // HU-028: la que pasó a realizada (la prueba o pg_cron) tiene su desembolso, que no cae con la monitoría.
+      await borrar("desembolsos", borrarDesembolsosDeMonitores(cliente, monitores));
       await borrar("monitorías", cliente.from("monitoria").delete().in("id_monitor", monitores));
       await borrar("franjas", cliente.from("franja").delete().in("id_monitor", monitores));
       await borrar("certificados", cliente.from("certificado").delete().in("id_monitor", monitores));
@@ -277,6 +279,8 @@ const dato = (page: Page, etiqueta: string): Locator =>
 const textoVisible = async (page: Page) => normalizar(await page.locator("body").innerText());
 
 const botonesDeCancelar = (page: Page) => page.getByRole("button", { name: /cancelar/i });
+/** El botón que abre el paso de confirmación de HU-024; solo está en una confirmada con plazo. */
+const botonCancelar = (page: Page) => page.getByRole("button", { name: "Cancelar mi monitoría", exact: true });
 const enlacesDeCancelar = (page: Page) => page.getByRole("link", { name: /cancelar/i });
 
 /**
@@ -309,7 +313,7 @@ async function expectNoIndexNiReferer(page: Page, donde: string): Promise<void> 
 // Criterio 2 · el enlace muestra la cita, su lugar y hasta cuándo se puede cancelar
 // ---------------------------------------------------------------------------
 test.describe("Criterio 2 · el Lead abre el enlace del correo", () => {
-  test("una presencial confirmada: resumen, lugar, hasta cuándo puede cancelarla sin botón de cancelar y el texto del pago; sin sesión ni datos privados", async ({
+  test("una presencial confirmada: resumen, lugar, hasta cuándo puede cancelarla con el botón de cancelar y el texto del pago; sin sesión ni datos privados", async ({
     page,
     context,
     escenario,
@@ -335,13 +339,14 @@ test.describe("Criterio 2 · el Lead abre el enlace del correo", () => {
       await expect(page.getByText("Enlace de la videollamada")).toHaveCount(0);
     });
 
-    await test.step("dice hasta cuándo puede cancelarla (12 h antes) y todavía no ofrece cancelar (D-25)", async () => {
+    await test.step("dice hasta cuándo puede cancelarla (12 h antes) y, con plazo, ofrece «Cancelar mi monitoría» (HU-024)", async () => {
       const limite = formatearFechaHora(new Date(cita.inicio.getTime() - 12 * 3_600_000));
       const texto = await textoVisible(page);
       // La hora termina en «p. m.»: la frase no repite el punto, y sigue el tiempo que queda.
       expect(texto).toContain(`Puedes cancelarla hasta el ${normalizar(limite)} Quedan `);
       expect(texto).toMatch(/Quedan \d+ d/);
-      await expect(botonesDeCancelar(page)).toHaveCount(0);
+      // El botón solo abre el paso de confirmación; cancelar de verdad lo cubre e2e/cancelar.spec.ts.
+      await expect(botonCancelar(page)).toBeVisible();
       await expect(enlacesDeCancelar(page)).toHaveCount(0);
     });
 
@@ -379,7 +384,7 @@ test.describe("Criterio 2 · el Lead abre el enlace del correo", () => {
     await expect(enlace).toHaveAttribute("target", "_blank");
     await expect(enlace).toHaveAttribute("rel", /noopener/);
     await expect(enlace).toHaveAttribute("rel", /noreferrer/);
-    await expect(botonesDeCancelar(page)).toHaveCount(0);
+    await expect(botonCancelar(page)).toBeVisible();
   });
 
   test("agendada con menos de 12 horas (RN-37) dice que el plazo para cancelarla ya terminó; una aprobada lo dice del pago", async ({ page, escenario }) => {
@@ -395,6 +400,8 @@ test.describe("Criterio 2 · el Lead abre el enlace del correo", () => {
     expect(texto).not.toContain("Puedes cancelarla hasta");
     await expect(page.getByText("Tu pago está aprobado.")).toBeVisible();
     await expect(botonesDeCancelar(page)).toHaveCount(0);
+    // Sin plazo no hay botón y se explica quién resuelve los casos extremos (HU-024, criterio 3).
+    await expect(page.getByText("Pasó el plazo para cancelarla. Los casos de fuerza mayor los resuelve un admin", { exact: false })).toBeVisible();
   });
 
   test("una confirmada cuya hora ya pasó dice que terminó y el monitor la marcará como realizada; ya no muestra el lugar", async ({ page, escenario }) => {
@@ -564,7 +571,7 @@ test.describe("Criterio 4 · el mismo navegador con el que agendó", () => {
       await expect(dato(page, "Materia")).toHaveText(confirmada.materia);
       await expect(dato(page, "Lugar")).toHaveText(confirmada.lugar!);
       await expect(page.getByText(TEXTO_PAGO_EN_REVISION)).toBeVisible();
-      await expect(botonesDeCancelar(page)).toHaveCount(0);
+      await expect(botonCancelar(page)).toBeVisible();
       await expectNoIndexNiReferer(page, "detalle de mi cita");
       await expectReglasDelProducto(page, "detalle de mi cita");
       await page.getByRole("link", { name: "Ver mis citas" }).click();

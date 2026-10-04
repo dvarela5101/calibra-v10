@@ -4,6 +4,7 @@ import { ResumenDeCita } from "@/app/(publico)/agendar/ResumenDeCita";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { rutaDeReserva } from "@/lib/agendar/reglas";
+import { textoDeFueraDePlazo } from "@/lib/citas/cancelar-reglas";
 import { RUTA_DE_CITAS, vistaDeCita, type Cita } from "@/lib/citas/reglas";
 import { rutaDeMonitores } from "@/lib/disponibilidad/reglas";
 import estilos from "./cita.module.css";
@@ -15,10 +16,14 @@ type Props = {
   /** La hora de la petición: de ella dependen la vista (antes, en curso, terminada) y el plazo. */
   ahora: Date;
   /**
-   * El hueco de las acciones. HU-024 pone aquí "Cancelar" cuando `vistaDeCita(cita, ahora).puedeCancelar` y HU-029
-   * pone "El monitor no llegó" cuando `puedeReportar`. Sin ellas (D-25), la página solo dice hasta cuándo se puede cancelar.
+   * El hueco de las acciones. La página pone aquí "Cancelar mi monitoría" (HU-024) solo cuando
+   * `vistaDeCita(cita, ahora).puedeCancelar` y "El monitor no llegó" (HU-029) cuando `puedeReportar`; no se solapan
+   * (cancelar es antes del inicio, reportar desde el inicio). Sin ellas, la página solo informa: hasta cuándo se
+   * puede cancelar, que el plazo terminó o el estado del reporte.
    */
   acciones?: ReactNode;
+  /** El correo de Calibra para los casos de fuerza mayor de una cita sin plazo para cancelar (criterio 3). Sin él, el texto no promete un canal. */
+  contactoSoporte?: string | null;
   /** Con la sesión del Lead se ofrece volver a "Mis citas"; con el enlace del correo no (no hay sesión que lo respalde). */
   conLista?: boolean;
 };
@@ -29,7 +34,7 @@ type Props = {
  * confirmada y el pago sin rechazar (D-21); de una terminada o cancelada no se muestran. Nada del contacto del
  * monitor ni cifras de comisión (P-37).
  */
-export function DetalleDeCita({ cita, ahora, acciones, conLista = false }: Props) {
+export function DetalleDeCita({ cita, ahora, acciones, contactoSoporte = null, conLista = false }: Props) {
   const vista = vistaDeCita(cita, ahora);
   const conOtraMonitoria = vista.tipo === "cancelada" || vista.tipo === "realizada";
 
@@ -51,10 +56,22 @@ export function DetalleDeCita({ cita, ahora, acciones, conLista = false }: Props
       {vista.textoDelPlazo && (
         <div className={vista.puedeCancelar ? estilos.plazo : estilos.plazoTerminado}>
           <p className={estilos.textoPlazo}>{vista.textoDelPlazo}</p>
+          {vista.mostrarCasosExtremos && <p className={estilos.casosExtremos}>{textoDeFueraDePlazo(contactoSoporte)}</p>}
         </div>
       )}
       {vista.textoDelPago && <p className={estilos.nota}>{vista.textoDelPago}</p>}
       {vista.textoDelReembolso && <p className={estilos.aviso}>{vista.textoDelReembolso}</p>}
+      {vista.textoDelReporte && (
+        <div className={estilos.reporte}>
+          <p>{vista.textoDelReporte}</p>
+        </div>
+      )}
+      {vista.observacionesDelReporte && (
+        <div className={estilos.observaciones}>
+          <p className={estilos.observacionesTitulo}>Observaciones del admin</p>
+          <p className={estilos.observacionesTexto}>{vista.observacionesDelReporte}</p>
+        </div>
+      )}
       {acciones && <div className={estilos.acciones}>{acciones}</div>}
       <div className={estilos.enlaces}>
         {vista.tipo === "pendiente_pago" && (

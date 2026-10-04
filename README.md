@@ -109,12 +109,13 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 `/admin` (HU-012) muestra lo que tiene asignado el admin que entró: pagos en revisión ordenados por vencimiento (con el tiempo que les queda o cuánto llevan vencidos), reembolsos activos por estado, reportes de inasistencia en revisión y desembolsos ejecutables. Arriba hay un contador por sección.
 
 - `cargarBandeja()` (`src/lib/admin/bandeja.ts`) siempre se llama con el id de la sesión. Las políticas dejan leer a todo admin, así que el filtro por admin lo pone quien llama.
-- Los desembolsos no tienen admin hasta que se ejecutan (RN-80): los ejecutables son los mismos para todos. La regla de RN-83 (pasaron 24 horas del fin y no hay un reporte en revisión ni aceptado) vive en la vista `desembolsos_ejecutables`, que HU-028 también usará. La vista no expone bruto, comisión ni la llave del monitor.
+- Los desembolsos no tienen admin hasta que se ejecutan (RN-80): los ejecutables son los mismos para todos. La vista `desembolsos_ejecutables` lista los pendientes que pasaron 24 horas del fin (RN-83) y que su monitoría no bloquea: sin un reporte en revisión ni aceptado, sin pagos en revisión (D-39) y con al menos un pago aprobado. Lo de la monitoría lo dice `privado.bloqueo_del_desembolso`, la misma función que usa `privado.estado_para_ejecutar` de HU-028, así que la bandeja solo ofrece lo que la página deja ejecutar (ver "Ejecutar un desembolso"). La vista no expone bruto, comisión ni la llave del monitor.
+- El neto que muestra la bandeja es el de la foto que se tomó al pasar la monitoría a `realizada`. El que se transfiere se recalcula al ejecutar con los pagos aprobados de ese momento (P-29), y es el que muestra la página del desembolso: si se aprobó un pago después de la foto, las dos cifras no coinciden.
 - Un desembolso es ejecutable **después** de `desembolsable_desde`, no desde ese instante: en el instante exacto la ventana de reporte sigue abierta (N-6, HU-063). Así lo dice la bandeja. El encabezado de `20260929070017_bandeja_admin.sql` todavía habla del "borde inclusivo de HU-003"; quedó superado por `*_ajustes_plazos_y_comision.sql` y no se edita porque ya está en `main`.
 - Un admin desactivado (RN-23) no ve nada de la bandeja: ni la vista ni las tablas que lee (`supabase/tests/bandeja_admin.test.sql`, HU-064).
 - Los textos de ayuda no prometen lo que aún no existe: el orden por vencimiento se anuncia solo en los pagos, y el paso al siguiente admin cuando vence un pago se anunciará con el escalamiento (HU-034).
 - El tiempo restante de un pago sale del motor de plazos (HU-003) y respeta el borde inclusivo de P-40.
-- Cada pago lleva a su revisión (HU-020, ver "Revisar un pago"). Las demás secciones se vuelven accionables cuando llegan HU-026 (reembolsos), HU-030 (reportes) y HU-028 (desembolsos).
+- Cada pago lleva a su revisión (HU-020, ver "Revisar un pago") y cada desembolso ejecutable a su ejecución (HU-028, ver "Ejecutar un desembolso"). Las demás secciones se vuelven accionables cuando llegan HU-026 (reembolsos) y HU-030 (reportes).
 
 ## Revisar un pago
 
@@ -125,6 +126,19 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 - La acción (`src/app/admin/pagos/[id]/acciones.ts`) vuelve a la página con lo que pasó (`?revisado=`, `?correo=`, `?error=`). Si el rechazo canceló la cita, `avisarRechazoAlPagador()` (`src/lib/admin/pagos.ts`) le escribe al pagador a `pago.contacto` con la plantilla `pago_rechazado_individual`, con `CORREO_DATOS_PERSONALES` como contacto de soporte. La entidad es el id del pago, y si el correo falla lo reintenta HU-065 con `reconstruirPagoRechazado()`. Si no salió, o si el contacto no es un correo, la página se lo dice al admin. En P-24 y con la cita ya cancelada no se le escribe al pagador, y al monitor nunca: lo ve en su agenda (D-11).
 - "Ver comprobante" es un `<a>` a `/admin/pagos/<id>/comprobante`, un Route Handler que pide `enlaceDeComprobanteDePago()` con la sesión en el momento del clic y redirige (307) al enlace firmado de 60 segundos. Al pintar la página no se firma nada.
 - Los mensajes, qué le pasa a la cita según su estado y los datos del correo son funciones puras de `src/lib/admin/pagos-reglas.ts`.
+
+## Ejecutar un desembolso
+
+`/admin/desembolsos/<id>` (HU-028, enlazada desde cada desembolso ejecutable de la bandeja): el monitor, la monitoría, después de cuándo es ejecutable, el neto a transferir y la llave destino con un botón para copiarla. Cualquier admin activo lo ejecuta (RN-80). El admin transfiere desde la cuenta de Calibra y después registra la referencia (de 1 a 100 caracteres) y la fecha de la transferencia, que no puede ser posterior a hoy en Bogotá ni anterior al día de la sesión. Registrar pide confirmación y no se deshace.
+
+- El desembolso lo crea el trigger `monitoria_crea_desembolso` (`privado.crear_desembolso_al_realizar`, definer) cuando una monitoría individual pasa a `realizada`, sea porque la finaliza el monitor o por el cierre automático. Queda `pendiente`, con una foto de los montos de los pagos aprobados y una copia de la llave del monitor en `llave_destino` (RN-80): si el monitor cambia su llave después, el desembolso conserva la anterior. Es solo de `UPDATE`, así que una monitoría insertada ya `realizada` no lo dispara. Un monitor sin `monitor_privado` no puede pasar una monitoría a `realizada`: el trigger lanza un error. Las grupales no generan desembolso todavía.
+- `privado.calcular_desembolso(id_monitoria)` es la única fuente de los montos: el bruto es la suma de los pagos aprobados, y la comisión y el neto salen de `public.comision()` y `public.monto_neto()`. La usan el trigger y la ejecución.
+- `public.estado_para_ejecutar(id)` (invoker, solo para admins activos) dice sin bloquear nada si se puede ejecutar ahora y, si no, por qué: `anulado`, `no_realizada`, `antes_de_plazo` (todavía no es estrictamente después de fin + 24 h, según `public.desembolso_ejecutable`, N-6), `con_reporte` (un reporte en revisión o aceptado), `pagos_en_revision` (D-39) o `sin_pagos_aprobados`. Da el neto recalculado, nunca el bruto ni la comisión. Con eso la página muestra el formulario o el motivo en palabras. Los tres últimos los dice `privado.bloqueo_del_desembolso(id_monitoria)` (invoker), que también filtra la vista `desembolsos_ejecutables` de la bandeja: las dos dicen lo mismo, salvo la defensa `no_realizada`, que la vista no mira.
+- Registrar la transferencia es un formulario entero dentro de la confirmación (`<details>`), con la referencia, la fecha, el texto de lo que se registra y el botón, como rechazar un pago. Cerrada, no hay dónde pulsar Enter; y si algo envía el formulario con ella cerrada, `onSubmit` lo detiene antes de la acción.
+- `public.ejecutar_desembolso(id, referencia, fecha, neto_esperado)` (invoker, solo con sesión) bloquea la monitoría y después el desembolso, en el orden de `revisar_pago`, vuelve a mirar todo con `estado_para_ejecutar` y recalcula los montos con los pagos aprobados de ese momento (P-29). Si el neto ya no es el que vio el admin, responde `monto_cambio` sin tocar nada. Si dos admins registran el mismo, el segundo recibe `ya_desembolsado`. Queda `desembolsado` con el id del admin de la sesión, la referencia y la fecha, guardada a mediodía en Bogotá. Las versiones con `p_ahora` no tienen grant.
+- La acción (`src/app/admin/desembolsos/[id]/acciones.ts`) vuelve a la página con `?ejecutado=` o `?error=`. Con `monto_cambio` se queda en el formulario con lo escrito, y la página se vuelve a pintar con el monto nuevo. La carga y la ejecución están en `src/lib/admin/desembolsos.ts`, con la sesión del admin; los mensajes, la lectura del formulario y los avisos son funciones puras de `src/lib/admin/desembolsos-reglas.ts`.
+- Nunca se muestran la comisión ni el bruto (CLAUDE.md, P-32). La página no los lee de la base, y tampoco los montos de los pagos, de los que se podría deducir la comisión. Quedan en la tabla para auditoría.
+- `BotonCopiar` está en `src/components/`: lo usan el pago por Llave de la reserva (HU-018) y esta página.
 
 ## Equipo de admins
 
@@ -161,6 +175,8 @@ Supabase Auth con `@supabase/ssr` (HU-004):
 - Si el correo ya es de otro Lead (P-23), no se liga nada: se manda el correo `verificacion_lead` con un enlace a `/contacto/verificar`. El enlace vence en 24 horas y sirve una vez. Se mandan como máximo 3 por hora al mismo Lead: lo cuenta y lo crea `public.crear_verificacion_lead()` con la fila del Lead bloqueada, así que ni muchos pedidos a la vez lo pasan. El aviso al visitante dice si el enlace salió, se frenó o falló.
 - En esa página (que muestra el correo a medias, `a***@u***.edu.co`), el botón "Sí, es mi correo" liga **el navegador que abrió el enlace** a ese Lead (`lead_sesion`, que `privado.es_mi_lead` tiene en cuenta), con sus diagnósticos. Abrir el enlace no cambia nada, así que un revisor de enlaces no lo gasta.
 - Una sesión, un Lead: `registrar_lead` y `confirmar_correo_de_lead` toman el mismo candado por sesión y cuentan el Lead propio, el confirmado y el de la cuenta de Estudiante.
+- Tope de correos (HU-075, D-36): una sesión escribe como mucho 5 correos distintos en una hora móvil, existan o no en Calibra, tanto al dejar su contacto como al cambiarlo con `&editar=1` (las dos respuestas dicen si el correo ya es de otro Lead). Con el tope lleno, un correo nuevo no se guarda, no se dice si existe ni se manda enlace, y el visitante lee "Probaste varios correos seguidos. Espera un rato y vuelve a intentarlo.". Repetir un correo que ya escribió en esa hora no suma, ni volver a enviar el que su Lead ya tiene. Un correo inválido o un envío sin autorización se rechazan antes y no cuentan.
+- El tope lo cuenta `public.anotar_correo_de_contacto()` (solo service_role) antes de las dos ramas de `registrarContacto`, con el candado por sesión de `registrar_lead`. El tope y la ventana viven en `public.parametros_contacto()`. `privado.correo_de_contacto` guarda el SHA-256 del correo normalizado, no el correo. Lo que sale de la ventana se borra al anotar (de esa sesión) y cada hora con el trabajo `calibra-purgar-correos-de-contacto` de pg_cron (de todas); lo de una sesión borrada se va con ella.
 - `siguiente` solo admite rutas internas ya normalizadas (`rutaSiguiente`, y un CHECK en la base): `/.//otro.sitio` termina en `/`.
 - El origen del Lead es la campaña con la que llegó el visitante (`?utm_campaign=...`). `OrigenDeCampana` la guarda en la cookie `calibra_origen` por 30 días.
 
@@ -202,7 +218,7 @@ Cada fecha libre de `/monitores` lleva a `/agendar?franja=…&fecha=…&materia=
 
 - `public.finalizar_monitoria(id)` (invoker, solo con sesión) sobre `privado.finalizar_monitoria` (definer): con `auth.uid()` y `now()`, la pasa a `realizada` con `fecha_finalizacion` si es del monitor, está confirmada y ya llegó su inicio (D-13, borde incluido).
 - Cierre automático (P-05, D-14): pg_cron corre cada 15 minutos `privado.cerrar_monitorias_sin_finalizar(now())`, que cierra cada individual confirmada que alcanzó `public.cierre_automatico_desde(fin programado)` = fin + `cierre_automatico_min` (24 h, en `parametros_negocio()`). Las grupales no se cierran solas (su monitor entrega el enlace de reseña, HU-046).
-- El desembolso al pasar a `realizada` es de HU-028. El correo de reseña individual sale con HU-035 (ver "Reseña individual").
+- Al pasar a `realizada` se crea el desembolso pendiente del monitor (HU-028, ver "Ejecutar un desembolso"). El correo de reseña individual sale con HU-035 (ver "Reseña individual").
 
 ## Avisos al monitor
 
@@ -232,8 +248,19 @@ HU-019 (P-04, D-19 a D-25): cuando una monitoría individual pasa de `pendiente_
 - El token se guarda tal cual y no vence mientras exista la cita (D-20): sirve para ver la cita y, con HU-024 y HU-029, para cancelarla y reportar inasistencia. Abrirlo no liga el navegador al Lead.
 - `/cita?token=…` muestra la cita (`public.cita_por_token`, solo `service_role`). Sin token, `/cita` lista las citas del navegador (`public.mis_citas`) y `/cita/[id]` abre una (`public.mi_cita`), las dos con la sesión del Lead (`privado.es_mi_lead`). Las rutas van fuera de `(publico)`: abrir el enlace no crea una sesión anónima. Llevan `noindex` y `no-referrer`.
 - El lugar de la presencial o el enlace de la virtual solo salen con la cita confirmada, aunque el pago siga en revisión (D-21). Si el pago se rechaza, o la cita terminó, se cancela o se realiza, dejan de mostrarse.
-- La página dice hasta cuándo se puede cancelar, sin botón: cancelar llega con HU-024 (D-25). `src/lib/citas/reglas.ts` (`vistaDeCita`) decide los textos de cada estado.
+- La página dice hasta cuándo se puede cancelar y, dentro del plazo, ofrece cancelar (HU-024, abajo). `src/lib/citas/reglas.ts` (`vistaDeCita`) decide los textos de cada estado.
 - "Mis citas" está en el pie de página y en la reserva confirmada ("Ver y gestionar mi cita").
+
+## Cancelar una cita
+
+HU-024 (RN-60, RN-61, P-07, D-26 a D-29): el Lead cancela su monitoría individual `confirmada` hasta 12 h antes del inicio, con el enlace del correo de confirmación o con la sesión del navegador. Fuera de plazo no hay botón y la página explica que los casos de fuerza mayor los resuelve un admin.
+
+- `privado.cancelar_cita(id, ahora)` (definer, ningún rol la ejecuta) bloquea la monitoría y después sus pagos, compara con `public.cancelable_hasta` y la hora de la base (borde inclusivo, P-40) y pasa la cita a `cancelada` (`estudiante`): la fecha queda libre y sale el aviso al monitor de HU-051. Responde `cancelada`, `ya_cancelada`, `fuera_de_plazo`, `no_cancelable`, `no_individual` o `no_existe`.
+- Dos puertas, siempre con `now()`: `public.cancelar_cita_por_token` (solo `service_role`, el token de `confirmacion_cita`) y `public.cancelar_mi_cita` (la sesión del Lead, `privado.es_mi_lead`). La acción `src/app/cita/acciones.ts` elige la puerta; `CancelarCita.tsx` pide confirmar antes.
+- Por cada pago `aprobado` se crea un reembolso total en `esperando_llave` con el motivo «Cancelaste la monitoría dentro del plazo.», asignado al primer admin activo (D-26). Sin admin activo se cancela igual y el reembolso queda sin admin (D-28); el trabajo `calibra-asignar-reembolsos` (cada 5 minutos) se lo asigna cuando haya uno.
+- P-07: si el pago seguía en revisión, el trigger `pago_reembolsa_cancelacion` crea el reembolso cuando el admin lo aprueba. Un pago rechazado no tiene reembolso (RN-43).
+- Cada reembolso nace con su token en `public.solicitud_llave` (solo `service_role`), para la página de la llave de HU-025 (`/reembolso?token=…`).
+- El correo `cancelacion_cita` (D-27) va al mismo destinatario que la confirmación. Si hubo reembolso, pide ahí la llave; si el pago seguía en revisión, explica que la llave se pide si se aprueba. Si pagó otra persona con otro correo, dice que le escribimos a ella: ese pedido lo manda HU-025 (`solicitud_llave.en_correo_de_cancelacion` marca las que ya pidió este correo). Sale por `public.cancelacion_cita` → `privado.disparar_cancelaciones_cita()` → `/api/procesos/avisar-cancelaciones` (mismos secretos de Vault), con pg_cron cada 5 minutos (`calibra-avisar-cancelaciones`). Entidad = id de la monitoría; HU-065 lo reintenta.
 
 ## Franjas del monitor
 
@@ -265,6 +292,7 @@ Los comprobantes van en el bucket privado `comprobantes` de Supabase Storage (HU
 | `recuperacion_diagnostico` | Diagnóstico completado: enlace con token para recuperar los resultados | Lead |
 | `resena_individual` | Monitoría individual realizada: enlace a la reseña, sin límite de tiempo | Lead |
 | `confirmacion_cita` | Monitoría individual confirmada: resumen y enlace para gestionar la cita (HU-019) | Lead |
+| `cancelacion_cita` | El Lead canceló a tiempo: confirma la cancelación y, si hay reembolso, pide la llave (HU-024) | Lead |
 | `solicitud_llave_reembolso` | Reembolso creado: se pide la llave para devolver el dinero | Pagador |
 | `pago_rechazado_individual` | Pago rechazado en una individual: la cita se cancela | Pagador |
 | `pago_rechazado_grupal` | Pago rechazado en una grupal: se anula ese cupo | Pagador |

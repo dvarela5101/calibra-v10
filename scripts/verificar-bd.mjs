@@ -29,6 +29,18 @@ const PREAMBULOS = new Map([
     // HU-063 quitó la comisión de parametros_negocio(): pasó de 13 a 11 columnas.
     "drop function if exists public.parametros_negocio();",
   ],
+  [
+    "20261002064121_confirmacion_cita.sql",
+    // HU-029 sumó observaciones_reporte a la salida de la cita (D-37): 20 columnas pasaron a 21 (22 en privado.datos_de_cita).
+    [
+      "drop function if exists public.cita_por_token(text);",
+      "drop function if exists public.mi_cita(uuid);",
+      "drop function if exists public.mis_citas();",
+      "drop function if exists privado.mi_cita(uuid);",
+      "drop function if exists privado.mis_citas();",
+      "drop function if exists privado.datos_de_cita(uuid);",
+    ].join(" "),
+  ],
 ]);
 
 const cliente = new pg.Client({ connectionString: URL_BD });

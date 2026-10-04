@@ -5,9 +5,9 @@ import { MENSAJES_DE_REVISION } from "@/lib/admin/pagos-reglas";
 import RevisarPago from "./page";
 
 // Sin navegador ni base: la revisión de un pago con la sesión y el pago inventados, y se lee el HTML. Aquí se fija
-// qué ve cada admin (criterio 1, supuestos 1, 7 y 8), qué consecuencias se leen antes de rechazar según la monitoría
-// (criterio 3, P-24) y que al pintar no se firma ningún enlace (criterio 6). El recorrido con la base lo cubre
-// e2e/revisar-pagos.spec.ts.
+// qué ve cada admin (criterio 1, supuestos 1, 7 y 8; HU-077: otro admin antes y después de la hora del asignado, y
+// quién revisó), qué consecuencias se leen antes de rechazar según la monitoría (criterio 3, P-24) y que al pintar no
+// se firma ningún enlace (criterio 6). El recorrido con la base lo cubre e2e/revisar-pagos.spec.ts.
 
 const ID = "6a6a6a6a-0000-4000-8000-000000000020";
 const YO = "a0a0a0a0-0000-4000-8000-000000000020";
@@ -32,6 +32,7 @@ vi.mock("@/lib/admin/pagos", () => ({
   revisarPago: vi.fn(),
   avisarRechazoAlPagador: vi.fn(),
 }));
+vi.mock("@/lib/admin/casos-p24", () => ({ cerrarCasoP24: vi.fn() }));
 vi.mock("@/lib/comprobantes/almacenamiento", () => ({ enlaceDeComprobanteDePago: firmar }));
 vi.mock("next/navigation", () => ({
   notFound: () => {
@@ -59,7 +60,10 @@ function pago(cambios: Partial<Omit<PagoParaRevisar, "monitoria">> = {}, monitor
     revisionHasta: new Date("2030-01-07T14:30:00.000Z"),
     restante: { texto: "Quedan 30 min", vencido: false },
     fechaRevision: null,
+    idAdminRevisor: null,
+    nombreAdminRevisor: null,
     observaciones: null,
+    cierre: null,
     monitoria: {
       estado: "confirmada",
       motivoCancelacion: null,
@@ -145,7 +149,13 @@ describe("Revisión de un pago (HU-020): lo que ve el admin (criterio 1)", () =>
   });
 
   it("escapa lo que viene de la base", async () => {
-    const html = await pintar(pago({ nombrePagador: '<img src=x onerror="alert(1)">', estado: "rechazado", observaciones: "<script>alert(2)</script>" }));
+    // Con la monitoría cancelada no es un caso P-24 (HU-078): sin formulario, React no agrega su <script> de reenvío.
+    const html = await pintar(
+      pago(
+        { nombrePagador: '<img src=x onerror="alert(1)">', estado: "rechazado", observaciones: "<script>alert(2)</script>" },
+        { estado: "cancelada", motivoCancelacion: "pago_rechazado" },
+      ),
+    );
     // El único <img> es el logo de la pantalla.
     expect(html).not.toContain("<img src=x");
     expect(html).toContain("&lt;img src=x");
@@ -176,7 +186,11 @@ describe("Revisión de un pago: aprobar y rechazar (criterios 2, 3 y 7, supuesto
   it("P-24: una confirmada en su inicio exacto ya empezó (P-40): no se cancela y las observaciones son obligatorias", async () => {
     const html = await pintar(pago({}, { inicio: AHORA }));
     const t = texto(html);
-    expect(t).toContain("La sesión ya empezó, así que la monitoría no se cancela y el pago queda fuera del desembolso del monitor.");
+    // HU-078 (D-39): el caso queda por cobrar o asumir y cuenta en el desembolso cuando alguien lo cierra.
+    expect(t).toContain(
+      "La sesión ya empezó, así que la monitoría no se cancela y el caso queda en «Pagos por cobrar o asumir»: el pago cuenta en el desembolso del monitor solo cuando alguien lo cierre como cobrado o asumido.",
+    );
+    expect(t).not.toContain("queda fuera del desembolso");
     expect(t).not.toContain("Se cancela la monitoría");
     expect(t).not.toContain("Observaciones (opcionales)");
     expect(t).toContain("Obligatorias: escribe qué se hará con ese cobro, si cobrarlo por fuera o asumirlo.");
@@ -202,21 +216,71 @@ describe("Revisión de un pago: aprobar y rechazar (criterios 2, 3 y 7, supuesto
   });
 });
 
-describe("Revisión de un pago: quién revisa (supuestos 1 y 8)", () => {
-  it("otro admin ve el pago y a quién está asignado, sin acciones", async () => {
+describe("Revisión de un pago: quién revisa (supuestos 1 y 8; HU-077)", () => {
+  const ASIGNADO_EN_HORA =
+    "Este pago está asignado a Admin Dos hasta el lunes, 7 de enero de 2030, 9:30 a. m. Si para entonces no lo ha revisado, podrás aprobarlo o rechazarlo tú.";
+  const ASIGNADO_VENCIDO = "Este pago está asignado a Admin Dos, pero se le pasó la hora el lunes, 7 de enero de 2030, 8:59 a. m. Puedes aprobarlo o rechazarlo tú.";
+  /** La hora del asignado venció un milisegundo antes de AHORA. */
+  const VENCIDO = { revisionHasta: new Date(AHORA.getTime() - 1), restante: { texto: "Venció hace menos de 1 min", vencido: true } };
+
+  it("HU-077 criterio 2: otro admin dentro de la hora ve el pago, a quién está asignado y hasta cuándo, sin acciones", async () => {
     const html = await pintar(pago({ idAdmin: OTRO, nombreAdmin: "Admin Dos" }));
     const t = texto(html);
-    expect(t).toContain("Este pago está asignado a Admin Dos. Solo esa persona puede aprobarlo o rechazarlo.");
+    expect(t).toContain(ASIGNADO_EN_HORA);
     expect(t).toContain("Pagador Camila Rojas");
     expect(t).toContain("Ver comprobante");
     expect(html).not.toContain("<form");
     expect(t).not.toContain("Aprobar pago");
     expect(t).not.toContain("Rechazar el pago");
+    expect(t).not.toContain("Compara el comprobante");
+  });
+
+  it("supuesto 1 (P-40): justo en el límite el pago todavía es solo del asignado", async () => {
+    const html = await pintar(pago({ idAdmin: OTRO, nombreAdmin: "Admin Dos", revisionHasta: AHORA, restante: { texto: "Queda menos de 1 min", vencido: false } }));
+    expect(texto(html)).toContain("Este pago está asignado a Admin Dos hasta el lunes, 7 de enero de 2030, 9:00 a. m.");
+    expect(html).not.toContain("<form");
+  });
+
+  it("HU-077 criterio 1: con la hora vencida, otro admin ve de quién era la hora y puede aprobarlo o rechazarlo con las mismas reglas", async () => {
+    const vencido = await pintar(pago({ idAdmin: OTRO, nombreAdmin: "Admin Dos", ...VENCIDO }));
+    const t = texto(vencido);
+    // AHORA son las 9:00 en Bogotá: la hora venció un milisegundo antes, a las 8:59:59.
+    expect(t).toContain(ASIGNADO_VENCIDO);
+    expect(t).toContain("Compara el comprobante con estos datos antes de aprobarlo o rechazarlo.");
+    expect(t).toContain("Aprobar pago");
+    expect(vencido).toMatch(/<details[^>]*><summary[^>]*>Rechazar el pago<\/summary>/);
+    // Las mismas consecuencias que ve el asignado (criterio 3 de HU-020), y el aviso antes de las acciones.
+    expect(t).toContain("Se cancela la monitoría del 7 de enero de 2030 y esa fecha queda libre para otra persona.");
+    expect(t.indexOf("se le pasó la hora")).toBeLessThan(t.indexOf("Aprobar pago"));
+    // Quién revisa lo pone la sesión, no el formulario.
+    expect(vencido).not.toContain(YO);
+  });
+
+  it("HU-077: con la hora vencida y P-24, otro admin también tiene que escribir las observaciones", async () => {
+    const html = await pintar(pago({ idAdmin: OTRO, nombreAdmin: "Admin Dos", ...VENCIDO }, { inicio: AHORA }));
+    expect(texto(html)).toContain("La sesión ya empezó, así que la monitoría no se cancela");
+    expect(html).toMatch(/<textarea[^>]*required/);
+  });
+
+  it("el asignado no lee ningún aviso de quién revisa, ni antes ni después de su hora", async () => {
+    for (const p of [pago(), pago(VENCIDO)]) {
+      const t = texto(await pintar(p));
+      expect(t).not.toContain("Este pago está asignado a");
+      expect(t).toContain("Aprobar pago");
+    }
   });
 
   it("el pago de una grupal no se revisa aquí todavía (HU-038)", async () => {
     const html = await pintar(pago({}, { grupal: true }));
     expect(texto(html)).toContain(MENSAJES_DE_REVISION.no_individual);
+    expect(html).not.toContain("<form");
+  });
+
+  it("la grupal de otro admin con la hora vencida tampoco: no promete que puede revisarla", async () => {
+    const html = await pintar(pago({ idAdmin: OTRO, nombreAdmin: "Admin Dos", ...VENCIDO }, { grupal: true }));
+    const t = texto(html);
+    expect(t).toContain(MENSAJES_DE_REVISION.no_individual);
+    expect(t).not.toContain("Puedes aprobarlo o rechazarlo tú");
     expect(html).not.toContain("<form");
   });
 });
@@ -238,6 +302,26 @@ describe("Revisión de un pago: después de revisar", () => {
     expect(t).not.toContain("Tiempo para revisarlo");
     expect(html).not.toContain("<form");
     expect(t).toContain("Volver a mi bandeja");
+  });
+
+  it("HU-077 criterio 3: dice quién lo revisó; si fue el asignado, no repite a quién estaba asignado", async () => {
+    const t = texto(await pintar({ ...RECHAZADO, idAdminRevisor: YO, nombreAdminRevisor: "Admin Uno" }));
+    expect(t).toContain("Revisado lunes, 7 de enero de 2030, 9:10 a. m. Revisado por Admin Uno Observaciones");
+    expect(t).not.toContain("Asignado a");
+  });
+
+  it("HU-077 criterio 3: si lo revisó otro admin, dice quién lo revisó y a quién estaba asignado", async () => {
+    const html = await pintar({ ...RECHAZADO, idAdmin: OTRO, nombreAdmin: "Admin Dos", idAdminRevisor: YO, nombreAdminRevisor: "Admin Uno" });
+    const t = texto(html);
+    expect(t).toContain("Revisado por Admin Uno Asignado a Admin Dos");
+    expect(html).not.toContain("<form");
+    expect(t).not.toContain("Este pago está asignado a");
+  });
+
+  it("un pago revisado sin revisor registrado (insertado ya revisado) no inventa uno", async () => {
+    const t = texto(await pintar(RECHAZADO));
+    expect(t).not.toContain("Revisado por");
+    expect(t).not.toContain("Asignado a");
   });
 
   it("tras rechazar, el mensaje de éxito es un role=status y dice si el correo salió", async () => {
@@ -263,6 +347,137 @@ describe("Revisión de un pago: después de revisar", () => {
     const html = await pintar(RECHAZADO, { error: "ya_revisado" });
     expect(html).toMatch(/<p role="alert"[^>]*>Este pago ya se revisó, y una revisión no se puede cambiar\.<\/p>/);
     expect(texto(html)).toContain(MENSAJES_DE_REVISION.ya_revisado);
+  });
+});
+
+describe("Pagos por cobrar o asumir (HU-078)", () => {
+  const OBSERVACIONES = "Se cobra por fuera.\nLlamar el lunes.";
+  /** Un caso P-24 abierto: rechazado y la monitoría ya realizada, sin cierre. */
+  const ABIERTO = pago(
+    { estado: "rechazado", fechaRevision: new Date("2030-01-07T14:10:00.000Z"), idAdminRevisor: YO, nombreAdminRevisor: "Admin Uno", observaciones: OBSERVACIONES },
+    { estado: "realizada" },
+  );
+  const CERRADO = {
+    ...ABIERTO,
+    cierre: { como: "cobrado" as const, nota: "Pagó por Nequi.", idAdmin: OTRO, nombreAdmin: "Admin Dos", fecha: new Date("2030-01-08T15:30:00.000Z") },
+  };
+  const CONSECUENCIAS =
+    "Cerrar el caso no se puede deshacer. Sale de «Pagos por cobrar o asumir», el pago sigue rechazado y su monto cuenta en el desembolso del monitor.";
+
+  it("criterio 2: un caso abierto se explica, con las observaciones del rechazo, y se cierra dentro de una confirmación que dice que no se deshace", async () => {
+    const html = await pintar(ABIERTO);
+    const t = texto(html);
+    expect(t).toContain("Observaciones Se cobra por fuera. Llamar el lunes.");
+    expect(t).toContain("Por cobrar o asumir");
+    expect(t).toContain(
+      "Este pago se rechazó cuando la sesión ya había empezado, así que la monitoría no se canceló. Lo que se anotó al rechazarlo está en Observaciones.",
+    );
+    // Criterio 4: el admin sabe que el desembolso espera.
+    expect(t).toContain("Mientras siga abierto, el desembolso de esta monitoría no se puede ejecutar.");
+    expect(html).toMatch(/<details[^>]*><summary[^>]*>Cerrar el caso<\/summary>/);
+    expect(t).toContain(CONSECUENCIAS);
+    expect(t.indexOf(CONSECUENCIAS)).toBeLessThan(t.indexOf("Sí, cerrar el caso"));
+    expect(t).toContain("¿Cómo se resolvió?");
+    expect(t).toContain("Cobrado: el pagador pagó por fuera");
+    expect(t).toContain("Asumido: Calibra no lo cobra");
+    expect(t).toContain("Nota (opcional)");
+    // Ninguna opción viene marcada: el admin elige.
+    expect(html).not.toMatch(/<input[^>]*type="radio"[^>]*checked/);
+    // Quién cierra lo pone la sesión, no el formulario; nunca se habla de comisión ni de bruto.
+    expect(html).not.toContain(YO);
+    expect(html.toLowerCase()).not.toMatch(/comisi|bruto/);
+  });
+
+  it("el formulario entero (las opciones, la nota y el botón) está dentro de la confirmación, que empieza cerrada", async () => {
+    const html = await pintar(ABIERTO);
+    const inicio = html.indexOf("<details");
+    const fin = html.indexOf("</details>");
+    expect(inicio).toBeGreaterThan(-1);
+    // La única confirmación de la página es la del caso: la revisión ya pasó.
+    expect(html.indexOf("<details", inicio + 1)).toBe(-1);
+    expect(html.slice(inicio, html.indexOf(">", inicio) + 1)).not.toContain("open");
+    const dentro = html.slice(inicio, fin);
+    const fuera = html.slice(0, inicio) + html.slice(fin);
+    for (const pieza of ["<form", `name="id_pago" value="${ID}"`, 'value="cobrado"', 'value="asumido"', 'id="nota"', 'maxLength="500"', 'type="submit"', "no se puede deshacer"]) {
+      expect(dentro, pieza).toContain(pieza);
+      expect(fuera, pieza).not.toContain(pieza);
+    }
+    expect(dentro.match(/<input type="radio"[^>]*name="cierre"/g)).toHaveLength(2);
+    expect(dentro.indexOf("no se puede deshacer")).toBeLessThan(dentro.indexOf('type="radio"'));
+  });
+
+  it("supuesto 1: una confirmada que ya empezó también es un caso", async () => {
+    const html = await pintar({ ...ABIERTO, monitoria: { ...ABIERTO.monitoria, estado: "confirmada", inicio: new Date(AHORA.getTime() - 60_000) } });
+    expect(texto(html)).toContain("Cerrar el caso");
+  });
+
+  it("supuesto 1: un pago rechazado de una monitoría cancelada no es un caso, ni un pago aprobado o en revisión", async () => {
+    for (const p of [
+      pago({ estado: "rechazado", fechaRevision: new Date("2030-01-07T14:10:00.000Z") }, { estado: "cancelada", motivoCancelacion: "pago_rechazado" }),
+      pago({ estado: "rechazado", fechaRevision: new Date("2030-01-07T14:10:00.000Z") }, { estado: "cancelada", motivoCancelacion: "estudiante" }),
+      pago({ estado: "aprobado", fechaRevision: new Date("2030-01-07T14:10:00.000Z") }, { estado: "realizada" }),
+      pago({}, { estado: "realizada" }),
+    ]) {
+      const t = texto(await pintar(p));
+      expect(t).not.toContain("Por cobrar o asumir");
+      expect(t).not.toContain("Cerrar el caso");
+    }
+  });
+
+  it("criterio 2: un caso cerrado dice cómo, quién, cuándo y la nota, sin formulario", async () => {
+    const html = await pintar(CERRADO);
+    const t = texto(html);
+    expect(t).toContain("Caso Cerrado. Cobrado: el pagador pagó por fuera");
+    expect(t).toContain("Cerrado por Admin Dos");
+    expect(t).toContain("Cerrado martes, 8 de enero de 2030, 10:30 a. m.");
+    expect(html).toContain('<time dateTime="2030-01-08T15:30:00.000Z">');
+    expect(t).toContain("Nota Pagó por Nequi.");
+    expect(html).not.toContain("<form");
+    expect(t).not.toContain("Cerrar el caso");
+    expect(t).not.toContain("Mientras siga abierto");
+  });
+
+  it("P-28: si la monitoría se canceló después del cierre, el cierre se sigue mostrando, sin formulario", async () => {
+    const html = await pintar({ ...CERRADO, monitoria: { ...CERRADO.monitoria, estado: "cancelada", motivoCancelacion: "monitor_no_asistio" } });
+    expect(texto(html)).toContain("Caso Cerrado. Cobrado: el pagador pagó por fuera");
+    expect(html).not.toContain("<form");
+  });
+
+  it("un caso asumido sin nota no inventa una", async () => {
+    const t = texto(await pintar({ ...CERRADO, cierre: { ...CERRADO.cierre, como: "asumido", nota: null } }));
+    expect(t).toContain("Caso Cerrado. Asumido: Calibra no lo cobra");
+    expect(t).not.toContain("Nota");
+  });
+
+  it("criterio 5: tras un rechazo en P-24 el éxito dice que el caso quedó en Pagos por cobrar o asumir", async () => {
+    const html = await pintar(ABIERTO, { revisado: "rechazado" });
+    expect(html).toMatch(
+      /<p role="status"[^>]*>Rechazaste el pago\. El caso quedó en «Pagos por cobrar o asumir» de la bandeja hasta que alguien lo cierre como cobrado o asumido\.<\/p>/,
+    );
+    expect(texto(html)).not.toContain("Ya no aparece en tu bandeja");
+  });
+
+  it("tras cerrarlo, el éxito es un role=status; un enlace viejo o el cierre de otro admin no lo anuncian", async () => {
+    const mio = { ...CERRADO, cierre: { ...CERRADO.cierre, idAdmin: YO, nombreAdmin: "Admin Uno" } };
+    expect(await pintar(mio, { caso: "cerrado" })).toMatch(
+      /<p role="status"[^>]*>Cerraste el caso como cobrado\. Ya no aparece en «Pagos por cobrar o asumir»\.<\/p>/,
+    );
+    expect(await pintar(CERRADO, { caso: "cerrado" })).not.toContain("Cerraste");
+    expect(await pintar(ABIERTO, { caso: "cerrado" })).not.toContain("Cerraste");
+  });
+
+  it("si otro admin lo cerró mientras tanto, lo dice como alerta y muestra cómo quedó", async () => {
+    const html = await pintar(CERRADO, { caso: "ya_cerrado" });
+    expect(html).toMatch(/<p role="alert"[^>]*>Este caso ya estaba cerrado, y un cierre no se puede cambiar\.<\/p>/);
+    expect(texto(html)).toContain("Cerrado por Admin Dos");
+  });
+
+  it("escapa la nota y el nombre de quien lo cerró", async () => {
+    const html = await pintar({ ...CERRADO, cierre: { ...CERRADO.cierre, nota: "<script>alert(1)</script>", nombreAdmin: "<b>Admin</b>" } });
+    // Cerrado no tiene formulario: el único <script> sería el de la nota.
+    expect(html).not.toContain("<script");
+    expect(html).not.toContain("<b>Admin");
+    expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
   });
 });
 

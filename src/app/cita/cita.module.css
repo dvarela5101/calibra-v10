@@ -24,6 +24,13 @@
   font-weight: 600;
 }
 
+/* Pasado el plazo: los casos de fuerza mayor los resuelve un admin (criterio 3 de HU-024). */
+.casosExtremos {
+  font-size: 15px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
 .nota {
   margin-block-start: var(--e3);
   font-size: 15px;
@@ -112,4 +119,136 @@
 .aviso {
   margin-block-start: var(--e3);
   font-size: 16px;
+}
+
+/*
+ * Cancelar la monitoría (HU-024): un botón que solo pregunta y, en un segundo paso, la acción que no se deshace.
+ * El botón de abrir lleva borde y texto en --alert-text; el de confirmar, relleno en --alert-text con texto
+ * claro (5,6:1). --alert queda para rellenos que no llevan texto.
+ */
+.cancelar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.peligro {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  min-block-size: 52px;
+  padding: 10px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border: 1px solid var(--alert-text);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: filter var(--transicion);
+}
+
+.abrirCancelar {
+  composes: peligro;
+  background: transparent;
+  color: var(--alert-text);
+}
+
+.confirmarCancelar {
+  composes: peligro;
+  background: var(--alert-text);
+  color: var(--surface);
+}
+
+.confirmarCancelar:disabled {
+  background: var(--border);
+  border-color: var(--border);
+  color: var(--muted-disabled);
+  cursor: not-allowed;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .confirmarCancelar:not(:disabled):hover {
+    filter: brightness(0.93);
+  }
+}
+
+/* El paso de confirmación. El borde de color es solo relleno: el texto va en --text y --muted. */
+.confirmacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-inline-start: 6px solid var(--alert);
+  border-radius: var(--r);
+}
+
+.pregunta {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.notaDelDinero {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/*
+ * El reporte de inasistencia (HU-029): el aviso del estado (borde --primary como .plazo; es solo relleno, el texto va
+ * en --text) y, si el admin lo rechazó, sus observaciones. Ese texto lo escribe otra persona: se parte donde haga
+ * falta y se respetan sus saltos de línea.
+ */
+.reporte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  margin-block-start: var(--e3);
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-inline-start: 6px solid var(--primary);
+  border-radius: var(--r);
+  font-size: 16px;
+}
+
+.observaciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  margin-block-start: var(--e3);
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+.observacionesTitulo {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.observacionesTexto {
+  font-size: 16px;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* Reportar no destruye nada: sus botones son los del formulario, sin el rojo de cancelar. */
+.reportar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.confirmacionReporte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-inline-start: 6px solid var(--primary);
+  border-radius: var(--r);
 }
