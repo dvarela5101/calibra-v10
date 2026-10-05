@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-04 23:54. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-05 00:49. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -22,7 +22,6 @@ _Generado automaticamente: 2026-10-04 23:54. No editar a mano; usa `scripts/back
 | [HU-079](backlog/HU-079.md) | [Técnica] Unificar los procesadores de la bandeja de salida de correos | Backlog | P2 | S | HU-025 |
 | [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | Backlog | P3 | S | HU-010 |
 | [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | Lista | P0 | M | HU-009, HU-008, HU-068 |
-| [HU-030](backlog/HU-030.md) | [Admin] Resolver reportes de inasistencia | Lista | P0 | M | HU-029, HU-026, HU-028 |
 | [HU-081](backlog/HU-081.md) | [Técnica] Servidor del diagnóstico: diagnóstico en curso, guardado y lo que recibe el navegador | Lista | P0 | M | HU-060, HU-004, HU-005 |
 | [HU-036](backlog/HU-036.md) | [Estudiante] Agendar una sesión grupal como organizador | Lista | P1 | L | HU-032, HU-017, HU-018 |
 | [HU-037](backlog/HU-037.md) | [Estudiante] Compartir el enlace del grupo y ver quién ha pagado | Lista | P1 | M | HU-036 |
@@ -36,6 +35,7 @@ _Generado automaticamente: 2026-10-04 23:54. No editar a mano; usa `scripts/back
 | [HU-045](backlog/HU-045.md) | [Estudiante] Reportar inasistencia del monitor en mi grupal | Lista | P1 | XS | HU-029, HU-036 |
 | [HU-046](backlog/HU-046.md) | [Monitor] Finalizar una grupal y entregar el enlace de reseña | Lista | P1 | S | HU-023, HU-036 |
 | [HU-047](backlog/HU-047.md) | [Integrante] Reseñar la sesión grupal eligiendo mi nombre | Lista | P1 | M | HU-046, HU-038, HU-035 |
+| [HU-030](backlog/HU-030.md) | [Admin] Resolver reportes de inasistencia | En progreso | P0 | M | HU-029, HU-026, HU-028 |
 | [HU-060](backlog/HU-060.md) | [Técnica] Motor del diagnóstico adaptativo con nivel por habilidad | En progreso | P0 | M | HU-005 |
 | [HU-061](backlog/HU-061.md) | [Técnica] Instructivo y skill para reprocesar el banco de una materia con IA | En progreso | P0 | L | HU-005 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
