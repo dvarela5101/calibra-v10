@@ -5,7 +5,7 @@
  */
 import type { DatosPorPlantilla } from "@/lib/correo/plantillas";
 
-export const EVENTOS_DE_AVISO = ["confirmada", "cancelada", "pago_rechazado"] as const;
+export const EVENTOS_DE_AVISO = ["confirmada", "cancelada", "pago_rechazado", "inasistencia_aceptada"] as const;
 export type EventoDeAviso = (typeof EVENTOS_DE_AVISO)[number];
 
 export function esEventoDeAviso(valor: unknown): valor is EventoDeAviso {
@@ -37,15 +37,20 @@ export type DatosDeAviso = {
  *    si ya se realizó, el aviso llegaría tarde.
  *  - cancelada: si la canceló el estudiante (una cancelada no cambia más).
  *  - pago_rechazado: si la canceló el rechazo del pago (HU-076, D-38), por el mismo motivo.
- * Nunca para una grupal (sus avisos llegan con sus HUs) ni para una sesión que ya empezó: el aviso llegaría tarde
- * (pasa si el aviso se procesa con retraso, por ejemplo antes de configurar Vault en el corte).
+ *  - inasistencia_aceptada: si la canceló el reporte de inasistencia aceptado (HU-030, D-37), tenga la sesión o no ya
+ *    empezada: un reporte solo existe desde que la sesión empezó (RN-64), así que con el guard de abajo este aviso
+ *    nunca saldría.
+ * Nunca para una grupal (sus avisos llegan con sus HUs). Los otros tres tampoco para una sesión que ya empezó: el
+ * aviso llegaría tarde (pasa si el aviso se procesa con retraso, por ejemplo antes de configurar Vault en el corte).
  */
 export function avisoVigente(
   evento: EventoDeAviso,
   d: Pick<DatosDeAviso, "estado" | "motivoCancelacion" | "grupal" | "inicio">,
   ahora: Date,
 ): boolean {
-  if (d.grupal || new Date(d.inicio).getTime() <= ahora.getTime()) return false;
+  if (d.grupal) return false;
+  if (evento === "inasistencia_aceptada") return d.estado === "cancelada" && d.motivoCancelacion === "monitor_no_asistio";
+  if (new Date(d.inicio).getTime() <= ahora.getTime()) return false;
   if (evento === "confirmada") return d.estado === "confirmada";
   if (evento === "pago_rechazado") return d.estado === "cancelada" && d.motivoCancelacion === "pago_rechazado";
   return d.estado === "cancelada" && d.motivoCancelacion === "estudiante";
@@ -70,4 +75,18 @@ export function datosDeCancelada(d: DatosDeAviso, enlace: string): DatosPorPlant
 /** Sin el nombre del estudiante, su contacto ni montos: el monitor solo necesita saber qué sesión se cayó (HU-076, P-37). */
 export function datosDePagoRechazado(d: DatosDeAviso, enlace: string): DatosPorPlantilla["aviso_monitor_pago_rechazado"] {
   return { nombreMonitor: d.nombreMonitor, materia: d.nombreMateria, inicio: d.inicio, enlace };
+}
+
+/**
+ * Las mismas cuatro claves que el de pago rechazado (HU-030, D-37), más si el desembolso de la monitoría ya se le
+ * transfirió al monitor (`desembolsado`; no es un dato de nadie): el correo no puede decirle que no se le desembolsa
+ * cuando ya cobró. Sin el nombre del estudiante ni su contacto (P-37), sin montos y sin las observaciones del admin, que
+ * son para quien pagó o para quien reportó.
+ */
+export function datosDeInasistenciaAceptada(
+  d: DatosDeAviso,
+  enlace: string,
+  desembolsado = false,
+): DatosPorPlantilla["aviso_monitor_inasistencia_aceptada"] {
+  return { nombreMonitor: d.nombreMonitor, materia: d.nombreMateria, inicio: d.inicio, enlace, desembolsado };
 }

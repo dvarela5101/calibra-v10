@@ -230,7 +230,7 @@ select lives_ok(
   'El check de aviso_monitor acepta el evento pago_rechazado');
 select throws_ok(
   $$insert into public.aviso_monitor (id_monitoria, evento) values ('50000000-0000-0000-0000-000000007615', 'realizada')$$,
-  '23514', null, 'Y sigue rechazando un evento que no es confirmada, cancelada ni pago_rechazado');
+  '23514', null, 'Y sigue rechazando un evento que no es confirmada, cancelada, pago_rechazado ni inasistencia_aceptada (HU-030)');
 delete from public.aviso_monitor where id_monitoria = '50000000-0000-0000-0000-000000007614';
 
 -- 11: confirmada -> cancelada por pago_rechazado anota el evento, una sola vez.
@@ -260,13 +260,14 @@ select is(
   (select count(*)::int from public.aviso_monitor where id_monitoria = '50000000-0000-0000-0000-000000007613'), 0,
   'Una grupal confirmada cancelada por pago_rechazado no anota aviso');
 
--- 14 y 15: los demás motivos siguen sin avisar.
+-- 14 y 15: monitor_no_asistio avisa desde HU-030 (D-37, evento inasistencia_aceptada); diferencia_no_cubierta sigue sin avisar.
 update public.monitoria set estado = 'cancelada', motivo_cancelacion = 'monitor_no_asistio' where id = '50000000-0000-0000-0000-000000007614';
 update public.monitoria set estado = 'cancelada', motivo_cancelacion = 'diferencia_no_cubierta' where id = '50000000-0000-0000-0000-000000007615';
-select is(
-  (select count(*)::int from public.aviso_monitor where id_monitoria in
-    ('50000000-0000-0000-0000-000000007614', '50000000-0000-0000-0000-000000007615')), 0,
-  'monitor_no_asistio y diferencia_no_cubierta siguen sin anotar aviso');
+select set_eq(
+  $$select right(id_monitoria::text, 2), evento from public.aviso_monitor where id_monitoria in
+    ('50000000-0000-0000-0000-000000007614', '50000000-0000-0000-0000-000000007615')$$,
+  $$values ('14'::text, 'inasistencia_aceptada'::text)$$,
+  'monitor_no_asistio anota inasistencia_aceptada (HU-030, D-37) y diferencia_no_cubierta sigue sin anotar aviso');
 
 -- ---------------------------------------------------------------------------
 -- (A) Rechazar una cita futura confirmada, por public.revisar_pago
@@ -473,8 +474,9 @@ select set_eq(
   'En total hay cinco filas para pagadores: 01, 02, 07 y 17 cita_cancelada y 03 cita_ya_cancelada');
 select set_eq(
   $$select right(id_monitoria::text, 2), evento from public.aviso_monitor where id_monitoria::text like '50000000-0000-0000-0000-0000000076%'$$,
-  $$values ('01'::text, 'pago_rechazado'::text), ('07', 'pago_rechazado'), ('11', 'pago_rechazado')$$,
-  'Y tres avisos para monitores: 01, 07 y 11, todos pago_rechazado');
+  $$values ('01'::text, 'pago_rechazado'::text), ('07', 'pago_rechazado'), ('11', 'pago_rechazado'),
+           ('14', 'inasistencia_aceptada')$$,
+  'Y cuatro avisos para monitores: 01, 07 y 11 pago_rechazado, y 14 inasistencia_aceptada (HU-030)');
 
 -- ---------------------------------------------------------------------------
 -- service_role: lee los avisos y los marca, nada más

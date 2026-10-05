@@ -68,6 +68,12 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
     enlace: "https://calibra.example/monitor/agenda",
   },
   pago_rechazado_sin_reembolso: { nombre: "Ana", monto: 25_000, fechaSesion: "2020-01-06", contactoSoporte: "ayuda@calibra.example" },
+  aviso_monitor_inasistencia_aceptada: {
+    nombreMonitor: "Camilo Rojas",
+    materia: "Cálculo Integral",
+    inicio: "2020-01-13T15:00:00.000Z",
+    enlace: "https://calibra.example/monitor/agenda",
+  },
 };
 
 const entrada = (cambios: Partial<EntradaDeEnvio<"solicitud_llave_reembolso">> = {}): EntradaDeEnvio<"solicitud_llave_reembolso"> => ({

@@ -211,6 +211,7 @@ function reconstructoresCon(cambios: Partial<Reconstructores> = {}): Reconstruct
     cancelacion_cita: null,
     aviso_monitor_pago_rechazado: null,
     pago_rechazado_sin_reembolso: null,
+    aviso_monitor_inasistencia_aceptada: null,
     ...cambios,
   };
 }

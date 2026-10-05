@@ -1183,6 +1183,9 @@ isOneToOne: true
 "reserva_hasta":
 { Args: { "p_fecha_creacion": string }; Returns: string
                            },
+"resolver_reporte_inasistencia":
+{ Args: { "p_decision": string,"p_id_reporte": string,"p_observaciones": string }; Returns: string
+                           },
 "revisar_pago":
 { Args: { "p_decision": string,"p_id_pago": string,"p_observaciones"?: string }; Returns: {
               "cancelo_monitoria": boolean,"resultado": string

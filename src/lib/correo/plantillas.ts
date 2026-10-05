@@ -29,6 +29,7 @@ export const PLANTILLAS = [
   "cancelacion_cita",
   "aviso_monitor_pago_rechazado",
   "pago_rechazado_sin_reembolso",
+  "aviso_monitor_inasistencia_aceptada",
 ] as const;
 
 export type Plantilla = (typeof PLANTILLAS)[number];
@@ -50,6 +51,7 @@ export const NOMBRE_DE_PLANTILLA: Record<Plantilla, string> = {
   cancelacion_cita: "Cancelación de la cita",
   aviso_monitor_pago_rechazado: "Aviso al monitor: pago rechazado",
   pago_rechazado_sin_reembolso: "Pago rechazado (cita ya cancelada)",
+  aviso_monitor_inasistencia_aceptada: "Aviso al monitor: reporte de inasistencia aceptado",
 };
 
 export function esPlantilla(valor: string): valor is Plantilla {
@@ -155,6 +157,14 @@ export type DatosPorPlantilla = {
    * `fechaSesion` es el día de la monitoría, `AAAA-MM-DD`.
    */
   pago_rechazado_sin_reembolso: { nombre: string; monto: number; fechaSesion: string; contactoSoporte?: string };
+  /**
+   * Un admin aceptó el reporte de inasistencia de una monitoría individual del monitor y quedó cancelada (D-37, HU-030).
+   * Al monitor. Sin nombre del estudiante, sin su contacto (P-37), sin montos y sin las observaciones del admin.
+   * `inicio` es un instante ISO; `enlace`, su agenda. `desembolsado` es si el desembolso de la monitoría ya se le
+   * transfirió al monitor (la decisión no lo anula): entonces el correo no dice que no se le desembolsa. Sin él, o con
+   * `false`, lo dice.
+   */
+  aviso_monitor_inasistencia_aceptada: { nombreMonitor: string; materia: string; inicio: string; enlace: string; desembolsado?: boolean };
 };
 
 export type CorreoRenderizado = { asunto: string; html: string; texto: string };
@@ -489,6 +499,25 @@ function contenidoDe<P extends Plantilla>(plantilla: P, datos: DatosPorPlantilla
             `Se canceló la monitoría de ${materia} del ${cerrar(cuando)}`,
             "Fue porque no se pudo verificar el pago.",
             "No tienes que hacer nada: ya no aparece entre tus próximas monitorías.",
+          ],
+          boton: { texto: "Ver mi agenda", enlace: d.enlace },
+        },
+      };
+    }
+    case "aviso_monitor_inasistencia_aceptada": {
+      const d = datos as DatosPorPlantilla["aviso_monitor_inasistencia_aceptada"];
+      const materia = linea(d.materia, "materia");
+      const cuando = formatearFechaHora(instante(d.inicio, "inicio"));
+      return {
+        asunto: `Se aceptó un reporte de inasistencia en tu monitoría de ${materia}`,
+        contenido: {
+          titulo: "Se aceptó un reporte de inasistencia",
+          parrafos: [
+            `Hola, ${cerrar(linea(d.nombreMonitor, "nombreMonitor"))}`,
+            `La monitoría de ${materia} del ${cerrar(cuando)}`,
+            "Quedó cancelada porque un admin aceptó un reporte de inasistencia.",
+            // Con el desembolso ya transferido sería falso: la decisión no lo anula.
+            ...(d.desembolsado === true ? [] : ["Por eso no se te desembolsa."]),
           ],
           boton: { texto: "Ver mi agenda", enlace: d.enlace },
         },
