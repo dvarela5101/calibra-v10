@@ -36,6 +36,13 @@ export function tieneFormaDeTokenDeLlave(valor: unknown): valor is string {
 export const MOTIVO_CANCELACION_A_TIEMPO = "Cancelaste la monitoría dentro del plazo.";
 
 /**
+ * La base del motivo del reembolso cuando se acepta un reporte de inasistencia (D-37, HU-030): el texto de
+ * `privado.motivo_de_inasistencia`, al que se le suma, si las hay, un espacio y las observaciones del admin. Se guarda
+ * en `reembolso.motivo`. Una prueba de integración compara esta constante con la que escribe la base.
+ */
+export const MOTIVO_INASISTENCIA_ACEPTADA = "El monitor no asistió a la monitoría.";
+
+/**
  * Qué se le dice a quien cancela con un pago todavía en revisión (D-27, P-07): el reembolso depende de que el admin
  * lo apruebe. Lo usan el correo de cancelación y la página de la cita.
  */

@@ -77,15 +77,21 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
     enlace: "https://calibra.example/monitor/agenda",
   },
   pago_rechazado_sin_reembolso: { nombre: "Ana", monto: 25_000, fechaSesion: "2020-01-06", contactoSoporte: "ayuda@calibra.example" },
+  aviso_monitor_inasistencia_aceptada: {
+    nombreMonitor: "Camilo Rojas",
+    materia: "Cálculo Integral",
+    inicio: "2020-01-13T15:00:00.000Z",
+    enlace: "https://calibra.example/monitor/agenda",
+  },
 };
 
 const render = <P extends Plantilla>(plantilla: P, cambios: Partial<DatosPorPlantilla[P]> = {}) =>
   renderizar(plantilla, { ...EJEMPLOS[plantilla], ...cambios });
 
 describe("las plantillas de correo", () => {
-  it("son las que salen por correo: diagnóstico, reseña, llave y su recordatorio, dos rechazos, escalamiento, invitación de monitor, verificación del correo del Lead, tres avisos al monitor (confirmada, cancelada y pago rechazado), la confirmación y la cancelación de la cita y el pago rechazado con la cita ya cancelada", () => {
+  it("son las que salen por correo: diagnóstico, reseña, llave y su recordatorio, dos rechazos, escalamiento, invitación de monitor, verificación del correo del Lead, cuatro avisos al monitor (confirmada, cancelada, pago rechazado y reporte de inasistencia aceptado), la confirmación y la cancelación de la cita y el pago rechazado con la cita ya cancelada", () => {
     expect([...PLANTILLAS].sort()).toEqual(Object.keys(EJEMPLOS).sort());
-    expect(PLANTILLAS).toHaveLength(15);
+    expect(PLANTILLAS).toHaveLength(16);
   });
 
   it.each(PLANTILLAS)("%s sale en español con HTML y texto plano", (plantilla) => {
@@ -214,7 +220,12 @@ describe("avisos al monitor (HU-051, D-16)", () => {
   });
 
   it("no lleva el contacto del estudiante: sus datos no lo incluyen (P-37)", () => {
-    for (const plantilla of ["aviso_monitor_confirmada", "aviso_monitor_cancelada", "aviso_monitor_pago_rechazado"] as const) {
+    for (const plantilla of [
+      "aviso_monitor_confirmada",
+      "aviso_monitor_cancelada",
+      "aviso_monitor_pago_rechazado",
+      "aviso_monitor_inasistencia_aceptada",
+    ] as const) {
       expect(Object.keys(EJEMPLOS[plantilla]).filter((campo) => /correo|telefono|contacto/i.test(campo))).toEqual([]);
     }
   });
@@ -297,6 +308,92 @@ describe("aviso al monitor por un pago rechazado (HU-076, D-16, D-38, P-37)", ()
     ["inicio", { inicio: "" }],
   ])("%s inválido es un error de quien llama, no un correo con hueco", (_campo, cambios) => {
     expect(() => render("aviso_monitor_pago_rechazado", cambios)).toThrow(RangeError);
+  });
+});
+
+describe("aviso al monitor por un reporte de inasistencia aceptado (HU-030, D-37, P-37)", () => {
+  const plano = (cambios: Partial<DatosPorPlantilla["aviso_monitor_inasistencia_aceptada"]> = {}) =>
+    render("aviso_monitor_inasistencia_aceptada", cambios).texto.replace(/[  ]/g, " ");
+
+  it("dice qué monitoría se canceló, cuándo era, por qué y que no se desembolsa, con el enlace a su agenda", () => {
+    const { asunto, texto } = render("aviso_monitor_inasistencia_aceptada");
+    expect(asunto).toBe("Se aceptó un reporte de inasistencia en tu monitoría de Cálculo Integral");
+    expect(texto).toContain("Se aceptó un reporte de inasistencia\n");
+    const llano = plano();
+    expect(llano).toContain("Hola, Camilo Rojas.");
+    // 15:00 UTC son las 10:00 a. m. en Bogotá.
+    expect(llano).toContain("La monitoría de Cálculo Integral del lunes, 13 de enero de 2020, 10:00 a. m.");
+    expect(llano).toContain("Quedó cancelada porque un admin aceptó un reporte de inasistencia.");
+    expect(llano).toContain("Por eso no se te desembolsa.");
+    expect(llano).toContain("Ver mi agenda: https://calibra.example/monitor/agenda");
+    expect(render("aviso_monitor_inasistencia_aceptada").html).toContain('href="https://calibra.example/monitor/agenda"');
+  });
+
+  it("no tiene pie: el botón es lo último", () => {
+    expect(plano().trimEnd().endsWith("Ver mi agenda: https://calibra.example/monitor/agenda")).toBe(true);
+    expect(plano({ desembolsado: true }).trimEnd().endsWith("Ver mi agenda: https://calibra.example/monitor/agenda")).toBe(true);
+  });
+
+  it("si el desembolso ya se le transfirió al monitor no dice que no se le desembolsa: es falso, y la decisión no lo anula", () => {
+    const llano = plano({ desembolsado: true });
+    expect(llano).toContain("Quedó cancelada porque un admin aceptó un reporte de inasistencia.");
+    expect(llano).not.toContain("Por eso no se te desembolsa.");
+    const { asunto, html, texto } = render("aviso_monitor_inasistencia_aceptada", { desembolsado: true });
+    for (const contenido of [asunto, html, texto]) expect(contenido).not.toMatch(/desembols/i);
+    // Sin la marca, o con `false`, es el correo de siempre.
+    for (const cambios of [{}, { desembolsado: false }]) {
+      expect(plano(cambios), JSON.stringify(cambios)).toContain("Por eso no se te desembolsa.");
+    }
+  });
+
+  it("no lleva el nombre ni el contacto del estudiante, ni montos, ni las observaciones del admin: sus datos tienen solo cuatro claves (P-37)", () => {
+    expect(Object.keys(EJEMPLOS.aviso_monitor_inasistencia_aceptada).sort()).toEqual(["enlace", "inicio", "materia", "nombreMonitor"]);
+    const { asunto, html, texto } = render("aviso_monitor_inasistencia_aceptada");
+    for (const contenido of [asunto, html, texto]) {
+      expect(contenido).not.toMatch(/\$|@|comisi|neto|reembolso|observaci/i);
+      expect(contenido).not.toContain("Ana");
+    }
+  });
+
+  it("no lee el reloj: el mismo dato da el mismo cuerpo hoy y dentro de un año (la Idempotency-Key lo exige)", () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2020-01-01T00:00:00Z"));
+      const antes = render("aviso_monitor_inasistencia_aceptada");
+      vi.setSystemTime(new Date("2021-01-01T00:00:00Z"));
+      expect(render("aviso_monitor_inasistencia_aceptada")).toEqual(antes);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("escapa en el HTML lo que viene de fuera: nombre del monitor y materia", () => {
+    const { html, texto } = render("aviso_monitor_inasistencia_aceptada", { nombreMonitor: "<b>Camilo</b> & Co", materia: "Cálculo <script>" });
+    expect(html).not.toContain("<b>");
+    expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;b&gt;Camilo&lt;/b&gt; &amp; Co");
+    expect(html).toContain("Cálculo &lt;script&gt;");
+    expect(texto).toContain("Hola, <b>Camilo</b> & Co.");
+  });
+
+  it("un salto de línea en la materia no parte el asunto ni cuela una cabecera", () => {
+    const salto = String.fromCharCode(13, 10);
+    const { asunto } = render("aviso_monitor_inasistencia_aceptada", { materia: `Cálculo${salto}Bcc: alguien@otro.co` });
+    expect(asunto).not.toMatch(/[\r\n]/);
+    expect(asunto).toBe("Se aceptó un reporte de inasistencia en tu monitoría de Cálculo Bcc: alguien@otro.co");
+  });
+
+  it("un enlace peligroso falla en vez de armar el correo", () => {
+    expect(() => render("aviso_monitor_inasistencia_aceptada", { enlace: "javascript:alert(1)" })).toThrow(RangeError);
+  });
+
+  it.each<[string, Partial<DatosPorPlantilla["aviso_monitor_inasistencia_aceptada"]>]>([
+    ["nombreMonitor", { nombreMonitor: "  " }],
+    ["materia", { materia: " \n " }],
+    ["inicio", { inicio: "mañana" }],
+    ["inicio", { inicio: "" }],
+  ])("%s inválido es un error de quien llama, no un correo con hueco", (_campo, cambios) => {
+    expect(() => render("aviso_monitor_inasistencia_aceptada", cambios)).toThrow(RangeError);
   });
 });
 

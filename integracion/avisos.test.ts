@@ -20,8 +20,10 @@ import { exigirSupabaseLocal, exito, Fixtures } from "./utilidades";
  * HU-051 contra el Supabase local: el trigger de `monitoria` anota el aviso, `procesarAvisosAlMonitor` (el mismo
  * código de la ruta `/api/procesos/avisar-monitores`) lo manda por Mailpit al correo del monitor y lo marca
  * procesado. HU-076 suma el tercer evento, `pago_rechazado` (`confirmada` que el rechazo de su pago cancela); el
- * recorrido completo del rechazo, con el aviso al pagador, está en `integracion/avisos-rechazo.test.ts`. En local no hay
- * configuración en Vault, así que la base no llama a la app: la prueba llama el proceso.
+ * recorrido completo del rechazo, con el aviso al pagador, está en `integracion/avisos-rechazo.test.ts`. HU-030 suma el
+ * cuarto, `inasistencia_aceptada` (el reporte aceptado cancela la monitoría); su recorrido completo, con la decisión del
+ * admin, está en `integracion/resolver-reportes.test.ts`. En local no hay configuración en Vault, así que la base no
+ * llama a la app: la prueba llama el proceso.
  *
  * El estado lo cambia service_role, como lo harán HU-018 (confirmar) y HU-024 (cancelar): el trigger reacciona al
  * cambio sin importar quién lo hace. Las monitorías son de un lunes a varias semanas, lejos de cualquier proceso
@@ -83,6 +85,7 @@ async function pendiente() {
     claveDeCorreo("aviso_monitor_confirmada", monitoria.id),
     claveDeCorreo("aviso_monitor_cancelada", monitoria.id),
     claveDeCorreo("aviso_monitor_pago_rechazado", monitoria.id),
+    claveDeCorreo("aviso_monitor_inasistencia_aceptada", monitoria.id),
   );
   return monitoria;
 }
@@ -198,7 +201,10 @@ describe("criterio 2: el estudiante cancela una confirmada", () => {
 });
 
 describe("criterio 3: lo que no se avisa", () => {
-  it("una reserva que vence sin pago, una confirmada que se cancela por otro motivo y una que se realiza no anotan avisos nuevos", async () => {
+  const titulo =
+    "una reserva que vence sin pago y una confirmada que se realiza no anotan avisos nuevos; una confirmada que se cancela " +
+    "porque el monitor no asistió anota inasistencia_aceptada (HU-030, D-37) y el proceso lo manda sin el contacto del estudiante";
+  it(titulo, async () => {
     const vencida = await pendiente();
     await cambiarEstado(vencida.id, "cancelada", "reserva_expirada");
     expect(await avisosDe(vencida.id)).toEqual([]);
@@ -206,13 +212,33 @@ describe("criterio 3: lo que no se avisa", () => {
     const noAsistio = await pendiente();
     await cambiarEstado(noAsistio.id, "confirmada");
     await cambiarEstado(noAsistio.id, "cancelada", "monitor_no_asistio");
-    expect((await avisosDe(noAsistio.id)).map((a) => a.evento)).toEqual(["confirmada"]);
+    expect((await avisosDe(noAsistio.id)).map((a) => a.evento)).toEqual(["confirmada", "inasistencia_aceptada"]);
 
     const realizada = await pendiente();
     await cambiarEstado(realizada.id, "confirmada");
     await cambiarEstado(realizada.id, "realizada");
     expect((await avisosDe(realizada.id)).map((a) => a.evento)).toEqual(["confirmada"]);
-    await procesar();
+    const antes = (await correosDelMonitor()).length;
+
+    const resumen = await procesar();
+
+    // El de confirmada de las dos monitorías ya no vale (una se canceló y la otra se realizó); sale solo el de la inasistencia.
+    expect(resumen.enviados).toBeGreaterThanOrEqual(1);
+    expect(resumen.descartados).toBeGreaterThanOrEqual(2);
+    const correos = await correosDelMonitor();
+    expect(correos).toHaveLength(antes + 1);
+    const correo = correos.find((c) => c.Subject === `Se aceptó un reporte de inasistencia en tu monitoría de ${e.materia.nombre}`);
+    expect(correo, "debía llegar el aviso de la inasistencia aceptada").toBeDefined();
+    expect(correo!.Text).toContain("Quedó cancelada porque un admin aceptó un reporte de inasistencia.");
+    // P-37: nada del estudiante en el correo.
+    for (const privado of [e.lead.nombre, e.lead.correo, e.lead.numero_telefono].filter(Boolean)) {
+      expect(correo!.Text).not.toContain(privado);
+      expect(correo!.HTML).not.toContain(privado);
+    }
+    expect(
+      exito(await fx.admin.from("correo_envio").select("estado, destinatario").eq("clave", claveDeCorreo("aviso_monitor_inasistencia_aceptada", noAsistio.id)).single(), "leer el registro"),
+    ).toEqual({ estado: "enviado", destinatario: e.monitor.correo });
+    expect((await avisosDe(noAsistio.id)).every((a) => a.procesado_en !== null)).toBe(true);
   });
 });
 

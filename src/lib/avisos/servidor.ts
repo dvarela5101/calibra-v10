@@ -8,6 +8,7 @@ import {
   avisoVigente,
   datosDeCancelada,
   datosDeConfirmada,
+  datosDeInasistenciaAceptada,
   datosDePagoRechazado,
   esEventoDeAviso,
   RUTA_DE_LA_AGENDA,
@@ -88,6 +89,28 @@ export async function reconstruirAvisoPagoRechazado(
   return d && { destinatario: d.correoMonitor, datos: datosDePagoRechazado(d, urlDelSitio(RUTA_DE_LA_AGENDA)) };
 }
 
+/**
+ * Si el desembolso de la monitoría ya se le transfirió al monitor. Aceptar un reporte no anula uno transferido (el dinero
+ * ya salió) y el correo no puede decirle entonces que no se le desembolsa. Es un estado terminal: da lo mismo al mandar
+ * el aviso que al reintentarlo. Si no se puede leer, falla y el aviso se reintenta en otra corrida.
+ */
+async function desembolsoTransferido(cliente: Cliente, idMonitoria: string): Promise<boolean> {
+  const { data, error } = await cliente.from("desembolso").select("estado").eq("id_monitoria", idMonitoria).maybeSingle();
+  if (error) throw new Error(`No se pudo leer el desembolso de la monitoría: ${error.message}`);
+  return data?.estado === "desembolsado";
+}
+
+/** Para reintentar un aviso de reporte de inasistencia aceptado que falló (HU-030, HU-065). La entidad es el id de la monitoría. */
+export async function reconstruirAvisoInasistenciaAceptada(
+  idMonitoria: string,
+  cliente: Cliente = crearClienteAdmin(),
+): Promise<Reconstruccion<"aviso_monitor_inasistencia_aceptada"> | null> {
+  const d = await datosVigentes(cliente, "inasistencia_aceptada", idMonitoria);
+  if (!d) return null;
+  const transferido = await desembolsoTransferido(cliente, idMonitoria);
+  return { destinatario: d.correoMonitor, datos: datosDeInasistenciaAceptada(d, urlDelSitio(RUTA_DE_LA_AGENDA), transferido) };
+}
+
 /** Manda el correo de un aviso, o `null` si ya no vale. */
 async function mandarAviso(
   cliente: Cliente,
@@ -102,6 +125,10 @@ async function mandarAviso(
   if (evento === "pago_rechazado") {
     const correo = await reconstruirAvisoPagoRechazado(idMonitoria, cliente);
     return correo && enviar({ plantilla: "aviso_monitor_pago_rechazado", ...correo, entidad: idMonitoria });
+  }
+  if (evento === "inasistencia_aceptada") {
+    const correo = await reconstruirAvisoInasistenciaAceptada(idMonitoria, cliente);
+    return correo && enviar({ plantilla: "aviso_monitor_inasistencia_aceptada", ...correo, entidad: idMonitoria });
   }
   const correo = await reconstruirAvisoCancelada(idMonitoria, cliente);
   return correo && enviar({ plantilla: "aviso_monitor_cancelada", ...correo, entidad: idMonitoria });

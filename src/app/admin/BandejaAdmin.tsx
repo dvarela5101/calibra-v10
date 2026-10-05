@@ -333,16 +333,19 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
         id="reportes"
         titulo="Reportes en revisión"
         total={contadores.reportes}
-        ayuda="Reportes de inasistencia del monitor. No tienen plazo: atiéndelos cuanto antes."
+        ayuda="Reportes de inasistencia del monitor. No tienen plazo: atiéndelos cuanto antes. Abre cada uno para aceptarlo o rechazarlo."
         vacio="No tienes reportes en revisión."
       >
         <ul className={estilos.lista}>
           {bandeja.reportes.map((reporte) => (
-            <li key={reporte.id} className={estilos.fila}>
-              <span className={estilos.nombre}>
-                {reporte.fechaSesion ? `Sesión del ${formatearDia(reporte.fechaSesion)}` : "Sesión sin fecha"}
-              </span>
-              <span className={estilos.meta}>Reportado el {formatearFechaHora(reporte.fechaReporte)}</span>
+            <li key={reporte.id}>
+              {/* HU-030: cada reporte abre su resolución, con un <a> como los desembolsos. */}
+              <a href={`/admin/reportes/${reporte.id}`} className={estilos.filaEnlace}>
+                <span className={estilos.nombre}>
+                  {reporte.fechaSesion ? `Sesión del ${formatearDia(reporte.fechaSesion)}` : "Sesión sin fecha"}
+                </span>
+                <span className={estilos.meta}>Reportado el {formatearFechaHora(reporte.fechaReporte)}</span>
+              </a>
             </li>
           ))}
         </ul>

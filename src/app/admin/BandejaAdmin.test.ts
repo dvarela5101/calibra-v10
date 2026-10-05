@@ -233,6 +233,25 @@ describe("BandejaAdmin: lo que se ve en cada ítem", () => {
     expect(t).toContain("Reportado el martes, 29 de septiembre de 2026, 2:09 a. m.");
   });
 
+  it("HU-030: cada reporte enlaza a su resolución, con su texto dentro del enlace", () => {
+    const fechaReporte = new Date("2026-09-29T07:09:00.000Z");
+    const html = pintar({
+      ...VACIA,
+      reportes: [
+        { id: "reporte-1", fechaReporte, fechaSesion: "2020-01-13" },
+        { id: "reporte-2", fechaReporte, fechaSesion: null },
+      ],
+      contadores: { ...VACIA.contadores, reportes: 2 },
+    });
+    const enlace = (id: string) => html.match(new RegExp(`<a href="/admin/reportes/${id}"[^>]*>(.*?)</a>`))?.[1] ?? "";
+    expect(texto(enlace("reporte-1"))).toContain("Sesión del 13 de enero de 2020");
+    expect(texto(enlace("reporte-1"))).toContain("Reportado el martes, 29 de septiembre de 2026, 2:09 a. m.");
+    expect(texto(enlace("reporte-2"))).toContain("Sesión sin fecha");
+    // Un enlace por reporte y ninguno más hacia las páginas de reportes.
+    expect(html.match(/href="\/admin\/reportes\//g)).toHaveLength(2);
+    expect(texto(html)).toContain("Abre cada uno para aceptarlo o rechazarlo.");
+  });
+
   it("un desembolso muestra el neto y después de cuándo es ejecutable, y nada de bruto ni comisión", () => {
     const html = pintar({
       ...VACIA,
