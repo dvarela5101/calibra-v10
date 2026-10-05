@@ -18,10 +18,10 @@ import { reenviarPedidoDeLlave } from "@/lib/reembolsos/servidor";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
 /**
- * HU-026: el admin asignado registra la transferencia de un reembolso pendiente (criterio 2, sin vuelta atrás). Escribe
+ * HU-026, HU-082: cualquier admin activo registra la transferencia de un reembolso pendiente (sin vuelta atrás). Escribe
  * con la sesión del admin: si se puede registrar y quién lo registra lo decide `public.ejecutar_reembolso`. Tras
  * registrarla vuelve a la página del reembolso, que dice qué pasó (`?registrado=`); lo que cambió mientras el admin
- * miraba (otro lo registró, todavía espera la llave o se lo reasignaron) también vuelve a pintarla (`?error=`).
+ * miraba (otro lo registró o todavía espera la llave) también vuelve a pintarla (`?error=`).
  * `valores` devuelve lo escrito para no vaciar el formulario tras un error.
  */
 export type EstadoRegistro = { error: string | null; valores: { referencia: string; fecha: string } };

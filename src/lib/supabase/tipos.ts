@@ -717,18 +717,24 @@ isOneToOne: false
                   ]
                 },"reembolso": {
                   Row: {
-                    "cerrado_en": string | null,"estado": Database["public"]['Enums']["estado_reembolso"],"fecha_generacion": string,"fecha_reembolso": string | null,"id": string,"id_admin": string | null,"id_pago": string,"llave_destino": string | null,"monto": number,"motivo": string,"plazo_llave_desde": string,"referencia_transferencia": string | null
+                    "cerrado_en": string | null,"estado": Database["public"]['Enums']["estado_reembolso"],"fecha_generacion": string,"fecha_reembolso": string | null,"id": string,"id_admin": string | null,"id_admin_registro": string | null,"id_pago": string,"llave_destino": string | null,"monto": number,"motivo": string,"plazo_llave_desde": string,"referencia_transferencia": string | null
                   }
                   Insert: {
-                    "cerrado_en"?: string | null,"estado"?: Database["public"]['Enums']["estado_reembolso"],"fecha_generacion"?: string,"fecha_reembolso"?: string | null,"id"?: string,"id_admin"?: string | null,"id_pago": string,"llave_destino"?: string | null,"monto": number,"motivo": string,"plazo_llave_desde"?: string,"referencia_transferencia"?: string | null
+                    "cerrado_en"?: string | null,"estado"?: Database["public"]['Enums']["estado_reembolso"],"fecha_generacion"?: string,"fecha_reembolso"?: string | null,"id"?: string,"id_admin"?: string | null,"id_admin_registro"?: string | null,"id_pago": string,"llave_destino"?: string | null,"monto": number,"motivo": string,"plazo_llave_desde"?: string,"referencia_transferencia"?: string | null
                   }
                   Update: {
-                    "cerrado_en"?: string | null,"estado"?: Database["public"]['Enums']["estado_reembolso"],"fecha_generacion"?: string,"fecha_reembolso"?: string | null,"id"?: string,"id_admin"?: string | null,"id_pago"?: string,"llave_destino"?: string | null,"monto"?: number,"motivo"?: string,"plazo_llave_desde"?: string,"referencia_transferencia"?: string | null
+                    "cerrado_en"?: string | null,"estado"?: Database["public"]['Enums']["estado_reembolso"],"fecha_generacion"?: string,"fecha_reembolso"?: string | null,"id"?: string,"id_admin"?: string | null,"id_admin_registro"?: string | null,"id_pago"?: string,"llave_destino"?: string | null,"monto"?: number,"motivo"?: string,"plazo_llave_desde"?: string,"referencia_transferencia"?: string | null
                   }
                   Relationships: [
                     {
       foreignKeyName: "reembolso_id_admin_fkey"
       columns: ["id_admin"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reembolso_id_admin_registro_fkey"
+      columns: ["id_admin_registro"]
 isOneToOne: false
       referencedRelation: "admin"
       referencedColumns: ["id"]

@@ -37,9 +37,8 @@ const ESTADOS: Record<EstadoDeLaVista, string> = {
 
 /**
  * HU-026: un reembolso, para que el admin lo gestione según su estado. Lo ve cualquier admin activo (la política «admin
- * lee»). Si espera la llave, cualquiera reenvía el enlace (criterio 3); si está pendiente, solo el asignado ve la llave
- * de quien pagó y registra la transferencia (criterio 2, supuestos 1 y 9): otro admin no la necesita y, con el monto a
- * la vista, podría transferir un reembolso que no puede registrar. Un caso cerrado solo se muestra: reabrirlo sigue en
+ * lee»). Si espera la llave, cualquiera reenvía el enlace (criterio 3); si está pendiente, cualquier admin activo ve la
+ * llave de quien pagó y registra la transferencia (HU-082, D-48). Un caso cerrado solo se muestra: reabrirlo sigue en
  * la bandeja (supuesto 11). El estado lo dice la base con su hora; al registrar lo vuelve a decidir bajo candado.
  */
 export default async function GestionarUnReembolso({ params, searchParams }: PageProps<"/admin/reembolsos/[id]">) {
@@ -66,12 +65,15 @@ export default async function GestionarUnReembolso({ params, searchParams }: Pag
   if (!reembolso) notFound();
 
   const r = reembolso;
-  const esElAsignado = r.asignado !== null && r.asignado.id === sesion.idUsuario;
-  const avisos = avisosDeLaPagina(await searchParams, { estado: r.estadoVista, idAdmin: r.asignado?.id ?? null }, sesion.idUsuario);
-  // La llave solo sale hacia la página para el asignado (supuesto 9): en pendiente, para transferir; en reembolsado, para
-  // quien lo registró. A nadie más se le pinta ni se le pasa a un componente de cliente.
-  const llaveParaTransferir = r.estadoVista === "pendiente" && esElAsignado ? r.llaveDestino : null;
-  const llaveTransferida = r.estadoVista === "reembolsado" && esElAsignado ? r.llaveDestino : null;
+  const avisos = avisosDeLaPagina(
+    await searchParams,
+    { estado: r.estadoVista, idAdminRegistro: r.registradoPor?.id ?? null },
+    sesion.idUsuario,
+  );
+  // La llave la ve cualquier admin activo (quien llega aquí ya lo es) en pendiente, para transferir, y en reembolsado.
+  // En los demás estados no se pinta ni se le pasa a un componente de cliente.
+  const llaveParaTransferir = r.estadoVista === "pendiente" ? r.llaveDestino : null;
+  const llaveTransferida = r.estadoVista === "reembolsado" ? r.llaveDestino : null;
   const t = r.transferencia;
   const diaDeLaTransferencia = t && diaDelNegocio(t.fecha);
   const m = r.monitoria;
@@ -79,9 +81,7 @@ export default async function GestionarUnReembolso({ params, searchParams }: Pag
   const subtitulos: Record<EstadoDeLaVista, string | undefined> = {
     esperando_llave: "Le pedimos la llave a quien pagó. Cuando la envíe, el reembolso queda listo para transferir.",
     cerrado: "Pasó el plazo sin que quien pagó enviara su llave.",
-    pendiente: llaveParaTransferir
-      ? "Transfiere el monto a la llave de quien pagó desde la cuenta de Calibra y después registra la referencia y la fecha."
-      : undefined,
+    pendiente: "Transfiere el monto a la llave de quien pagó desde la cuenta de Calibra y después registra la referencia y la fecha.",
     reembolsado: undefined,
   };
 
@@ -133,7 +133,7 @@ export default async function GestionarUnReembolso({ params, searchParams }: Pag
               )}
             </>
           )}
-          {/* En un reembolsado, id_admin es quien lo registró: lo dice «Registrado por». */}
+          {/* En un reembolsado lo dice «Registrado por» (id_admin_registro), no el asignado. */}
           {r.estadoVista !== "reembolsado" && (
             <>
               <dt className={estilos.dato}>Asignado a</dt>
@@ -149,7 +149,7 @@ export default async function GestionarUnReembolso({ params, searchParams }: Pag
                 <time dateTime={diaDeLaTransferencia}>{formatearDia(diaDeLaTransferencia)}</time>
               </dd>
               <dt className={estilos.dato}>Registrado por</dt>
-              <dd className={estilos.valor}>{r.asignado ? r.asignado.nombre : "Sin dato"}</dd>
+              <dd className={estilos.valor}>{r.registradoPor ? r.registradoPor.nombre : "Sin dato"}</dd>
             </>
           )}
           {llaveTransferida && (
@@ -208,42 +208,35 @@ export default async function GestionarUnReembolso({ params, searchParams }: Pag
         </p>
       )}
 
-      {r.estadoVista === "pendiente" &&
-        (llaveParaTransferir ? (
-          <section aria-labelledby="transferir" className={estilos.seccion}>
-            <h2 id="transferir" className={estilos.titulo}>
-              Transferir {formatearPesos(r.monto)}
-            </h2>
-            <div className={formulario.campo}>
-              <label htmlFor="llave-destino" className={formulario.etiqueta}>
-                Llave de quien pagó
-              </label>
-              <p id="llave-ayuda" className={formulario.ayuda}>
-                La que envió desde el enlace del correo. Revísala antes de transferir.
-              </p>
-              <input
-                id="llave-destino"
-                readOnly
-                value={llaveParaTransferir}
-                aria-describedby="llave-ayuda"
-                className={`${formulario.entrada} ${estilos.llave}`}
-              />
-              <BotonCopiar texto={llaveParaTransferir} idCampo="llave-destino" />
-            </div>
-            <RegistrarTransferencia
-              idReembolso={r.id}
-              fechaMinima={r.fechaMinima}
-              hoy={diaDelNegocio(new Date())}
-              consecuencias={consecuenciasDeRegistrar(formatearPesos(r.monto), llaveParaTransferir)}
+      {llaveParaTransferir && (
+        <section aria-labelledby="transferir" className={estilos.seccion}>
+          <h2 id="transferir" className={estilos.titulo}>
+            Transferir {formatearPesos(r.monto)}
+          </h2>
+          <div className={formulario.campo}>
+            <label htmlFor="llave-destino" className={formulario.etiqueta}>
+              Llave de quien pagó
+            </label>
+            <p id="llave-ayuda" className={formulario.ayuda}>
+              La que envió desde el enlace del correo. Revísala antes de transferir.
+            </p>
+            <input
+              id="llave-destino"
+              readOnly
+              value={llaveParaTransferir}
+              aria-describedby="llave-ayuda"
+              className={`${formulario.entrada} ${estilos.llave}`}
             />
-          </section>
-        ) : (
-          <p className={estilos.explicacion}>
-            {r.asignado
-              ? `Lo tiene asignado ${r.asignado.nombre}: solo esa persona registra la transferencia.`
-              : "Todavía no tiene admin: en unos minutos se le asigna al primer admin activo y esa persona registra la transferencia."}
-          </p>
-        ))}
+            <BotonCopiar texto={llaveParaTransferir} idCampo="llave-destino" />
+          </div>
+          <RegistrarTransferencia
+            idReembolso={r.id}
+            fechaMinima={r.fechaMinima}
+            hoy={diaDelNegocio(new Date())}
+            consecuencias={consecuenciasDeRegistrar(formatearPesos(r.monto), llaveParaTransferir)}
+          />
+        </section>
+      )}
 
       <VolverALaBandeja />
     </Pantalla>

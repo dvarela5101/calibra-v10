@@ -15,7 +15,7 @@ import { leerLlavePorToken, reenviarPedidoDeLlave } from "@/lib/reembolsos/servi
 import { crearCliente, exigirSupabaseLocal, exito, Fixtures, type Cliente, type UsuarioPrueba } from "./utilidades";
 
 /**
- * HU-026 contra el Supabase local, por la misma ruta que la página y las acciones de `/admin/reembolsos/[id]`:
+ * HU-026 y HU-082 contra el Supabase local, por la misma ruta que la página y las acciones de `/admin/reembolsos/[id]`:
  * `cargarReembolso` y `ejecutarReembolso` con la sesión de verdad de cada admin, así que también se prueban
  * `public.estado_de_reembolso`, `public.ejecutar_reembolso`, sus permisos y que nadie escriba `reembolso` por su cuenta.
  * La acción `registrar` hace lo mismo y además `exigirRol`, la lectura del formulario, `revalidatePath` y `redirect`, que
@@ -26,6 +26,9 @@ import { crearCliente, exigirSupabaseLocal, exito, Fixtures, type Cliente, type 
  *
  * Criterio 4 (al crearse queda asignado al primer admin activo, D-26, D-28): no se duplica. Ya lo prueban las puertas
  * reales en `integracion/cancelar.test.ts:474` (cancelar a tiempo), `:866` (P-07 con `revisarPago`) y `:958` (D-28).
+ *
+ * HU-082 (D-48): cualquier admin activo registra la transferencia, no solo el asignado. `id_admin` no cambia y
+ * `id_admin_registro` guarda quién la registró.
  *
  * Los reembolsos se insertan directo, como los crea cualquier HU (HU-024, P-07, HU-030): los triggers les anotan su
  * solicitud (el token) y, si esperan la llave, su pedido. Un caso vencido o cerrado se prepara moviendo el plazo hacia
@@ -205,7 +208,7 @@ async function cerrarSinLlave(r: Reembolso): Promise<Reembolso> {
   return r;
 }
 
-const COLUMNAS = "estado, llave_destino, id_admin, referencia_transferencia, fecha_reembolso, monto, motivo, cerrado_en, plazo_llave_desde";
+const COLUMNAS = "estado, llave_destino, id_admin, id_admin_registro, referencia_transferencia, fecha_reembolso, monto, motivo, cerrado_en, plazo_llave_desde";
 
 /** Lo que la base guarda del reembolso. Con la llave secreta: aquí sí se lee la llave, para comprobarla. */
 const reembolsoEnBd = async (id: string) => exito(await fx.admin.from("reembolso").select(COLUMNAS).eq("id", id).single(), "leer el reembolso");
@@ -383,6 +386,9 @@ describe("criterio 1: el admin ve los reembolsos que tiene asignados, agrupados 
     // El cerrado va con los de todos los admins (HU-025), para reabrirlo; el de otro admin, en la bandeja de ese admin.
     expect(bandeja.reembolsosCerrados.map((r) => r.id)).toContain(cerrado.id);
     expect((await bandejaDe(otroAdmin)).reembolsos.pendientes.map((r) => r.id)).toEqual([deOtro.id]);
+    // HU-082: el pendiente de otro admin sale aparte, sin sumar a los propios (ver integracion/bandeja.test.ts).
+    expect(bandeja.reembolsos.pendientesDeOtros.map((r) => r.id)).toEqual([deOtro.id]);
+    expect(bandeja.contadores.reembolsosPendientesDeOtros).toBe(1);
 
     const grupos: [EstadoDeLaVista, { id: string }[]][] = [
       ["esperando_llave", bandeja.reembolsos.esperandoLlave],
@@ -402,8 +408,8 @@ describe("criterio 1: el admin ve los reembolsos que tiene asignados, agrupados 
 // Criterio 2: registrar la transferencia
 // ---------------------------------------------------------------------------------------------------------------
 
-describe("criterio 2: en pendiente, el admin asignado registra la referencia y la fecha y pasa a reembolsado", () => {
-  it("con su sesión queda reembolsado con la referencia recortada, la fecha a mediodía de Bogotá y su id; sale de «Listos para transferir»; la página lo pinta registrado; otro intento suyo responde ya_reembolsado y el de otro admin no_asignado; el enlace de quien pagó dice que ya le devolvimos el dinero", async () => {
+describe("criterio 2: en pendiente, el admin registra la referencia y la fecha y pasa a reembolsado", () => {
+  it("con su sesión queda reembolsado con la referencia recortada, la fecha a mediodía de Bogotá y su id; sale de «Listos para transferir»; la página lo pinta registrado; otro intento suyo, y el de otro admin, responden ya_reembolsado; el enlace de quien pagó dice que ya le devolvimos el dinero", async () => {
     const r = await reembolso("pendiente");
     const antes = await reembolsoEnBd(r.id);
     const bandejaAntes = await bandejaDe(admin);
@@ -421,6 +427,7 @@ describe("criterio 2: en pendiente, el admin asignado registra la referencia y l
       contacto: r.contacto,
       llaveDestino: LLAVE,
       asignado: { id: admin.usuario.id, nombre: "Admin de prueba" },
+      registradoPor: null,
       fechaMinima: hoy(),
       transferencia: null,
       monitoria: { estado: "cancelada", motivoCancelacion: "estudiante", fecha: r.fecha, hora: "10:00:00", duracionMin: 60, nombreMateria: "Materia de prueba" },
@@ -439,8 +446,9 @@ describe("criterio 2: en pendiente, el admin asignado registra la referencia y l
       estado: "reembolsado",
       referencia_transferencia: referencia,
       fecha_reembolso: mediodiaEnBogota(dia).getTime(),
-      // id_admin no cambia: ya era quien registra.
+      // id_admin no cambia; id_admin_registro es quien registró.
       id_admin: admin.usuario.id,
+      id_admin_registro: admin.usuario.id,
       llave_destino: LLAVE,
     });
     const bandejaDespues = await bandejaDe(admin);
@@ -449,12 +457,13 @@ describe("criterio 2: en pendiente, el admin asignado registra la referencia y l
     expect(await cargarReembolso(admin.cliente, r.id)).toMatchObject({
       estadoVista: "reembolsado",
       asignado: { id: admin.usuario.id, nombre: "Admin de prueba" },
+      registradoPor: { id: admin.usuario.id, nombre: "Admin de prueba" },
       transferencia: { referencia, fecha: mediodiaEnBogota(dia) },
     });
 
-    // Sin vuelta atrás: el mismo admin recibe ya_reembolsado; otro admin, no_asignado (quién puede va antes).
+    // Sin vuelta atrás: el mismo admin y otro admin activo reciben ya_reembolsado.
     expect(await registrar(admin, r.id)).toBe("ya_reembolsado");
-    expect(await registrar(otroAdmin, r.id)).toBe("no_asignado");
+    expect(await registrar(otroAdmin, r.id)).toBe("ya_reembolsado");
     expect(await reembolsoEnBd(r.id)).toEqual(enBd);
 
     // Quien pagó lo ve en su enlace: «Ya te devolvimos el dinero».
@@ -465,7 +474,6 @@ describe("criterio 2: en pendiente, el admin asignado registra la referencia y l
     ["espera la llave", "esperando_llave", "sin_llave", () => reembolso("esperando_llave")],
     ["venció sin llave y pg_cron todavía no lo cierra", "cerrado", "sin_llave", async () => vencer(await reembolso("esperando_llave"))],
     ["se cerró sin llave", "cerrado", "sin_llave", async () => cerrarSinLlave(await reembolso("esperando_llave"))],
-    ["lo tiene asignado otro admin", "pendiente", "no_asignado", () => reembolso("pendiente", otroAdmin)],
   ];
 
   it.each(negativos)("%s: cargarReembolso lo da en %s, registrar responde %s y nada cambia", async (_caso, estadoVista, resultado, crear) => {
@@ -475,6 +483,88 @@ describe("criterio 2: en pendiente, el admin asignado registra la referencia y l
     expect((await cargarReembolso(admin.cliente, r.id))?.estadoVista).toBe(estadoVista);
     expect(await registrar(admin, r.id)).toBe(resultado);
     expect(await reembolsoEnBd(r.id)).toEqual(antes);
+  });
+
+  it("HU-082: otro admin activo registra un pendiente asignado a alguien más: queda reembolsado, id_admin no cambia, id_admin_registro es quien lo registró, y la página lo nombra", async () => {
+    const r = await reembolso("pendiente", admin);
+    const antes = await reembolsoEnBd(r.id);
+    expect(antes).toMatchObject({ id_admin: admin.usuario.id, id_admin_registro: null });
+
+    // El embed con dos llaves a admin (sería PGRST201 sin el nombre de la relación) y la llave que lee cualquier admin.
+    expect(await cargarReembolso(otroAdmin.cliente, r.id)).toMatchObject({ estadoVista: "pendiente", llaveDestino: LLAVE, asignado: { id: admin.usuario.id }, registradoPor: null });
+
+    expect(await registrar(otroAdmin, r.id, { referencia: "TRX-OTRO" })).toBe("reembolsado");
+    const enBd = await reembolsoEnBd(r.id);
+    expect(enBd).toMatchObject({
+      estado: "reembolsado",
+      referencia_transferencia: "TRX-OTRO",
+      id_admin: admin.usuario.id,
+      id_admin_registro: otroAdmin.usuario.id,
+      llave_destino: LLAVE,
+      monto: MONTO,
+      motivo: MOTIVO,
+    });
+    for (const cuenta of [otroAdmin, admin]) {
+      expect(await cargarReembolso(cuenta.cliente, r.id)).toMatchObject({
+        estadoVista: "reembolsado",
+        asignado: { id: admin.usuario.id },
+        registradoPor: { id: otroAdmin.usuario.id, nombre: "Admin de prueba" },
+        transferencia: { referencia: "TRX-OTRO" },
+      });
+    }
+    // Ni el asignado ni otro pueden registrarlo otra vez.
+    expect(await registrar(admin, r.id)).toBe("ya_reembolsado");
+    expect(await registrar(otroAdmin, r.id)).toBe("ya_reembolsado");
+    expect(await reembolsoEnBd(r.id)).toEqual(enBd);
+    // Sale de las dos bandejas: de los propios del asignado y de «De otros admins» del otro.
+    expect((await bandejaDe(admin)).reembolsos.pendientes.map((x) => x.id)).not.toContain(r.id);
+    expect((await bandejaDe(otroAdmin)).reembolsos.pendientesDeOtros.map((x) => x.id)).not.toContain(r.id);
+  });
+
+  it("HU-082 (D-28): un pendiente sin admin asignado lo registra cualquier admin activo; id_admin sigue nulo", async () => {
+    const r = await reembolso("pendiente");
+    exito(await fx.admin.from("reembolso").update({ id_admin: null }).eq("id", r.id).select().single(), "quitar el admin");
+
+    expect(await cargarReembolso(otroAdmin.cliente, r.id)).toMatchObject({ estadoVista: "pendiente", asignado: null, llaveDestino: LLAVE });
+    expect(await registrar(otroAdmin, r.id)).toBe("reembolsado");
+    expect(await reembolsoEnBd(r.id)).toMatchObject({ estado: "reembolsado", id_admin: null, id_admin_registro: otroAdmin.usuario.id });
+    expect(await cargarReembolso(admin.cliente, r.id)).toMatchObject({ asignado: null, registradoPor: { id: otroAdmin.usuario.id } });
+  });
+
+  it("HU-082 (criterio 5): un admin desactivado, aunque conserve su token, recibe sin_permiso y no cambia nada; al reactivarlo registra", async () => {
+    const r = await reembolso("pendiente");
+    const usuario = await fx.crearAdmin();
+    const desactivado: Cuenta = { usuario, cliente: await fx.iniciarSesion(usuario) };
+    const antes = await reembolsoEnBd(r.id);
+
+    await bd.query("update auth.users set banned_until = now() + interval '876000 hours' where id = $1", [usuario.id]);
+    expect(await registrar(desactivado, r.id)).toBe("sin_permiso");
+    expect(await cargarReembolso(desactivado.cliente, r.id)).toBeNull();
+    expect(await reembolsoEnBd(r.id)).toEqual(antes);
+
+    await bd.query("update auth.users set banned_until = null where id = $1", [usuario.id]);
+    expect(await registrar(desactivado, r.id)).toBe("reembolsado");
+    expect(await reembolsoEnBd(r.id)).toMatchObject({ id_admin: admin.usuario.id, id_admin_registro: usuario.id });
+  });
+
+  it("HU-082: el reembolso y su llave no salen para un Lead anónimo, un estudiante ni un monitor (cargarReembolso da null)", async () => {
+    const r = await reembolso("pendiente");
+    const reembolsado = await reembolso("reembolsado");
+    const anonimo = await fx.crearAnonimo();
+    await fx.crearLeadDeSesion(anonimo.id);
+    const estudiante = await fx.crearEstudiante();
+    const clienteEstudiante = await fx.iniciarSesion(estudiante);
+
+    for (const [quien, cliente] of [
+      ["lead anónimo", anonimo.cliente],
+      ["estudiante", clienteEstudiante],
+      ["monitor", monitor.cliente],
+    ] as const) {
+      for (const x of [r, reembolsado]) {
+        expect(await cargarReembolso(cliente, x.id), `${quien} ${x.id}`).toBeNull();
+      }
+      sinFilas(await cliente.from("reembolso").select("llave_destino, id_admin_registro").eq("id", r.id));
+    }
   });
 
   it("con la referencia o la fecha mal responde referencia_invalida o fecha_invalida sin tocar nada; un id que no existe, no_encontrado; la fecha del día en que se creó y 100 caracteres (contados como la base) sí se registran", async () => {
@@ -575,7 +665,7 @@ describe("criterio 3: en esperando la llave, el admin reenvía la solicitud a qu
 // Permisos
 // ---------------------------------------------------------------------------------------------------------------
 
-describe("solo el admin asignado registra, y solo por la función", () => {
+describe("cualquier admin activo registra, y solo por la función", () => {
   it("un monitor no ve el reembolso (null) y al registrar recibe sin_permiso; sin sesión la base ni siquiera ejecuta las funciones; una sesión sin usuario recibe sin_sesion; nada cambia", async () => {
     const r = await reembolso("pendiente");
     const antes = await reembolsoEnBd(r.id);
@@ -652,7 +742,7 @@ describe("solo el admin asignado registra, y solo por la función", () => {
 
 describe("dos operaciones a la vez sobre el mismo reembolso (A.4 del diseño)", () => {
   it(
-    "doble clic: el primer registro bloquea la fila; el segundo espera, recibe ya_reembolsado y queda la referencia del primero",
+    "dos admins a la vez (el asignado y otro): el primer registro bloquea la fila; el segundo espera, recibe ya_reembolsado y queda la referencia y el registrador del primero",
     async () => {
       const r = await reembolso("pendiente");
 
@@ -664,7 +754,7 @@ describe("dos operaciones a la vez sobre el mismo reembolso (A.4 del diseño)", 
         expect(await registrarEn(a.cliente, r.id, "TRX-PRIMERO")).toBe("reembolsado");
 
         await b.cliente.query("begin");
-        await como(b.cliente, admin);
+        await como(b.cliente, otroAdmin);
         const segundo = enCurso(registrarEn(b.cliente, r.id, "TRX-SEGUNDO"));
         await esperarBloqueo(b.pid, a.pid, segundo);
 
@@ -674,13 +764,18 @@ describe("dos operaciones a la vez sobre el mismo reembolso (A.4 del diseño)", 
       } finally {
         await cerrar(a, b);
       }
-      expect(await reembolsoEnBd(r.id)).toMatchObject({ estado: "reembolsado", id_admin: admin.usuario.id, referencia_transferencia: "TRX-PRIMERO" });
+      expect(await reembolsoEnBd(r.id)).toMatchObject({
+        estado: "reembolsado",
+        id_admin: admin.usuario.id,
+        id_admin_registro: admin.usuario.id,
+        referencia_transferencia: "TRX-PRIMERO",
+      });
     },
     60_000,
   );
 
   it(
-    "P-44: si reasignar_casos_de_admin tomó la fila y confirma, el registro del admin que la tenía, que esperaba, responde no_asignado y no escribe nada",
+    "P-44: si reasignar_casos_de_admin tomó la fila y confirma, el registro del admin que la tenía, que esperaba y sigue activo, registra: id_admin es el nuevo asignado e id_admin_registro es él",
     async () => {
       const r = await reembolso("pendiente");
 
@@ -697,14 +792,47 @@ describe("dos operaciones a la vez sobre el mismo reembolso (A.4 del diseño)", 
         await esperarBloqueo(b.pid, a.pid, registro);
 
         await a.cliente.query("commit");
-        expect(await registro.promesa).toBe("no_asignado");
+        expect(await registro.promesa).toBe("reembolsado");
         await b.cliente.query("commit");
       } finally {
         await cerrar(a, b);
       }
       const enBd = await reembolsoEnBd(r.id);
-      expect(enBd).toMatchObject({ estado: "pendiente", referencia_transferencia: null, fecha_reembolso: null, llave_destino: LLAVE });
+      expect(enBd).toMatchObject({ estado: "reembolsado", referencia_transferencia: "TRX-TARDE", llave_destino: LLAVE, id_admin_registro: admin.usuario.id });
       expect(enBd.id_admin).not.toBe(admin.usuario.id);
+    },
+    60_000,
+  );
+
+  it(
+    "P-44: si el admin que esperaba la fila se desactiva antes de que la otra transacción confirme, el registro responde sin_permiso (se mira otra vez bajo el candado) y no escribe nada",
+    async () => {
+      const r = await reembolso("pendiente");
+      const viejo = await fx.crearAdmin();
+      exito(await fx.admin.from("reembolso").update({ id_admin: viejo.id }).eq("id", r.id).select().single(), "asignar al admin viejo");
+      const antes = await reembolsoEnBd(r.id);
+
+      const a = await conexion();
+      const b = await conexion();
+      try {
+        // A toma la fila y, antes de confirmar, desactiva al admin viejo (como al desactivarlo desde el equipo).
+        await a.cliente.query("begin");
+        await a.cliente.query("select id from public.reembolso where id = $1 for no key update", [r.id]);
+
+        await b.cliente.query("begin");
+        await b.cliente.query("set local role authenticated");
+        await b.cliente.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: viejo.id, role: "authenticated" })]);
+        const registro = enCurso(registrarEn(b.cliente, r.id, "TRX-BANEADO"));
+        await esperarBloqueo(b.pid, a.pid, registro);
+
+        await a.cliente.query("update auth.users set banned_until = now() + interval '876000 hours' where id = $1", [viejo.id]);
+        await a.cliente.query("commit");
+        expect(await registro.promesa).toBe("sin_permiso");
+        await b.cliente.query("commit");
+      } finally {
+        await cerrar(a, b);
+      }
+      expect(await reembolsoEnBd(r.id)).toEqual(antes);
     },
     60_000,
   );

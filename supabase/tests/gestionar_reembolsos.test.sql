@@ -1,12 +1,16 @@
--- Pruebas pgTAP de registrar la transferencia de un reembolso (HU-026).
+-- Pruebas pgTAP de registrar la transferencia de un reembolso (HU-026) y de que la registre cualquier admin activo (HU-082).
 -- Corre con: npx supabase test db
 -- Todo ocurre en una transacción que termina en rollback: no deja datos.
 --
--- Qué cubre la migración 20261004055644_gestionar_reembolsos.sql:
+-- Qué cubre la migración 20261004055644_gestionar_reembolsos.sql (HU-026) y 20261004205851_registrar_reembolso_cualquier_admin.sql
+-- (HU-082):
 --   * El check de la referencia (reembolso_referencia_con_texto).
---   * privado.ejecutar_reembolso: cada resultado y su orden (quién puede antes que el texto; el texto antes que el
---     estado), los bordes de la fecha en Bogotá con p_ahora, y que el éxito no cambia el admin, la llave, el monto ni el
---     motivo. Sus envoltorios con now() y los permisos de las cuatro funciones.
+--   * privado.ejecutar_reembolso: cada resultado y su orden (quién puede, un admin activo, antes que el texto; el texto
+--     antes que el estado; ya no hay no_asignado), los bordes de la fecha en Bogotá con p_ahora, y que el éxito no cambia
+--     el admin asignado, la llave, el monto ni el motivo y guarda quién lo registró (id_admin_registro), sea o no el
+--     asignado o no tenga asignado (D-28). Sus envoltorios con now() y los permisos de las cuatro funciones.
+--   * La columna id_admin_registro (tipo, nulidad, llave foránea, índice, permisos), su relleno idempotente y que la llave
+--     del pagador y quién registró solo los lee un admin activo (monitor, Lead y estudiante no ven filas).
 --   * public.estado_de_reembolso: el estado de la página (cerrado aunque el cierre de pg_cron no haya corrido, con el
 --     borde de P-40) y que solo un admin activo recibe filas.
 --   * Lo que ya existía sigue igual con un reembolsado: la pantalla del equipo, entregar la llave, la página de la llave,
@@ -33,11 +37,14 @@
 --     referencia de 100 caracteres de dos bytes)     11 pendiente de A creado en 2020 (las puertas con now())
 --     12 esperando de A desde hace 7 días exactos y 13 desde hace 7 días y un microsegundo (el borde de P-40 con now())
 --     14 pendiente de C, el desactivado (RN-23 aunque sea suyo)     15 esperando de B desde hace un día (abierto con now())
+--     16 pendiente de A que registra B (HU-082)     17 pendiente sin admin (D-28) que registra A (HU-082)
+--     18 reembolsado de A insertado directo, con id_admin_registro nulo: el relleno (HU-082)
+--   Estudiante E (con el Lead 01): una sesión que no es admin, ni monitor, ni anónima.
 
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(62);
+select plan(83);
 
 -- ---------------------------------------------------------------------------
 -- Estructura y permisos
@@ -116,6 +123,26 @@ select ok(
   and not has_any_column_privilege('authenticated', 'public.reembolso', 'update')
   and not has_table_privilege('authenticated', 'public.reembolso', 'delete'),
   'Sigue igual: nadie con sesión escribe en reembolso; solo las funciones');
+select col_type_is('public', 'reembolso', 'id_admin_registro', 'uuid',
+  'Criterio 2 (HU-082): reembolso.id_admin_registro guarda qué admin registró la transferencia');
+select col_is_null('public', 'reembolso', 'id_admin_registro',
+  'Puede ser nula: mientras no se registra no hay quien la registró (supuesto 3)');
+select fk_ok('public', 'reembolso', 'id_admin_registro', 'public', 'admin', 'id',
+  'Apunta a un admin');
+select has_index('public', 'reembolso', 'reembolso_id_admin_registro_idx', 'id_admin_registro',
+  'Tiene su índice, como cada llave foránea del esquema');
+select ok(
+  has_column_privilege('authenticated', 'public.reembolso', 'id_admin_registro', 'select')
+  and not has_column_privilege('authenticated', 'public.reembolso', 'id_admin_registro', 'insert')
+  and not has_column_privilege('authenticated', 'public.reembolso', 'id_admin_registro', 'update')
+  and not has_column_privilege('anon', 'public.reembolso', 'id_admin_registro', 'select'),
+  'Criterio 4: la sesión la lee (la RLS de reembolso deja solo a los admins) y no la escribe; anon no la lee');
+select ok(
+  has_column_privilege('authenticated', 'public.reembolso', 'llave_destino', 'select')
+  and not has_column_privilege('authenticated', 'public.reembolso', 'llave_destino', 'insert')
+  and not has_column_privilege('authenticated', 'public.reembolso', 'llave_destino', 'update')
+  and not has_column_privilege('anon', 'public.reembolso', 'llave_destino', 'select'),
+  'Criterio 4: lo mismo con la llave del pagador (llave_destino): la lee la sesión (solo los admins por la RLS), anon no, y nadie la escribe');
 
 -- Sin permiso ni se ejecutan.
 set local role anon;
@@ -153,7 +180,8 @@ insert into auth.users (id, is_anonymous, banned_until) values
   ('a0000000-0000-0000-0000-0000000026b0', false, null),
   ('a0000000-0000-0000-0000-0000000026c0', false, now() + interval '100 years'),
   ('b0000000-0000-0000-0000-000000002601', false, null),
-  ('c0000000-0000-0000-0000-000000002601', true, null);
+  ('c0000000-0000-0000-0000-000000002601', true, null),
+  ('d0000000-0000-0000-0000-000000002601', false, null);
 
 insert into public.admin (id, nombre, correo, orden_revision) values
   ('a0000000-0000-0000-0000-0000000026a0', 'Admin A', 'admin-a-hu026@calibra.test', -2600),
@@ -168,6 +196,8 @@ insert into public.certificado (id_monitor, id_materia, id_admin) values
 insert into public.lead (id, id_sesion_anonima, nombre, numero_telefono, correo, acepta_tratamiento_datos, fecha_consentimiento) values
   ('40000000-0000-0000-0000-000000002601', 'c0000000-0000-0000-0000-000000002601', 'Lead Prueba 26', '3002611111',
    'lead26@calibra.test', true, now());
+insert into public.estudiante (id, id_lead) values
+  ('d0000000-0000-0000-0000-000000002601', '40000000-0000-0000-0000-000000002601');
 
 -- r(nn): el reembolso 26NN. t(nn): el token que se le pone a su solicitud de llave.
 create function pg_temp.r(nn text) returns uuid language sql immutable
@@ -186,13 +216,13 @@ insert into public.monitoria (id, id_franja, id_materia, id_lead, fecha, valor_t
 -- Un pago aprobado por reembolso, cada uno con su comprobante revisado (HU-059). No hace falta el archivo.
 insert into public.comprobante_revisado (ruta, tipo)
 select 'c0000000-0000-0000-0000-000000002601/60000000-0000-0000-0000-0000000026' || nn || '.pdf', 'application/pdf'
-from unnest(array['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15']) as nn;
+from unnest(array['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18']) as nn;
 insert into public.pago (id, id_monitoria, monto, nombre_pagador, contacto, estado, id_admin, fecha_pago, fecha_revision, comprobante)
 select ('60000000-0000-0000-0000-0000000026' || nn)::uuid, '50000000-0000-0000-0000-000000002601', 20000, 'Pagador ' || nn,
        'pagador26-' || nn || '@example.com', 'aprobado', 'a0000000-0000-0000-0000-0000000026a0',
        timestamptz '2020-01-06 09:00-05', now(),
        'c0000000-0000-0000-0000-000000002601/60000000-0000-0000-0000-0000000026' || nn || '.pdf'
-from unnest(array['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15']) as nn;
+from unnest(array['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18']) as nn;
 
 -- Los reembolsos, en una sola sentencia. El plazo de la llave corre desde que se crearon.
 insert into public.reembolso (id, id_pago, id_admin, monto, motivo, llave_destino, estado, fecha_generacion,
@@ -217,7 +247,10 @@ from (values
   ('12', 'a', null, 'esperando_llave', now() - interval '168 hours', null),
   ('13', 'a', null, 'esperando_llave', now() - interval '168 hours' - interval '1 microsecond', null),
   ('14', 'c', 'llave-26-14', 'pendiente', timestamptz '2031-12-01 10:00-05', null),
-  ('15', 'b', null, 'esperando_llave', now() - interval '24 hours', null)
+  ('15', 'b', null, 'esperando_llave', now() - interval '24 hours', null),
+  ('16', 'a', 'llave-26-16', 'pendiente', timestamptz '2031-12-01 10:00-05', null),
+  ('17', null, 'llave-26-17', 'pendiente', timestamptz '2031-12-01 10:00-05', null),
+  ('18', 'a', 'llave-26-18', 'reembolsado', timestamptz '2031-12-01 10:00-05', null)
 ) as v(nn, admin, llave, estado, creado, cerrado);
 
 -- Tokens conocidos para los reembolsos de la prueba.
@@ -225,15 +258,21 @@ update public.solicitud_llave set token = pg_temp.t(right(id_reembolso::text, 2)
 where id_reembolso::text like '70000000-0000-0000-0000-0000000026%';
 
 select ok(
-  (select count(*) = 15 from public.reembolso where id::text like '70000000-0000-0000-0000-0000000026%')
+  (select count(*) = 18 from public.reembolso where id::text like '70000000-0000-0000-0000-0000000026%')
   and (select id_admin is null from public.reembolso where id = pg_temp.r('03'))
   and (select (fecha_generacion at time zone 'America/Bogota')::date = date '2031-12-20'
               and (fecha_generacion at time zone 'UTC')::date = date '2031-12-21'
        from public.reembolso where id = pg_temp.r('07'))
   and (select banned_until > now() from auth.users where id = 'a0000000-0000-0000-0000-0000000026c0')
   and (select estado = 'pendiente' and id_admin = 'a0000000-0000-0000-0000-0000000026c0'
-       from public.reembolso where id = pg_temp.r('14')),
-  'Control: están los 15 reembolsos, el 03 no tiene admin, el 07 se creó el 20-dic en Bogotá (en UTC ya es el 21), C está desactivado y tiene el 14 pendiente');
+       from public.reembolso where id = pg_temp.r('14'))
+  and (select estado = 'pendiente' and id_admin = 'a0000000-0000-0000-0000-0000000026a0'
+       from public.reembolso where id = pg_temp.r('16'))
+  and (select estado = 'pendiente' and id_admin is null from public.reembolso where id = pg_temp.r('17'))
+  and (select estado = 'reembolsado' and id_admin_registro is null from public.reembolso where id = pg_temp.r('18'))
+  and (select count(*) = 0 from public.reembolso where id::text like '70000000-0000-0000-0000-0000000026%'
+         and id_admin_registro is not null),
+  'Control: están los 18 reembolsos, el 03 y el 17 no tienen admin, el 07 se creó el 20-dic en Bogotá (en UTC ya es el 21), C está desactivado y tiene el 14 pendiente, el 16 es pendiente de A y el 18 está reembolsado sin id_admin_registro');
 
 -- ---------------------------------------------------------------------------
 -- La referencia, por fuera de la función (supuesto 2)
@@ -256,7 +295,7 @@ update public.reembolso set referencia_transferencia = null where id = pg_temp.r
 -- ejecutar_reembolso con ahora = 31-dic-2031 12:00 en Bogotá: lo que no se registra
 -- ---------------------------------------------------------------------------
 create temporary table antes as
-select id, estado::text as estado, id_admin, llave_destino, referencia_transferencia, fecha_reembolso, monto, motivo,
+select id, estado::text as estado, id_admin, id_admin_registro, llave_destino, referencia_transferencia, fecha_reembolso, monto, motivo,
        cerrado_en, plazo_llave_desde
 from public.reembolso where id::text like '70000000-0000-0000-0000-0000000026%';
 
@@ -273,10 +312,10 @@ set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-0000000026c0","
 select is(
   array[
     privado.ejecutar_reembolso(pg_temp.r('14'), 'REF-1', date '2031-12-31', '2031-12-31 12:00-05'),
-    privado.ejecutar_reembolso(pg_temp.r('01'), 'REF-1', date '2031-12-31', '2031-12-31 12:00-05')
+    privado.ejecutar_reembolso(pg_temp.r('16'), 'REF-1', date '2031-12-31', '2031-12-31 12:00-05')
   ],
   array['sin_permiso', 'sin_permiso'],
-  'RN-23: un admin desactivado no registra ni el suyo (el 14, pendiente de C, con referencia y fecha válidas) ni el de otro admin');
+  'RN-23, criterio 5: un admin desactivado no registra ni el suyo (el 14, pendiente de C, con referencia y fecha válidas) ni uno pendiente de otro admin (el 16): sin_permiso y nada cambia');
 
 -- Desde aquí el admin de la sesión es A, salvo donde se diga.
 set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-0000000026a0","role":"authenticated"}';
@@ -287,19 +326,17 @@ select is(
   ],
   array['no_encontrado', 'no_encontrado'],
   'Un reembolso que no existe o un id nulo: no_encontrado');
+-- Ya no hay no_asignado (HU-082): el de otro admin (02, de B) o uno sin admin (03, D-28) se valida como cualquiera. Con
+-- texto inválido responden lo del texto y no cambian nada (el 02 y el 03 se usan después).
 select is(
   array[
-    privado.ejecutar_reembolso(pg_temp.r('02'), 'REF-1', date '2031-12-31', '2031-12-31 12:00-05'),
-    privado.ejecutar_reembolso(pg_temp.r('03'), 'REF-1', date '2031-12-31', '2031-12-31 12:00-05'),
     privado.ejecutar_reembolso(pg_temp.r('02'), repeat('a', 101), date '2031-12-31', '2031-12-31 12:00-05'),
-    privado.ejecutar_reembolso(pg_temp.r('03'), null, null, '2031-12-31 12:00-05')
+    privado.ejecutar_reembolso(pg_temp.r('03'), null, null, '2031-12-31 12:00-05'),
+    privado.ejecutar_reembolso(pg_temp.r('02'), 'REF-1', null, '2031-12-31 12:00-05'),
+    privado.ejecutar_reembolso(pg_temp.r('03'), 'REF-1', date '2032-01-01', '2031-12-31 12:00-05')
   ],
-  array['no_asignado', 'no_asignado', 'no_asignado', 'no_asignado'],
-  'Supuesto 1: el de otro admin (B) o uno sin admin (D-28): no_asignado, también con una referencia o una fecha inválidas (quién puede se mira antes que el texto)');
-set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-0000000026b0","role":"authenticated"}';
-select is(privado.ejecutar_reembolso(pg_temp.r('01'), 'REF-1', date '2031-12-31', '2031-12-31 12:00-05'), 'no_asignado',
-  'B, activo, tampoco registra el de A: no_asignado');
-set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-0000000026a0","role":"authenticated"}';
+  array['referencia_invalida', 'referencia_invalida', 'fecha_invalida', 'fecha_invalida'],
+  'Supuesto 1 (HU-082): el de otro admin (B) o uno sin admin (D-28) ya no responden no_asignado: se mira el texto como en cualquiera (referencia_invalida y fecha_invalida) y no se registra nada');
 select is(
   array[
     privado.ejecutar_reembolso(pg_temp.r('08'), null, date '2031-12-31', '2031-12-31 12:00-05'),
@@ -330,8 +367,8 @@ select is(
 select is(privado.ejecutar_reembolso(pg_temp.r('06'), 'REF-1', date '2031-12-31', '2031-12-31 12:00-05'), 'ya_reembolsado',
   'Supuesto 4: uno ya registrado: ya_reembolsado');
 select results_eq(
-  $$select id, estado::text, id_admin, llave_destino, referencia_transferencia, fecha_reembolso, monto, motivo, cerrado_en,
-           plazo_llave_desde
+  $$select id, estado::text, id_admin, id_admin_registro, llave_destino, referencia_transferencia, fecha_reembolso, monto,
+           motivo, cerrado_en, plazo_llave_desde
     from public.reembolso where id::text like '70000000-0000-0000-0000-0000000026%' order by id$$,
   $$select * from antes order by id$$,
   'Ninguno de esos intentos tocó un reembolso');
@@ -346,11 +383,13 @@ select casos_abiertos from public.equipo_de_admins() where id = 'a0000000-0000-0
 select is(privado.ejecutar_reembolso(pg_temp.r('01'), E'  REF-2601 \n', date '2031-12-31', '2031-12-31 12:00-05'),
   'reembolsado', 'Criterio 2: A registra la transferencia del 01: reembolsado');
 select results_eq(
-  $$select estado::text, referencia_transferencia, fecha_reembolso, id_admin, llave_destino, monto, motivo, cerrado_en
+  $$select estado::text, referencia_transferencia, fecha_reembolso, id_admin, id_admin_registro, llave_destino, monto, motivo,
+           cerrado_en
     from public.reembolso where id = pg_temp.r('01')$$,
   $$values ('reembolsado'::text, 'REF-2601'::text, timestamptz '2031-12-31 12:00-05',
-            'a0000000-0000-0000-0000-0000000026a0'::uuid, 'llave-26-01'::text, 20000, 'Prueba 01'::text, null::timestamptz)$$,
-  'Queda con la referencia sin los espacios de los bordes y la fecha a mediodía en Bogotá; el admin (quien lo registró), la llave, el monto y el motivo no cambian');
+            'a0000000-0000-0000-0000-0000000026a0'::uuid, 'a0000000-0000-0000-0000-0000000026a0'::uuid, 'llave-26-01'::text,
+            20000, 'Prueba 01'::text, null::timestamptz)$$,
+  'Queda con la referencia sin los espacios de los bordes y la fecha a mediodía en Bogotá; el admin asignado, la llave, el monto y el motivo no cambian y id_admin_registro es A, quien lo registró');
 select is(
   (select casos_abiertos from public.equipo_de_admins() where id = 'a0000000-0000-0000-0000-0000000026a0'),
   (select casos_abiertos - 1 from casos_a),
@@ -385,6 +424,37 @@ select results_eq(
            ('09', 'reembolsado', 'a0000000-0000-0000-0000-0000000026a0', 8, timestamptz '2032-01-01 12:00-05'),
            ('10', 'reembolsado', 'a0000000-0000-0000-0000-0000000026a0', 100, timestamptz '2031-12-31 12:00-05')$$,
   'Quedan con su fecha a mediodía en Bogotá y la referencia completa (los 100 caracteres de dos bytes)');
+
+-- ---------------------------------------------------------------------------
+-- Criterio 2 (HU-082): otro admin activo registra el de A, y A el que no tiene admin
+-- ---------------------------------------------------------------------------
+set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-0000000026b0","role":"authenticated"}';
+select is(privado.ejecutar_reembolso(pg_temp.r('16'), 'REF-2616', date '2031-12-31', '2031-12-31 12:00-05'), 'reembolsado',
+  'Criterio 2: B, un admin activo que no es el asignado, registra la transferencia del 16, pendiente de A: reembolsado');
+select results_eq(
+  $$select estado::text, referencia_transferencia, fecha_reembolso, id_admin, id_admin_registro, llave_destino, monto, motivo
+    from public.reembolso where id = pg_temp.r('16')$$,
+  $$values ('reembolsado'::text, 'REF-2616'::text, timestamptz '2031-12-31 12:00-05',
+            'a0000000-0000-0000-0000-0000000026a0'::uuid, 'a0000000-0000-0000-0000-0000000026b0'::uuid, 'llave-26-16'::text,
+            20000, 'Prueba 16'::text)$$,
+  'Queda reembolsado; el asignado sigue siendo A (D-48 a), quien lo registró es B, y la llave, el monto y el motivo no cambian');
+select is(privado.ejecutar_reembolso(pg_temp.r('16'), 'OTRA-REF', date '2031-12-30', '2031-12-31 12:00-05'), 'ya_reembolsado',
+  'Criterio 7: B otra vez: ya_reembolsado');
+set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-0000000026a0","role":"authenticated"}';
+select is(privado.ejecutar_reembolso(pg_temp.r('16'), 'REF-DE-A', date '2031-12-31', '2031-12-31 12:00-05'), 'ya_reembolsado',
+  'Criterio 7: A, el asignado, llega después que B: ya_reembolsado');
+select results_eq(
+  $$select referencia_transferencia, fecha_reembolso, id_admin, id_admin_registro
+    from public.reembolso where id = pg_temp.r('16')$$,
+  $$values ('REF-2616'::text, timestamptz '2031-12-31 12:00-05', 'a0000000-0000-0000-0000-0000000026a0'::uuid,
+            'a0000000-0000-0000-0000-0000000026b0'::uuid)$$,
+  'Y nada cambia: ni la referencia, ni la fecha, ni quién lo registró');
+select is(privado.ejecutar_reembolso(pg_temp.r('17'), 'REF-2617', date '2031-12-31', '2031-12-31 12:00-05'), 'reembolsado',
+  'Supuesto 4: A registra el 17, pendiente sin admin (D-28), sin esperar al cron: reembolsado');
+select results_eq(
+  $$select estado::text, id_admin, id_admin_registro, llave_destino from public.reembolso where id = pg_temp.r('17')$$,
+  $$values ('reembolsado'::text, null::uuid, 'a0000000-0000-0000-0000-0000000026a0'::uuid, 'llave-26-17'::text)$$,
+  'Sigue sin admin asignado (id_admin nulo) y id_admin_registro es A');
 
 -- ---------------------------------------------------------------------------
 -- Las puertas, con la hora real (el 11 es de 2020)
@@ -447,6 +517,34 @@ select is((select count(*)::int from public.estado_de_reembolso('70000000-0000-0
 reset role;
 
 -- ---------------------------------------------------------------------------
+-- Criterio 4: la llave y quién registró solo los ve un admin activo
+-- ---------------------------------------------------------------------------
+set local role authenticated;
+set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-0000000026b0","role":"authenticated"}';
+select is(
+  (select llave_destino from public.reembolso where id = pg_temp.r('01')),
+  'llave-26-01',
+  'B, un admin activo que no es el asignado, lee la llave del 01, reembolsado por A (D-48 a)');
+select is(
+  (select llave_destino from public.reembolso where id = pg_temp.r('16')),
+  'llave-26-16',
+  'Y la del 16, reembolsado por él pero asignado a A: cualquier admin activo la lee');
+set local request.jwt.claims to '{"sub":"b0000000-0000-0000-0000-000000002601","role":"authenticated"}';
+select ok(
+  (select count(*) = 0 from public.reembolso) and (select count(*) = 0 from public.estado_de_reembolso(pg_temp.r('16'))),
+  'El monitor no recibe filas de reembolso ni de estado_de_reembolso: ni la llave ni quién registró');
+set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000002601","role":"authenticated","is_anonymous":true}';
+select ok(
+  (select count(*) = 0 from public.reembolso) and (select count(*) = 0 from public.estado_de_reembolso(pg_temp.r('16'))),
+  'El Lead anónimo tampoco');
+set local request.jwt.claims to '{"sub":"d0000000-0000-0000-0000-000000002601","role":"authenticated"}';
+select ok(
+  (select count(*) = 0 from public.reembolso) and (select count(*) = 0 from public.estado_de_reembolso(pg_temp.r('16'))),
+  'Ni el estudiante');
+reset role;
+set local request.jwt.claims to '{"sub":"a0000000-0000-0000-0000-0000000026a0","role":"authenticated"}';
+
+-- ---------------------------------------------------------------------------
 -- Lo que ya existía, con el 01 reembolsado (HU-025)
 -- ---------------------------------------------------------------------------
 select is(
@@ -482,8 +580,43 @@ select results_eq(
            ('08', 'a0000000-0000-0000-0000-0000000026a0'), ('09', 'a0000000-0000-0000-0000-0000000026a0'),
            ('10', 'a0000000-0000-0000-0000-0000000026a0'), ('11', 'a0000000-0000-0000-0000-0000000026a0'),
            ('12', 'a0000000-0000-0000-0000-0000000026b0'), ('13', 'a0000000-0000-0000-0000-0000000026b0'),
-           ('14', 'a0000000-0000-0000-0000-0000000026c0'), ('15', 'a0000000-0000-0000-0000-0000000026b0')$$,
-  'Los reembolsados (01, 06 a 11) se quedan con A, quien los registró; el cerrado (05) también; los abiertos pasan a B; los de C (14) y B (15) no se tocan');
+           ('14', 'a0000000-0000-0000-0000-0000000026c0'), ('15', 'a0000000-0000-0000-0000-0000000026b0'),
+           ('16', 'a0000000-0000-0000-0000-0000000026a0'), ('17', null), ('18', 'a0000000-0000-0000-0000-0000000026a0')$$,
+  'Los reembolsados (01, 06 a 11, 16 y 18) se quedan con A, el asignado; el 17 y el 03 siguen sin admin; el cerrado (05) también se queda; los abiertos pasan a B; los de C (14) y B (15) no se tocan');
+select results_eq(
+  $$select right(id::text, 2), id_admin_registro from public.reembolso
+    where id in (pg_temp.r('01'), pg_temp.r('16'), pg_temp.r('17')) order by id$$,
+  $$values ('01'::text, 'a0000000-0000-0000-0000-0000000026a0'::uuid), ('16', 'a0000000-0000-0000-0000-0000000026b0'),
+           ('17', 'a0000000-0000-0000-0000-0000000026a0')$$,
+  'Reasignar no mueve quién registró: el 16, reembolsado por B, sigue con id_admin A e id_admin_registro B (supuesto 2)');
+
+-- ---------------------------------------------------------------------------
+-- El relleno de la migración (criterio 3, supuesto 3): se corre aquí el mismo UPDATE
+-- ---------------------------------------------------------------------------
+select ok(
+  (select id_admin_registro is null from public.reembolso where id = pg_temp.r('18'))
+  and (select id_admin_registro is null from public.reembolso where id = pg_temp.r('06')),
+  'Antes: el 18 y el 06, reembolsados de antes de HU-082 (insertados directo), no tienen id_admin_registro');
+-- Un reembolsado sin admin y sin quién lo registró (D-28 con datos de antes).
+update public.reembolso set id_admin_registro = null where id = pg_temp.r('17');
+update public.reembolso set id_admin = null where id = pg_temp.r('17');
+update public.reembolso set id_admin_registro = id_admin
+where estado = 'reembolsado' and id_admin_registro is null and id_admin is not null;
+select results_eq(
+  $$select right(id::text, 2), id_admin_registro from public.reembolso
+    where id in (pg_temp.r('02'), pg_temp.r('03'), pg_temp.r('06'), pg_temp.r('17'), pg_temp.r('18')) order by id$$,
+  $$values ('02'::text, null::uuid), ('03', null), ('06', 'a0000000-0000-0000-0000-0000000026a0'),
+           ('17', null), ('18', 'a0000000-0000-0000-0000-0000000026a0')$$,
+  'Criterio 3: el relleno copia el asignado en los reembolsados de antes (06 y 18); el reembolsado sin admin (17) y los pendientes (02 y 03) quedan nulos');
+update public.reembolso set id_admin_registro = id_admin
+where estado = 'reembolsado' and id_admin_registro is null and id_admin is not null;
+select results_eq(
+  $$select right(id::text, 2), id_admin_registro from public.reembolso
+    where id in (pg_temp.r('02'), pg_temp.r('03'), pg_temp.r('06'), pg_temp.r('17'), pg_temp.r('18'), pg_temp.r('16'))
+    order by id$$,
+  $$values ('02'::text, null::uuid), ('03', null), ('06', 'a0000000-0000-0000-0000-0000000026a0'),
+           ('16', 'a0000000-0000-0000-0000-0000000026b0'), ('17', null), ('18', 'a0000000-0000-0000-0000-0000000026a0')$$,
+  'Reaplicado no cambia nada, ni pisa al que registró otro admin (el 16 sigue con B)');
 
 select * from finish();
 rollback;

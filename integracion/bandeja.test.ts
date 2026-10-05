@@ -57,6 +57,8 @@ describe("criterio 3: la semilla deja los admins iniciales con su orden de revis
       reembolsos: 0,
       reembolsosEsperandoLlave: 0,
       reembolsosPendientes: 0,
+      // HU-082: los pendientes de otros admins son de todos: puede haber de otras pruebas.
+      reembolsosPendientesDeOtros: bandeja.reembolsos.pendientesDeOtros.length,
       // HU-025: los cerrados sin llave también son de todos: puede haber de otras pruebas.
       reembolsosCerrados: bandeja.reembolsosCerrados.length,
       reportes: 0,
@@ -103,7 +105,7 @@ async function armarMundo() {
   const r2 = await fx.crearReembolso({ idPago: (await pagoParaReembolso()).id, idAdmin: a.id, estado: "esperando_llave" });
   const r3 = await fx.crearReembolso({ idPago: (await pagoParaReembolso()).id, idAdmin: a.id, estado: "pendiente" });
   await fx.crearReembolso({ idPago: (await pagoParaReembolso()).id, idAdmin: a.id, estado: "reembolsado" });
-  await fx.crearReembolso({ idPago: (await pagoParaReembolso()).id, idAdmin: b.id, estado: "pendiente" });
+  const rDeB = await fx.crearReembolso({ idPago: (await pagoParaReembolso()).id, idAdmin: b.id, estado: "pendiente" });
 
   // Reportes: uno en revisión de A; uno aceptado y uno rechazado de A; uno en revisión de B.
   const reporteEnRevision = await fx.crearReporte({ idMonitoria: mReporteEnRevision.id, idAdmin: a.id, estado: "en_revision" });
@@ -142,7 +144,7 @@ async function armarMundo() {
   const dSinPagosAprobados = await fx.crearDesembolso({ idMonitoria: mSinPagosAprobados.id }); // bloqueado: no tiene ningún pago
   const dCasoAbierto = await fx.crearDesembolso({ idMonitoria: mCasoAbierto.id }); // bloqueado: un caso P-24 abierto (HU-078)
 
-  return { a, b, p1, p2, p3, pAprobadoDeA, pDeB, r1, r2, r3, reporteEnRevision, dEjecutable, dRechazado, dPagoEnRevision, dSinPagosAprobados, dCasoAbierto };
+  return { a, b, p1, p2, p3, pAprobadoDeA, pDeB, r1, r2, r3, rDeB, futura, reporteEnRevision, dEjecutable, dRechazado, dPagoEnRevision, dSinPagosAprobados, dCasoAbierto };
 }
 
 describe("criterio 1: el admin ve contadores y listas de lo que tiene asignado", () => {
@@ -167,6 +169,8 @@ describe("criterio 1: el admin ve contadores y listas de lo que tiene asignado",
     expect(bandeja.reembolsos.pendientes.map((r) => r.id)).toEqual([m.r3.id]);
     expect(bandeja.reembolsos.pendientes[0]).toEqual({ id: m.r3.id, monto: 25_000, motivo: "Cancelación de prueba" });
     expect(bandeja.contadores).toMatchObject({ reembolsos: 3, reembolsosEsperandoLlave: 2, reembolsosPendientes: 1 });
+    // HU-082: el de B no entra en los propios de A: sale aparte, en pendientesDeOtros.
+    expect(bandeja.reembolsos.pendientes.map((r) => r.id)).not.toContain(m.rDeB.id);
   });
 
   it("reportes de A que siguen en revisión, con la fecha de la sesión", async () => {
@@ -317,6 +321,63 @@ describe("criterio 2: un ítem con plazo muestra el tiempo restante", () => {
   });
 });
 
+describe("HU-082: los reembolsos listos para transferir de otros admins", () => {
+  // Cualquier admin ve los pendientes de todos, así que puede haber de otras pruebas: se mira solo lo de cada una.
+  const soloDe = <T extends { id: string }>(lista: T[], ...reembolsos: { id: string }[]) => lista.filter((x) => reembolsos.some((y) => y.id === x.id));
+
+  it("A ve el pendiente de B con su nombre y no los suyos; B ve el pendiente de A; el filtro or(id_admin.is.null,id_admin.neq.<id>) y el embed con nombre de relación funcionan contra la base", async () => {
+    const m = await armarMundo();
+    const nombreDeB = `Admin B ${randomUUID().slice(0, 6)}`;
+    expect((await fx.admin.from("admin").update({ nombre: nombreDeB }).eq("id", m.b.id)).error).toBeNull();
+    const deA = await cargarBandeja(await fx.iniciarSesion(m.a), m.a.id, AHORA, { maxFilas: 1_000 });
+
+    expect(soloDe(deA.reembolsos.pendientesDeOtros, m.r1, m.r2, m.r3, m.rDeB)).toEqual([
+      { id: m.rDeB.id, monto: 25_000, motivo: "Cancelación de prueba", nombreAdmin: nombreDeB },
+    ]);
+    // Los contadores propios no cambian; el de otros cuenta lo mismo que la lista sin corte.
+    expect(deA.contadores).toMatchObject({ reembolsos: 3, reembolsosPendientes: 1 });
+    expect(deA.contadores.reembolsosPendientesDeOtros).toBe(deA.reembolsos.pendientesDeOtros.length);
+
+    const deB = await cargarBandeja(await fx.iniciarSesion(m.b), m.b.id, AHORA, { maxFilas: 1_000 });
+    expect(soloDe(deB.reembolsos.pendientesDeOtros, m.r1, m.r2, m.r3, m.rDeB).map((r) => r.id)).toEqual([m.r3.id]);
+    expect(deB.reembolsos.pendientes.map((r) => r.id)).toEqual([m.rDeB.id]);
+    expect(deB.contadores).toMatchObject({ reembolsos: 1, reembolsosPendientes: 1 });
+  });
+
+  it("un pendiente sin admin (id_admin nulo) sale en «de otros» de cualquier admin, con nombreAdmin nulo, y nunca en los propios", async () => {
+    const m = await armarMundo();
+    const pago = await fx.crearPagoDe(m.futura.id, { idAdmin: m.a.id, estado: "aprobado" });
+    const sinAdmin = await fx.crearReembolso({ idPago: pago.id, idAdmin: m.a.id, estado: "pendiente" });
+    expect((await fx.admin.from("reembolso").update({ id_admin: null }).eq("id", sinAdmin.id)).error).toBeNull();
+
+    for (const quien of [m.a, m.b]) {
+      const bandeja = await cargarBandeja(await fx.iniciarSesion(quien), quien.id, AHORA, { maxFilas: 1_000 });
+      expect(soloDe(bandeja.reembolsos.pendientesDeOtros, sinAdmin)).toEqual([
+        { id: sinAdmin.id, monto: 25_000, motivo: "Cancelación de prueba", nombreAdmin: null },
+      ]);
+      expect(bandeja.reembolsos.pendientes.map((r) => r.id)).not.toContain(sinAdmin.id);
+    }
+  });
+
+  it("no entran los esperando llave, los reembolsados ni los cerrados de otros; el corte limita la lista y el contador sigue exacto", async () => {
+    const m = await armarMundo();
+    const deB = (estado: "esperando_llave" | "reembolsado") => fx.crearPagoDe(m.futura.id, { idAdmin: m.b.id, estado: "aprobado" }).then((p) => fx.crearReembolso({ idPago: p.id, idAdmin: m.b.id, estado }));
+    const esperando = await deB("esperando_llave");
+    const reembolsado = await deB("reembolsado");
+    const cerrado = await deB("esperando_llave");
+    expect((await fx.admin.from("reembolso").update({ cerrado_en: hace(1) }).eq("id", cerrado.id)).error).toBeNull();
+    const otroPendiente = await fx.crearPagoDe(m.futura.id, { idAdmin: m.b.id, estado: "aprobado" }).then((p) => fx.crearReembolso({ idPago: p.id, idAdmin: m.b.id, estado: "pendiente" }));
+
+    const completa = await cargarBandeja(await fx.iniciarSesion(m.a), m.a.id, AHORA, { maxFilas: 1_000 });
+    expect(soloDe(completa.reembolsos.pendientesDeOtros, esperando, reembolsado, cerrado, m.rDeB, otroPendiente).map((r) => r.id).sort()).toEqual([m.rDeB.id, otroPendiente.id].sort());
+
+    const cortada = await cargarBandeja(await fx.iniciarSesion(m.a), m.a.id, AHORA, { maxFilas: 1 });
+    expect(cortada.reembolsos.pendientesDeOtros).toHaveLength(1);
+    expect(cortada.contadores.reembolsosPendientesDeOtros).toBe(completa.contadores.reembolsosPendientesDeOtros);
+    expect(cortada.contadores.reembolsosPendientesDeOtros).toBeGreaterThanOrEqual(2);
+  });
+});
+
 describe("quién puede leer la bandeja", () => {
   it("con la sesión de un monitor las cinco listas salen vacías (las políticas son solo de admins)", async () => {
     const m = await armarMundo();
@@ -327,7 +388,7 @@ describe("quién puede leer la bandeja", () => {
     expect(bandeja.pagosVencidosDeOtros).toEqual([]);
     // HU-078: el mundo tiene un caso P-24 abierto (mCasoAbierto) y un monitor no lo ve.
     expect(bandeja.pagosPorCobrarOAsumir).toEqual([]);
-    expect(bandeja.reembolsos).toEqual({ esperandoLlave: [], pendientes: [] });
+    expect(bandeja.reembolsos).toEqual({ esperandoLlave: [], pendientes: [], pendientesDeOtros: [] });
     expect(bandeja.reembolsosCerrados).toEqual([]);
     expect(bandeja.reportes).toEqual([]);
     expect(bandeja.desembolsos).toEqual([]);
@@ -339,6 +400,7 @@ describe("quién puede leer la bandeja", () => {
       reembolsos: 0,
       reembolsosEsperandoLlave: 0,
       reembolsosPendientes: 0,
+      reembolsosPendientesDeOtros: 0,
       reembolsosCerrados: 0,
       reportes: 0,
       desembolsos: 0,
