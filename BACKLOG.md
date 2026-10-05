@@ -1,13 +1,14 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-05 07:47. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-05 12:11. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
-| [HU-009](backlog/HU-009.md) | [Visitante] Tomar el diagnóstico sin iniciar sesión | Backlog | P0 | L | HU-004, HU-005, HU-060, HU-081 |
-| [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | Backlog | P0 | S | HU-009 |
-| [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | Backlog | P0 | L | HU-021, HU-009 |
+| [HU-009](backlog/HU-009.md) | [Visitante] Tomar el diagnóstico sin iniciar sesión | Backlog | P0 | M | HU-004, HU-005, HU-060, HU-081, HU-083 |
+| [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | Backlog | P0 | M | HU-009, HU-081 |
+| [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | Backlog | P0 | L | HU-021, HU-009, HU-081 |
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | Backlog | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056 |
+| [HU-083](backlog/HU-083.md) | [Técnica] Dibujar fórmulas y código del banco de preguntas | Backlog | P0 | S | HU-005 |
 | [HU-031](backlog/HU-031.md) | [Lead] Recuperar mis resultados desde otro dispositivo con un enlace | Backlog | P1 | M | HU-010, HU-006 |
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | Backlog | P1 | M | HU-010, HU-004 |
 | [HU-033](backlog/HU-033.md) | [Estudiante] Gestionar mis citas y diagnósticos desde mi cuenta | Backlog | P1 | M | HU-032, HU-019, HU-024 |
