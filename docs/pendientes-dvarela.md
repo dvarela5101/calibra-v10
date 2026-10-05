@@ -170,6 +170,11 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   6. Aprobación mínima para seguir con las otras materias: (a) 70 %, (b) 80 % o (c) sin umbral. **Recomendada: (a)**, contando como aprobadas las que el monitor deja revisadas, con o sin cambios.
   7. Qué puede usar la IA del material: (a) parciales, talleres, soluciones y resúmenes, sin libros; tomar la estructura de un ejercicio con otra función y otros números vale, y la misma función con los mismos números es copia; (b) lo mismo, también con libros; (c) solo los temas del programa. **Recomendada: (a).** **Decidido el 4-oct (D-48/D-49/D-50).**
 
+- [ ] **Motor del diagnóstico (HU-060, de Juzou04): tres supuestos de la implementación.** La revisión encontró que una habilidad cubierta solo por preguntas cuyo fallo se acredita a otra habilidad podía quedar sin medir, con preguntas libres y sin marca. Para cerrarlo cambié las reglas 5, 6, 7 y 12 de la HU (marcadas *supuesto, 5-oct-2026*). Mientras no digas otra cosa, vale lo implementado:
+  1. La duda cuenta las respuestas que la regla 8 le acredita a la habilidad y no las preguntas que la miden. Para una habilidad sin respuesta propia, el motor prefiere las preguntas que le cuentan pase lo que pase. **Recomendada: así.**
+  2. Una habilidad a la que ya se le eligieron 2 preguntas y sigue sin respuesta propia sale marcada `sin_preguntas_sin_ver` aunque le queden preguntas libres. La alternativa es un motivo aparte en `FALTA-MATERIAL.md`, que también tocaría HU-061 y HU-081. **Recomendada: así, sin motivo nuevo.**
+  3. Una habilidad que queda con una sola respuesta por el máximo de 2 preguntas elegidas, y no por el tope de 20, no se marca. En Cálculo Integral con borradores pasa unas 131 veces cada 1000 diagnósticos. Marcarla es una línea. **Recomendada: no marcarla.**
+
 ### A3. Preparar la cuenta de Gmail (para HU-066)
 
 La app va a enviar los correos desde `calibra.monitorias@gmail.com` (decisión D-1). Google exige una contraseña de aplicación.
