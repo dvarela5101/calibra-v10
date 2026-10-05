@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-05 14:46. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-05 15:27. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -36,9 +36,6 @@ _Generado automaticamente: 2026-10-05 14:46. No editar a mano; usa `scripts/back
 | [HU-045](backlog/HU-045.md) | [Estudiante] Reportar inasistencia del monitor en mi grupal | Lista | P1 | XS | HU-029, HU-036 |
 | [HU-046](backlog/HU-046.md) | [Monitor] Finalizar una grupal y entregar el enlace de reseña | Lista | P1 | S | HU-023, HU-036 |
 | [HU-047](backlog/HU-047.md) | [Integrante] Reseñar la sesión grupal eligiendo mi nombre | Lista | P1 | M | HU-046, HU-038, HU-035 |
-| [HU-030](backlog/HU-030.md) | [Admin] Resolver reportes de inasistencia | En revision | P0 | M | HU-029, HU-026, HU-028 |
-| [HU-060](backlog/HU-060.md) | [Técnica] Motor del diagnóstico adaptativo con nivel por habilidad | En revision | P0 | M | HU-005 |
-| [HU-061](backlog/HU-061.md) | [Técnica] Instructivo y skill para reprocesar el banco de una materia con IA | En revision | P0 | L | HU-005 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
@@ -64,7 +61,10 @@ _Generado automaticamente: 2026-10-05 14:46. No editar a mano; usa `scripts/back
 | [HU-027](backlog/HU-027.md) | [Sistema] Expirar reservas sin comprobante a los 10 minutos | Hecha | P0 | S | HU-017 |
 | [HU-028](backlog/HU-028.md) | [Admin] Ejecutar desembolsos a monitores | Hecha | P0 | M | HU-023, HU-020 |
 | [HU-029](backlog/HU-029.md) | [Lead] Reportar que el monitor no asistió | Hecha | P0 | M | HU-019 |
+| [HU-030](backlog/HU-030.md) | [Admin] Resolver reportes de inasistencia | Hecha | P0 | M | HU-029, HU-026, HU-028 |
 | [HU-051](backlog/HU-051.md) | [Monitor] Recibir avisos de nuevas monitorías y cancelaciones | Hecha | P0 | S | HU-021, HU-006 |
+| [HU-060](backlog/HU-060.md) | [Técnica] Motor del diagnóstico adaptativo con nivel por habilidad | Hecha | P0 | M | HU-005 |
+| [HU-061](backlog/HU-061.md) | [Técnica] Instructivo y skill para reprocesar el banco de una materia con IA | Hecha | P0 | L | HU-005 |
 | [HU-066](backlog/HU-066.md) | [Técnica] Enviar los correos desde calibra.monitorias@gmail.com por SMTP de Gmail | Hecha | P0 | S | HU-006 |
 | [HU-068](backlog/HU-068.md) | [Visitante] Dejar mi contacto al agendar y quedar como Lead | Hecha | P0 | M | HU-004, HU-006, HU-008 |
 | [HU-076](backlog/HU-076.md) | [Sistema] Correos del rechazo de un pago: al monitor y al pagador, sin que se pierdan | Hecha | P0 | M | HU-020, HU-051, HU-024 |
