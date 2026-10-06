@@ -23,7 +23,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(89);
+select plan(90);
 
 -- ---------------------------------------------------------------------------
 -- Estructura y permisos
@@ -105,10 +105,21 @@ select ok(
   and not has_column_privilege('anon', 'public.diagnostico', 'token_recuperacion', 'select'),
   'Ninguna sesión lee el token de recuperación del diagnóstico (RN-12): ni el Lead ni el monitor de la cita (D-7)');
 select ok(
-  has_column_privilege('authenticated', 'public.diagnostico', 'resultado_por_tema', 'select')
+  has_column_privilege('authenticated', 'public.diagnostico', 'resultado_por_habilidad', 'select')
   and has_column_privilege('authenticated', 'public.diagnostico', 'id_lead', 'select')
   and has_column_privilege('service_role', 'public.diagnostico', 'token_recuperacion', 'select'),
   'Las sesiones leen el resto del diagnóstico (según la política) y el servidor también el token');
+-- HU-081: las copias de las preguntas traen la correcta y la solución, y la semilla permite calcularlas: ni el dueño ni el monitor
+-- de la cita las leen por la Data API.
+select ok(
+  not has_column_privilege('authenticated', 'public.diagnostico', 'respuestas', 'select')
+  and not has_column_privilege('authenticated', 'public.diagnostico', 'semilla', 'select')
+  and not has_column_privilege('authenticated', 'public.diagnostico', 'repetido', 'select')
+  and not has_column_privilege('authenticated', 'public.diagnostico', 'respondidas', 'select')
+  and not has_column_privilege('authenticated', 'public.diagnostico', 'aciertos', 'select')
+  and not has_column_privilege('authenticated', 'public.diagnostico', 'falta_material', 'select')
+  and not has_any_column_privilege('anon', 'public.diagnostico', 'select'),
+  'Ninguna sesión lee las copias, la semilla, el repetido, lo respondido, los aciertos ni la marca de falta de material del diagnóstico');
 
 -- ---------------------------------------------------------------------------
 -- Fixtures (como postgres)
@@ -564,21 +575,21 @@ insert into public.evaluacion (id, id_materia, semana, nombre) values
   ('20000000-0000-0000-0000-0000000017b1', '10000000-0000-0000-0000-0000000017b1', 1, 'Parcial B');
 -- 01 a 03: del Lead 07 (dos de A, el más reciente de las tres es el de B). 04: de otro Lead (22), el más
 -- reciente de todos en A. 05: del Lead 08, solo de B. 06 y 07: del Lead 09, el 07 sin Lead (solo con su sesión).
-insert into public.diagnostico (id, id_lead, id_sesion_anonima, id_evaluacion, id_materia, respuestas, puntaje, resultado_por_tema, fecha_realizacion) values
+insert into public.diagnostico (id, id_lead, id_sesion_anonima, id_evaluacion, id_materia, respuestas, puntaje, resultado_por_habilidad, semilla, aciertos, fecha_realizacion) values
   ('60000000-0000-0000-0000-000000001701', '40000000-0000-0000-0000-000000001707', null,
-   '20000000-0000-0000-0000-0000000017a1', '10000000-0000-0000-0000-0000000017a1', '{}', 40, '{}', now() - interval '5 days'),
+   '20000000-0000-0000-0000-0000000017a1', '10000000-0000-0000-0000-0000000017a1', '[{"clave":"P1"}]', 40, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0, now() - interval '5 days'),
   ('60000000-0000-0000-0000-000000001702', '40000000-0000-0000-0000-000000001707', 'c0000000-0000-0000-0000-000000001707',
-   '20000000-0000-0000-0000-0000000017a1', '10000000-0000-0000-0000-0000000017a1', '{}', 60, '{}', now() - interval '2 days'),
+   '20000000-0000-0000-0000-0000000017a1', '10000000-0000-0000-0000-0000000017a1', '[{"clave":"P1"}]', 60, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0, now() - interval '2 days'),
   ('60000000-0000-0000-0000-000000001703', '40000000-0000-0000-0000-000000001707', null,
-   '20000000-0000-0000-0000-0000000017b1', '10000000-0000-0000-0000-0000000017b1', '{}', 80, '{}', now() - interval '1 day'),
+   '20000000-0000-0000-0000-0000000017b1', '10000000-0000-0000-0000-0000000017b1', '[{"clave":"P1"}]', 80, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0, now() - interval '1 day'),
   ('60000000-0000-0000-0000-000000001704', '40000000-0000-0000-0000-000000001722', 'c0000000-0000-0000-0000-000000001722',
-   '20000000-0000-0000-0000-0000000017a1', '10000000-0000-0000-0000-0000000017a1', '{}', 70, '{}', now() - interval '1 hour'),
+   '20000000-0000-0000-0000-0000000017a1', '10000000-0000-0000-0000-0000000017a1', '[{"clave":"P1"}]', 70, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0, now() - interval '1 hour'),
   ('60000000-0000-0000-0000-000000001705', '40000000-0000-0000-0000-000000001708', null,
-   '20000000-0000-0000-0000-0000000017b1', '10000000-0000-0000-0000-0000000017b1', '{}', 50, '{}', now() - interval '1 day'),
+   '20000000-0000-0000-0000-0000000017b1', '10000000-0000-0000-0000-0000000017b1', '[{"clave":"P1"}]', 50, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0, now() - interval '1 day'),
   ('60000000-0000-0000-0000-000000001706', '40000000-0000-0000-0000-000000001709', null,
-   '20000000-0000-0000-0000-0000000017a1', '10000000-0000-0000-0000-0000000017a1', '{}', 30, '{}', now() - interval '6 days'),
+   '20000000-0000-0000-0000-0000000017a1', '10000000-0000-0000-0000-0000000017a1', '[{"clave":"P1"}]', 30, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0, now() - interval '6 days'),
   ('60000000-0000-0000-0000-000000001707', null, 'c0000000-0000-0000-0000-000000001709',
-   '20000000-0000-0000-0000-0000000017a1', '10000000-0000-0000-0000-0000000017a1', '{}', 55, '{}', now() - interval '3 days');
+   '20000000-0000-0000-0000-0000000017a1', '10000000-0000-0000-0000-0000000017a1', '[{"clave":"P1"}]', 55, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0, now() - interval '3 days');
 
 -- P-35: el diagnóstico más reciente de ESA materia (el 02), no el de B (más reciente, otra materia) ni el de otro Lead.
 set local role authenticated;

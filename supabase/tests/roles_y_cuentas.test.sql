@@ -82,8 +82,8 @@ select throws_ok(
 -- ---------------------------------------------------------------------------
 insert into public.evaluacion (id, id_materia, semana, nombre) values
   ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 1, 'Semana 1');
-insert into public.diagnostico (id_sesion_anonima, id_evaluacion, respuestas, puntaje, resultado_por_tema) values
-  ('c0000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-000000000001', '{}', 50, '{}');
+insert into public.diagnostico (id_sesion_anonima, id_evaluacion, respuestas, puntaje, resultado_por_habilidad, semilla, aciertos) values
+  ('c0000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-000000000001', '[{"clave":"P1"}]', 50, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0);
 select lives_ok(
   $$delete from auth.users where id = 'c0000000-0000-0000-0000-00000000000a'$$,
   'Se puede borrar una sesión anónima con diagnósticos');

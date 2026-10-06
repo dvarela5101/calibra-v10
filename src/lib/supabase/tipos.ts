@@ -202,13 +202,13 @@ isOneToOne: true
                   ]
                 },"diagnostico": {
                   Row: {
-                    "fecha_realizacion": string,"id": string,"id_evaluacion": string,"id_lead": string | null,"id_materia": string,"id_monitoria": string | null,"id_sesion_anonima": string | null,"puntaje": number,"respuestas": NonNullable<Json>,"resultado_por_tema": NonNullable<Json>,"token_recuperacion": string
+                    "aciertos": number,"falta_material": NonNullable<Json>,"fecha_realizacion": string,"id": string,"id_evaluacion": string,"id_lead": string | null,"id_materia": string,"id_monitoria": string | null,"id_sesion_anonima": string | null,"puntaje": number,"repetido": boolean,"respondidas": number | null,"respuestas": NonNullable<Json>,"resultado_por_habilidad": NonNullable<Json>,"semilla": number,"token_recuperacion": string
                   }
                   Insert: {
-                    "fecha_realizacion"?: string,"id"?: string,"id_evaluacion": string,"id_lead"?: string | null,"id_materia": string,"id_monitoria"?: string | null,"id_sesion_anonima"?: string | null,"puntaje": number,"respuestas": NonNullable<Json>,"resultado_por_tema": NonNullable<Json>,"token_recuperacion"?: string
+                    "aciertos": number,"falta_material"?: NonNullable<Json>,"fecha_realizacion"?: string,"id"?: string,"id_evaluacion": string,"id_lead"?: string | null,"id_materia": string,"id_monitoria"?: string | null,"id_sesion_anonima"?: string | null,"puntaje": number,"repetido"?: boolean,"respondidas"?: never,"respuestas": NonNullable<Json>,"resultado_por_habilidad": NonNullable<Json>,"semilla": number,"token_recuperacion"?: string
                   }
                   Update: {
-                    "fecha_realizacion"?: string,"id"?: string,"id_evaluacion"?: string,"id_lead"?: string | null,"id_materia"?: string,"id_monitoria"?: string | null,"id_sesion_anonima"?: string | null,"puntaje"?: number,"respuestas"?: NonNullable<Json>,"resultado_por_tema"?: NonNullable<Json>,"token_recuperacion"?: string
+                    "aciertos"?: number,"falta_material"?: NonNullable<Json>,"fecha_realizacion"?: string,"id"?: string,"id_evaluacion"?: string,"id_lead"?: string | null,"id_materia"?: string,"id_monitoria"?: string | null,"id_sesion_anonima"?: string | null,"puntaje"?: number,"repetido"?: boolean,"respondidas"?: never,"respuestas"?: NonNullable<Json>,"resultado_por_habilidad"?: NonNullable<Json>,"semilla"?: number,"token_recuperacion"?: string
                   }
                   Relationships: [
                     {
@@ -228,6 +228,25 @@ isOneToOne: false
       columns: ["id_monitoria","id_materia"]
 isOneToOne: false
       referencedRelation: "monitoria"
+      referencedColumns: ["id","id_materia"]
+    }
+                  ]
+                },"diagnostico_en_curso": {
+                  Row: {
+                    "actualizado_en": string,"candidatas": NonNullable<Json>,"contexto": NonNullable<Json>,"id": string,"id_evaluacion": string,"id_materia": string,"id_sesion": string,"iniciado_en": string,"paso": number,"pasos": NonNullable<Json>,"repetido": boolean,"semilla": number,"vistas_antes": (string)[]
+                  }
+                  Insert: {
+                    "actualizado_en"?: string,"candidatas": NonNullable<Json>,"contexto": NonNullable<Json>,"id"?: string,"id_evaluacion": string,"id_materia": string,"id_sesion": string,"iniciado_en"?: string,"paso"?: number,"pasos"?: NonNullable<Json>,"repetido"?: boolean,"semilla": number,"vistas_antes"?: (string)[]
+                  }
+                  Update: {
+                    "actualizado_en"?: string,"candidatas"?: NonNullable<Json>,"contexto"?: NonNullable<Json>,"id"?: string,"id_evaluacion"?: string,"id_materia"?: string,"id_sesion"?: string,"iniciado_en"?: string,"paso"?: number,"pasos"?: NonNullable<Json>,"repetido"?: boolean,"semilla"?: number,"vistas_antes"?: (string)[]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "diagnostico_en_curso_evaluacion_fk"
+      columns: ["id_evaluacion","id_materia"]
+isOneToOne: false
+      referencedRelation: "evaluacion"
       referencedColumns: ["id","id_materia"]
     }
                   ]
@@ -945,6 +964,9 @@ isOneToOne: true
 "anotar_correo_de_contacto":
 { Args: { "p_correo": string,"p_id_sesion": string }; Returns: boolean
                            },
+"banco_de_la_evaluacion":
+{ Args: { "p_id_evaluacion": string }; Returns: Json
+                           },
 "cancelable_hasta":
 { Args: { "p_es_grupal": boolean,"p_inicio": string }; Returns: string
                            },
@@ -1023,6 +1045,28 @@ isOneToOne: true
 "desembolso_ejecutable":
 { Args: { "p_ahora": string,"p_fin_programado": string }; Returns: boolean
                            },
+"diagnostico_en_curso_de":
+{ Args: { "p_id_sesion": string }; Returns: {
+              "actualizado_en": string,
+"candidatas": NonNullable<Json>,
+"contexto": NonNullable<Json>,
+"id": string,
+"id_evaluacion": string,
+"id_materia": string,
+"id_sesion": string,
+"iniciado_en": string,
+"paso": number,
+"pasos": NonNullable<Json>,
+"repetido": boolean,
+"semilla": number,
+"vistas_antes": (string)[]
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "diagnostico_en_curso"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "ejecutar_desembolso":
 { Args: { "p_fecha": string,"p_id_desembolso": string,"p_neto_esperado": number,"p_referencia": string }; Returns: string
                            },
@@ -1066,6 +1110,11 @@ isOneToOne: true
                            },
 "finalizar_monitoria":
 { Args: { "p_id_monitoria": string }; Returns: string
+                           },
+"iniciar_diagnostico":
+{ Args: { "p_candidatas": Json,"p_contexto": Json,"p_id_evaluacion": string,"p_id_sesion": string,"p_repetido": boolean,"p_semilla": number,"p_vistas_antes": (string)[] }; Returns: {
+              "id": string,"resultado": string
+            }[]
                            },
 "inicio_sesion":
 { Args: { "p_fecha": string,"p_hora": string }; Returns: string
@@ -1186,6 +1235,9 @@ isOneToOne: true
 "resolver_reporte_inasistencia":
 { Args: { "p_decision": string,"p_id_reporte": string,"p_observaciones": string }; Returns: string
                            },
+"responder_diagnostico":
+{ Args: { "p_copia": Json,"p_id": string,"p_id_sesion": string,"p_paso": number }; Returns: boolean
+                           },
 "revisar_pago":
 { Args: { "p_decision": string,"p_id_pago": string,"p_observaciones"?: string }; Returns: {
               "cancelo_monitoria": boolean,"resultado": string
@@ -1194,6 +1246,11 @@ isOneToOne: true
 "revision_hasta":
 { Args: { "p_fecha_asignacion": string }; Returns: string
                            },
+"terminar_diagnostico":
+{ Args: { "p_aciertos": number,"p_copia": Json,"p_falta_material": Json,"p_id": string,"p_id_sesion": string,"p_paso": number,"p_puntaje": number,"p_resultado": Json }; Returns: {
+              "id": string,"resultado": string
+            }[]
+                           },
 "tomar_comprobantes_huerfanos":
 { Args: { "p_limite"?: number }; Returns: {
               "ruta": string
@@ -1201,6 +1258,11 @@ isOneToOne: true
                            },
 "ventana_resena_hasta":
 { Args: { "p_fecha_finalizacion": string }; Returns: string
+                           },
+"vistas_de_la_sesion":
+{ Args: { "p_id_evaluacion": string,"p_id_sesion": string }; Returns: {
+              "claves": (string)[],"id_ultimo": string
+            }[]
                            }
           }
           Enums: {
