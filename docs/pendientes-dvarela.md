@@ -199,6 +199,10 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
   2. Desde cuándo y hasta cuándo ve el monitor el diagnóstico: (a) con la cita confirmada y también realizada, sin plazo; (b) igual, pero una realizada deja de verse pasado un plazo; (c) desde la reserva, como deja hoy la base. **Recomendada: (a).** Una reserva sin pagar puede vencer en 10 minutos.
   3. Qué ve el monitor de cada pregunta: (a) las falladas, con la opción que eligió, la correcta y la solución, y de las acertadas solo el conteo; (b) todas; (c) ninguna. **Recomendada: (a).** Con (a) o (b) hay que cambiar antes el texto de la autorización y del aviso de privacidad a «mis respuestas y el resultado de mi diagnóstico», validado con asesoría (una HU nueva, S). Con (c), HU-022 baja a M.
 
+- [ ] **Fórmulas y código del banco (HU-083, de Juzou04).** Dos cosas para ti; mientras no respondas, vale la recomendada:
+  1. Cada fórmula lleva un texto alternativo con su lectura en español en palabras («1 sobre R sub eq»), para que una opción que es solo una fórmula tenga nombre en un lector de pantalla. Solo se probó en Chromium; con VoiceOver o NVDA puede leerse la etiqueta en vez de la fórmula. **Recomendada: dejarlo así** y probarlo con un lector real antes del corte.
+  2. `npm run contenido:validar` no ve lo que el dibujo rechaza (`$50%$`, `$rac12$`, `$x^$`); hoy solo lo atrapa una prueba de HU-083. **Recomendada: una HU corta (S)** para que el validador use el mismo analizador. No la creé.
+
 ### A3. Preparar la cuenta de Gmail (para HU-066)
 
 La app va a enviar los correos desde `calibra.monitorias@gmail.com` (decisión D-1). Google exige una contraseña de aplicación.
