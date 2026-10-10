@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-09 10:12. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-10 15:49. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -9,8 +9,8 @@ _Generado automaticamente: 2026-10-09 10:12. No editar a mano; usa `scripts/back
 | [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | Backlog | P0 | L | HU-021, HU-009, HU-081 |
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | Backlog | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056 |
 | [HU-031](backlog/HU-031.md) | [Lead] Recuperar mis resultados desde otro dispositivo con un enlace | Backlog | P1 | M | HU-006, HU-009, HU-010, HU-081 |
-| [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | Backlog | P1 | M | HU-010, HU-004 |
-| [HU-033](backlog/HU-033.md) | [Estudiante] Gestionar mis citas y diagnósticos desde mi cuenta | Backlog | P1 | M | HU-032, HU-019, HU-024 |
+| [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | Backlog | P1 | M | HU-004, HU-019, HU-068 |
+| [HU-033](backlog/HU-033.md) | [Estudiante] Gestionar mis citas y diagnósticos desde mi cuenta | Backlog | P1 | M | HU-032, HU-019, HU-024, HU-029, HU-009, HU-081 |
 | [HU-034](backlog/HU-034.md) | [Sistema] Escalar al siguiente admin los pagos sin revisar tras 1 hora | Backlog | P1 | M | HU-020, HU-006, HU-054, HU-065, HU-074, HU-077 |
 | [HU-048](backlog/HU-048.md) | [Técnica] Recorridos de punta a punta: agendar, pagar, cancelar, reportar y desembolsar | Backlog | P1 | M | HU-030, HU-076, HU-082 |
 | [HU-084](backlog/HU-084.md) | [Técnica] Recorrido de punta a punta del diagnóstico: de la prueba al monitor | Backlog | P1 | S | HU-048, HU-010, HU-011, HU-022 |
@@ -19,8 +19,8 @@ _Generado automaticamente: 2026-10-09 10:12. No editar a mano; usa `scripts/back
 | [HU-052](backlog/HU-052.md) | [Admin] Autorizar una cancelación fuera de plazo en casos extremos | Backlog | P2 | M | HU-024, HU-026 |
 | [HU-053](backlog/HU-053.md) | [Admin] Gestionar leads | Backlog | P2 | M | HU-012, HU-068 |
 | [HU-055](backlog/HU-055.md) | [Admin] Gestionar materias y evaluaciones | Backlog | P2 | M | HU-005, HU-012, HU-014, HU-016, HU-062 |
-| [HU-072](backlog/HU-072.md) | [Admin] Agregar un admin al equipo por invitación | Backlog | P2 | S | HU-054 |
-| [HU-079](backlog/HU-079.md) | [Técnica] Unificar los procesadores de la bandeja de salida de correos | Backlog | P2 | S | HU-025 |
+| [HU-072](backlog/HU-072.md) | [Admin] Agregar un admin al equipo por invitación | Backlog | P2 | M | HU-054, HU-013, HU-058, HU-065, HU-070 |
+| [HU-079](backlog/HU-079.md) | [Técnica] Unificar los procesadores de la bandeja de salida de correos | Backlog | P2 | S | HU-019, HU-024, HU-025, HU-030, HU-035, HU-051, HU-076, HU-080 |
 | [HU-085](backlog/HU-085.md) | [Sistema] Borrar o anonimizar los datos de un Lead o aspirante que retiró su autorización o lleva 24 meses sin actividad | Backlog | P2 | L | HU-056, HU-006, HU-062, HU-068 |
 | [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | Backlog | P3 | S | HU-004, HU-068 |
 | [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | Lista | P0 | M | HU-009, HU-008, HU-068 |
