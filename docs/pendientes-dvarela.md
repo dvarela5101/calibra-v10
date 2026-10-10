@@ -296,6 +296,10 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
     - Las filas de `correo_envio` de monitores y admins no tienen plazo. Esta HU solo borra las de Leads y aspirantes.
     - El aviso promete dar «prueba de la autorización que nos diste». Al anonimizar, la fila conserva la fecha del consentimiento y no a quién pertenece. Qué prueba se conserva se valida con asesoría (sección D).
 
+- [ ] **Fórmulas y código del banco (HU-083, de Juzou04).** Dos cosas para ti; mientras no respondas, vale la recomendada:
+  1. Cada fórmula lleva un texto alternativo con su lectura en español en palabras («1 sobre R sub eq»), para que una opción que es solo una fórmula tenga nombre en un lector de pantalla. Solo se probó en Chromium; con VoiceOver o NVDA puede leerse la etiqueta en vez de la fórmula. **Recomendada: dejarlo así** y probarlo con un lector real antes del corte.
+  2. `npm run contenido:validar` no ve lo que el dibujo rechaza (`$50%$`, `$rac12$`, `$x^$`); hoy solo lo atrapa una prueba de HU-083. **Recomendada: una HU corta (S)** para que el validador use el mismo analizador. No la creé.
+
 ### A3. Preparar la cuenta de Gmail (para HU-066)
 
 La app va a enviar los correos desde `calibra.monitorias@gmail.com` (decisión D-1). Google exige una contraseña de aplicación.
