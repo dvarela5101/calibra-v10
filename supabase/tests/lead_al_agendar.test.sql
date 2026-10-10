@@ -55,11 +55,11 @@ insert into public.materia (id, nombre, codigo) values ('10000000-0000-0000-0000
 insert into public.evaluacion (id, id_materia, semana, nombre) values
   ('20000000-0000-0000-0000-000000006801', '10000000-0000-0000-0000-000000006801', 1, 'Parcial 1');
 -- Un diagnóstico anónimo de la sesión 1 y otro de la sesión 2.
-insert into public.diagnostico (id, id_sesion_anonima, id_evaluacion, id_materia, respuestas, puntaje, resultado_por_tema) values
+insert into public.diagnostico (id, id_sesion_anonima, id_evaluacion, id_materia, respuestas, puntaje, resultado_por_habilidad, semilla, aciertos) values
   ('60000000-0000-0000-0000-000000006801', 'c0000000-0000-0000-0000-0000000068a1', '20000000-0000-0000-0000-000000006801',
-   '10000000-0000-0000-0000-000000006801', '[]', 50, '{}'),
+   '10000000-0000-0000-0000-000000006801', '[{"clave":"P1"}]', 50, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0),
   ('60000000-0000-0000-0000-000000006802', 'c0000000-0000-0000-0000-0000000068a2', '20000000-0000-0000-0000-000000006801',
-   '10000000-0000-0000-0000-000000006801', '[]', 70, '{}');
+   '10000000-0000-0000-0000-000000006801', '[{"clave":"P1"}]', 70, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0);
 
 -- ---------------------------------------------------------------------------
 -- Crear el Lead de una sesión (criterios 1 y 7)

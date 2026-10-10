@@ -318,8 +318,13 @@ export class Fixtures {
     );
   }
 
-  /** Diagnóstico de una sesión anónima (id_lead nulo, RN de P-33); id_materia lo llena un trigger. */
-  async crearDiagnostico(datos: { idSesionAnonima: string; idEvaluacion: string; idMateria: string }) {
+  /**
+   * Diagnóstico terminado de una sesión anónima (id_lead nulo, RN de P-33); id_materia lo llena un trigger. Nace completo, como los
+   * que inserta `terminar_diagnostico` (HU-081): `respuestas` es un arreglo con un paso por clave (las vistas antes leen
+   * `respuestas[].clave`; por defecto `P1` y `P2`), con semilla y un acierto, y el resultado trae sus tres claves.
+   */
+  async crearDiagnostico(datos: { idSesionAnonima: string; idEvaluacion: string; idMateria: string; claves?: string[] }) {
+    const claves = datos.claves ?? ["P1", "P2"];
     return exito(
       await this.admin
         .from("diagnostico")
@@ -327,9 +332,11 @@ export class Fixtures {
           id_sesion_anonima: datos.idSesionAnonima,
           id_evaluacion: datos.idEvaluacion,
           id_materia: datos.idMateria,
-          respuestas: { p1: "a", p2: "c" },
-          puntaje: 62.5,
-          resultado_por_tema: { algebra: 0.5, calculo: 0.75 },
+          respuestas: claves.map((clave) => ({ clave })),
+          puntaje: Math.round(10000 / claves.length) / 100,
+          resultado_por_habilidad: { habilidades: [], errores: [], prerrequisitos: [] },
+          semilla: 1,
+          aciertos: 1,
         })
         .select()
         .single(),

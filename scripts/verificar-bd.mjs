@@ -30,6 +30,13 @@ const PREAMBULOS = new Map([
     "drop function if exists public.parametros_negocio();",
   ],
   [
+    "20261001040929_agendar_monitoria.sql",
+    // HU-081 renombró diagnostico.resultado_por_tema a resultado_por_habilidad: el grant por columnas de este archivo todavía
+    // nombra la columna antigua. Se le devuelve el nombre antiguo antes de reaplicarlo; la migración de HU-081, que es posterior,
+    // la renombra otra vez (es idempotente) y deja el grant final.
+    "alter table public.diagnostico rename column resultado_por_habilidad to resultado_por_tema;",
+  ],
+  [
     "20261002064121_confirmacion_cita.sql",
     // HU-029 sumó observaciones_reporte a la salida de la cita (D-37): 20 columnas pasaron a 21 (22 en privado.datos_de_cita).
     [

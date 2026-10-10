@@ -528,14 +528,17 @@ describe("criterio 7 (RN-15, P-35, D-7): el diagnóstico más reciente de la mat
     expect(await idsVisibles(delMonitor, "diagnostico", "id", deOtraSesion.id)).toEqual([]);
     expect(await idsVisibles(deOtroMonitor, "diagnostico", "id", reciente.id)).toEqual([]);
     expect(await idsVisibles(duena.cliente, "diagnostico", "id", reciente.id)).toEqual([reciente.id]);
-    // Lo lee por columnas: el token de recuperación (RN-12) no lo pide ni el monitor ni la dueña.
+    // Lo lee por columnas: ni el monitor ni la dueña piden el token de recuperación (RN-12) ni, desde HU-081, las copias de las
+    // preguntas (traen la correcta y la solución), la semilla, el repetido, lo respondido, los aciertos o la marca de falta de material.
     for (const cliente of [delMonitor, duena.cliente]) {
-      const conToken = await cliente.from("diagnostico").select("id, token_recuperacion").eq("id", reciente.id);
-      expect(conToken.error?.code).toBe("42501");
+      for (const columna of ["token_recuperacion", "respuestas", "semilla", "repetido", "respondidas", "aciertos", "falta_material"]) {
+        const conColumna = await cliente.from("diagnostico").select(`id, ${columna}`).eq("id", reciente.id);
+        expect(conColumna.error?.code, columna).toBe("42501");
+      }
     }
-    const sinToken = await delMonitor.from("diagnostico").select("id, resultado_por_tema").eq("id", reciente.id);
-    expect(sinToken.error).toBeNull();
-    expect(sinToken.data?.map((d) => d.id)).toEqual([reciente.id]);
+    const sinCopias = await delMonitor.from("diagnostico").select("id, resultado_por_habilidad").eq("id", reciente.id);
+    expect(sinCopias.error).toBeNull();
+    expect(sinCopias.data?.map((d) => d.id)).toEqual([reciente.id]);
 
     // Cancelada la primera reserva, otra fecha comparte el mismo diagnóstico aunque ya esté ligado a otra cita (D-7).
     await expirarReserva(primera.idMonitoria!);
