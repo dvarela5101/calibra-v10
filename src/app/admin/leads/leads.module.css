@@ -226,3 +226,14 @@
   border-color: var(--border);
   cursor: not-allowed;
 }
+
+/* «Pidió no recibir mensajes» (HU-089): el botón y su confirmación en la misma tarjeta. */
+.sinContacto {
+  inline-size: 100%;
+}
+
+.confirmacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}

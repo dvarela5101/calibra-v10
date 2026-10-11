@@ -28,6 +28,11 @@ export type LeadParaAdmin = {
   materias: string[];
   /** Quién marcó el estado y cuándo; `null` si nadie lo ha gestionado. */
   marcado: { porAdmin: string | null; en: Date } | null;
+  /**
+   * Quién registró que pidió no recibir mensajes y cuándo (HU-089, D-61 f). Solo si `aceptaContacto` es falso y hay
+   * registro: quien apagó la casilla al editar su contacto no lo pidió.
+   */
+  sinContacto: { porAdmin: string | null; en: Date } | null;
 };
 
 export type PaginaDeLeads = {
@@ -47,6 +52,8 @@ const COLUMNAS =
   "id, nombre, correo, numero_telefono, estado, origen, acepta_contacto, fecha_creacion, estado_cambiado_en, id_admin_estado, ids_materia";
 
 type Fila = Database["public"]["Views"]["lead_para_gestion"]["Row"];
+/** Quién registró que el Lead pidió no recibir mensajes (HU-089), leído aparte de `lead_sin_contacto`. */
+type SinContacto = { id_admin: string | null; registrado_en: string };
 
 /** Las materias para el filtro, por nombre. `materia` es de lectura pública. */
 export async function listarMaterias(cliente: Cliente): Promise<MateriaDeFiltro[]> {
@@ -115,8 +122,12 @@ export async function listarLeads(
   if (error) throw new Error(`No se pudieron leer los leads: ${error.message}`);
 
   const filas = (data ?? []) as Fila[];
-  const nombresDeAdmin = await nombresDeAdmins(cliente, filas);
-  const leads = filas.map((fila) => aLeadParaAdmin(fila, materias, nombresDeAdmin));
+  const sinContacto = await registrosSinContacto(cliente, filas);
+  const nombresDeAdmin = await nombresDeAdmins(cliente, [
+    ...filas.map((f) => f.id_admin_estado),
+    ...[...sinContacto.values()].map((r) => r.id_admin),
+  ]);
+  const leads = filas.map((fila) => aLeadParaAdmin(fila, materias, nombresDeAdmin, sinContacto.get(fila.id ?? "")));
   return { leads, total: count ?? leads.length, totalSinFiltros, pagina, porPagina };
 }
 
@@ -162,16 +173,33 @@ async function contar(
   return count ?? 0;
 }
 
-/** Los nombres de los admins que marcaron estas filas (la política «admin lee» de `admin` lo permite). */
-async function nombresDeAdmins(cliente: Cliente, filas: readonly Fila[]): Promise<Map<string, string>> {
-  const ids = [...new Set(filas.map((f) => f.id_admin_estado).filter((id): id is string => Boolean(id)))];
+/**
+ * Los registros de HU-089 de los Leads de la página que ya no aceptan contacto. La vista de HU-053 no los trae: se
+ * leen de `lead_sin_contacto`, que solo leen los admins.
+ */
+async function registrosSinContacto(cliente: Cliente, filas: readonly Fila[]): Promise<Map<string, SinContacto>> {
+  const ids = filas.filter((f) => f.acepta_contacto === false && f.id).map((f) => f.id as string);
+  if (ids.length === 0) return new Map();
+  const { data, error } = await cliente.from("lead_sin_contacto").select("id_lead, id_admin, registrado_en").in("id_lead", ids);
+  if (error) throw new Error(`No se pudieron leer los pedidos de no recibir mensajes: ${error.message}`);
+  return new Map((data ?? []).map((r) => [r.id_lead, { id_admin: r.id_admin, registrado_en: r.registrado_en }]));
+}
+
+/** Los nombres de esos admins (la política «admin lee» de `admin` lo permite). */
+async function nombresDeAdmins(cliente: Cliente, idsDeAdmin: readonly (string | null)[]): Promise<Map<string, string>> {
+  const ids = [...new Set(idsDeAdmin.filter((id): id is string => Boolean(id)))];
   if (ids.length === 0) return new Map();
   const { data, error } = await cliente.from("admin").select("id, nombre").in("id", ids);
   if (error) throw new Error(`No se pudieron leer los nombres de los admins: ${error.message}`);
   return new Map((data ?? []).map((a) => [a.id, a.nombre]));
 }
 
-function aLeadParaAdmin(fila: Fila, materias: readonly MateriaDeFiltro[], nombresDeAdmin: Map<string, string>): LeadParaAdmin {
+function aLeadParaAdmin(
+  fila: Fila,
+  materias: readonly MateriaDeFiltro[],
+  nombresDeAdmin: Map<string, string>,
+  sinContacto?: SinContacto,
+): LeadParaAdmin {
   const nombreDe = new Map(materias.map((m) => [m.id, m.nombre]));
   return {
     id: fila.id ?? "",
@@ -192,6 +220,13 @@ function aLeadParaAdmin(fila: Fila, materias: readonly MateriaDeFiltro[], nombre
           en: new Date(fila.estado_cambiado_en),
         }
       : null,
+    sinContacto:
+      fila.acepta_contacto === false && sinContacto
+        ? {
+            porAdmin: sinContacto.id_admin ? (nombresDeAdmin.get(sinContacto.id_admin) ?? null) : null,
+            en: new Date(sinContacto.registrado_en),
+          }
+        : null,
   };
 }
 
@@ -221,4 +256,20 @@ export async function cambiarEstadoDeLead(
   if (errorLectura) return { ok: false, error: ERROR_AL_CAMBIAR };
   if (actual?.estado === "descartado") return { ok: false, error: YA_DESCARTADO };
   return { ok: false, error: NO_ENCONTRADO };
+}
+
+export const ERROR_AL_REGISTRAR = "No pudimos registrarlo. Intenta de nuevo.";
+export const YA_NO_ACEPTA = "Ese lead ya no acepta contacto. Recarga la página.";
+
+/**
+ * El admin registra que el Lead pidió no recibir más mensajes (HU-089, D-61 f): `registrar_sin_contacto` apaga
+ * `acepta_contacto` y guarda su id y la hora, con el Lead bloqueado. Con su sesión: la función lee `auth.uid()`.
+ */
+export async function registrarSinContacto(cliente: Cliente, idLead: string): Promise<ResultadoCambio> {
+  const { data, error } = await cliente.rpc("registrar_sin_contacto", { p_id_lead: idLead });
+  if (error) throw new Error(`No se pudo registrar el pedido: ${error.message}`);
+  if (data === "registrado") return { ok: true };
+  if (data === "ya_no_acepta") return { ok: false, error: YA_NO_ACEPTA };
+  if (data === "no_existe") return { ok: false, error: NO_ENCONTRADO };
+  return { ok: false, error: ERROR_AL_REGISTRAR };
 }

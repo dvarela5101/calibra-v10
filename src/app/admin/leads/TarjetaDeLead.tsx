@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { ETIQUETA_DE_ESTADO, type EstadoLead } from "@/lib/leads/estados";
 import { enlaceDeCorreo } from "@/lib/solicitudes/reglas";
 import { marcarLead, type EstadoCambio } from "./acciones";
+import { PedidoSinContacto } from "./PedidoSinContacto";
 import estilos from "./leads.module.css";
 
 export type DatosDeTarjeta = {
@@ -19,6 +20,8 @@ export type DatosDeTarjeta = {
   materias: string[];
   /** «Lo marcó … el …», ya escrito; `null` si nadie lo ha gestionado. */
   marcado: string | null;
+  /** «Pidió no recibir mensajes. Lo registró … el …» (HU-089), ya escrito; `null` sin registro. */
+  sinContacto: string | null;
 };
 
 const inicial: EstadoCambio = { error: null, exito: null };
@@ -62,6 +65,7 @@ export function TarjetaDeLead({ lead: l }: { lead: DatosDeTarjeta }) {
           <dd>{l.aceptaContacto ? "Sí" : "No"}</dd>
         </div>
       </dl>
+      {l.sinContacto && <p className={estilos.dato}>{l.sinContacto}</p>}
       <p className={estilos.contacto}>
         {l.correo && (
           <a href={enlaceDeCorreo(l.correo)} className={estilos.enlace}>
@@ -112,6 +116,8 @@ export function TarjetaDeLead({ lead: l }: { lead: DatosDeTarjeta }) {
           </p>
         </form>
       )}
+      {/* En cualquier estado, también descartado (HU-089). Solo la persona vuelve a encender acepta_contacto. */}
+      {l.aceptaContacto && <PedidoSinContacto idLead={l.id} nombre={l.nombre} />}
     </>
   );
 }

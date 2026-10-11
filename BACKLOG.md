@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-11 15:34. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-11 16:14. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -39,7 +39,7 @@ _Generado automaticamente: 2026-10-11 15:34. No editar a mano; usa `scripts/back
 | [HU-050](backlog/HU-050.md) | [Monitor] Ver mis desembolsos | En progreso | P1 | M | HU-028, HU-030, HU-078 |
 | [HU-055](backlog/HU-055.md) | [Admin] Gestionar materias y evaluaciones | En progreso | P1 | L | HU-005, HU-012, HU-014, HU-016, HU-062 |
 | [HU-052](backlog/HU-052.md) | [Admin] Autorizar una cancelación fuera de plazo en casos extremos | En progreso | P2 | M | HU-024, HU-026 |
-| [HU-089](backlog/HU-089.md) | [Admin] Registrar que un Lead pidió no recibir más mensajes | En progreso | P2 | S | HU-053 |
+| [HU-089](backlog/HU-089.md) | [Admin] Registrar que un Lead pidió no recibir más mensajes | En revision | P2 | S | HU-053 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |

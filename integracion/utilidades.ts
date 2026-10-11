@@ -232,6 +232,14 @@ export class Fixtures {
     return lead;
   }
 
+  /**
+   * Anota un Lead que no creó esta clase (lo creó `registrar_lead` desde `registrarContacto`, HU-068) para que
+   * `limpiar()` lo borre antes que su sesión: al borrarla, `id_sesion_anonima` se anula y el Lead quedaría huérfano.
+   */
+  registrarLead(id: string): void {
+    this.leads.push(id);
+  }
+
   async crearEstudiante() {
     const usuario = await this.crearUsuario();
     const lead = await this.crearLead();

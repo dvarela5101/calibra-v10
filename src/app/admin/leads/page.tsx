@@ -236,6 +236,9 @@ function ListaDeLeads({ carga: { filtros, pagina: p } }: { carga: Carga }) {
                 marcado: l.marcado
                   ? `Lo marcó ${l.marcado.porAdmin ?? "un admin"} el ${formatearFechaHora(l.marcado.en)}`
                   : null,
+                sinContacto: l.sinContacto
+                  ? `Pidió no recibir mensajes. Lo registró ${l.sinContacto.porAdmin ?? "un admin"} el ${formatearFechaHora(l.sinContacto.en)}`
+                  : null,
               }}
             />
           </li>
