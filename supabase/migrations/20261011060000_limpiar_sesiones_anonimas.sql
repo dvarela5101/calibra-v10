@@ -16,7 +16,8 @@
 --     para el día siguiente.
 --   * El candado dura hasta el final de la corrida (pg_advisory_xact_lock). Para no llenar la tabla de candados, cada
 --     corrida borra a lo sumo 1000 sesiones, las más viejas primero; las demás quedan para el día siguiente
---     (supuesto de la implementación).
+--     (supuesto de la implementación). Mientras corre, quien deja su contacto en una sesión que la corrida ya tomó
+--     espera a que termine (registrar_lead espera el candado); solo le pasa a una sesión que estaba en la lista.
 --   * Si una sesión no se puede borrar (por ejemplo, una llave foránea sin cascada que agregue una HU futura), se salta,
 --     se avisa en el log solo con su id y se sigue con las demás.
 --   * Solo la corre pg_cron (como postgres): ninguna sesión ni el servidor la ejecutan ni consultan las vencidas.
@@ -108,6 +109,9 @@ as $$
     select u.id, privado.ultima_actividad_de_sesion(u.id) as ultima_actividad
     from auth.users u
     where u.is_anonymous
+      -- La última actividad nunca es anterior al alta: una sesión creada dentro del plazo no puede vencer, y así no se
+      -- calcula la actividad de cada visitante reciente.
+      and u.created_at < p_ahora - make_interval(days => (select p.sesion_anonima_dias from public.parametros_retencion() p))
       and not privado.sesion_tiene_dueno(u.id)
   ) v
   where v.ultima_actividad < p_ahora - make_interval(days => (select p.sesion_anonima_dias from public.parametros_retencion() p));
@@ -132,6 +136,11 @@ begin
   if not pg_try_advisory_xact_lock(6801, hashtext(p_id::text)) then
     return false;
   end if;
+
+  -- Bloquea la fila del usuario antes de comprobar: una cuenta (estudiante, monitor, admin) o un diagnóstico que se
+  -- crea a la vez para esta sesión espera a esta transacción por su llave foránea, en lugar de colarse entre la
+  -- comprobación y el borrado.
+  perform 1 from auth.users u where u.id = p_id for update;
 
   if not exists (
     select 1
@@ -167,12 +176,14 @@ declare
   v_id uuid;
   v_borradas integer := 0;
 begin
+  -- El tope cuenta las borradas, no las intentadas: una sesión que falla siempre (y sigue siendo de las más viejas) no
+  -- ocupa el cupo de las demás. Las que fallan no guardan su candado: se va con la subtransacción.
   for v_id in
     select v.id
     from privado.sesiones_anonimas_vencidas(p_ahora) v
     order by v.ultima_actividad, v.id
-    limit 1000
   loop
+    exit when v_borradas >= 1000;
     begin
       if privado.borrar_sesion_vencida(v_id, p_ahora) then
         v_borradas := v_borradas + 1;
