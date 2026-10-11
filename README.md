@@ -284,6 +284,18 @@ Cada fecha libre de `/monitores` lleva a `/agendar?franja=…&fecha=…&materia=
 - Cierre automático (P-05, D-14): pg_cron corre cada 15 minutos `privado.cerrar_monitorias_sin_finalizar(now())`, que cierra cada individual confirmada que alcanzó `public.cierre_automatico_desde(fin programado)` = fin + `cierre_automatico_min` (24 h, en `parametros_negocio()`). Las grupales no se cierran solas (su monitor entrega el enlace de reseña, HU-046).
 - Al pasar a `realizada` se crea el desembolso pendiente del monitor (HU-028, ver "Ejecutar un desembolso"). El correo de reseña individual sale con HU-035 (ver "Reseña individual").
 
+## Mis desembolsos (monitor)
+
+`/monitor/desembolsos` (HU-050, enlazada desde `/monitor`): los desembolsos del monitor en tres grupos, por transferir, transferidos y anulados. Cada uno trae la materia y el día y la hora de la sesión y, según su situación, una frase: desde cuándo se puede transferir, qué lo retiene, cuándo y con qué referencia se transfirió, o que se anuló. Los por transferir y los transferidos muestran tres cifras en este orden: el total de la monitoría, la comisión de Calibra y lo que se le transfiere (D-59). Es la única pantalla que muestra cifras de comisión.
+
+- La da `public.mis_desembolsos()` (invoker, solo `authenticated`) sobre `privado.mis_desembolsos_de_la_sesion()` (definer, pasa `now()`) y `privado.desembolsos_del_monitor(ahora)` (definer, sin `grant`: ninguna sesión elige la hora). Filtra por `auth.uid()` a través de `monitoria.id_monitor`, así que un admin, un Lead o una sesión anónima reciben una lista vacía y `anon` no tiene permiso.
+- La tabla `desembolso` sigue cerrada para el monitor (solo la lee un admin). La función devuelve 13 columnas: ni el admin, ni el nombre o el contacto del estudiante o de quien pagó, ni los motivos internos (P-37).
+- La situación es una lista cerrada de siete: `en_plazo`, `listo`, `pago_en_revision`, `pago_rechazado`, `en_espera`, `transferido` y `anulado`. Sale de `privado.estado_para_ejecutar`, la misma función que usa el admin, así que `listo` coincide con «Desembolsos ejecutables». Los motivos sin frase propia (`con_reporte`, `sin_pagos_aprobados`, `no_realizada` y cualquiera que se agregue después) salen como `en_espera`. No existe una situación de reporte en revisión: así el monitor no puede leer por la Data API que hay un reporte de inasistencia (D-59 b).
+- Los montos de un por transferir son el cálculo de ahora (`privado.calcular_desembolso`), nunca la foto de la fila (P-29). Los de un transferido son los que quedaron al ejecutarlo, con su llave y su referencia. Un anulado no trae montos ni llave. La app no calcula nada, tampoco la comisión (N-2). `fecha_desembolso` llega ya como día de Bogotá.
+- Si la llave copiada a un desembolso por transferir no es la que el monitor tiene hoy (HU-013), la tarjeta dice a cuál se transferirá y, si `CORREO_DATOS_PERSONALES` está configurado, a qué correo escribir si esa llave ya no sirve.
+- La lectura no escribe ni toma candados: nunca espera a un admin que ejecuta, acepta un reporte o revisa un pago, y lee cada desembolso completo, o por transferir o ya transferido.
+- La excepción de la comisión la vigilan `pruebas/comision-solo-en-desembolsos.test.ts` (ninguna otra pantalla, correo o consulta del código, y que `CLAUDE.md` y este archivo la nombren), `supabase/tests/mis_desembolsos.test.sql` (ninguna otra función, vista o tabla entrega la comisión a una sesión) y `e2e/mis-desembolsos.spec.ts` (el HTML de las demás pantallas de cada rol). Mostrarla en otro lugar exige cambiar la regla, `CLAUDE.md` y esas pruebas a la vez.
+
 ## Avisos al monitor
 
 HU-051 (D-16): el monitor recibe un correo cuando una monitoría individual suya queda `confirmada` (fecha y hora en Bogotá, duración, materia, modalidad y el nombre del estudiante, nunca su contacto, P-37) y cuando el estudiante cancela una confirmada. Las reservas por pagar y las que vencen sin pago no se avisan. Sale aunque el cambio de estado lo haga otra HU (HU-018 confirma, HU-024 cancela).
@@ -428,7 +440,7 @@ Mientras falten los secretos, el paso de despliegue se salta con un aviso y el p
 
 - Zona horaria de negocio `America/Bogota`, idioma `es`, locale `es-CO`: `src/config/regional.ts`. Toda fecha se muestra en esa zona aunque el servidor corra en UTC (`src/lib/fechas.ts`).
 - Tokens de diseño del prototipo: `src/styles/tokens.css`. Los colores `--alert`, `--warn` y `--success` son solo relleno; para texto se usan `--alert-text`, `--success-text` y `--muted`, que pasan WCAG AA. `src/styles/tokens.test.ts` lo comprueba.
-- Reglas que no se negocian: ningún texto por debajo de 14 px, áreas táctiles de 44 px o más, sin degradados, sin emojis decorativos, sin iconos de cerebro, robot o IA, y nunca mostrar cifras de comisión, salvo al monitor en sus desembolsos (D-59).
+- Reglas que no se negocian: ningún texto por debajo de 14 px, áreas táctiles de 44 px o más, sin degradados, sin emojis decorativos, sin iconos de cerebro, robot o IA, y nunca mostrar cifras de comisión; única excepción (D-59): `/monitor/desembolsos`, al monitor dueño del desembolso (ver «Mis desembolsos (monitor)»).
 
 ## Estructura
 
@@ -438,7 +450,7 @@ src/config/           Configuración regional
 src/lib/              Utilidades compartidas
 src/styles/           Tokens de diseño
 e2e/                  Pruebas de Playwright
-pruebas/              Pruebas del repo (secretos, convertidor y banco de ejemplo)
+pruebas/              Pruebas del repo (secretos, convertidor, banco de ejemplo y la excepción de la comisión)
 contenido/            Banco de preguntas por habilidades, una carpeta por materia (ver contenido/README.md)
 scripts/contenido/    Convertidor del banco: valida, carga y migración del prototipo
 supabase/migrations/  Esquema de la base (migraciones idempotentes)

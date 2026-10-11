@@ -1155,6 +1155,11 @@ isOneToOne: true
               "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"observaciones_reporte": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
             }[]
                            },
+"mis_desembolsos":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "comision": number,"desembolsable_desde": string,"duracion_min": number,"fecha": string,"fecha_desembolso": string,"hora": string,"id_desembolso": string,"llave_destino": string,"monto_bruto": number,"monto_neto": number,"nombre_materia": string,"referencia_transferencia": string,"situacion": string
+            }[]
+                           },
 "monto_neto":
 { Args: { "p_monto_bruto": number }; Returns: number
                            },

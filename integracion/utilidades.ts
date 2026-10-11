@@ -503,22 +503,35 @@ export class Fixtures {
     return reporte;
   }
 
-  /** Un desembolso de una monitoría (bruto 25.000, comisión 2.500, neto 22.500). */
-  async crearDesembolso(datos: { idMonitoria: string; estado?: "pendiente" | "desembolsado" | "anulado"; idAdmin?: string }) {
+  /**
+   * Un desembolso de una monitoría. Sin más datos queda en bruto 25.000, comisión 2.500, neto 22.500, con la llave
+   * `llave-de-prueba` y, si ya está desembolsado, la referencia `REF-PRUEBA` y la fecha de ahora (HU-050: `montos`,
+   * `llave`, `referencia` y `fechaDesembolso` las cambian, por ejemplo para una foto distinta de los pagos de hoy).
+   */
+  async crearDesembolso(datos: {
+    idMonitoria: string;
+    estado?: "pendiente" | "desembolsado" | "anulado";
+    idAdmin?: string;
+    montos?: { bruto: number; comision: number; neto: number };
+    llave?: string;
+    referencia?: string;
+    fechaDesembolso?: string;
+  }) {
     const estado = datos.estado ?? "pendiente";
+    const montos = datos.montos ?? { bruto: 25_000, comision: 2_500, neto: 22_500 };
     const desembolso = exito(
       await this.admin
         .from("desembolso")
         .insert({
           id_monitoria: datos.idMonitoria,
-          monto_bruto: 25_000,
-          comision: 2_500,
-          monto_neto: 22_500,
-          llave_destino: "llave-de-prueba",
+          monto_bruto: montos.bruto,
+          comision: montos.comision,
+          monto_neto: montos.neto,
+          llave_destino: datos.llave ?? "llave-de-prueba",
           estado,
           id_admin: estado === "desembolsado" ? (datos.idAdmin ?? null) : null,
-          fecha_desembolso: estado === "desembolsado" ? new Date().toISOString() : null,
-          referencia_transferencia: estado === "desembolsado" ? "REF-PRUEBA" : null,
+          fecha_desembolso: estado === "desembolsado" ? (datos.fechaDesembolso ?? new Date().toISOString()) : null,
+          referencia_transferencia: estado === "desembolsado" ? (datos.referencia ?? "REF-PRUEBA") : null,
         })
         .select()
         .single(),
