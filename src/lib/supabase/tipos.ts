@@ -33,6 +33,12 @@ export type Database = {
       foreignKeyName: "aviso_monitor_id_monitoria_fkey"
       columns: ["id_monitoria"]
 isOneToOne: false
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
+    },{
+      foreignKeyName: "aviso_monitor_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: false
       referencedRelation: "monitoria"
       referencedColumns: ["id"]
     },{
@@ -77,10 +83,53 @@ isOneToOne: true
       foreignKeyName: "cancelacion_cita_id_monitoria_fkey"
       columns: ["id_monitoria"]
 isOneToOne: true
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
+    },{
+      foreignKeyName: "cancelacion_cita_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
       referencedRelation: "monitoria"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "cancelacion_cita_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "monitoria_plazos"
+      referencedColumns: ["id_monitoria"]
+    }
+                  ]
+                },"cancelacion_excepcional": {
+                  Row: {
+                    "autorizada_en": string,"categoria": string,"id_admin": string,"id_monitoria": string,"nota": string | null
+                  }
+                  Insert: {
+                    "autorizada_en"?: string,"categoria": string,"id_admin": string,"id_monitoria": string,"nota"?: string | null
+                  }
+                  Update: {
+                    "autorizada_en"?: string,"categoria"?: string,"id_admin"?: string,"id_monitoria"?: string,"nota"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "cancelacion_excepcional_id_admin_fkey"
+      columns: ["id_admin"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cancelacion_excepcional_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
+    },{
+      foreignKeyName: "cancelacion_excepcional_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "monitoria"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cancelacion_excepcional_id_monitoria_fkey"
       columns: ["id_monitoria"]
 isOneToOne: true
       referencedRelation: "monitoria_plazos"
@@ -146,6 +195,12 @@ isOneToOne: false
       foreignKeyName: "confirmacion_cita_id_monitoria_fkey"
       columns: ["id_monitoria"]
 isOneToOne: true
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
+    },{
+      foreignKeyName: "confirmacion_cita_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
       referencedRelation: "monitoria"
       referencedColumns: ["id"]
     },{
@@ -186,6 +241,12 @@ isOneToOne: true
 isOneToOne: false
       referencedRelation: "admin"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "desembolso_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
     },{
       foreignKeyName: "desembolso_id_monitoria_fkey"
       columns: ["id_monitoria"]
@@ -568,6 +629,12 @@ isOneToOne: false
       foreignKeyName: "monitoria_grupal_id_monitoria_fkey"
       columns: ["id_monitoria"]
 isOneToOne: true
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
+    },{
+      foreignKeyName: "monitoria_grupal_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
       referencedRelation: "monitoria"
       referencedColumns: ["id"]
     },{
@@ -638,6 +705,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "admin"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pago_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: false
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
     },{
       foreignKeyName: "pago_id_monitoria_fkey"
       columns: ["id_monitoria"]
@@ -786,6 +859,12 @@ isOneToOne: false
       foreignKeyName: "reporte_inasistencia_id_monitoria_fkey"
       columns: ["id_monitoria"]
 isOneToOne: true
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
+    },{
+      foreignKeyName: "reporte_inasistencia_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
       referencedRelation: "monitoria"
       referencedColumns: ["id"]
     },{
@@ -919,12 +998,25 @@ isOneToOne: false
                 }
           }
           Views: {
-            "desembolsos_ejecutables": {
+            "citas_sin_plazo_para_cancelar": {
+                  Row: {
+                    "cancelable_hasta": string | null,"id_monitoria": string | null,"inicio": string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"desembolsos_ejecutables": {
                   Row: {
                     "desembolsable_desde": string | null,"fecha_generacion": string | null,"fecha_sesion": string | null,"id": string | null,"id_monitoria": string | null,"monto_neto": number | null
                   }
                   Relationships: [
                     {
+      foreignKeyName: "desembolso_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
+    },{
       foreignKeyName: "desembolso_id_monitoria_fkey"
       columns: ["id_monitoria"]
 isOneToOne: true
@@ -963,6 +1055,9 @@ isOneToOne: true
                            },
 "anotar_correo_de_contacto":
 { Args: { "p_correo": string,"p_id_sesion": string }; Returns: boolean
+                           },
+"autorizar_cancelacion_fuera_de_plazo":
+{ Args: { "p_categoria": string,"p_id_monitoria": string,"p_nota": string }; Returns: string
                            },
 "banco_de_la_evaluacion":
 { Args: { "p_id_evaluacion": string }; Returns: Json

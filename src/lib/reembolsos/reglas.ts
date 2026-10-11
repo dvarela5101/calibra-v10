@@ -36,6 +36,14 @@ export function tieneFormaDeTokenDeLlave(valor: unknown): valor is string {
 export const MOTIVO_CANCELACION_A_TIEMPO = "Cancelaste la monitoría dentro del plazo.";
 
 /**
+ * El motivo del reembolso que crea una cancelación que un admin autorizó fuera del plazo (D-60, HU-052). Es el texto de
+ * `privado.motivo_de_cancelacion_del_estudiante` cuando existe la fila de `cancelacion_excepcional`, que usan el núcleo de
+ * la cancelación y el trigger de P-07. No lleva el motivo de la excepción ni la nota: lo lee quien pagó, en el pedido de la
+ * llave. Una prueba de integración compara esta constante con la que escribe la base.
+ */
+export const MOTIVO_CANCELACION_AUTORIZADA = "Cancelaste la monitoría y un admin autorizó hacerlo fuera del plazo.";
+
+/**
  * La base del motivo del reembolso cuando se acepta un reporte de inasistencia (D-37, HU-030): el texto de
  * `privado.motivo_de_inasistencia`, al que se le suma, si las hay, un espacio y las observaciones del admin. Se guarda
  * en `reembolso.motivo`. Una prueba de integración compara esta constante con la que escribe la base.
