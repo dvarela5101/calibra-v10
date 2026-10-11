@@ -321,15 +321,17 @@ export class Fixtures {
   /**
    * Diagnóstico terminado de una sesión anónima (id_lead nulo, RN de P-33); id_materia lo llena un trigger. Nace completo, como los
    * que inserta `terminar_diagnostico` (HU-081): `respuestas` es un arreglo con un paso por clave (las vistas antes leen
-   * `respuestas[].clave`; por defecto `P1` y `P2`), con semilla y un acierto, y el resultado trae sus tres claves.
+   * `respuestas[].clave`; por defecto `P1` y `P2`), con semilla y un acierto, y el resultado trae sus tres claves. Con
+   * `idLead`, de ese Lead (HU-053): se borra con él.
    */
-  async crearDiagnostico(datos: { idSesionAnonima: string; idEvaluacion: string; idMateria: string; claves?: string[] }) {
+  async crearDiagnostico(datos: { idSesionAnonima?: string; idLead?: string; idEvaluacion: string; idMateria: string; claves?: string[] }) {
     const claves = datos.claves ?? ["P1", "P2"];
     return exito(
       await this.admin
         .from("diagnostico")
         .insert({
-          id_sesion_anonima: datos.idSesionAnonima,
+          id_sesion_anonima: datos.idSesionAnonima ?? null,
+          id_lead: datos.idLead ?? null,
           id_evaluacion: datos.idEvaluacion,
           id_materia: datos.idMateria,
           respuestas: claves.map((clave) => ({ clave })),
