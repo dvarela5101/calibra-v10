@@ -1,6 +1,14 @@
 # Reparto de trabajo
 
-**Actualizado:** 4 de octubre de 2026 (ver "Ajuste del 4-oct-2026"; después vienen el ajuste del 3-oct, el ajuste del 2-oct en la noche, la revisión de HU-020, el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+**Actualizado:** 10 de octubre de 2026 (ver "Ajuste del 10-oct-2026"; después vienen el ajuste del 4-oct, el ajuste del 3-oct, el ajuste del 2-oct en la noche, la revisión de HU-020, el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+
+## Ajuste del 10-oct-2026
+
+- **Decisiones del 10-oct (D-52 a D-66):** dvarela5101 respondió las preguntas del refinamiento del diagnóstico y de las dependencias del corte. Pasan a Lista HU-009, HU-011, HU-022, HU-031, HU-032, HU-033, HU-048, HU-049, HU-050, HU-052, HU-053, HU-055, HU-056, HU-072, HU-079, HU-084 y HU-085.
+- **HUs nuevas, en Backlog y por refinar:** [HU-086](../backlog/HU-086.md) (ligar un diagnóstico hecho después de agendar), [HU-087](../backlog/HU-087.md) (autorización y aviso ampliados a las respuestas; HU-022 depende de ella), [HU-088](../backlog/HU-088.md) (reseñas en la tarjeta del monitor), [HU-089](../backlog/HU-089.md) (pidió no recibir mensajes; entra al corte) y [HU-090](../backlog/HU-090.md) (retiro de la autorización desde la gestión de leads). Sus cuerpos ya están escritos; les falta la revisión de quien las tome.
+- **HU-034 vuelve a refinarse** (D-56): RN-42 pasa a bandeja común con aviso a todos los admins y sin escalamiento por hora. Toca código de la cadena del admin de Juzou04 (HU-020, HU-074, HU-077).
+- **Al corte (HU-057) se suman** HU-084 (D-57) y HU-089 (D-61 f); por HU-084 también entran HU-022 y HU-087.
+- El reparto por persona no cambió: dvarela5101 lo confirma en la siguiente sesión.
 
 ## Ajuste del 4-oct-2026
 
