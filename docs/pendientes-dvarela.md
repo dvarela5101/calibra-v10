@@ -298,7 +298,7 @@ Si te gusta, dile a Claude "apruebo HU-XXX" (él corre `python scripts/backlog.p
 
 - [ ] **Fórmulas y código del banco (HU-083, de Juzou04).** Dos cosas para ti; mientras no respondas, vale la recomendada:
   1. Cada fórmula lleva un texto alternativo con su lectura en español en palabras («1 sobre R sub eq»), para que una opción que es solo una fórmula tenga nombre en un lector de pantalla. Solo se probó en Chromium; con VoiceOver o NVDA puede leerse la etiqueta en vez de la fórmula. **Recomendada: dejarlo así** y probarlo con un lector real antes del corte.
-  2. `npm run contenido:validar` no ve lo que el dibujo rechaza (`$50%$`, `$rac12$`, `$x^$`); hoy solo lo atrapa una prueba de HU-083. **Recomendada: una HU corta (S)** para que el validador use el mismo analizador. No la creé.
+  2. `npm run contenido:validar` no ve lo que el dibujo rechaza (`$50%$`, `$\frac12$`, `$x^$`); hoy solo lo atrapa una prueba de HU-083. **Recomendada: una HU corta (S)** para que el validador use el mismo analizador. No la creé.
 
 ### A3. Preparar la cuenta de Gmail (para HU-066)
 
