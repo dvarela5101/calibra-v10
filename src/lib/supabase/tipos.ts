@@ -525,6 +525,43 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"lead_sin_contacto": {
+                  Row: {
+                    "id_admin": string | null,"id_lead": string,"registrado_en": string
+                  }
+                  Insert: {
+                    "id_admin"?: string | null,"id_lead": string,"registrado_en": string
+                  }
+                  Update: {
+                    "id_admin"?: string | null,"id_lead"?: string,"registrado_en"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lead_sin_contacto_id_admin_fkey"
+      columns: ["id_admin"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lead_sin_contacto_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: true
+      referencedRelation: "lead"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lead_sin_contacto_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: true
+      referencedRelation: "lead_para_contactar"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lead_sin_contacto_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: true
+      referencedRelation: "lead_para_gestion"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"materia": {
                   Row: {
                     "codigo": string,"id": string,"nombre": string
@@ -1345,6 +1382,9 @@ isOneToOne: false
                            },
 "registrar_resena":
 { Args: { "p_calificacion": number,"p_comentario": string,"p_token": string }; Returns: string
+                           },
+"registrar_sin_contacto":
+{ Args: { "p_id_lead": string }; Returns: string
                            },
 "reportar_inasistencia_de_mi_cita":
 { Args: { "p_id_monitoria": string }; Returns: string

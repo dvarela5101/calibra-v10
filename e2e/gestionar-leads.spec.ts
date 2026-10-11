@@ -125,7 +125,9 @@ test.describe("Criterios 1, 3, 4 y 7 a 9 · la lista y el cambio de estado", () 
     await expect(tarjeta.getByText("no se puede volver a cambiar desde esta pantalla")).toBeVisible();
     await tarjeta.getByRole("button", { name: `Sí, descartar a ${lead.nombre}` }).click();
     await expect(tarjeta.getByText("Descartado", { exact: true })).toBeVisible(ESPERA);
-    await expect(tarjeta.getByRole("button")).toHaveCount(0);
+    // Sin botones de estado. El de «Pidió no recibir mensajes» (HU-089) sí sigue: vale en cualquier estado.
+    await expect(tarjeta.getByRole("button", { name: /^Marcar como|^Sí, descartar/ })).toHaveCount(0);
+    await expect(tarjeta.getByText("Descartar", { exact: true })).toHaveCount(0);
     expect(await escenario.estadoDe(lead.id)).toBe("descartado");
     expect(errores).toEqual([]);
   });
