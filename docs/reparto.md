@@ -8,7 +8,26 @@
 - **HUs nuevas, en Backlog y por refinar:** [HU-086](../backlog/HU-086.md) (ligar un diagnóstico hecho después de agendar), [HU-087](../backlog/HU-087.md) (autorización y aviso ampliados a las respuestas; HU-022 depende de ella), [HU-088](../backlog/HU-088.md) (reseñas en la tarjeta del monitor), [HU-089](../backlog/HU-089.md) (pidió no recibir mensajes; entra al corte) y [HU-090](../backlog/HU-090.md) (retiro de la autorización desde la gestión de leads). Sus cuerpos ya están escritos; les falta la revisión de quien las tome.
 - **HU-034 vuelve a refinarse** (D-56): RN-42 pasa a bandeja común con aviso a todos los admins y sin escalamiento por hora. Toca código de la cadena del admin de Juzou04 (HU-020, HU-074, HU-077).
 - **Al corte (HU-057) se suman** HU-084 (D-57) y HU-089 (D-61 f); por HU-084 también entran HU-022 y HU-087.
-- El reparto por persona no cambió: dvarela5101 lo confirma en la siguiente sesión.
+- **D-67:** HU-087 y HU-088 quedan sin preguntas. HU-087 deja de esperar a HU-010 (depende de HU-008 y HU-068) y pasa a Lista con HU-089, las dos del corte.
+- **Reparto confirmado por dvarela5101.** Juzou04 lleva más carga y lo más grande (tiene más límite en su cuenta de Claude), la cadena del diagnóstico (tiene el material de las materias) y lo que sale de su código de admin. dvarela5101 lleva lo que sale de su código: contacto, autorización y lista de monitores. Cada lista va en orden.
+
+| Persona | Siguiente, en orden |
+|---|---|
+| Juzou04 | 1) Fusionar [HU-081](../backlog/HU-081.md) ([PR #51](https://github.com/dvarela5101/calibra-v10/pull/51)) y [HU-083](../backlog/HU-083.md) ([PR #52](https://github.com/dvarela5101/calibra-v10/pull/52)). 2) [HU-009](../backlog/HU-009.md) (M). 3) [HU-011](../backlog/HU-011.md) (M). 4) [HU-022](../backlog/HU-022.md) (L; su punto 8 espera HU-087). 5) [HU-084](../backlog/HU-084.md) (S). 6) [HU-055](../backlog/HU-055.md) (L). 7) Volver a refinar [HU-034](../backlog/HU-034.md) con D-56 y construirla. 8) [HU-052](../backlog/HU-052.md) (M) y [HU-050](../backlog/HU-050.md) (M) |
+| dvarela5101 | 1) [HU-056](../backlog/HU-056.md) (S). 2) [HU-087](../backlog/HU-087.md) (S). 3) [HU-053](../backlog/HU-053.md) (M) y después [HU-089](../backlog/HU-089.md) (S). 4) [HU-010](../backlog/HU-010.md) (M), cuando HU-009 esté `Hecha`. 5) [HU-031](../backlog/HU-031.md) (M). 6) [HU-048](../backlog/HU-048.md) (M). 7) [HU-049](../backlog/HU-049.md) (L) |
+
+Sin dueño, después del corte: HU-032, HU-033, HU-072, HU-079, HU-085, HU-086, HU-088, HU-090 y las grupales (D-47).
+
+Posibles choques:
+- **HU-087 y HU-010:** las dos tocan la casilla de autorización (`CasillasConsentimiento`); van con la misma persona y en ese orden.
+- **HU-087 y HU-022:** el punto 8 de HU-022 (el monitor ve las respuestas) usa la versión de la autorización que guarda HU-087. Si HU-022 llega antes, se construye sin ese punto y se completa al fusionar HU-087. El texto nuevo se valida con asesoría (o lo aprueba dvarela5101) antes de salir.
+- **HU-053 y HU-089:** la misma pantalla `/admin/leads`; misma persona.
+- **HU-055 y HU-009:** HU-055 cambia el cargador del banco y la tabla `materia`; HU-009 lee las materias con Evaluación activa. El que llegue segundo integra `main`.
+- **HU-034 y HU-052, HU-050:** todas de Juzou04; tocan la bandeja del admin.
+
+Material que dvarela5101 le pide a Juzou04 de su carpeta de materias:
+- El código oficial de Física II (¿FISI-1019 o FISI-1028?) y la semana 5 de su Parcial 1, y confirmar FISI-1018, MATE-1203 e ISIS-1221 contra el programa (`REVISION_REGLAS.md` §3). HU-055 carga por código: hace falta antes del corte.
+- Material para más Evaluaciones activas: hoy solo 2 de 8 materias tienen una, y HU-009 solo ofrece esas (D-53 a). Se procesa como en HU-061.
 
 ## Ajuste del 4-oct-2026
 
