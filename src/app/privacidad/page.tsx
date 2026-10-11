@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Pantalla } from "@/components/Pantalla";
 import { formatearDia } from "@/lib/fechas";
-import { AVISO_ACTUALIZADO, DIAS_SESION_ANONIMA, correoConsultasDatos } from "@/lib/privacidad/consentimiento";
+import {
+  AVISO_ACTUALIZADO,
+  DIAS_SESION_ANONIMA,
+  FINALIDAD_DIAGNOSTICO,
+  correoConsultasDatos,
+} from "@/lib/privacidad/consentimiento";
 import estilos from "./privacidad.module.css";
 
 export const metadata: Metadata = { title: "Aviso de privacidad · Calibra" };
@@ -47,10 +52,10 @@ export default async function AvisoPrivacidad() {
         <section aria-labelledby="finalidades">
           <h2 id="finalidades">Para qué los usamos</h2>
           <ul>
-            <li>Mostrarte en qué subtema fallas y guardar tus diagnósticos.</li>
+            <li>Mostrarte en qué habilidad fallas y guardar tus diagnósticos.</li>
             <li>
-              <strong>Compartir el resultado de tu diagnóstico con el monitor de tu monitoría</strong>, para que llegue a
-              la sesión sabiendo por dónde empezar.
+              <strong>{FINALIDAD_DIAGNOSTICO}</strong>, para que llegue a la sesión sabiendo por dónde empezar y qué
+              respondiste en cada pregunta.
             </li>
             <li>Agendar tus monitorías, revisar tus pagos y tramitar reembolsos.</li>
             <li>Escribirte sobre tus citas, pagos y reembolsos.</li>

@@ -4,6 +4,7 @@ import {
   CASILLA_TRATAMIENTO,
   ERROR_SIN_AUTORIZACION,
   MARCADA,
+  VERSION_AUTORIZACION,
   correoConsultasDatos,
   leerConsentimiento,
 } from "./consentimiento";
@@ -29,13 +30,14 @@ describe("leerConsentimiento", () => {
     expect(leerConsentimiento(formulario({ [CASILLA_TRATAMIENTO]: valor }), AHORA).ok).toBe(false);
   });
 
-  it("con la autorización guarda los tres campos, con la fecha del servidor", () => {
+  it("con la autorización guarda los cuatro campos, con la fecha y la versión del servidor", () => {
     expect(leerConsentimiento(formulario({ [CASILLA_TRATAMIENTO]: MARCADA }), AHORA)).toEqual({
       ok: true,
       consentimiento: {
         acepta_tratamiento_datos: true,
         fecha_consentimiento: "2026-09-29T22:15:00.000Z",
         acepta_contacto: false,
+        version_autorizacion: "v2",
       },
     });
   });
@@ -54,6 +56,15 @@ describe("leerConsentimiento", () => {
       AHORA,
     );
     expect(resultado.ok && resultado.consentimiento.fecha_consentimiento).toBe(AHORA.toISOString());
+  });
+
+  it("la versión del texto la pone el servidor: ignora una que mande el navegador (HU-087)", () => {
+    expect(VERSION_AUTORIZACION).toBe("v2");
+    const resultado = leerConsentimiento(
+      formulario({ [CASILLA_TRATAMIENTO]: MARCADA, version_autorizacion: "v9" }),
+      AHORA,
+    );
+    expect(resultado.ok && resultado.consentimiento.version_autorizacion).toBe(VERSION_AUTORIZACION);
   });
 });
 

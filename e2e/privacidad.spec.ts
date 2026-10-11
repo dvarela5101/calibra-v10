@@ -35,7 +35,10 @@ test.describe("aviso de privacidad (HU-008)", () => {
       await expect(page.getByRole("heading", { level: 2, name: titulo })).toBeVisible();
     }
 
-    await expect(page.getByText("Compartir el resultado de tu diagnóstico con el monitor de tu monitoría")).toBeVisible();
+    // HU-087 (D-54 c): con el monitor se comparten las respuestas y el resultado; la finalidad habla de habilidades.
+    await expect(page.getByText("Compartir tus respuestas y el resultado de tu diagnóstico con el monitor de tu monitoría")).toBeVisible();
+    await expect(page.getByText("Mostrarte en qué habilidad fallas y guardar tus diagnósticos.")).toBeVisible();
+    await expect(page.locator("main")).not.toContainText("subtema");
     await expect(page.getByText("Calibra es la responsable del tratamiento")).toBeVisible();
 
     // HU-069 (D-6): el nombre del monitor se muestra; su contacto y su llave no. Con la fecha del cambio.

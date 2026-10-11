@@ -15,7 +15,7 @@ import {
   type EntradaDeContacto,
 } from "@/lib/leads/servidor";
 import { HORAS_DE_VIGENCIA, MAXIMO_DE_ENLACES_POR_HORA } from "@/lib/leads/verificacion";
-import { CASILLA_CONTACTO, CASILLA_TRATAMIENTO, leerConsentimiento, MARCADA } from "@/lib/privacidad/consentimiento";
+import { CASILLA_CONTACTO, CASILLA_TRATAMIENTO, leerConsentimiento, MARCADA, VERSION_AUTORIZACION } from "@/lib/privacidad/consentimiento";
 import { exigirSupabaseLocal, exito, Fixtures, idsVisibles } from "./utilidades";
 
 // HU-068 contra el Supabase LOCAL: el Lead se crea de verdad con `registrar_lead`, el enlace de verificación sale por
@@ -301,6 +301,8 @@ describe("criterios 1, 6 y 7: la sesión que deja su contacto queda como Lead", 
       estado: "nuevo",
       acepta_tratamiento_datos: true,
       acepta_contacto: true,
+      // HU-087: autorizó con el texto que nombra las respuestas del diagnóstico.
+      version_autorizacion: VERSION_AUTORIZACION,
     });
     expect(lead.fecha_creacion).toBeTruthy();
     // La fecha de la autorización es la que puso el servidor al leer el formulario.
@@ -373,6 +375,16 @@ describe("criterio 4: una sesión que ya es Lead no crea otro", () => {
       correo: correoNuevoDeAna,
       numeroTelefono: "+12125550100",
     });
+  });
+
+  it("un Lead que autorizó con el texto viejo (v1) queda con el nuevo al volver a dejar su contacto (HU-087)", async () => {
+    const correo = correoNuevo();
+    const antes = await crearLeadDeDuena(correo);
+    exito(await fx.admin.from("lead").update({ version_autorizacion: "v1" }).eq("id", antes.id).select("id"), "dejar el Lead en v1");
+
+    expect(await registrarContacto(entradaDe(duena.id, { nombre: "Ana", correo }))).toEqual({ resultado: "lead" });
+
+    expect((await leadDe(duena.id)).version_autorizacion).toBe(VERSION_AUTORIZACION);
   });
 
   it("si el correo nuevo ya es de otro Lead, da error, no cambia nada y no manda ningún enlace", async () => {
