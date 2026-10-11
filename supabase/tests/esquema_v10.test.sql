@@ -148,17 +148,18 @@ insert into public.resena (id_pago, calificacion) values
   ('60000000-0000-0000-0000-000000000001', 5);
 
 -- Diagnóstico de A (ligado a la monitoría) y de B (solo sesión, sin Lead).
--- id_materia lo llena el trigger desde la evaluación.
+-- id_materia lo llena el trigger desde la evaluación. Un diagnóstico solo nace completo (HU-081): al menos un paso en
+-- `respuestas`, semilla, aciertos y un resultado con habilidades, errores y prerrequisitos (`respondidas` se genera).
 insert into public.diagnostico
-  (id, id_lead, id_sesion_anonima, id_evaluacion, id_monitoria, respuestas, puntaje, resultado_por_tema) values
+  (id, id_lead, id_sesion_anonima, id_evaluacion, id_monitoria, respuestas, puntaje, resultado_por_habilidad, semilla, aciertos) values
   ('80000000-0000-0000-0000-00000000000a',
    '40000000-0000-0000-0000-00000000000a', 'c0000000-0000-0000-0000-00000000000a',
    '20000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001',
-   '{}', 50.00, '{}'),
+   '[{"clave":"P1"}]', 50.00, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0),
   ('80000000-0000-0000-0000-00000000000b',
    null, 'c0000000-0000-0000-0000-00000000000b',
    '20000000-0000-0000-0000-000000000001', null,
-   '{}', 70.00, '{}');
+   '[{"clave":"P1"}]', 70.00, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0);
 
 -- ---------------------------------------------------------------------------
 -- 2. Triggers que completan las copias (id_monitor, id_materia)
@@ -257,22 +258,23 @@ select throws_ok(
   'RN-22: monitoría en una materia sin certificado del monitor se rechaza');
 
 -- RN-15: la evaluación del diagnóstico debe ser de la materia de la monitoría.
+-- Con todas las columnas de un diagnóstico completo: una columna `not null` sin valor falla con 23502 antes que la llave.
 select throws_ok(
-  $$insert into public.diagnostico (id_lead, id_evaluacion, id_monitoria, respuestas, puntaje, resultado_por_tema) values
+  $$insert into public.diagnostico (id_lead, id_evaluacion, id_monitoria, respuestas, puntaje, resultado_por_habilidad, semilla, aciertos) values
     ('40000000-0000-0000-0000-00000000000a',
      '20000000-0000-0000-0000-000000000002',
      '50000000-0000-0000-0000-000000000001',
-     '{}', 10.00, '{}')$$,
-  '23503', null,
+     '[{"clave":"P1"}]', 10.00, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0)$$,
+  '23503', 'insert or update on table "diagnostico" violates foreign key constraint "diagnostico_monitoria_fk"',
   'RN-15: diagnóstico ligado a una monitoría con evaluación de otra materia se rechaza');
 
 select lives_ok(
-  $$insert into public.diagnostico (id, id_lead, id_evaluacion, id_monitoria, respuestas, puntaje, resultado_por_tema) values
+  $$insert into public.diagnostico (id, id_lead, id_evaluacion, id_monitoria, respuestas, puntaje, resultado_por_habilidad, semilla, aciertos) values
     ('80000000-0000-0000-0000-00000000000c',
      '40000000-0000-0000-0000-00000000000a',
      '20000000-0000-0000-0000-000000000001',
      '50000000-0000-0000-0000-000000000001',
-     '{}', 10.00, '{}')$$,
+     '[{"clave":"P1"}]', 10.00, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0)$$,
   'RN-15: diagnóstico ligado a una monitoría con evaluación de la misma materia se acepta');
 
 delete from public.diagnostico where id = '80000000-0000-0000-0000-00000000000c';
@@ -293,9 +295,9 @@ select throws_ok(
   'RN-11: lead sin correo ni teléfono se rechaza');
 
 select throws_ok(
-  $$insert into public.diagnostico (id_evaluacion, respuestas, puntaje, resultado_por_tema) values
-    ('20000000-0000-0000-0000-000000000001', '{}', 10.00, '{}')$$,
-  '23514', null,
+  $$insert into public.diagnostico (id_evaluacion, respuestas, puntaje, resultado_por_habilidad, semilla, aciertos) values
+    ('20000000-0000-0000-0000-000000000001', '[{"clave":"P1"}]', 10.00, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0)$$,
+  '23514', 'new row for relation "diagnostico" violates check constraint "diagnostico_tiene_dueno"',
   'P-33: diagnóstico sin lead ni sesión anónima se rechaza');
 
 select throws_ok(
