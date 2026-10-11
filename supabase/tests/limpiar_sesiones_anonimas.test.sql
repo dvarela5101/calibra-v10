@@ -139,18 +139,18 @@ insert into public.monitor (id, nombre) values ('c0000000-0000-0000-0000-0000000
 insert into public.admin (id, nombre, correo, orden_revision) values
   ('c0000000-0000-0000-0000-000000005611', 'Admin 56', 'admin56@calibra.test', 9005611);
 
-insert into public.diagnostico (id, id_sesion_anonima, id_lead, id_evaluacion, respuestas, puntaje, resultado_por_tema, fecha_realizacion) values
+insert into public.diagnostico (id, id_sesion_anonima, id_lead, id_evaluacion, respuestas, puntaje, resultado_por_habilidad, semilla, aciertos, fecha_realizacion) values
   -- 01: viejo, hace 100 días.
   ('50000000-0000-0000-0000-000000005601', 'c0000000-0000-0000-0000-000000005601', null,
-   '20000000-0000-0000-0000-000000005601', '{}', 50, '{}', timestamptz '2020-03-10 17:00:00+00' - interval '100 days'),
+   '20000000-0000-0000-0000-000000005601', '[{"clave":"P1"}]', 50, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0, timestamptz '2020-03-10 17:00:00+00' - interval '100 days'),
   -- 05: hace 5 días.
   ('50000000-0000-0000-0000-000000005605', 'c0000000-0000-0000-0000-000000005605', null,
-   '20000000-0000-0000-0000-000000005601', '{}', 50, '{}', timestamptz '2020-03-10 17:00:00+00' - interval '5 days'),
+   '20000000-0000-0000-0000-000000005601', '[{"clave":"P1"}]', 50, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0, timestamptz '2020-03-10 17:00:00+00' - interval '5 days'),
   -- 07: uno de antes del Lead (ya ligado) y uno de después.
   ('50000000-0000-0000-0000-000000005671', 'c0000000-0000-0000-0000-000000005607', '40000000-0000-0000-0000-000000005607',
-   '20000000-0000-0000-0000-000000005601', '{}', 50, '{}', '2019-01-01 12:00:00+00'),
+   '20000000-0000-0000-0000-000000005601', '[{"clave":"P1"}]', 50, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0, '2019-01-01 12:00:00+00'),
   ('50000000-0000-0000-0000-000000005672', 'c0000000-0000-0000-0000-000000005607', '40000000-0000-0000-0000-000000005607',
-   '20000000-0000-0000-0000-000000005601', '{}', 50, '{}', '2019-01-03 12:00:00+00');
+   '20000000-0000-0000-0000-000000005601', '[{"clave":"P1"}]', 50, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0, '2019-01-03 12:00:00+00');
 
 -- 13: una tabla la referencia sin cascada. No puede ser temporal (Postgres no deja que una temporal apunte a auth.users):
 -- es una tabla normal que el rollback del final se lleva. Se crea después de la prueba de contrato de arriba.
