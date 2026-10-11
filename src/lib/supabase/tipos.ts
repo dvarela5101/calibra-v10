@@ -224,6 +224,18 @@ isOneToOne: false
       referencedRelation: "lead"
       referencedColumns: ["id"]
     },{
+      foreignKeyName: "diagnostico_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: false
+      referencedRelation: "lead_para_contactar"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "diagnostico_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: false
+      referencedRelation: "lead_para_gestion"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "diagnostico_monitoria_fk"
       columns: ["id_monitoria","id_materia"]
 isOneToOne: false
@@ -247,6 +259,18 @@ isOneToOne: false
       columns: ["id_lead"]
 isOneToOne: true
       referencedRelation: "lead"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "estudiante_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: true
+      referencedRelation: "lead_para_contactar"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "estudiante_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: true
+      referencedRelation: "lead_para_gestion"
       referencedColumns: ["id"]
     }
                   ]
@@ -414,6 +438,43 @@ isOneToOne: true
                   Relationships: [
                     
                   ]
+                },"lead_gestion": {
+                  Row: {
+                    "estado_cambiado_en": string,"id_admin": string | null,"id_lead": string
+                  }
+                  Insert: {
+                    "estado_cambiado_en": string,"id_admin"?: string | null,"id_lead": string
+                  }
+                  Update: {
+                    "estado_cambiado_en"?: string,"id_admin"?: string | null,"id_lead"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lead_gestion_id_admin_fkey"
+      columns: ["id_admin"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lead_gestion_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: true
+      referencedRelation: "lead"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lead_gestion_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: true
+      referencedRelation: "lead_para_contactar"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lead_gestion_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: true
+      referencedRelation: "lead_para_gestion"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"lead_sesion": {
                   Row: {
                     "id_lead": string,"id_sesion": string,"ligada_en": string
@@ -430,6 +491,18 @@ isOneToOne: true
       columns: ["id_lead"]
 isOneToOne: false
       referencedRelation: "lead"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lead_sesion_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: false
+      referencedRelation: "lead_para_contactar"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lead_sesion_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: false
+      referencedRelation: "lead_para_gestion"
       referencedColumns: ["id"]
     }
                   ]
@@ -531,6 +604,18 @@ isOneToOne: false
       columns: ["id_lead"]
 isOneToOne: false
       referencedRelation: "lead"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "monitoria_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: false
+      referencedRelation: "lead_para_contactar"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "monitoria_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: false
+      referencedRelation: "lead_para_gestion"
       referencedColumns: ["id"]
     }
                   ]
@@ -895,6 +980,18 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "lead"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "verificacion_lead_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: false
+      referencedRelation: "lead_para_contactar"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "verificacion_lead_id_lead_fkey"
+      columns: ["id_lead"]
+isOneToOne: false
+      referencedRelation: "lead_para_gestion"
+      referencedColumns: ["id"]
     }
                   ]
                 }
@@ -917,6 +1014,32 @@ isOneToOne: true
 isOneToOne: true
       referencedRelation: "monitoria_plazos"
       referencedColumns: ["id_monitoria"]
+    }
+                  ]
+                },"lead_para_contactar": {
+                  Row: {
+                    "acepta_contacto": boolean | null,"correo": string | null,"estado": Database["public"]['Enums']["estado_lead"] | null,"estado_cambiado_en": string | null,"fecha_creacion": string | null,"id": string | null,"id_admin_estado": string | null,"ids_materia": (string)[] | null,"nombre": string | null,"numero_telefono": string | null,"origen": string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lead_gestion_id_admin_fkey"
+      columns: ["id_admin_estado"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"lead_para_gestion": {
+                  Row: {
+                    "acepta_contacto": boolean | null,"correo": string | null,"estado": Database["public"]['Enums']["estado_lead"] | null,"estado_cambiado_en": string | null,"fecha_creacion": string | null,"id": string | null,"id_admin_estado": string | null,"ids_materia": (string)[] | null,"nombre": string | null,"numero_telefono": string | null,"origen": string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lead_gestion_id_admin_fkey"
+      columns: ["id_admin_estado"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
     }
                   ]
                 },"monitoria_plazos": {
@@ -1111,6 +1234,9 @@ isOneToOne: true
                            },
 "mover_admin":
 { Args: { "p_direccion": string,"p_id": string }; Returns: string
+                           },
+"origenes_de_leads":
+{ Args: Record<PropertyKey, never>; Returns: string[]
                            },
 "parametros_comision":
 { Args: Record<PropertyKey, never>; Returns: {
