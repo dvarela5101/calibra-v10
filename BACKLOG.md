@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-11 03:21. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-11 04:08. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -40,8 +40,8 @@ _Generado automaticamente: 2026-10-11 03:21. No editar a mano; usa `scripts/back
 | [HU-089](backlog/HU-089.md) | [Admin] Registrar que un Lead pidió no recibir más mensajes | Lista | P2 | S | HU-053 |
 | [HU-081](backlog/HU-081.md) | [Técnica] Servidor del diagnóstico: diagnóstico en curso, guardado y lo que recibe el navegador | En progreso | P0 | M | HU-060, HU-004, HU-005 |
 | [HU-083](backlog/HU-083.md) | [Técnica] Dibujar fórmulas y código del banco de preguntas | En progreso | P0 | S | HU-005 |
-| [HU-053](backlog/HU-053.md) | [Admin] Gestionar leads | En progreso | P2 | M | HU-012, HU-068 |
 | [HU-087](backlog/HU-087.md) | [Técnica] Ampliar la autorización y el aviso de privacidad a las respuestas del diagnóstico | En revision | P0 | S | HU-008, HU-068 |
+| [HU-053](backlog/HU-053.md) | [Admin] Gestionar leads | En revision | P2 | M | HU-012, HU-068 |
 | [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | En revision | P2 | S | HU-004, HU-068 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |

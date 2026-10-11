@@ -318,13 +318,17 @@ export class Fixtures {
     );
   }
 
-  /** Diagnóstico de una sesión anónima (id_lead nulo, RN de P-33); id_materia lo llena un trigger. */
-  async crearDiagnostico(datos: { idSesionAnonima: string; idEvaluacion: string; idMateria: string }) {
+  /**
+   * Diagnóstico de una sesión anónima (id_lead nulo, RN de P-33); id_materia lo llena un trigger. Con `idLead`, de
+   * ese Lead (HU-053): se borra con él.
+   */
+  async crearDiagnostico(datos: { idSesionAnonima?: string; idLead?: string; idEvaluacion: string; idMateria: string }) {
     return exito(
       await this.admin
         .from("diagnostico")
         .insert({
-          id_sesion_anonima: datos.idSesionAnonima,
+          id_sesion_anonima: datos.idSesionAnonima ?? null,
+          id_lead: datos.idLead ?? null,
           id_evaluacion: datos.idEvaluacion,
           id_materia: datos.idMateria,
           respuestas: { p1: "a", p2: "c" },
