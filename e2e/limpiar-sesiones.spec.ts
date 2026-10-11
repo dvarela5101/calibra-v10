@@ -42,10 +42,11 @@ test("quien vuelve con la cookie de una sesión borrada ve el inicio normal y re
 
   await page.goto("/");
   const vieja = await esperarSesion(context);
-  cuentas.borrarAlFinal(vieja.id);
 
-  // La limpieza la borra de Auth (con ella se va su sesión de Auth y su token de renovación).
+  // La limpieza la borra de Auth (con ella se va su sesión de Auth y su token de renovación). Solo si no se pudo
+  // borrar queda anotada para la limpieza de la prueba, que fallaría con un usuario que ya no existe.
   const { error } = await cuentas.cliente.auth.admin.deleteUser(vieja.id);
+  if (error) cuentas.borrarAlFinal(vieja.id);
   expect(error).toBeNull();
   await vencerToken(context);
 
@@ -53,7 +54,8 @@ test("quien vuelve con la cookie de una sesión borrada ve el inicio normal y re
   await expect(
     page.getByRole("heading", { level: 1, name: "Descubre en qué tema fallas antes de tu monitoría" }),
   ).toBeVisible(ESPERA);
-  await expect(page.getByRole("alert")).toHaveCount(0);
+  // Ningún mensaje de error. Next.js pone en toda página un anunciador de rutas con role=alert, vacío.
+  await expect(page.getByRole("alert").filter({ hasText: /\S/ })).toHaveCount(0);
 
   // El sitio le crea una sesión anónima nueva, con un usuario que existe en Auth.
   await expect

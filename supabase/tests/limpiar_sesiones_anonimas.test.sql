@@ -152,9 +152,10 @@ insert into public.diagnostico (id, id_sesion_anonima, id_lead, id_evaluacion, r
   ('50000000-0000-0000-0000-000000005672', 'c0000000-0000-0000-0000-000000005607', '40000000-0000-0000-0000-000000005607',
    '20000000-0000-0000-0000-000000005601', '{}', 50, '{}', '2019-01-03 12:00:00+00');
 
--- 13: una tabla la referencia sin cascada.
-create temporary table bloqueo_56 (id_sesion uuid references auth.users (id));
-insert into bloqueo_56 values ('c0000000-0000-0000-0000-000000005613');
+-- 13: una tabla la referencia sin cascada. No puede ser temporal (Postgres no deja que una temporal apunte a auth.users):
+-- es una tabla normal que el rollback del final se lleva. Se crea después de la prueba de contrato de arriba.
+create table public.bloqueo_56 (id_sesion uuid references auth.users (id));
+insert into public.bloqueo_56 values ('c0000000-0000-0000-0000-000000005613');
 
 -- ---------------------------------------------------------------------------
 -- Qué cuenta como actividad (D-63 b) y el borde de los 90 días (P-40)
@@ -270,7 +271,7 @@ select is(
   'Correrla otra vez seguida no borra nada');
 
 -- Sin la tabla que bloqueaba, la sesión 13 se borra en la corrida siguiente.
-delete from bloqueo_56;
+delete from public.bloqueo_56;
 select is(
   privado.limpiar_sesiones_anonimas('2020-03-10 17:00:00+00'),
   1,

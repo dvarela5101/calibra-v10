@@ -1137,6 +1137,11 @@ isOneToOne: true
               "plazo_llave_min": number,"recordatorio_llave_min": number
             }[]
                            },
+"parametros_retencion":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "sesion_anonima_dias": number
+            }[]
+                           },
 "plazo_alcanzado":
 { Args: { "p_ahora": string,"p_desde": string }; Returns: boolean
                            },
