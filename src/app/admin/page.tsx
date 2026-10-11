@@ -57,6 +57,9 @@ export default async function PanelAdmin({ searchParams }: PageProps<"/admin">) 
       <Link href="/admin/solicitudes" className={formulario.enlace}>
         Solicitudes para ser monitor
       </Link>
+      <Link href="/admin/leads" className={formulario.enlace}>
+        Leads
+      </Link>
       <Link href="/admin/equipo" className={formulario.enlace}>
         Equipo de admins
       </Link>
