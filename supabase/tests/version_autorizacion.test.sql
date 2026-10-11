@@ -8,7 +8,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(19);
 
 -- ---------------------------------------------------------------------------
 -- Estructura
@@ -24,6 +24,8 @@ select hasnt_function('public', 'registrar_lead',
   array['uuid', 'text', 'text', 'text', 'boolean', 'timestamp with time zone', 'text'],
   'Ya no existe la registrar_lead de 7 parámetros: no quedan dos versiones que se confundan');
 select has_function('privado', 'autorizo_respuestas', array['uuid'], 'Existe privado.autorizo_respuestas');
+select hasnt_column('public', 'solicitud_monitor', 'version_autorizacion',
+  'La solicitud de monitor no cambia: su autorización es otra (HU-062)');
 
 select ok(
   not has_function_privilege('anon', 'public.registrar_lead(uuid, text, text, text, boolean, timestamptz, text, text)', 'execute')
@@ -88,12 +90,13 @@ select is(
   false,
   'Un Lead que no existe da false');
 
--- Volver a autorizar con el texto nuevo (editar el contacto) lo pasa a v2.
+-- El predicado sigue a la columna: un Lead que pasa a v2 (editar el contacto, que prueba integracion/leads.test.ts)
+-- ya autoriza las respuestas.
 update public.lead set version_autorizacion = 'v2' where id = '40000000-0000-0000-0000-000000008703';
 select is(
   privado.autorizo_respuestas('40000000-0000-0000-0000-000000008703'),
   true,
-  'Un Lead que vuelve a autorizar con el texto nuevo queda en v2');
+  'Con la versión cambiada a v2, el predicado da true');
 
 select * from finish();
 rollback;
