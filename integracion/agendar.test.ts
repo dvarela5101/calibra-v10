@@ -91,10 +91,15 @@ const horaDelNegocio = (instante: Date) => formatoHora.format(instante);
 
 const fechasDe = (libres: FechaLibre[], idFranja: string) => libres.filter((f) => f.idFranja === idFranja).map((f) => f.fecha);
 
-/** Una de las sesiones anónimas del archivo, ya con su contacto dejado: es Lead (HU-068). */
+/**
+ * Una de las sesiones anónimas del archivo, ya con su contacto dejado: es Lead (HU-068). Queda con la autorización
+ * vieja (`v1`, el default de la base): todo este archivo agenda y paga así, sin que se le pida autorizar de nuevo
+ * (HU-087).
+ */
 async function sesionLead(numero: 0 | 1 = 0) {
   const sesion = pool[numero];
   const lead = await fx.crearLeadDeSesion(sesion.id);
+  expect(lead.version_autorizacion).toBe("v1");
   return { ...sesion, lead };
 }
 

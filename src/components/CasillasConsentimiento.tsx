@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { CASILLA_CONTACTO, CASILLA_TRATAMIENTO, MARCADA, RUTA_AVISO } from "@/lib/privacidad/consentimiento";
+import {
+  AUTORIZACION_ESTUDIANTE,
+  CASILLA_CONTACTO,
+  CASILLA_TRATAMIENTO,
+  MARCADA,
+  RUTA_AVISO,
+} from "@/lib/privacidad/consentimiento";
 import estilos from "./casillas.module.css";
 
 /**
@@ -48,8 +54,7 @@ export function CasillasConsentimiento({
             </>
           ) : (
             <>
-              Autorizo a Calibra a tratar mis datos personales, incluido compartir el resultado de mi diagnóstico con el
-              monitor de mi monitoría, según el {aviso}. (Obligatorio)
+              {AUTORIZACION_ESTUDIANTE}, según el {aviso}. (Obligatorio)
             </>
           )}
         </label>
