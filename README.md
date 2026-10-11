@@ -12,7 +12,7 @@ El prototipo anterior (`../Calibra`, un solo `index.html`) queda como referencia
 | Hosting | Vercel | Producción desde `main` y un preview por cada PR |
 | Datos y cuentas | Supabase: Postgres, Auth (con inicio anónimo), Storage, Realtime y tareas programadas | Se conectan desde HU-002 y HU-004 |
 | Pruebas de lógica | Vitest | `src/**/*.test.ts` y `pruebas/` |
-| Pruebas de flujos | Playwright (Chromium, 390x844 y 1280x800) | `e2e/` |
+| Pruebas de flujos | Playwright (Chromium: por HU a 390x844 y 1280x800; recorridos a 390x844 y 1440x900) | `e2e/`, `e2e/recorridos/` |
 
 La decisión quedó registrada en `backlog/HU-001.md`. Se recomienda un proyecto Supabase nuevo: el `schema.sql` del prototipo empieza con `drop table ... cascade`, y el proyecto `uotlhaitdkfroavqkvee` queda como fuente de datos históricos.
 
@@ -60,13 +60,22 @@ npx playwright install --no-shell chromium
 | `npm run build` | Build de producción |
 | `npm run verificar` | Lint, tipos, pruebas unitarias, banco de preguntas, build y e2e, en el orden del pipeline |
 | `npm run db:iniciar` | Levanta Supabase local (Postgres, Auth, REST, Storage y Mailpit) con las migraciones y la llave secreta de prueba de Turnstile (CAPTCHA) |
-| `npm run db:env` | Escribe `.env.local` con las llaves del Supabase local |
+| `npm run db:env` | Escribe `.env.local` con las llaves del Supabase local y un `CRON_SECRETO` de prueba nuevo en cada corrida |
 | `npm run db:tipos` | Regenera `src/lib/supabase/tipos.ts` desde el esquema local |
 | `npm run db:reiniciar` | Borra la base local y aplica las migraciones y la semilla desde cero |
 | `npm run db:verificar` | Reaplica las migraciones (idempotencia) y corre las pruebas pgTAP |
 | `npm run db:detener` | Detiene los contenedores locales de Supabase |
 | `npm run contenido:validar` | Valida el banco de preguntas (`contenido/`) sin tocar ninguna base: errores con archivo y línea, conteos y cobertura |
 | `npm run contenido:cargar` | Valida y carga el banco en la base local. Con `-- --borradores` también carga las preguntas en borrador |
+
+### Recorridos de punta a punta (HU-048)
+
+`e2e/recorridos/` sigue una misma monitoría por las pantallas del visitante, del monitor y del admin, con sus correos: agendar a desembolsar, pago rechazado, cancelar con reembolso e inasistencia. Por la base solo se prepara la materia, el monitor certificado, el admin y la franja; lo demás pasa por las pantallas, salvo dos ayudas de la llave secreta: pasar el pago o el reporte al admin de la prueba y mover la fecha de la monitoría (el salto de reloj).
+
+- Corren en dos proyectos propios, `recorrido-movil` (390x844) y `recorrido-escritorio` (1440x900), después de `movil` y `escritorio` y solo si pasan: llaman a los procesos programados (`POST /api/procesos/<ruta>` con el `CRON_SECRETO` de `.env.local`), que toman las filas pendientes de cualquier prueba.
+- Para correr solo los recorridos: `npx playwright test --project=recorrido-movil --no-deps` (sin `--no-deps`, Playwright corre antes `movil` y `escritorio` completos).
+- `npm run db:env` escribe un `CRON_SECRETO` de prueba nuevo en cada corrida. En local, Playwright reutiliza un `npm run dev` que ya corría: si arrancó con el `.env.local` anterior, los procesos responden 401 y el recorrido lo dice. Reinícialo.
+- Los módulos compartidos: `escenario.ts` (preparación, tramos comunes y limpieza, también de los correos de Mailpit), `procesos.ts` (correr los procesos y esperar un correo por destinatario y asunto) y `reglas.ts` (las reglas del producto en cada pantalla).
 
 Una migración nueva que cambia las columnas de salida de una función tiene que borrarla antes con `drop function`. Desde entonces la migración vieja que la creó ya no se puede reaplicar sobre la base final, y `db:verificar` fallaría al reaplicarla. Sin editar la migración vieja, `scripts/verificar-bd.mjs` lleva una lista de preámbulos (`PREAMBULOS`) que dice qué borrar antes de reaplicar cada una. Hoy tiene una entrada: `parametros_negocio()`, que HU-063 dejó sin la comisión.
 
