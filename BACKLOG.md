@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-11 14:38. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-11 15:34. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -40,10 +40,6 @@ _Generado automaticamente: 2026-10-11 14:38. No editar a mano; usa `scripts/back
 | [HU-050](backlog/HU-050.md) | [Monitor] Ver mis desembolsos | En progreso | P1 | M | HU-028, HU-030, HU-078 |
 | [HU-055](backlog/HU-055.md) | [Admin] Gestionar materias y evaluaciones | En progreso | P1 | L | HU-005, HU-012, HU-014, HU-016, HU-062 |
 | [HU-052](backlog/HU-052.md) | [Admin] Autorizar una cancelación fuera de plazo en casos extremos | En progreso | P2 | M | HU-024, HU-026 |
-| [HU-081](backlog/HU-081.md) | [Técnica] Servidor del diagnóstico: diagnóstico en curso, guardado y lo que recibe el navegador | En revision | P0 | M | HU-060, HU-004, HU-005 |
-| [HU-087](backlog/HU-087.md) | [Técnica] Ampliar la autorización y el aviso de privacidad a las respuestas del diagnóstico | En revision | P0 | S | HU-008, HU-068 |
-| [HU-053](backlog/HU-053.md) | [Admin] Gestionar leads | En revision | P2 | M | HU-012, HU-068 |
-| [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | En revision | P2 | S | HU-004, HU-068 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
@@ -76,7 +72,9 @@ _Generado automaticamente: 2026-10-11 14:38. No editar a mano; usa `scripts/back
 | [HU-066](backlog/HU-066.md) | [Técnica] Enviar los correos desde calibra.monitorias@gmail.com por SMTP de Gmail | Hecha | P0 | S | HU-006 |
 | [HU-068](backlog/HU-068.md) | [Visitante] Dejar mi contacto al agendar y quedar como Lead | Hecha | P0 | M | HU-004, HU-006, HU-008 |
 | [HU-076](backlog/HU-076.md) | [Sistema] Correos del rechazo de un pago: al monitor y al pagador, sin que se pierdan | Hecha | P0 | M | HU-020, HU-051, HU-024 |
+| [HU-081](backlog/HU-081.md) | [Técnica] Servidor del diagnóstico: diagnóstico en curso, guardado y lo que recibe el navegador | Hecha | P0 | M | HU-060, HU-004, HU-005 |
 | [HU-082](backlog/HU-082.md) | [Admin] Cualquier admin activo registra la transferencia de un reembolso | Hecha | P0 | S | HU-026 |
+| [HU-087](backlog/HU-087.md) | [Técnica] Ampliar la autorización y el aviso de privacidad a las respuestas del diagnóstico | Hecha | P0 | S | HU-008, HU-068 |
 | [HU-035](backlog/HU-035.md) | [Lead] Reseñar mi monitoría individual desde el correo | Hecha | P1 | M | HU-023, HU-006 |
 | [HU-062](backlog/HU-062.md) | [Aspirante a monitor] Pedir la certificación de una materia dejando mis datos | Hecha | P1 | M | HU-008, HU-012 |
 | [HU-063](backlog/HU-063.md) | [Técnica] Ajustes de la revisión de HU-003 y HU-007 | Hecha | P1 | S | HU-003, HU-007 |
@@ -89,7 +87,9 @@ _Generado automaticamente: 2026-10-11 14:38. No editar a mano; usa `scripts/back
 | [HU-077](backlog/HU-077.md) | [Admin] Revisar un pago que el admin asignado no revisó a tiempo | Hecha | P1 | S | HU-020 |
 | [HU-078](backlog/HU-078.md) | [Admin] Ver y cerrar los pagos rechazados de sesiones que ya ocurrieron (P-24) | Hecha | P1 | M | HU-020, HU-028 |
 | [HU-080](backlog/HU-080.md) | [Lead] No invitar a reseñar a quien reportó que el monitor no llegó | Hecha | P1 | S | HU-029, HU-035 |
+| [HU-053](backlog/HU-053.md) | [Admin] Gestionar leads | Hecha | P2 | M | HU-012, HU-068 |
 | [HU-054](backlog/HU-054.md) | [Admin] Gestionar el equipo de admins y el turno de revisión | Hecha | P2 | S | HU-012 |
+| [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | Hecha | P2 | S | HU-004, HU-068 |
 | [HU-058](backlog/HU-058.md) | [Técnica] Proteger el inicio de sesión anónimo con CAPTCHA | Hecha | P2 | S | HU-004 |
 | [HU-059](backlog/HU-059.md) | [Técnica] Endurecer los comprobantes: contenido real, huérfanos y cuota por sesión | Hecha | P2 | S | HU-007 |
 | [HU-070](backlog/HU-070.md) | [Técnica] Endurecer esCorreo: dominio solo con letras, dígitos, puntos y guiones | Hecha | P2 | S | HU-006 |
