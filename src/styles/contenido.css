@@ -1,0 +1,84 @@
+/*
+ * Texto del banco de preguntas (HU-083): fórmulas en MathML y bloques de código.
+ * Hoja global porque las reglas son de elemento (`math`, `msub`...) y las usan varias pantallas (HU-009, HU-022, HU-039).
+ * Todo cuelga de .texto-banco para no tocar nada ajeno. Va después de globals.css en layout.tsx: el border-radius del
+ * bloque tiene que ganarle al de :focus-visible.
+ */
+.texto-banco {
+  min-inline-size: 0;
+}
+
+.texto-banco math {
+  font-size: inherit;
+  /* --fuente-math la define next/font en layout.tsx (Noto Sans Math, completa, en src/app/fuentes) y trae el nombre con hash
+     de su @font-face. Detrás van los respaldos del sistema, que tienen tabla MATH. El valor de respaldo de var() evita que,
+     si la variable no está en el <html>, la declaración entera se invalide y `math` herede Inter, que no tiene tabla MATH. */
+  font-family: var(--fuente-math, "Noto Sans Math"), "Cambria Math", "STIX Two Math", math;
+}
+
+/*
+ * Piso de tamaño. El navegador encoge los subíndices, los límites y las partes de una fracción por niveles (a ~0,73 y ~0,6
+ * del tamaño base, con math-depth) y con base de 16 px llega a 9,6 px. Aquí cada nivel baja a 0,8 del anterior y nunca
+ * por debajo del mínimo del producto (14 px). Sin esta regla no se cumple el criterio de 14 px.
+ */
+.texto-banco :is(msub, msup, msubsup, munder, mover, munderover) > :not(:first-child),
+.texto-banco mroot > :last-child,
+.texto-banco mfrac > * {
+  font-size: max(var(--texto-min), 0.8em);
+}
+
+/*
+ * Una fórmula más ancha que la columna no se parte (el navegador no corta líneas dentro de <math>) y html y body esconden el
+ * desborde, así que sin esta regla el final se perdería sin remedio. Ahora tiene scroll propio, y Chromium lo alcanza con Tab
+ * solo cuando de verdad desborda (lo mide la e2e). Una fórmula que cabe no cambia en nada.
+ *
+ * Con overflow, el navegador recorta a la caja de la fórmula, que es más ajustada que su tinta (la cursiva de la f, el ∫, un
+ * subíndice sin base) y deja 2 a 6 px de desborde vertical. Por eso el relleno (que da sitio a la tinta) va compensado con
+ * margen negativo, el desborde vertical se esconde y el tope de ancho suma el relleno de los dos lados (con `100%` a secas,
+ * dentro de un contenedor que se ajusta a su contenido la fórmula quedaría más estrecha y con scroll de sobra). Medido con
+ * 1.192 fórmulas, entre ellas 800 al azar de hasta cuatro niveles: salen con los mismos píxeles que sin esta regla. Costo: la caja
+ * de la fórmula se asoma 0,5 em por arriba y por abajo y 0,15 em por los lados de su línea, y un contenedor con scroll propio
+ * y sin relleno lo contaría como suyo.
+ */
+.texto-banco math {
+  max-inline-size: calc(100% + 0.3em);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5em 0.15em;
+  margin: -0.5em -0.15em;
+}
+
+.texto-banco-parrafo {
+  display: block;
+}
+
+/* Un programa: la sangría se conserva, nada se parte en renglones y, si es más ancho que la pantalla, tiene scroll dentro del
+   bloque (se alcanza con el teclado por su tabindex). */
+.texto-banco-codigo {
+  display: block;
+  margin-block: var(--e3);
+  padding: var(--e3) 14px;
+  inline-size: 0;
+  min-inline-size: 100%;
+  max-inline-size: 100%;
+  overflow-x: auto;
+  white-space: pre;
+  overflow-wrap: normal;
+  tab-size: 4;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-align: start;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-inline-start: 4px solid var(--primary);
+  border-radius: var(--r);
+}
+
+.texto-banco-codigo code {
+  font: inherit;
+  letter-spacing: inherit;
+}
