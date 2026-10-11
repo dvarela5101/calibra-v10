@@ -81,9 +81,9 @@ insert into public.lead (id, id_sesion_anonima, nombre, correo, acepta_tratamien
   ('40000000-0000-0000-0000-000000005303', null, 'Lead 53 Tres', 'lead5303@calibra.test', true, now(), true, 'descartado', null),
   ('40000000-0000-0000-0000-000000005304', null, 'Lead 53 Cuatro', 'lead5304@calibra.test', true, now(), true, 'nuevo', null);
 
-insert into public.diagnostico (id_sesion_anonima, id_lead, id_evaluacion, respuestas, puntaje, resultado_por_tema) values
-  ('c0000000-0000-0000-0000-000000005301', '40000000-0000-0000-0000-000000005301', '20000000-0000-0000-0000-000000005301', '{}', 50, '{}'),
-  ('c0000000-0000-0000-0000-000000005301', '40000000-0000-0000-0000-000000005301', '20000000-0000-0000-0000-000000005301', '{}', 70, '{}');
+insert into public.diagnostico (id_sesion_anonima, id_lead, id_evaluacion, respuestas, puntaje, resultado_por_habilidad, semilla, aciertos) values
+  ('c0000000-0000-0000-0000-000000005301', '40000000-0000-0000-0000-000000005301', '20000000-0000-0000-0000-000000005301', '[{"clave":"P1"}]', 50, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0),
+  ('c0000000-0000-0000-0000-000000005301', '40000000-0000-0000-0000-000000005301', '20000000-0000-0000-0000-000000005301', '[{"clave":"P1"}]', 70, '{"habilidades":[],"errores":[],"prerrequisitos":[]}', 1, 0);
 insert into public.monitoria (id, id_franja, id_materia, id_lead, fecha, valor_total, estado, motivo_cancelacion, fecha_finalizacion) values
   ('50000000-0000-0000-0000-000000005301', '30000000-0000-0000-0000-000000005301', '10000000-0000-0000-0000-000000005302',
    '40000000-0000-0000-0000-000000005301', '2026-10-12', 30000, 'cancelada', 'pago_rechazado', null);
