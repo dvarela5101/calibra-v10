@@ -62,7 +62,14 @@ const rutaDeAgendar = (idFranja: string, fecha: string, codigoMateria: string) =
 // ---------------------------------------------------------------------------
 type Materia = { id: string; nombre: string; codigo: string };
 type Franja = { id: string; lugar: string };
-type FilaDeLead = { id: string; nombre: string; correo: string | null; id_sesion_anonima: string | null; acepta_tratamiento_datos: boolean };
+type FilaDeLead = {
+  id: string;
+  nombre: string;
+  correo: string | null;
+  id_sesion_anonima: string | null;
+  acepta_tratamiento_datos: boolean;
+  version_autorizacion: string;
+};
 type FilaDeMonitoria = {
   id: string;
   id_franja: string;
@@ -98,7 +105,7 @@ type Escenario = {
 
 type OtroContexto = (opciones?: { sinSesion?: boolean }) => Promise<BrowserContext>;
 
-const COLUMNAS_DE_LEAD = "id, nombre, correo, id_sesion_anonima, acepta_tratamiento_datos";
+const COLUMNAS_DE_LEAD = "id, nombre, correo, id_sesion_anonima, acepta_tratamiento_datos, version_autorizacion";
 const COLUMNAS_DE_MONITORIA =
   "id, id_franja, id_monitor, id_materia, id_lead, fecha, estado, valor_total, fecha_creacion, id_diagnostico";
 
@@ -349,6 +356,10 @@ test.describe("Criterios 1 y 6 · un visitante nuevo agenda desde la lista", () 
 
       await page.getByLabel("Tu nombre", { exact: true }).fill("Camila Rojas");
       await page.getByLabel("Tu correo", { exact: true }).fill(correo);
+      // HU-087 (D-54 c): la casilla nombra las respuestas del diagnóstico.
+      await expect(page.getByLabel(AUTORIZO)).toHaveAccessibleName(
+        /compartir mis respuestas y el resultado de mi diagnóstico con el monitor de mi monitoría/,
+      );
       await page.getByLabel(AUTORIZO).check();
       await page.getByRole("button", { name: "Seguir" }).click();
 
@@ -360,7 +371,13 @@ test.describe("Criterios 1 y 6 · un visitante nuevo agenda desde la lista", () 
       await expect(page.getByLabel(CASILLA_SIN_CANCELACION)).toHaveCount(0);
       const [lead, ...otros] = await escenario.leadsConCorreo(correo);
       expect(otros, "el correo debía tener un solo Lead").toEqual([]);
-      expect(lead).toMatchObject({ nombre: "Camila Rojas", id_sesion_anonima: sesion.id, acepta_tratamiento_datos: true });
+      expect(lead).toMatchObject({
+        nombre: "Camila Rojas",
+        id_sesion_anonima: sesion.id,
+        acepta_tratamiento_datos: true,
+        // HU-087: el servidor guarda con qué texto autorizó.
+        version_autorizacion: "v2",
+      });
     });
 
     await test.step("aparta la fecha: llega a su reserva, que dice hasta cuándo queda apartada y el valor", async () => {

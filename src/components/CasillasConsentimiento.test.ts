@@ -1,6 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { AUTORIZACION_ESTUDIANTE } from "@/lib/privacidad/consentimiento";
 import { CasillasConsentimiento } from "./CasillasConsentimiento";
 
 // El formulario de contacto (HU-010) usa estas casillas; aquí se lee su HTML sin navegador.
@@ -22,9 +23,10 @@ describe("CasillasConsentimiento", () => {
     expect(casilla("acepta_contacto")).not.toMatch(/\srequired/);
   });
 
-  it("la de tratamiento enlaza al aviso y dice que el diagnóstico se comparte con el monitor", () => {
+  it("la de tratamiento enlaza al aviso y dice que las respuestas y el resultado del diagnóstico se comparten con el monitor (HU-087)", () => {
     expect(html).toContain('href="/privacidad"');
-    expect(html).toContain("compartir el resultado de mi diagnóstico con el monitor");
+    expect(html).toContain(AUTORIZACION_ESTUDIANTE);
+    expect(html).toContain("compartir mis respuestas y el resultado de mi diagnóstico con el monitor de mi monitoría");
   });
 });
 
