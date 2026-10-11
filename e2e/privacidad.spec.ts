@@ -64,8 +64,13 @@ test.describe("aviso de privacidad (HU-008)", () => {
     await expect(adenda).toHaveAttribute("target", "_blank");
     await expect(adenda).toHaveAttribute("rel", "noopener noreferrer");
 
-    // Fecha del último cambio del texto (HU-073).
-    await expect(page.getByText("Última actualización: 2 de octubre de 2026.")).toBeVisible();
+    // Qué cuenta como actividad de una sesión sin contacto (HU-056, D-63 b).
+    const retencion = page.locator("section", { has: page.getByRole("heading", { name: "Cuánto tiempo los guardamos" }) });
+    await expect(retencion).toContainText("se borran, con sus diagnósticos, a los 90 días sin actividad");
+    await expect(retencion).toContainText("cuenta como actividad cualquier visita al sitio desde ese navegador");
+
+    // Fecha del último cambio del texto (HU-073, HU-056).
+    await expect(page.getByText("Última actualización: 11 de octubre de 2026.")).toBeVisible();
 
     // El correo depende de CORREO_DATOS_PERSONALES: basta con el enlace o con el aviso de que llegará pronto.
     const canal = page.locator("section", { has: page.getByRole("heading", { name: "Canal de consultas" }) });

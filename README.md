@@ -366,6 +366,18 @@ Si un correo falla por algo temporal (red, un 4xx de SMTP, un 5xx o el límite d
 - Se reintentan los fallidos temporales que llevan al menos 2 minutos quietos y los `pendiente` abandonados (su envío murió hace más de 5 minutos). Cada corrida toma hasta 10 y deja de tomar pasados 20 s, para terminar antes del límite de la función (60 s).
 - La invitación de monitor se reconstruye con un token nuevo, porque el token no se guarda: el enlace que no llegó deja de servir. Si el primer envío sí llegó y solo se perdió la respuesta, ese enlace también deja de servir; es raro y se acepta. Con Resend, además, el reintento repetiría la `Idempotency-Key` con otro contenido y Resend lo rechazaría (409, definitivo): al pasar a Resend hay que revisar este caso.
 
+### Limpieza de sesiones anónimas (HU-056)
+
+Cada día a las 08:23 UTC (03:23 en Bogotá) pg_cron corre `privado.limpiar_sesiones_anonimas(now())` (trabajo `calibra-limpiar-sesiones-anonimas`). Borra de Auth las sesiones anónimas que no son de nadie y llevan más de 90 días sin actividad (P-13), y con ellas sus diagnósticos. Vive solo en la base: no pasa por `/api/procesos`, no usa Vault ni manda correos.
+
+- **Actividad (D-63 b):** la más reciente entre el alta, el último inicio de sesión, la última renovación de su sesión de Auth (el proxy la renueva en cada visita; el token dura una hora) y su último diagnóstico terminado. Con 90 días justos no se borra; con 90 días y un segundo, sí (P-40).
+- **No se tocan** las sesiones de un Lead (la que lo creó, las que confirmaron su correo con el enlace de P-23 y la de su cuenta de Estudiante), de un monitor o de un admin, ni las que no son anónimas. Borrar la de un Lead se llevaría sus diagnósticos por la cascada de `diagnostico.id_sesion_anonima`.
+- Cada sesión se borra con el candado por sesión de `registrar_lead` (6801), sin esperar: si alguien está dejando su contacto justo entonces, se salta y queda para el día siguiente. Con el candado tomado se comprueba otra vez que siga vencida y sin dueño.
+- Cada corrida borra hasta 1000 sesiones, las más viejas primero, para no llenar la tabla de candados. Si una no se puede borrar (por ejemplo, una llave foránea sin cascada), se salta con un `warning` en el log que solo trae su id y el código del error.
+- El plazo vive en `public.parametros_retencion()`. El aviso de privacidad lo copia en `DIAS_SESION_ANONIMA` (`src/lib/privacidad/consentimiento.ts`), y `integracion/limpiar-sesiones.test.ts` falla si se separan. Cambiarlo es una migración nueva que redefine la función, más el aviso.
+- Las corridas se ven en `cron.job_run_details` (por ejemplo, `select status, return_message, start_time from cron.job_run_details d join cron.job j using (jobid) where j.jobname = 'calibra-limpiar-sesiones-anonimas' order by start_time desc limit 10`).
+- Pruebas: `supabase/tests/limpiar_sesiones_anonimas.test.sql` (cada criterio con un `ahora` fijo en 2020, los dueños, los bordes, el salto por llave foránea, los permisos y el contrato de que toda llave hacia `auth.users` en `public` y `privado` borra en cascada o pone nulo), `integracion/limpiar-sesiones.test.ts` (una sesión real de Auth, el candado con dos conexiones y el plazo del aviso) y `e2e/limpiar-sesiones.spec.ts` (quien vuelve con la cookie de una sesión borrada ve el inicio normal y recibe otra).
+
 ## CI y despliegue
 
 `.github/workflows/ci.yml` corre en cada push a `main` y en cada PR hacia `main`:
