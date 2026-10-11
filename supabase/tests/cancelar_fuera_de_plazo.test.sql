@@ -3,7 +3,7 @@
 -- Corre con: npx supabase test db
 -- Todo ocurre en una transacción que termina en rollback: no deja datos.
 --
--- Qué cubre la migración 20261011173441_cancelacion_fuera_de_plazo.sql:
+-- Qué cubre la migración 20261011230814_cancelacion_fuera_de_plazo.sql:
 --   * Estructura y permisos de lo nuevo: public.cancelacion_excepcional (RLS con una sola política «admin lee», sin escritura
 --     para nadie con sesión, checks de categoría y nota), la vista public.citas_sin_plazo_para_cancelar, el núcleo
 --     privado.cancelar_cita_con_permiso, el texto del motivo privado.motivo_de_cancelacion_del_estudiante y la puerta de tres
