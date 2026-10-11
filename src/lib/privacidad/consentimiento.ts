@@ -19,9 +19,15 @@ export const RUTA_AVISO = "/privacidad";
 /**
  * Día de la última actualización del texto del aviso (`AAAA-MM-DD`). Se cambia con cada cambio del texto:
  * HU-069 (1-oct-2026) agregó que el nombre del monitor se muestra a los estudiantes. HU-073 (2-oct-2026) sumó las
- * reseñas y Cloudflare Turnstile.
+ * reseñas y Cloudflare Turnstile. HU-056 (11-oct-2026) dijo qué cuenta como actividad de una sesión (D-63 b).
  */
-export const AVISO_ACTUALIZADO = "2026-10-02";
+export const AVISO_ACTUALIZADO = "2026-10-11";
+
+/**
+ * Días sin actividad tras los que se borra una sesión sin contacto (P-13). Copia el valor de la base,
+ * `public.parametros_retencion()`: una prueba de integración falla si se separan. HU-056.
+ */
+export const DIAS_SESION_ANONIMA = 90;
 
 export const ERROR_SIN_AUTORIZACION =
   "Para dejar tu contacto o agendar necesitamos tu autorización para tratar tus datos.";

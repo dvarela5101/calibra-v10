@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Pantalla } from "@/components/Pantalla";
 import { formatearDia } from "@/lib/fechas";
-import { AVISO_ACTUALIZADO, correoConsultasDatos } from "@/lib/privacidad/consentimiento";
+import { AVISO_ACTUALIZADO, DIAS_SESION_ANONIMA, correoConsultasDatos } from "@/lib/privacidad/consentimiento";
 import estilos from "./privacidad.module.css";
 
 export const metadata: Metadata = { title: "Aviso de privacidad · Calibra" };
@@ -134,7 +134,11 @@ export default async function AvisoPrivacidad() {
         <section aria-labelledby="retencion">
           <h2 id="retencion">Cuánto tiempo los guardamos</h2>
           <ul>
-            <li>Sesiones sin contacto: se borran a los 90 días sin actividad.</li>
+            <li>
+              Sesiones sin contacto: se borran, con sus diagnósticos, a los {DIAS_SESION_ANONIMA} días sin actividad. La
+              sesión es la que reconoce a tu navegador, y cuenta como actividad cualquier visita al sitio desde ese
+              navegador o hacer un diagnóstico.
+            </li>
             <li>
               Tu contacto: hasta que retires tu autorización o después de 24 meses sin actividad.
             </li>
