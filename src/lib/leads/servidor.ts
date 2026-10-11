@@ -99,6 +99,8 @@ export async function registrarContacto(entrada: EntradaDeContacto): Promise<Res
         numero_telefono: contacto.numeroTelefono,
         fecha_consentimiento: consentimiento.fecha_consentimiento,
         acepta_contacto: consentimiento.acepta_contacto,
+        // Volvió a marcar la casilla con el texto vigente: queda con esa versión, como la fecha (HU-087).
+        version_autorizacion: consentimiento.version_autorizacion,
       })
       .eq("id", actual.id);
     if (error?.code === "23505") return { resultado: "error", error: CORREO_DE_OTRO };
@@ -114,6 +116,7 @@ export async function registrarContacto(entrada: EntradaDeContacto): Promise<Res
     p_acepta_contacto: consentimiento.acepta_contacto,
     p_fecha_consentimiento: consentimiento.fecha_consentimiento,
     p_origen: origen ?? "",
+    p_version_autorizacion: consentimiento.version_autorizacion,
   });
   if (!error) return { resultado: "lead" };
   if (error.code !== "23505") throw error;

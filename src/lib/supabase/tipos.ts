@@ -422,13 +422,13 @@ isOneToOne: true
                   ]
                 },"lead": {
                   Row: {
-                    "acepta_contacto": boolean,"acepta_tratamiento_datos": boolean,"correo": string | null,"estado": Database["public"]['Enums']["estado_lead"],"fecha_consentimiento": string,"fecha_creacion": string,"id": string,"id_sesion_anonima": string | null,"nombre": string,"numero_telefono": string | null,"origen": string | null
+                    "acepta_contacto": boolean,"acepta_tratamiento_datos": boolean,"correo": string | null,"estado": Database["public"]['Enums']["estado_lead"],"fecha_consentimiento": string,"fecha_creacion": string,"id": string,"id_sesion_anonima": string | null,"nombre": string,"numero_telefono": string | null,"origen": string | null,"version_autorizacion": string
                   }
                   Insert: {
-                    "acepta_contacto"?: boolean,"acepta_tratamiento_datos": boolean,"correo"?: string | null,"estado"?: Database["public"]['Enums']["estado_lead"],"fecha_consentimiento": string,"fecha_creacion"?: string,"id"?: string,"id_sesion_anonima"?: string | null,"nombre": string,"numero_telefono"?: string | null,"origen"?: string | null
+                    "acepta_contacto"?: boolean,"acepta_tratamiento_datos": boolean,"correo"?: string | null,"estado"?: Database["public"]['Enums']["estado_lead"],"fecha_consentimiento": string,"fecha_creacion"?: string,"id"?: string,"id_sesion_anonima"?: string | null,"nombre": string,"numero_telefono"?: string | null,"origen"?: string | null,"version_autorizacion"?: string
                   }
                   Update: {
-                    "acepta_contacto"?: boolean,"acepta_tratamiento_datos"?: boolean,"correo"?: string | null,"estado"?: Database["public"]['Enums']["estado_lead"],"fecha_consentimiento"?: string,"fecha_creacion"?: string,"id"?: string,"id_sesion_anonima"?: string | null,"nombre"?: string,"numero_telefono"?: string | null,"origen"?: string | null
+                    "acepta_contacto"?: boolean,"acepta_tratamiento_datos"?: boolean,"correo"?: string | null,"estado"?: Database["public"]['Enums']["estado_lead"],"fecha_consentimiento"?: string,"fecha_creacion"?: string,"id"?: string,"id_sesion_anonima"?: string | null,"nombre"?: string,"numero_telefono"?: string | null,"origen"?: string | null,"version_autorizacion"?: string
                   }
                   Relationships: [
                     
@@ -1186,6 +1186,11 @@ isOneToOne: true
               "plazo_llave_min": number,"recordatorio_llave_min": number
             }[]
                            },
+"parametros_retencion":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "sesion_anonima_dias": number
+            }[]
+                           },
 "plazo_alcanzado":
 { Args: { "p_ahora": string,"p_desde": string }; Returns: boolean
                            },
@@ -1202,7 +1207,7 @@ isOneToOne: true
 { Args: { "p_id_reembolso": string }; Returns: string
                            },
 "registrar_lead":
-{ Args: { "p_acepta_contacto": boolean,"p_correo": string,"p_fecha_consentimiento": string,"p_id_sesion": string,"p_nombre": string,"p_numero_telefono": string,"p_origen": string }; Returns: string
+{ Args: { "p_acepta_contacto": boolean,"p_correo": string,"p_fecha_consentimiento": string,"p_id_sesion": string,"p_nombre": string,"p_numero_telefono": string,"p_origen": string,"p_version_autorizacion"?: string }; Returns: string
                            },
 "registrar_monitor":
 { Args: { "p_correo": string,"p_id_usuario": string,"p_llave": string,"p_nombre": string,"p_numero_telefono": string,"p_token_hash": string }; Returns: boolean

@@ -28,9 +28,9 @@ select ok(
   and has_table_privilege('service_role', 'public.lead_sesion', 'insert'),
   'El servidor (service_role) sí');
 select ok(
-  has_function_privilege('service_role', 'public.registrar_lead(uuid, text, text, text, boolean, timestamptz, text)', 'execute')
-  and not has_function_privilege('authenticated', 'public.registrar_lead(uuid, text, text, text, boolean, timestamptz, text)', 'execute')
-  and not has_function_privilege('anon', 'public.registrar_lead(uuid, text, text, text, boolean, timestamptz, text)', 'execute'),
+  has_function_privilege('service_role', 'public.registrar_lead(uuid, text, text, text, boolean, timestamptz, text, text)', 'execute')
+  and not has_function_privilege('authenticated', 'public.registrar_lead(uuid, text, text, text, boolean, timestamptz, text, text)', 'execute')
+  and not has_function_privilege('anon', 'public.registrar_lead(uuid, text, text, text, boolean, timestamptz, text, text)', 'execute'),
   'registrar_lead solo la llama el servidor');
 select ok(
   has_function_privilege('service_role', 'public.confirmar_correo_de_lead(text, uuid)', 'execute')

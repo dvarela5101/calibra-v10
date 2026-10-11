@@ -215,6 +215,7 @@ HU-076 (D-38, D-39): al rechazar un pago, los avisos salen de la base, en la mis
 - Una sesión, un Lead: `registrar_lead` y `confirmar_correo_de_lead` toman el mismo candado por sesión y cuentan el Lead propio, el confirmado y el de la cuenta de Estudiante.
 - Tope de correos (HU-075, D-36): una sesión escribe como mucho 5 correos distintos en una hora móvil, existan o no en Calibra, tanto al dejar su contacto como al cambiarlo con `&editar=1` (las dos respuestas dicen si el correo ya es de otro Lead). Con el tope lleno, un correo nuevo no se guarda, no se dice si existe ni se manda enlace, y el visitante lee "Probaste varios correos seguidos. Espera un rato y vuelve a intentarlo.". Repetir un correo que ya escribió en esa hora no suma, ni volver a enviar el que su Lead ya tiene. Un correo inválido o un envío sin autorización se rechazan antes y no cuentan.
 - El tope lo cuenta `public.anotar_correo_de_contacto()` (solo service_role) antes de las dos ramas de `registrarContacto`, con el candado por sesión de `registrar_lead`. El tope y la ventana viven en `public.parametros_contacto()`. `privado.correo_de_contacto` guarda el SHA-256 del correo normalizado, no el correo. Lo que sale de la ventana se borra al anotar (de esa sesión) y cada hora con el trabajo `calibra-purgar-correos-de-contacto` de pg_cron (de todas); lo de una sesión borrada se va con ella.
+- Versión de la autorización (HU-087, D-54 c, D-67): `lead.version_autorizacion` dice con qué texto autorizó. `v1` decía «compartir el resultado de mi diagnóstico»; `v2`, el vigente, dice «mis respuestas y el resultado». La pone el servidor (`VERSION_AUTORIZACION` en `src/lib/privacidad/consentimiento.ts`), al crear el Lead y al editar el contacto, nunca el navegador. Los Leads de antes quedan en `v1`, y `registrar_lead` sin la versión también deja `v1`, del lado seguro. `privado.autorizo_respuestas(id_lead)` dice si el monitor puede ver las respuestas (HU-022); con `v1` ve el resultado y no las respuestas. Los textos de la casilla y del aviso viven en `AUTORIZACION_ESTUDIANTE` y `FINALIDAD_DIAGNOSTICO`: si cambia lo que se autoriza, también sube la versión (y su `check` en la base).
 - `siguiente` solo admite rutas internas ya normalizadas (`rutaSiguiente`, y un CHECK en la base): `/.//otro.sitio` termina en `/`.
 - El origen del Lead es la campaña con la que llegó el visitante (`?utm_campaign=...`). `OrigenDeCampana` la guarda en la cookie `calibra_origen` por 30 días.
 
@@ -391,6 +392,18 @@ Si un correo falla por algo temporal (red, un 4xx de SMTP, un 5xx o el límite d
 - Se reintentan los fallidos temporales que llevan al menos 2 minutos quietos y los `pendiente` abandonados (su envío murió hace más de 5 minutos). Cada corrida toma hasta 10 y deja de tomar pasados 20 s, para terminar antes del límite de la función (60 s).
 - La invitación de monitor se reconstruye con un token nuevo, porque el token no se guarda: el enlace que no llegó deja de servir. Si el primer envío sí llegó y solo se perdió la respuesta, ese enlace también deja de servir; es raro y se acepta. Con Resend, además, el reintento repetiría la `Idempotency-Key` con otro contenido y Resend lo rechazaría (409, definitivo): al pasar a Resend hay que revisar este caso.
 
+### Limpieza de sesiones anónimas (HU-056)
+
+Cada día a las 08:23 UTC (03:23 en Bogotá) pg_cron corre `privado.limpiar_sesiones_anonimas(now())` (trabajo `calibra-limpiar-sesiones-anonimas`). Borra de Auth las sesiones anónimas que no son de nadie y llevan más de 90 días sin actividad (P-13), y con ellas sus diagnósticos. Vive solo en la base: no pasa por `/api/procesos`, no usa Vault ni manda correos.
+
+- **Actividad (D-63 b):** la más reciente entre el alta, el último inicio de sesión, la última renovación de su sesión de Auth (el proxy la renueva en cada visita; el token dura una hora) y su último diagnóstico terminado. Con 90 días justos no se borra; con 90 días y un segundo, sí (P-40).
+- **No se tocan** las sesiones de un Lead (la que lo creó, las que confirmaron su correo con el enlace de P-23 y la de su cuenta de Estudiante), de un monitor o de un admin, ni las que no son anónimas. Borrar la de un Lead se llevaría sus diagnósticos por la cascada de `diagnostico.id_sesion_anonima`.
+- Cada sesión se borra con el candado por sesión de `registrar_lead` (6801), sin esperar: si alguien está dejando su contacto justo entonces, se salta y queda para el día siguiente. Con el candado tomado se comprueba otra vez que siga vencida y sin dueño.
+- Cada corrida borra hasta 1000 sesiones, las más viejas primero, para no llenar la tabla de candados. Si una no se puede borrar (por ejemplo, una llave foránea sin cascada), se salta con un `warning` en el log que solo trae su id y el código del error.
+- El plazo vive en `public.parametros_retencion()`. El aviso de privacidad lo copia en `DIAS_SESION_ANONIMA` (`src/lib/privacidad/consentimiento.ts`), y `integracion/limpiar-sesiones.test.ts` falla si se separan. Cambiarlo es una migración nueva que redefine la función, más el aviso.
+- Las corridas se ven en `cron.job_run_details` (por ejemplo, `select status, return_message, start_time from cron.job_run_details d join cron.job j using (jobid) where j.jobname = 'calibra-limpiar-sesiones-anonimas' order by start_time desc limit 10`).
+- Pruebas: `supabase/tests/limpiar_sesiones_anonimas.test.sql` (cada criterio con un `ahora` fijo en 2020, los dueños, los bordes, el salto por llave foránea, los permisos y el contrato de que toda llave hacia `auth.users` en `public` y `privado` borra en cascada o pone nulo), `integracion/limpiar-sesiones.test.ts` (una sesión real de Auth, el candado con dos conexiones y el plazo del aviso) y `e2e/limpiar-sesiones.spec.ts` (quien vuelve con la cookie de una sesión borrada ve el inicio normal y recibe otra).
+
 ## CI y despliegue
 
 `.github/workflows/ci.yml` corre en cada push a `main` y en cada PR hacia `main`:
@@ -415,7 +428,7 @@ Mientras falten los secretos, el paso de despliegue se salta con un aviso y el p
 
 - Zona horaria de negocio `America/Bogota`, idioma `es`, locale `es-CO`: `src/config/regional.ts`. Toda fecha se muestra en esa zona aunque el servidor corra en UTC (`src/lib/fechas.ts`).
 - Tokens de diseño del prototipo: `src/styles/tokens.css`. Los colores `--alert`, `--warn` y `--success` son solo relleno; para texto se usan `--alert-text`, `--success-text` y `--muted`, que pasan WCAG AA. `src/styles/tokens.test.ts` lo comprueba.
-- Reglas que no se negocian: ningún texto por debajo de 14 px, áreas táctiles de 44 px o más, sin degradados, sin emojis decorativos, sin iconos de cerebro, robot o IA, y nunca mostrar cifras de comisión.
+- Reglas que no se negocian: ningún texto por debajo de 14 px, áreas táctiles de 44 px o más, sin degradados, sin emojis decorativos, sin iconos de cerebro, robot o IA, y nunca mostrar cifras de comisión, salvo al monitor en sus desembolsos (D-59).
 
 ## Estructura
 
