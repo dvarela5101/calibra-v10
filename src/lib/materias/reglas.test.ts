@@ -48,7 +48,7 @@ describe("normalizarCodigo", () => {
 describe("el recorte de la base y el de la app dicen lo mismo", () => {
   // Los triggers de la migración recortan con `btrim(x, c_blancos)` y la app con `trim()` de JavaScript. Si no quitaran lo mismo,
   // un nombre de solo un tabulador o un espacio de no separación se rechazaría en la app y se guardaría por la Data API.
-  const migracion = readFileSync(new URL("../../../supabase/migrations/20261011170714_gestionar_materias.sql", import.meta.url), "utf8");
+  const migracion = readFileSync(new URL("../../../supabase/migrations/20261011221326_gestionar_materias.sql", import.meta.url), "utf8");
   const barra = String.fromCharCode(92);
   const SECUENCIA = new RegExp(`${barra}${barra}(x[0-9a-f]{2}|u[0-9a-f]{4}|[tnr])`, "g");
 
