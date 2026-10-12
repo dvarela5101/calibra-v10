@@ -1,6 +1,7 @@
 // Escribe .env.local con las llaves del Supabase LOCAL (las que imprime `supabase status`).
 // .env.local está en .gitignore. Nunca usa llaves del proyecto real.
 import { execSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -39,6 +40,9 @@ const contenido = [
   // CAPTCHA (HU-058): llave del sitio de PRUEBA de Cloudflare (widget invisible, siempre valida). Es pública
   // por diseño. La secreta no va aquí: no la lee la app, solo Auth, y la pone `npm run db:iniciar`.
   "NEXT_PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000BB",
+  // Procesos programados (HU-048): un secreto de PRUEBA, nuevo en cada corrida, para que los recorridos llamen
+  // /api/procesos/* como lo haría pg_cron. 32 bytes en hexadecimal (el mínimo son 32 caracteres).
+  `CRON_SECRETO=${randomBytes(32).toString("hex")}`,
   "",
 ].join("\n");
 
