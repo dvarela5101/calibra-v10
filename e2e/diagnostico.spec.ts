@@ -5,6 +5,7 @@ import { dibujarTexto } from "../src/components/contenido/dibujar";
 import { diaDelNegocio, formatearDia } from "../src/lib/fechas";
 import type { Banco, Pregunta } from "../scripts/contenido/modelo.mts";
 import { CLAVES_INTERNAS_DE_EJEMPLO, GUARDADO_DE_EJEMPLO, sembrarDiagnostico } from "../pruebas/diagnostico-sembrado";
+import { cuerpoDe } from "../pruebas/cuerpo-de-respuesta";
 import { desescaparComillas } from "../pruebas/flujo-recibido";
 import {
   borrarBancoDelProyecto,
@@ -333,18 +334,60 @@ function contarAcciones(page: Page): { total(): number } {
   return { total: () => acciones.length };
 }
 
+let vigilantesCreados = 0;
+
 /**
  * Todo lo que el servidor le manda al navegador (las páginas y las respuestas de las acciones), para buscar ahí lo que no debe
  * llegar. Next incrusta el flujo de cada página en una cadena de JavaScript con las comillas escapadas (`\"clave\"`): se
  * desescapan, o un centinela como `"clave"` solo podría dispararse contra una acción y nunca contra una página.
+ *
+ * Los cuerpos llegan por dos caminos, porque el del protocolo de Chrome (`response.text()`) no sirve para las respuestas de `fetch`:
+ * con el servidor de producción responde «No data found for resource with given identifier» a respuestas que la página sí recibió,
+ * sin ninguna navegación de por medio (en una corrida de esta prueba con cuatro trabajadores: 4 de 65 respuestas de acciones y la
+ * mitad de las de flujo RSC, también la de cada navegación al resultado). El cuerpo se perdía en silencio, y bastaba perder los dos
+ * de D-51 (los únicos que traen `"habilidades"`) para que el control positivo fallara aunque la app funcionara.
+ * - Todo lo que la página pide con `fetch` (las acciones y el flujo de cada navegación del cliente) lo lee la propia página, con un
+ *   `clone()` de la respuesta en un `fetch` envuelto antes de que corra su código, y se lo pasa a la prueba. Es lo que el navegador
+ *   recibió, completo y sin depender de lo que Chrome conserve.
+ * - Las páginas (`text/html`) se leen por el protocolo, como antes, pero con `cuerpoDe`: un cuerpo cortado por una recarga o una
+ *   navegación se descarta pasado el tope en lugar de dejar la prueba esperando hasta su timeout.
+ * Quien necesite un cuerpo concreto lo espera con `esperarQueLleguen`: el de la página llega a la prueba un instante después.
  */
-function vigilarRespuestas(page: Page): () => Promise<string> {
-  const cuerpos: Promise<string>[] = [];
+async function vigilarRespuestas(page: Page): Promise<() => Promise<string>> {
+  const paginas: Promise<string>[] = [];
+  const delFetch: string[] = [];
+  const nombre = `__calibraVigilante${vigilantesCreados++}`;
+
+  await page.exposeFunction(nombre, (texto: string) => void delFetch.push(texto));
+  await page.addInitScript((nombreDeLaFuncion: string) => {
+    const original = window.fetch;
+    window.fetch = async function (this: unknown, ...argumentos: Parameters<typeof fetch>) {
+      const respuesta = await original.apply(this, argumentos);
+      const entregar = (window as unknown as Record<string, ((texto: string) => unknown) | undefined>)[nombreDeLaFuncion];
+      if (entregar && /text\/html|text\/x-component/.test(respuesta.headers.get("content-type") ?? "")) {
+        respuesta
+          .clone()
+          .text()
+          .then(
+            (texto) => void entregar(texto),
+            // Next cancela algunos prefetch: lo que la página no pudo leer tampoco le llegó.
+            () => undefined,
+          );
+      }
+      return respuesta;
+    };
+  }, nombre);
+
   page.on("response", (respuesta) => {
     const tipo = respuesta.headers()["content-type"] ?? "";
-    if (/text\/html|text\/x-component/.test(tipo)) cuerpos.push(respuesta.text().catch(() => ""));
+    if (/text\/html|text\/x-component/.test(tipo)) paginas.push(cuerpoDe(respuesta));
   });
-  return async () => desescaparComillas((await Promise.all(cuerpos)).join("\n"));
+  return async () => desescaparComillas([...(await Promise.all(paginas)), ...delFetch].join("\n"));
+}
+
+/** Espera a que lo recibido tenga el centinela: el cuerpo que lo trae puede estar todavía de camino hacia la prueba. */
+async function esperarQueLleguen(recibido: () => Promise<string>, centinela: string, mensaje: string): Promise<void> {
+  await expect.poll(async () => (await recibido()).includes(centinela), { message: mensaje, timeout: ESPERA.timeout }).toBe(true);
 }
 
 /** Las claves que nunca llegan al navegador, escritas entre comillas como las deja el JSON (ver `desescaparComillas`). */
@@ -872,7 +915,7 @@ test("Recorrido · empezar, responder con el teclado y con doble clic, llegar al
   test.setTimeout(300_000);
   const indice = new Indice(banco.banco);
   const acciones = contarAcciones(page);
-  const todoLoRecibido = vigilarRespuestas(page);
+  const todoLoRecibido = await vigilarRespuestas(page);
   const elegidas: OpcionDelBanco[] = [];
   const principal = page.locator("main");
   preguntasMedidas.length = 0;
@@ -950,6 +993,8 @@ test("Recorrido · empezar, responder con el teclado y con doble clic, llegar al
   // Tiene dirección propia y sigue ahí al recargar.
   const recargada = await page.reload();
   exigirSinCachePublico(recargada, "el resultado, con sesión");
+  // La página del resultado se lee ahora, antes de seguir navegando: es lo que el control positivo del final exige haber visto.
+  const paginaDelResultado = (await recargada?.text()) ?? "";
   await expect(titulo(page, TITULO_DEL_RESULTADO)).toBeVisible(ESPERA);
   await expectCifras(page, pasos.length, aciertos);
 
@@ -1036,9 +1081,14 @@ test("Recorrido · empezar, responder con el teclado y con doble clic, llegar al
   // --- Qué recibió el navegador (criterio 13): nada de la clave de una pregunta, la dificultad, la correcta, la misconcepción de
   // una opción, su texto de error, la solución ni la semilla; y nunca el token de recuperación, las copias de las preguntas ni la
   // marca de falta de material. Los textos de error que sí pueden verse son los de las opciones que la persona eligió.
-  const recibido = await todoLoRecibido();
-  expect(recibido, "el vigilante vio las respuestas de las acciones").toContain('"enunciado"');
-  expect(recibido, "y las páginas del resultado").toContain('"habilidades"');
+  // Controles positivos: sin ellos, un vigilante que no leyó nada daría por buena la ausencia de todo. `"enunciado"` viaja en las
+  // respuestas de las acciones; `"habilidades"` solo en el último resultado del mensaje de D-51 (la página del resultado es de
+  // servidor y no lleva el objeto, solo su dibujo), así que ese cuerpo concreto tiene que haber llegado a la prueba.
+  await esperarQueLleguen(todoLoRecibido, '"enunciado"', "el vigilante vio las respuestas de las acciones");
+  await esperarQueLleguen(todoLoRecibido, '"habilidades"', "y el último resultado que trae la respuesta de D-51");
+  expect(paginaDelResultado, "y el flujo de la página del resultado, leída al recargar").toMatch(/self\.__next_f\.push/);
+  expect(paginaDelResultado, "con el título de esa página").toContain("<title>Tu resultado · Calibra</title>");
+  const recibido = [desescaparComillas(paginaDelResultado), await todoLoRecibido()].join("\n");
   const textosElegidos = new Set(elegidas.flatMap((o) => (o.error ? [o.error] : [])));
   exigirQueNoLlego(recibido, [
     ...CLAVES_PROHIBIDAS,
@@ -1260,7 +1310,7 @@ test("Recargar y cambiar de materia · la pregunta pendiente sigue ahí, el avis
     const prohibidosAlCargar = [...CLAVES_PROHIBIDAS, ...valoresProhibidos(indice, textosElegidos)];
 
     // --- Recargar: la misma pregunta con las opciones en el mismo orden, sin el selector y sin robar el foco
-    const recibidoAlRecargar = vigilarRespuestas(page);
+    const recibidoAlRecargar = await vigilarRespuestas(page);
     await page.reload();
     await expect(titulo(page, TITULO_DE_LA_PREGUNTA)).toBeVisible(ESPERA);
     await page.waitForLoadState("networkidle");
@@ -1273,7 +1323,7 @@ test("Recargar y cambiar de materia · la pregunta pendiente sigue ahí, el avis
 
     // --- Otra pestaña del mismo navegador (como cerrar la pestaña y volver): lo mismo
     const otra = await context.newPage();
-    const recibidoEnLaOtra = vigilarRespuestas(otra);
+    const recibidoEnLaOtra = await vigilarRespuestas(otra);
     await otra.goto("/diagnostico");
     await expect(titulo(otra, TITULO_DE_LA_PREGUNTA)).toBeVisible(ESPERA);
     await otra.waitForLoadState("networkidle");
