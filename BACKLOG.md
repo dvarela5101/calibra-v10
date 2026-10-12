@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-11 21:07. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-11 22:29. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -33,11 +33,11 @@ _Generado automaticamente: 2026-10-11 21:07. No editar a mano; usa `scripts/back
 | [HU-009](backlog/HU-009.md) | [Visitante] Tomar el diagnóstico sin iniciar sesión | En progreso | P0 | M | HU-004, HU-005, HU-060, HU-081, HU-083 |
 | [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | En progreso | P0 | M | HU-009, HU-081 |
 | [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | En progreso | P0 | L | HU-021, HU-009, HU-081, HU-087 |
-| [HU-048](backlog/HU-048.md) | [Técnica] Recorridos de punta a punta: agendar, pagar, cancelar, reportar y desembolsar | En progreso | P1 | M | HU-030, HU-076, HU-082 |
 | [HU-050](backlog/HU-050.md) | [Monitor] Ver mis desembolsos | En progreso | P1 | M | HU-028, HU-030, HU-078 |
 | [HU-052](backlog/HU-052.md) | [Admin] Autorizar una cancelación fuera de plazo en casos extremos | En progreso | P2 | M | HU-024, HU-026 |
 | [HU-079](backlog/HU-079.md) | [Técnica] Unificar los procesadores de la bandeja de salida de correos | En progreso | P2 | S | HU-019, HU-024, HU-025, HU-030, HU-035, HU-051, HU-076, HU-080 |
 | [HU-083](backlog/HU-083.md) | [Técnica] Dibujar fórmulas y código del banco de preguntas | En revision | P0 | S | HU-005 |
+| [HU-048](backlog/HU-048.md) | [Técnica] Recorridos de punta a punta: agendar, pagar, cancelar, reportar y desembolsar | En revision | P1 | M | HU-030, HU-076, HU-082 |
 | [HU-055](backlog/HU-055.md) | [Admin] Gestionar materias y evaluaciones | En revision | P1 | L | HU-005, HU-012, HU-014, HU-016, HU-062 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
