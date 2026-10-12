@@ -29,9 +29,11 @@ type Props = {
  * servidor manda y este componente solo pinta: no elige, no califica y no guarda nada. Las transiciones son una función pura
  * (`siguientePantalla`).
  *
- * Una llamada a la vez: mientras hay una en curso, o ya se está yendo al resultado, los botones quedan deshabilitados. Un fallo
- * de la red es el mismo `error` que uno del servidor. Al llegar a una pantalla por una transición, el foco pasa al enunciado de
- * la pregunta o al título; al cargar o recargar la página no se mueve.
+ * Una llamada a la vez: mientras hay una en curso, o ya se está yendo al resultado, los botones quedan inactivos. Los de envío
+ * («Responder», «Empezar», «Sí, volver a tomarlo») con `aria-disabled` y no con `disabled`, para que no pierdan el foco y se pueda
+ * reintentar con el teclado tras un fallo; al empezar cada llamada se quita el mensaje de la anterior, para que un segundo fallo
+ * igual vuelva a anunciarse. Un fallo de la red es el mismo `error` que uno del servidor. Al llegar a una pantalla por una
+ * transición, el foco pasa al enunciado de la pregunta o al título; al cargar o recargar la página no se mueve.
  */
 export function Recorrido({ inicial, materias }: Props) {
   const router = useRouter();
@@ -62,6 +64,8 @@ export function Recorrido({ inicial, materias }: Props) {
   function empezar(idEvaluacion: string, volverATomar: boolean) {
     if (llamando.current) return;
     llamando.current = true;
+    // Fuera de la transición, para que el mensaje de un fallo anterior salga de la página antes de que llegue el resultado.
+    aplicar({ tipo: "llamando" });
     iniciarLlamada(async () => {
       const respuesta = await llamarSinCaerse(() => empezarDiagnostico({ idEvaluacion, volverATomar }), TEXTOS.errorAlEmpezar);
       llamando.current = false;
@@ -74,6 +78,7 @@ export function Recorrido({ inicial, materias }: Props) {
   function responder(enCurso: { idDiagnostico: string; paso: number }, letra: Letra) {
     if (llamando.current) return;
     llamando.current = true;
+    aplicar({ tipo: "llamando" });
     iniciarLlamada(async () => {
       const respuesta = await llamarSinCaerse(
         () => responderPregunta({ idDiagnostico: enCurso.idDiagnostico, paso: enCurso.paso, letra }),
@@ -140,6 +145,7 @@ export function Recorrido({ inicial, materias }: Props) {
           pendiente={pendiente}
           ocupado={ocupado}
           alEmpezar={(idEvaluacion) => empezar(idEvaluacion, false)}
+          alVolver={() => aplicar({ tipo: "volver" })}
         />
       </Pantalla>
     </div>

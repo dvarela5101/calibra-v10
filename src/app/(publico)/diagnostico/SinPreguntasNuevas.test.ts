@@ -94,13 +94,20 @@ describe("SinPreguntasNuevas: mensajes y llamadas", () => {
     expect(html).toContain("Tu último resultado");
   });
 
-  it("mientras hay una llamada, «Sí» dice «Empezando…» y los dos botones no se pueden pulsar", () => {
+  it("mientras hay una llamada, «Sí» dice «Empezando…» y queda inactivo, y «No» queda deshabilitado", () => {
     const html = pintar({ pendiente: true, ocupado: true });
-    expect(html).toMatch(/<button type="submit"[^>]* disabled=""[^>]*>Empezando…<\/button>/);
+    expect(html).toMatch(/<button type="submit"[^>]* aria-disabled="true"[^>]*>Empezando…<\/button>/);
     expect(html).toMatch(/<button type="button"[^>]* disabled=""[^>]*>No<\/button>/);
   });
 
+  it("«Sí, volver a tomarlo» no lleva `disabled` ocupado: con ese atributo pierde el foco y el teclado no puede reintentar tras un fallo (M49)", () => {
+    const boton = pintar({ pendiente: true, ocupado: true }).match(/<button type="submit"[^>]*>Empezando…<\/button>/)?.[0] ?? "";
+    expect(boton).not.toMatch(/\sdisabled(=|\s|>)/);
+  });
+
   it("fuera de una llamada los dos están habilitados", () => {
-    expect(pintar()).not.toContain("disabled");
+    const html = pintar();
+    expect(html).not.toContain("disabled");
+    expect(html).not.toContain("aria-disabled");
   });
 });

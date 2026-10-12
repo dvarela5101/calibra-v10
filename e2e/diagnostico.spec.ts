@@ -1,10 +1,11 @@
-import type { Browser, BrowserContext, Page, Request, Response } from "@playwright/test";
+import type { Browser, BrowserContext, ElementHandle, Locator, Page, Request, Response } from "@playwright/test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { renderToStaticMarkup } from "react-dom/server";
 import { dibujarTexto } from "../src/components/contenido/dibujar";
 import { diaDelNegocio, formatearDia } from "../src/lib/fechas";
 import type { Banco, Pregunta } from "../scripts/contenido/modelo.mts";
 import { CLAVES_INTERNAS_DE_EJEMPLO, GUARDADO_DE_EJEMPLO, sembrarDiagnostico } from "../pruebas/diagnostico-sembrado";
+import { desescaparComillas } from "../pruebas/flujo-recibido";
 import {
   borrarBancoDelProyecto,
   cargarBancoDelProyecto,
@@ -41,6 +42,7 @@ const TITULO_DEL_RESULTADO = "Tu resultado";
 const TITULO_SIN_PREGUNTAS = "Ya viste todas las preguntas";
 const ELIGE_UNA_OPCION = "Elige una opción";
 const ERROR_AL_RESPONDER = "No pudimos guardar tu respuesta. Inténtalo de nuevo.";
+const ERROR_AL_EMPEZAR = "No pudimos empezar el diagnóstico. Inténtalo de nuevo.";
 const DIAGNOSTICO_VENCIDO = "Ese diagnóstico ya no está. Empieza uno nuevo.";
 const NO_DISPONIBLE = "Esa evaluación no está disponible";
 const CUENTA_DEL_EQUIPO = "Estás con tu cuenta del equipo de Calibra. Para agendar como estudiante, sal de tu cuenta o usa otra ventana.";
@@ -331,14 +333,55 @@ function contarAcciones(page: Page): { total(): number } {
   return { total: () => acciones.length };
 }
 
-/** Todo lo que el servidor le manda al navegador (las páginas y las respuestas de las acciones), para buscar ahí lo que no debe llegar. */
+/**
+ * Todo lo que el servidor le manda al navegador (las páginas y las respuestas de las acciones), para buscar ahí lo que no debe
+ * llegar. Next incrusta el flujo de cada página en una cadena de JavaScript con las comillas escapadas (`\"clave\"`): se
+ * desescapan, o un centinela como `"clave"` solo podría dispararse contra una acción y nunca contra una página.
+ */
 function vigilarRespuestas(page: Page): () => Promise<string> {
   const cuerpos: Promise<string>[] = [];
   page.on("response", (respuesta) => {
     const tipo = respuesta.headers()["content-type"] ?? "";
     if (/text\/html|text\/x-component/.test(tipo)) cuerpos.push(respuesta.text().catch(() => ""));
   });
-  return async () => (await Promise.all(cuerpos)).join("\n");
+  return async () => desescaparComillas((await Promise.all(cuerpos)).join("\n"));
+}
+
+/** Las claves que nunca llegan al navegador, escritas entre comillas como las deja el JSON (ver `desescaparComillas`). */
+const CLAVES_PROHIBIDAS = [
+  '"dificultad"',
+  '"misconcepcion"',
+  '"solucion"',
+  '"correcta"',
+  '"semilla"',
+  '"token_recuperacion"',
+  '"faltaMaterial"',
+  '"falta_material"',
+  '"vistasAntes"',
+  '"candidatas"',
+  '"repetido"',
+  '"idUltimoDiagnostico"',
+  '"habilidad"',
+  '"descripcionHabilidad"',
+  '"puntaje"',
+  '"clave"',
+];
+
+/**
+ * Lo que el banco de ejemplo tiene y no llega nunca al navegador mientras la persona responde: las claves de las misconcepciones,
+ * las soluciones y los textos de error propios (D-14) de las opciones que no eligió.
+ */
+function valoresProhibidos(indice: Indice, textosElegidos: ReadonlySet<string>): string[] {
+  return [
+    ...["no-resta-uno", "suma-uno", "no-baja", "olvida-interna", "solo-interna"],
+    ...indice.soluciones().map((solucion) => solucion.split("\n")[0]),
+    ...indice.textosDeError().filter((texto) => !textosElegidos.has(texto)),
+  ];
+}
+
+/** Falla con el nombre de cada centinela que aparece en lo recibido. */
+function exigirQueNoLlego(recibido: string, prohibidos: readonly string[]): void {
+  for (const prohibido of prohibidos) expect(recibido.includes(prohibido), `llegó al navegador: ${prohibido}`).toBe(false);
 }
 
 /** Un `Cache-Control` que nunca es público. Con `next start` (CI) las dinámicas salen privadas; `next dev` manda solo «no-cache». */
@@ -997,29 +1040,11 @@ test("Recorrido · empezar, responder con el teclado y con doble clic, llegar al
   expect(recibido, "el vigilante vio las respuestas de las acciones").toContain('"enunciado"');
   expect(recibido, "y las páginas del resultado").toContain('"habilidades"');
   const textosElegidos = new Set(elegidas.flatMap((o) => (o.error ? [o.error] : [])));
-  const prohibidos = [
-    '"dificultad"',
-    '"misconcepcion"',
-    '"solucion"',
-    '"correcta"',
-    '"semilla"',
-    '"token_recuperacion"',
-    '"faltaMaterial"',
-    '"falta_material"',
-    '"vistasAntes"',
-    '"candidatas"',
-    '"repetido"',
-    '"idUltimoDiagnostico"',
-    '"habilidad"',
-    '"descripcionHabilidad"',
-    '"puntaje"',
-    '"clave"',
-    ...["no-resta-uno", "suma-uno", "no-baja", "olvida-interna", "solo-interna"],
-    ...indice.soluciones().map((solucion) => solucion.split("\n")[0]),
-    ...indice.textosDeError().filter((texto) => !textosElegidos.has(texto)),
+  exigirQueNoLlego(recibido, [
+    ...CLAVES_PROHIBIDAS,
+    ...valoresProhibidos(indice, textosElegidos),
     ...finales.map((fila) => fila.token_recuperacion),
-  ];
-  for (const prohibido of prohibidos) expect(recibido.includes(prohibido), `llegó al navegador: ${prohibido}`).toBe(false);
+  ]);
 });
 
 test("Recorrido · si falla la red o el servidor al responder, el mensaje conserva la opción y la respuesta se aplica una sola vez", async ({
@@ -1066,6 +1091,88 @@ test("Recorrido · si falla la red o el servidor al responder, el mensaje conser
   await expect(regionDeAvance(page)).toHaveText(/^Pregunta 2 de hasta \d+$/, ESPERA);
   await expect(alerta(page, ERROR_AL_RESPONDER), "el mensaje se va con la pregunta siguiente").toHaveCount(0);
   expect(intentos).toBe(3);
+  expect(await enCursoDe(banco, sesion.id), "la respuesta se aplicó una sola vez").toMatchObject({ paso: 1, npasos: 1 });
+});
+
+test("Fallos con el teclado · «Empezar» y «Responder» siguen enfocados tras un fallo, se reintenta con Enter y un segundo fallo igual se anuncia otra vez", async ({
+  page,
+  context,
+  banco,
+  limpieza,
+}) => {
+  const indice = new Indice(banco.banco);
+  await abrirSelector(page);
+  const sesion = await esperarSesion(context);
+  limpieza.anotar(sesion.id);
+
+  // Mientras `fallando`, cada llamada a una acción falla: la primera con la red cortada, la segunda con un error del servidor, y
+  // así sucesivamente. Al apagarlo pasan.
+  let fallando = true;
+  let llamadas = 0;
+  await page.route("**/diagnostico", async (ruta) => {
+    const peticion = ruta.request();
+    if (peticion.method() !== "POST" || peticion.headers()["next-action"] === undefined) return ruta.fallback();
+    if (!fallando) return ruta.fallback();
+    llamadas++;
+    if (llamadas % 2 === 1) return ruta.abort("failed");
+    return ruta.fulfill({ status: 500, contentType: "text/plain", body: "falla de prueba" });
+  });
+
+  /**
+   * Pulsa Enter sobre el botón enfocado y espera el mensaje de error. Comprueba lo que un fallo no puede estropear: el botón sigue
+   * enfocado (con `disabled` caía al body y había que recorrer la página desde el principio) y, si ya había un mensaje igual, se
+   * inserta uno nuevo en la página, que es lo que un lector de pantalla vuelve a anunciar.
+   */
+  async function reintentarConEnter(boton: Locator, mensaje: string, anterior: ElementHandle | null): Promise<ElementHandle> {
+    await expect(boton, "antes de pulsar Enter el botón está enfocado").toBeFocused();
+    await expect(boton, "y activo (no a mitad de una llamada)").toBeEnabled();
+    await page.keyboard.press("Enter");
+    const nuevo = alerta(page, mensaje);
+    await expect(nuevo).toBeVisible(ESPERA);
+    await expect(boton, "tras el fallo el botón sigue enfocado").toBeFocused();
+    if (anterior) {
+      expect(await anterior.evaluate((el) => el.isConnected), "el mensaje anterior se quitó de la página: el nuevo es otro elemento").toBe(false);
+    }
+    return (await nuevo.elementHandle())!;
+  }
+
+  // --- «Empezar»: de la materia al botón con Tab, y Enter
+  await elegirMateria(page, banco.nombreA);
+  await page.keyboard.press("Tab");
+  await expect(botonEmpezar(page), "Tab desde la materia llega a «Empezar»").toBeFocused();
+  const primeroAlEmpezar = await reintentarConEnter(botonEmpezar(page), ERROR_AL_EMPEZAR, null);
+  const segundoAlEmpezar = await reintentarConEnter(botonEmpezar(page), ERROR_AL_EMPEZAR, primeroAlEmpezar);
+  expect(llamadas).toBe(2);
+  expect(await enCursoDe(banco, sesion.id), "no se creó nada").toBeNull();
+  expect(await segundoAlEmpezar.evaluate((el) => el.isConnected)).toBe(true);
+
+  fallando = false;
+  await expect(botonEmpezar(page)).toBeEnabled();
+  await page.keyboard.press("Enter");
+  await expect(titulo(page, TITULO_DE_LA_PREGUNTA)).toBeVisible(LARGA);
+  await expect(page.locator(ENUNCIADO), "al llegar la pregunta el foco queda en su enunciado").toBeFocused();
+  expect(await enCursoDe(banco, sesion.id)).toMatchObject({ paso: 0, npasos: 0 });
+
+  // --- «Responder»: la opción con las flechas, Tab hasta el botón y Enter
+  const vista = await leerPregunta(page);
+  const letra = indice.reconocer(vista).letraDeLaCorrecta;
+  await elegirConTeclado(page, letra);
+  await page.keyboard.press("Tab");
+  await expect(botonResponder(page), "Tab desde las opciones llega a «Responder»").toBeFocused();
+
+  fallando = true;
+  llamadas = 0;
+  const primeroAlResponder = await reintentarConEnter(botonResponder(page), ERROR_AL_RESPONDER, null);
+  await reintentarConEnter(botonResponder(page), ERROR_AL_RESPONDER, primeroAlResponder);
+  expect(llamadas).toBe(2);
+  await expect(page.locator(`input[name="opcion"][value="${letra}"]`), "la opción elegida se conserva").toBeChecked();
+  expect(await enCursoDe(banco, sesion.id), "la respuesta no se aplicó").toMatchObject({ paso: 0, npasos: 0 });
+
+  fallando = false;
+  await expect(botonResponder(page)).toBeEnabled();
+  await page.keyboard.press("Enter");
+  await expect(regionDeAvance(page)).toHaveText(/^Pregunta 2 de hasta \d+$/, ESPERA);
+  await expect(alerta(page, ERROR_AL_RESPONDER), "el mensaje se va con la pregunta siguiente").toHaveCount(0);
   expect(await enCursoDe(banco, sesion.id), "la respuesta se aplicó una sola vez").toMatchObject({ paso: 1, npasos: 1 });
 });
 
@@ -1143,26 +1250,37 @@ test("Recargar y cambiar de materia · la pregunta pendiente sigue ahí, el avis
     await radioDe(page, /^Parcial 1/).check();
     await botonEmpezar(page).click();
     await expect(titulo(page, TITULO_DE_LA_PREGUNTA)).toBeVisible(LARGA);
-    await darPaso(page, indice, "correcta");
+    const { paso: respondida } = await darPaso(page, indice, "correcta");
     const vista = await leerPregunta(page);
     expect(vista.avance).toMatch(/^Pregunta 2 de hasta/);
     const d1 = (await enCursoDe(banco, sesion.id))!;
     expect(d1).toMatchObject({ paso: 1, id_evaluacion: banco.idParcial1 });
+    // Lo que la página trae con una pregunta pendiente (`inicial.enCurso` viaja en el flujo de la página) también se vigila.
+    const textosElegidos = new Set(respondida.elegida.error ? [respondida.elegida.error] : []);
+    const prohibidosAlCargar = [...CLAVES_PROHIBIDAS, ...valoresProhibidos(indice, textosElegidos)];
 
     // --- Recargar: la misma pregunta con las opciones en el mismo orden, sin el selector y sin robar el foco
+    const recibidoAlRecargar = vigilarRespuestas(page);
     await page.reload();
     await expect(titulo(page, TITULO_DE_LA_PREGUNTA)).toBeVisible(ESPERA);
     await page.waitForLoadState("networkidle");
     expect(await leerPregunta(page)).toEqual(vista);
     await expect(titulo(page, TITULO_DEL_SELECTOR)).toHaveCount(0);
     await expect(page.locator(ENUNCIADO), "al recargar no se roba el foco").not.toBeFocused();
+    const alRecargar = await recibidoAlRecargar();
+    expect(alRecargar, "el vigilante ve la pregunta pendiente en la página recargada").toContain('"enunciado"');
+    exigirQueNoLlego(alRecargar, prohibidosAlCargar);
 
     // --- Otra pestaña del mismo navegador (como cerrar la pestaña y volver): lo mismo
     const otra = await context.newPage();
+    const recibidoEnLaOtra = vigilarRespuestas(otra);
     await otra.goto("/diagnostico");
     await expect(titulo(otra, TITULO_DE_LA_PREGUNTA)).toBeVisible(ESPERA);
     await otra.waitForLoadState("networkidle");
     expect(await leerPregunta(otra)).toEqual(vista);
+    const enLaOtra = await recibidoEnLaOtra();
+    expect(enLaOtra, "el vigilante ve la pregunta pendiente en la otra pestaña").toContain('"enunciado"');
+    exigirQueNoLlego(enLaOtra, prohibidosAlCargar);
 
     // --- Cambiar de materia: el selector con el aviso exacto y el foco en el título; el diagnóstico no se toca
     await otra.getByRole("button", { name: "Cambiar de materia", exact: true }).click();
@@ -1200,6 +1318,67 @@ test("Recargar y cambiar de materia · la pregunta pendiente sigue ahí, el avis
     await expect(page.getByRole("status").filter({ hasText: "Llevas un diagnóstico" })).toHaveText(textoDelAviso("Parcial 2"));
     expect(await enCursoDe(banco, sesion.id), "la letra no se aplicó al diagnóstico nuevo").toMatchObject({ id: d2.id, paso: 0, npasos: 0 });
   });
+});
+
+test("Cambiar de materia · si la Evaluación en que va ya no se ofrece, «Volver a mi pregunta» devuelve a la pregunta pendiente sin llamar a nada", async ({
+  page,
+  context,
+  banco,
+  limpieza,
+}) => {
+  test.setTimeout(240_000);
+  const indice = new Indice(banco.banco);
+  const acciones = contarAcciones(page);
+  let idDeLaSesion = "";
+
+  // --- Un diagnóstico de Parcial 2, que se apaga después: la pendiente gana aunque su Evaluación ya no esté activa (HU-081)
+  await conEvaluacionActiva(banco, banco.idParcial2, async () => {
+    await abrirSelector(page);
+    const sesion = await esperarSesion(context);
+    limpieza.anotar(sesion.id);
+    idDeLaSesion = sesion.id;
+    await elegirMateria(page, banco.nombreA);
+    await page.getByRole("radiogroup", { name: "Evaluación", exact: true }).getByRole("radio", { name: /^Parcial 2/ }).check();
+    await botonEmpezar(page).click();
+    await expect(titulo(page, TITULO_DE_LA_PREGUNTA)).toBeVisible(LARGA);
+  });
+  const enMarcha = (await enCursoDe(banco, idDeLaSesion))!;
+  expect(enMarcha).toMatchObject({ paso: 0, id_evaluacion: banco.idParcial2 });
+
+  await page.reload();
+  await expect(titulo(page, TITULO_DE_LA_PREGUNTA)).toBeVisible(ESPERA);
+  await page.waitForLoadState("networkidle");
+  const vista = await leerPregunta(page);
+  expect(vista.avance).toMatch(/^Pregunta 1 de hasta/);
+  const llamadasAntes = acciones.total();
+
+  // --- «Cambiar de materia»: el aviso, y Parcial 2 ya no se ofrece (la materia A solo tiene Parcial 1)
+  await page.getByRole("button", { name: "Cambiar de materia", exact: true }).click();
+  await expect(titulo(page, TITULO_DEL_SELECTOR)).toBeFocused();
+  await expect(page.getByRole("status").filter({ hasText: "Llevas un diagnóstico" })).toHaveText(
+    `Llevas un diagnóstico de ${banco.nombreA} · Parcial 2. Si empiezas otro de otra Evaluación, se descarta este.`,
+  );
+  await elegirMateria(page, banco.nombreA);
+  const evaluacion = page.getByRole("group", { name: "Evaluación", exact: true });
+  await expect(evaluacion).toContainText("Parcial 1");
+  await expect(evaluacion, "la Evaluación en que va ya no se ofrece").not.toContainText("Parcial 2");
+
+  // --- La salida: sin elegir nada ni llamar a nada, vuelve a la pregunta que sigue en curso, con el foco en su enunciado
+  const volver = page.getByRole("button", { name: "Volver a mi pregunta", exact: true });
+  await expect(volver).toBeVisible();
+  await expectReglas(page, "el selector con «Volver a mi pregunta»");
+  await volver.click();
+  await expect(titulo(page, TITULO_DE_LA_PREGUNTA)).toBeVisible();
+  await expect(page.locator(ENUNCIADO), "al volver a la pregunta el foco queda en su enunciado").toBeFocused();
+  expect(await leerPregunta(page), "la misma pregunta, con las opciones en el mismo orden").toEqual(vista);
+  await expect(page.getByRole("status").filter({ hasText: "Llevas un diagnóstico" })).toHaveCount(0);
+  expect(acciones.total(), "volver no llama a ninguna acción").toBe(llamadasAntes);
+  expect(await enCursoDe(banco, idDeLaSesion), "el diagnóstico no se tocó").toMatchObject({ id: enMarcha.id, paso: 0 });
+
+  // --- Y desde ahí se sigue respondiendo
+  const { destino } = await darPaso(page, indice, "correcta");
+  expect(destino, "Parcial 2 tiene más de una pregunta").toBe("pregunta");
+  expect(await enCursoDe(banco, idDeLaSesion)).toMatchObject({ id: enMarcha.id, paso: 1, npasos: 1 });
 });
 
 // ===============================================================================================================
@@ -1294,6 +1473,7 @@ test("Resultado · un diagnóstico con los cuatro niveles, errores y prerrequisi
     if (cifra) await expect(habilidades.nth(i)).toContainText(cifra);
   }
   await expect(habilidades.nth(0).locator("math"), "la fórmula de una descripción sale como math").toHaveCount(1);
+  await expect(habilidades.nth(2).locator("math"), "la fórmula de otra descripción también").toHaveCount(1);
   await expect(habilidades.nth(3), "sin medir: no hay cifras ni motivo").not.toContainText("Acertaste");
   await expect(habilidades.nth(4), "sin respuestas contadas: no hay cifras ni aviso").not.toContainText(/Acertaste|No medimos/);
 
@@ -1302,9 +1482,14 @@ test("Resultado · un diagnóstico con los cuatro niveles, errores y prerrequisi
   await expect(errores).toHaveCount(3);
   await expect(errores.nth(0)).toContainText("Error detectado:");
   await expect(errores.nth(0)).toContainText(plano(GUARDADO_DE_EJEMPLO.errores[1].texto));
-  await expect(errores.nth(0).locator("math"), "la fórmula del título del error sale como math").toHaveCount(1);
+  await expect(errores.nth(0).locator("p").first().locator("math"), "la fórmula del título del error sale como math").toHaveCount(1);
   await expect(errores.nth(0)).toContainText("Habilidad: interpreta gráficas de posición");
-  await expect(errores.nth(0)).toContainText("Revisa qué magnitud va arriba.");
+  await expect(errores.nth(0)).toContainText("Revisa qué magnitud va arriba en");
+  // Cada texto del banco que dibuja el resultado pasa por TextoDelBanco: una fórmula en la habilidad que nombra el error, en un
+  // detalle y en un prerrequisito sale como math, no como `$…$` (el banco real ya trae el caso en un texto de error).
+  await expect(errores.nth(0).locator("p", { hasText: "Habilidad:" }).locator("math"), "la habilidad del error").toHaveCount(1);
+  await expect(errores.nth(0).locator("p", { hasText: "Revisa qué magnitud" }).locator("math"), "el detalle").toHaveCount(1);
+  await expect(errores.nth(0).locator("math"), "título, habilidad y detalle").toHaveCount(3);
   await expect(errores.nth(1)).toContainText("Posible error: confundes energía con potencia");
   await expect(errores.nth(1)).toContainText("Habilidad: aplica la conservación de la energía");
   await expect(errores.nth(2)).toContainText("Posible error: ignoras la fricción");
@@ -1316,6 +1501,7 @@ test("Resultado · un diagnóstico con los cuatro niveles, errores y prerrequisi
   const repasar = page.getByRole("region", { name: "Conviene repasar antes", exact: true }).getByRole("listitem");
   await expect(repasar).toHaveCount(2);
   await expect(repasar.nth(0)).toContainText("despeja una incógnita");
+  await expect(repasar.nth(0).locator("math"), "la fórmula de un prerrequisito sale como math").toHaveCount(1);
   await expect(repasar.nth(0)).not.toContainText("(");
   await expect(repasar.nth(1)).toContainText("deriva polinomios (Cálculo Diferencial)");
 
@@ -1325,10 +1511,11 @@ test("Resultado · un diagnóstico con los cuatro niveles, errores y prerrequisi
 
   // Nada de repetido, en pantalla ni en lo que se recibió (D-53 b); ninguna clave interna ni el token (criterio 13)
   await expect(principal).not.toContainText(/repetid|otra vez/i);
-  const recibido = await respuesta!.text();
-  for (const prohibido of [...CLAVES_INTERNAS_DE_EJEMPLO, sembrado.tokenDeRecuperacion, '"repetido"', '"semilla"', '"falta_material"', '"faltaMaterial"', '"puntaje"']) {
-    expect(recibido.includes(prohibido), `llegó al navegador: ${prohibido}`).toBe(false);
-  }
+  await expect(principal, "ninguna fórmula quedó sin dibujar").not.toContainText("$");
+  // Las claves van entre comillas y en el HTML de una página Next las escapa: se desescapan, o el centinela nunca podría dispararse.
+  const recibido = desescaparComillas(await respuesta!.text());
+  expect(recibido, "el vigilante ve el flujo de la página (y por eso puede ver una clave)").toMatch(/self\.__next_f\.push/);
+  exigirQueNoLlego(recibido, [...CLAVES_INTERNAS_DE_EJEMPLO, sembrado.tokenDeRecuperacion, ...CLAVES_PROHIBIDAS]);
   await expectReglasDelProducto(page, "el resultado sembrado");
 });
 

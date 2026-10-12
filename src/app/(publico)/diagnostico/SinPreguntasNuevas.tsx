@@ -53,7 +53,8 @@ export function SinPreguntasNuevas({ ultimo, mensaje, pendiente, ocupado, alVolv
           )}
           {sesion.aviso}
           <div className={estilos.botones}>
-            <button type="submit" className={formulario.boton} disabled={ocupado || sesion.verificando}>
+            {/* Sin `disabled`: ese atributo le quita el foco al botón y quien usa el teclado no podría reintentar tras un fallo (ver `.envio`). */}
+            <button type="submit" className={`${formulario.boton} ${estilos.envio}`} aria-disabled={ocupado || sesion.verificando || undefined}>
               {sesion.verificando ? TEXTO_VERIFICANDO : pendiente ? TEXTOS.empezando : TEXTOS.volverATomar}
             </button>
             <button type="button" className={formulario.botonSecundario} onClick={alNo} disabled={ocupado}>

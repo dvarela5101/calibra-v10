@@ -25,6 +25,8 @@ export const TEXTOS = {
   errorDeCarga: "No pudimos cargar el diagnóstico. Recarga la página; si sigue igual, inténtalo más tarde.",
   evaluacionNoDisponible: "Esa evaluación no está disponible",
   errorAlEmpezar: "No pudimos empezar el diagnóstico. Inténtalo de nuevo.",
+  // Solo con un diagnóstico en curso: la salida del selector que se abrió con «Cambiar de materia».
+  volverAMiPregunta: "Volver a mi pregunta",
 
   // Pregunta
   tituloDeLaPregunta: "Tu diagnóstico",

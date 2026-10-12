@@ -183,6 +183,70 @@ describe("siguientePantalla (B8)", () => {
     });
   });
 
+  describe("volver a mi pregunta (M51)", () => {
+    it("del selector con un diagnóstico en curso vuelve a su pregunta, con el foco y sin mensaje", () => {
+      const enMarcha = enCurso(ID_A, 3);
+      expect(siguientePantalla(selector({ enCurso: enMarcha, mensaje: TEXTOS.evaluacionNoDisponible }), { tipo: "volver" })).toEqual({
+        tipo: "pregunta",
+        enCurso: enMarcha,
+        mensaje: null,
+        enfocar: true,
+      });
+    });
+
+    it("sin diagnóstico en curso no hay a qué volver y la pantalla no cambia", () => {
+      const actual = selector({ enCurso: null });
+      expect(siguientePantalla(actual, { tipo: "volver" })).toBe(actual);
+    });
+
+    it("desde otra pantalla no cambia nada", () => {
+      const actual = pregunta();
+      expect(siguientePantalla(actual, { tipo: "volver" })).toBe(actual);
+      const mensaje = sinPreguntas();
+      expect(siguientePantalla(mensaje, { tipo: "volver" })).toBe(mensaje);
+    });
+
+    it("de «Cambiar de materia» y vuelta se llega a la misma pregunta, aunque su Evaluación ya no se ofrezca", () => {
+      const original = pregunta();
+      const selectorAbierto = siguientePantalla(original, { tipo: "cambiar_materia" });
+      const devuelta = siguientePantalla(selectorAbierto, { tipo: "volver" });
+      expect(devuelta).toMatchObject({ tipo: "pregunta", mensaje: null, enfocar: true });
+      expect(devuelta.tipo === "pregunta" && devuelta.enCurso === original.enCurso).toBe(true);
+    });
+  });
+
+  describe("llamando: quitar el mensaje de la llamada anterior (M50)", () => {
+    it("la pregunta con el mensaje de un fallo lo pierde, conserva la pregunta y no mueve el foco", () => {
+      const actual = pregunta({ mensaje: TEXTOS.errorAlResponder, enfocar: true });
+      const siguiente = siguientePantalla(actual, { tipo: "llamando" });
+      expect(siguiente).toEqual({ ...actual, mensaje: null, enfocar: false });
+      expect(siguiente.tipo === "pregunta" && siguiente.enCurso === actual.enCurso).toBe(true);
+    });
+
+    it("el selector y D-51 también pierden el mensaje y conservan lo demás", () => {
+      const delSelector = selector({ enCurso: enCurso(ID_A), mensaje: TEXTOS.errorAlEmpezar });
+      expect(siguientePantalla(delSelector, { tipo: "llamando" })).toEqual({ ...delSelector, mensaje: null, enfocar: false });
+      const deD51 = sinPreguntas({ mensaje: TEXTOS.errorAlEmpezar });
+      expect(siguientePantalla(deD51, { tipo: "llamando" })).toEqual({ ...deD51, mensaje: null, enfocar: false });
+    });
+
+    it("sin mensaje no cambia nada: ni se repinta ni se vuelve a mover el foco", () => {
+      const actual = pregunta({ mensaje: null, enfocar: true });
+      expect(siguientePantalla(actual, { tipo: "llamando" })).toBe(actual);
+      const delSelector = selector();
+      expect(siguientePantalla(delSelector, { tipo: "llamando" })).toBe(delSelector);
+    });
+
+    it("un segundo fallo con el mismo texto vuelve a poner el mensaje: entre uno y otro la pantalla no lo tuvo", () => {
+      const primero = siguientePantalla(pregunta(), { tipo: "respondio", respuesta: { tipo: "error", mensaje: TEXTOS.errorAlResponder } });
+      expect(primero).toMatchObject({ mensaje: TEXTOS.errorAlResponder });
+      const enCamino = siguientePantalla(primero, { tipo: "llamando" });
+      expect(enCamino).toMatchObject({ mensaje: null });
+      const segundo = siguientePantalla(enCamino, { tipo: "respondio", respuesta: { tipo: "error", mensaje: TEXTOS.errorAlResponder } });
+      expect(segundo).toMatchObject({ mensaje: TEXTOS.errorAlResponder, enfocar: false });
+    });
+  });
+
   describe("empezar", () => {
     it("una pregunta pendiente lleva a la pregunta, con el foco", () => {
       const primera = enCurso(ID_B);

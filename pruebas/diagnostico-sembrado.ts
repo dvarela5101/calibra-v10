@@ -7,7 +7,9 @@ import type { ResultadoGuardado } from "@/lib/diagnostico/resultado";
  * Es el JSON que guarda HU-081 en `diagnostico.resultado_por_habilidad` y la fila que devuelve `public.mi_diagnostico(id)`.
  *
  * Trae los cuatro niveles, un error confirmado y dos en sospecha (uno de una habilidad que no es del resultado), un detalle
- * presente y otro ausente, una fórmula en un título y un prerrequisito de otra materia. Las claves internas (`habilidad`,
+ * presente y otro ausente, un prerrequisito de otra materia y una fórmula `$…$` en cada sitio donde el resultado dibuja un
+ * texto del banco: la descripción de una habilidad (que el error nombra con «Habilidad: …»), el título de un error, un detalle y
+ * un prerrequisito. Así, si uno de esos sitios deja de pasar por `TextoDelBanco`, se ve el `$` crudo. Las claves internas (`habilidad`,
  * `misconcepcion`) son reconocibles a propósito: una prueba busca que ninguna salga, ni siquiera como valor de otro campo.
  * Está en `pruebas/` para que lo reutilicen las pruebas de integración y la e2e cuando necesiten sembrar un diagnóstico.
  *
@@ -34,7 +36,7 @@ export const GUARDADO_DE_EJEMPLO: ResultadoGuardado = {
   habilidades: [
     { habilidad: "habilidad-secreta-1", descripcion: "calcula la fuerza neta con $F = ma$", nivel: "lo_domina", respuestas: 3, aciertos: 3 },
     { habilidad: "habilidad-secreta-2", descripcion: "aplica la conservación de la energía", nivel: "en_proceso", respuestas: 2, aciertos: 1 },
-    { habilidad: "habilidad-secreta-3", descripcion: "interpreta gráficas de posición", nivel: "no_lo_domina", respuestas: 2, aciertos: 0 },
+    { habilidad: "habilidad-secreta-3", descripcion: "interpreta gráficas de posición como $x = vt$", nivel: "no_lo_domina", respuestas: 2, aciertos: 0 },
     { habilidad: "habilidad-secreta-4", descripcion: "resuelve problemas con rozamiento", nivel: "sin_medir", respuestas: 0, aciertos: 0 },
     { habilidad: "habilidad-secreta-5", descripcion: "lee un diagrama de fuerzas", nivel: "no_lo_domina", respuestas: 0, aciertos: 0 },
   ],
@@ -51,11 +53,11 @@ export const GUARDADO_DE_EJEMPLO: ResultadoGuardado = {
     {
       misconcepcion: "misc-secreta-2",
       habilidad: "habilidad-secreta-3",
-      descripcionHabilidad: "interpreta gráficas de posición",
+      descripcionHabilidad: "interpreta gráficas de posición como $x = vt$",
       texto: String.raw`inviertes la relación $\frac{1}{2}$ entre dos magnitudes`,
       estado: "confirmada",
       veces: 2,
-      detalles: ["Revisa qué magnitud va arriba."],
+      detalles: [String.raw`Revisa qué magnitud va arriba en $\frac{a}{b}$.`],
     },
     {
       misconcepcion: "misc-secreta-3",
@@ -68,7 +70,7 @@ export const GUARDADO_DE_EJEMPLO: ResultadoGuardado = {
     },
   ],
   prerrequisitos: [
-    { materia: null, habilidad: "repasar-secreta-1", descripcion: "despeja una incógnita" },
+    { materia: null, habilidad: "repasar-secreta-1", descripcion: "despeja una incógnita en $ax + b = c$" },
     { materia: "Cálculo Diferencial", habilidad: "repasar-secreta-2", descripcion: "deriva polinomios" },
   ],
 };

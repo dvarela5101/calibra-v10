@@ -110,13 +110,20 @@ describe("Pregunta: botones y mensajes (criterios 5 y 6)", () => {
     expect(html.indexOf("role=\"alert\"")).toBeLessThan(html.indexOf("Responder"));
   });
 
-  it("mientras hay una llamada en curso los dos botones quedan deshabilitados (M28)", () => {
+  it("mientras hay una llamada en curso «Responder» queda inactivo y «Cambiar de materia» deshabilitado (M28)", () => {
     const html = pintar({ ocupado: true });
-    expect(html).toMatch(/<button type="submit"[^>]* disabled=""[^>]*>Responder<\/button>/);
+    expect(html).toMatch(/<button type="submit"[^>]* aria-disabled="true"[^>]*>Responder<\/button>/);
     expect(html).toMatch(/<button type="button"[^>]* disabled=""[^>]*>Cambiar de materia<\/button>/);
   });
 
+  it("«Responder» no lleva `disabled` ni siquiera ocupado: con ese atributo el botón pierde el foco y el teclado no puede reintentar (M49)", () => {
+    const boton = pintar({ ocupado: true }).match(/<button type="submit"[^>]*>Responder<\/button>/)?.[0] ?? "";
+    expect(boton).not.toMatch(/\sdisabled(=|\s|>)/);
+  });
+
   it("fuera de una llamada los botones están habilitados", () => {
-    expect(pintar()).not.toContain("disabled");
+    const html = pintar();
+    expect(html).not.toContain("disabled");
+    expect(html).not.toContain("aria-disabled");
   });
 });

@@ -150,3 +150,17 @@
   flex-direction: column;
   gap: var(--e3);
 }
+
+/*
+ * El botón de envío mientras hay una llamada en curso (o se verifica el navegador): se ve inactivo, pero no lleva `disabled`.
+ * Un botón con `disabled` pierde el foco y no lo recupera al habilitarse, así que quien usa el teclado tendría que recorrer la
+ * página desde el principio para reintentar tras un fallo. Con `aria-disabled` sigue enfocable y el envío se ignora en el código.
+ */
+.envio[aria-disabled="true"],
+.envio[aria-disabled="true"]:not(:disabled):hover {
+  background: var(--border);
+  border-color: var(--border);
+  color: var(--muted-disabled);
+  cursor: not-allowed;
+  filter: none;
+}

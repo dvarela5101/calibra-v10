@@ -16,7 +16,10 @@ type Props = {
   enCurso: EnCurso;
   /** Un fallo al responder: la opción elegida se conserva porque la pregunta no se remonta. */
   mensaje: string | null;
-  /** Hay una llamada en curso o ya se está yendo al resultado: «Responder» y «Cambiar de materia» quedan deshabilitados. */
+  /**
+   * Hay una llamada en curso o ya se está yendo al resultado: «Responder» queda `aria-disabled` (sigue enfocable y no envía) y
+   * «Cambiar de materia» queda deshabilitado.
+   */
   ocupado: boolean;
   alResponder: (letra: Letra) => void;
   alCambiarDeMateria: () => void;
@@ -84,7 +87,8 @@ export function Pregunta({ enCurso, mensaje, ocupado, alResponder, alCambiarDeMa
         </p>
       )}
 
-      <button type="submit" className={formulario.boton} disabled={ocupado}>
+      {/* Sin `disabled`: ese atributo le quita el foco al botón y quien usa el teclado no podría reintentar tras un fallo (ver `.envio`). */}
+      <button type="submit" className={`${formulario.boton} ${estilos.envio}`} aria-disabled={ocupado || undefined}>
         {TEXTOS.responder}
       </button>
       <button type="button" className={formulario.botonSecundario} onClick={alCambiarDeMateria} disabled={ocupado}>

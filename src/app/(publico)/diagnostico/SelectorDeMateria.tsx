@@ -86,14 +86,28 @@ type Props = {
   /** Además de la llamada, ya se está yendo a otra página. */
   ocupado: boolean;
   alEmpezar: (idEvaluacion: string) => void;
+  /** «Volver a mi pregunta», con un diagnóstico en curso: la Evaluación en que va puede ya no estar entre las que se ofrecen. */
+  alVolver: () => void;
 };
+
+/** La salida del selector que se abrió con un diagnóstico en curso: vuelve a su pregunta sin llamar a nada. */
+function VolverAMiPregunta({ ocupado, alVolver }: { ocupado: boolean; alVolver: () => void }) {
+  return (
+    <button type="button" className={formulario.botonSecundario} onClick={alVolver} disabled={ocupado}>
+      {TEXTOS.volverAMiPregunta}
+    </button>
+  );
+}
 
 /**
  * HU-009: elegir la materia y la Evaluación y empezar, sin escribir ningún dato. Lo elegido se guarda como códigos e ids y se
  * valida contra las `materias` que llegan en cada render (`resolverSeleccion`): si la lista cambia (la Evaluación se apagó y la
  * página se refrescó), lo que ya no existe se descarta y no se envía. El envío espera la sesión anónima (HU-058).
+ *
+ * Con un diagnóstico en curso, además del aviso de que empezar otra Evaluación lo descarta, ofrece volver a su pregunta: elegir
+ * la misma Evaluación no basta si esta ya no está entre las activas (D-13), y sin materias no hay nada que elegir.
  */
-export function SelectorDeMateria({ materias, enCurso, mensaje, pendiente, ocupado, alEmpezar }: Props) {
+export function SelectorDeMateria({ materias, enCurso, mensaje, pendiente, ocupado, alEmpezar, alVolver }: Props) {
   const sesion = useExigirSesionAnonima();
   const [codigoElegido, setCodigoElegido] = useState<string | null>(null);
   const [idElegido, setIdElegido] = useState<string | null>(null);
@@ -131,19 +145,17 @@ export function SelectorDeMateria({ materias, enCurso, mensaje, pendiente, ocupa
   const aviso = error ?? mensaje;
 
   if (materias.length === 0) {
+    // Sin materias no hay nada que empezar, así que tampoco se avisa de que empezar otra descarta el diagnóstico en curso: lo que
+    // sí hay es una salida, volver a su pregunta (la persona que llegó por «Cambiar de materia» no queda varada).
     return (
       <div className={estilos.seccion}>
-        {avisoDeEnCurso && (
-          <p role="status" className={estilos.aviso}>
-            {avisoDeEnCurso}
-          </p>
-        )}
         {mensaje && (
           <p role="alert" className={formulario.error}>
             {mensaje}
           </p>
         )}
         <p className={estilos.mensaje}>{TEXTOS.sinMaterias}</p>
+        {enCurso && <VolverAMiPregunta ocupado={ocupado} alVolver={alVolver} />}
         <EnlaceAMonitores />
       </div>
     );
@@ -187,9 +199,11 @@ export function SelectorDeMateria({ materias, enCurso, mensaje, pendiente, ocupa
       )}
       {sesion.aviso}
 
-      <button type="submit" className={formulario.boton} disabled={ocupado || sesion.verificando}>
+      {/* Sin `disabled`: ese atributo le quita el foco al botón y quien usa el teclado no podría reintentar tras un fallo (ver `.envio`). */}
+      <button type="submit" className={`${formulario.boton} ${estilos.envio}`} aria-disabled={ocupado || sesion.verificando || undefined}>
         {sesion.verificando ? TEXTO_VERIFICANDO : pendiente ? TEXTOS.empezando : TEXTOS.empezar}
       </button>
+      {enCurso && <VolverAMiPregunta ocupado={ocupado} alVolver={alVolver} />}
 
       <EnlaceAMonitores />
     </form>

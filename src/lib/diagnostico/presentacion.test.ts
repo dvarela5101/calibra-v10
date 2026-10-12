@@ -196,6 +196,10 @@ describe("TEXTOS", () => {
     expect(TEXTOS.tituloNoEncontrado).toBe("No encontramos ese resultado");
   });
 
+  it("el botón que no está en la HU y que la e2e busca por su nombre (supuesto, A2)", () => {
+    expect(TEXTOS.volverAMiPregunta).toBe("Volver a mi pregunta");
+  });
+
   it("el aviso de la cuenta del equipo es el mismo de agendar: si uno cambia, esta prueba lo dice (F-14)", () => {
     const agendar = readFileSync(join(__dirname, "../../app/(publico)/agendar/acciones.ts"), "utf8");
     expect(agendar).toContain(TEXTOS.cuentaDelEquipo);

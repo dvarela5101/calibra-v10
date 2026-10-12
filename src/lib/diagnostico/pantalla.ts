@@ -166,6 +166,13 @@ export type PantallaDelRecorrido =
 
 export type EventoDelRecorrido =
   | { tipo: "cambiar_materia" }
+  /** «Volver a mi pregunta»: del selector al diagnóstico que sigue en curso, sin llamar a nada. */
+  | { tipo: "volver" }
+  /**
+   * Empieza una llamada a una acción: se quita el mensaje de la anterior. Así, si la siguiente falla con el mismo texto, el
+   * `role="alert"` vuelve a insertarse en la página y un lector de pantalla lo anuncia otra vez.
+   */
+  | { tipo: "llamando" }
   | { tipo: "empezo"; idEvaluacion: string; respuesta: ResultadoDeEmpezar }
   | { tipo: "respondio"; respuesta: ResultadoDeResponder }
   /** «No» a volver a tomar el diagnóstico (D-51). */
@@ -186,6 +193,12 @@ export function siguientePantalla(actual: PantallaDelRecorrido, evento: EventoDe
   switch (evento.tipo) {
     case "cambiar_materia":
       return actual.tipo === "pregunta" ? { tipo: "selector", enCurso: actual.enCurso, mensaje: null, enfocar: true } : actual;
+    case "volver":
+      // Solo hay a qué volver si el selector se abrió con un diagnóstico en curso (la salida si su Evaluación ya no se ofrece).
+      return actual.tipo === "selector" && actual.enCurso ? { tipo: "pregunta", enCurso: actual.enCurso, mensaje: null, enfocar: true } : actual;
+    case "llamando":
+      // `enfocar: false`: el foco ya está en el botón que se pulsó y no debe volver a moverse al enunciado ni al título.
+      return actual.mensaje === null ? actual : { ...actual, mensaje: null, enfocar: false };
     case "no":
       return actual.tipo === "sin_preguntas" ? { tipo: "selector", enCurso: actual.enCursoPrevio, mensaje: null, enfocar: true } : actual;
     case "empezo":

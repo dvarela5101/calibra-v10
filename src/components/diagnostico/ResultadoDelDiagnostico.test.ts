@@ -54,7 +54,8 @@ describe("habilidades (criterio 10)", () => {
   const t = texto(html);
 
   it("están todas, en el orden guardado, con su descripción", () => {
-    const posiciones = RESULTADO.habilidades.map((h) => html.indexOf(h.descripcion.replace("$F = ma$", "")));
+    // Sin las fórmulas `$…$`: en el marcado salen dibujadas, no como texto.
+    const posiciones = RESULTADO.habilidades.map((h) => html.indexOf(h.descripcion.replace(/\$[^$]*\$/g, "")));
     expect(posiciones.every((p) => p > 0)).toBe(true);
     expect([...posiciones].sort((a, b) => a - b)).toEqual(posiciones);
   });
@@ -120,7 +121,7 @@ describe("errores (criterio 11)", () => {
   });
 
   it("cada detalle va en su renglón, y un error sin detalle no deja uno vacío", () => {
-    expect(t).toContain("Revisa qué magnitud va arriba.");
+    expect(t).toContain("Revisa qué magnitud va arriba en");
     expect(html).toMatch(/<p class="[^"]*">\s*<span class="texto-banco">La fricción también hace trabajo\.<\/span><\/p>/);
     expect(html).toMatch(/<p class="[^"]*">\s*<span class="texto-banco">Piensa en el sentido del movimiento\.<\/span><\/p>/);
     // Ningún párrafo vacío.
@@ -172,6 +173,65 @@ describe("prerrequisitos (criterio 12)", () => {
   it("el nombre de la materia es texto, no un texto del banco", () => {
     const conMateria = con({ prerrequisitos: [{ materia: "Cálculo <b>Diferencial</b>", habilidad: "x", descripcion: "deriva" }] });
     expect(pintar(conMateria)).toContain("(Cálculo &lt;b&gt;Diferencial&lt;/b&gt;)");
+  });
+});
+
+describe("todo texto del banco pasa por TextoDelBanco (HU-083)", () => {
+  // La fixture lleva una fórmula `$…$` en cada sitio donde el resultado dibuja un texto del banco. Si uno de esos sitios pasa a
+  // texto plano, la persona ve el `$…$` crudo: el banco real ya trae el caso (`contenido/calculo-integral/sustitucion.md`, el
+  // texto de error de una opción, que sale como detalle). Los sitios se miran uno por uno: con solo contar `<math` en todo el
+  // resultado, una fórmula que sí se dibuja taparía a la que no.
+  const html = pintar();
+  const iErrores = html.indexOf('aria-labelledby="errores-');
+  const iRepasar = html.indexOf('aria-labelledby="repasar-');
+  const secciones = {
+    habilidades: html.slice(html.indexOf('aria-labelledby="habilidades-'), iErrores),
+    errores: html.slice(iErrores, iRepasar),
+    repasar: html.slice(iRepasar),
+  };
+  // El primer párrafo de la sección cuyo texto, sin etiquetas, contiene `contiene` ("" si no hay ninguno).
+  const parrafo = (seccion: string, contiene: string) =>
+    (seccion.match(/<p [^>]*>.*?<\/p>/g) ?? []).find((p) => texto(p).includes(contiene)) ?? "";
+
+  it("la fixture trae una fórmula en cada sitio, y las secciones se separan bien", () => {
+    expect(iErrores).toBeGreaterThan(0);
+    expect(iRepasar).toBeGreaterThan(iErrores);
+    expect(secciones.habilidades).toContain("calcula la fuerza neta");
+    expect(secciones.errores).toContain("Posible error:");
+    expect(secciones.repasar).toContain("Conviene repasar antes");
+    const guardado = GUARDADO_DE_EJEMPLO;
+    expect(guardado.habilidades[2].descripcion).toContain("$");
+    expect(guardado.errores[1].descripcionHabilidad).toBe(guardado.habilidades[2].descripcion);
+    expect(guardado.errores[1].detalles[0]).toContain("$");
+    expect(guardado.prerrequisitos[0].descripcion).toContain("$");
+  });
+
+  it("la descripción de la habilidad de un error sale como <math> (M52)", () => {
+    const linea = parrafo(secciones.errores, "Habilidad: interpreta gráficas de posición");
+    expect(linea).toContain("<math");
+    expect(linea).not.toContain("$");
+  });
+
+  it("el detalle de un error sale como <math> (M53)", () => {
+    const linea = parrafo(secciones.errores, "Revisa qué magnitud va arriba");
+    expect(linea).toContain("<math");
+    expect(linea).not.toContain("$");
+  });
+
+  it("un prerrequisito sale como <math> (M54)", () => {
+    const linea = parrafo(secciones.repasar, "despeja una incógnita");
+    expect(linea).toContain("<math");
+    expect(linea).not.toContain("$");
+  });
+
+  it("la descripción de una habilidad y el título de un error siguen saliendo como <math>", () => {
+    expect(parrafo(secciones.habilidades, "interpreta gráficas de posición")).toContain("<math");
+    expect(parrafo(secciones.habilidades, "calcula la fuerza neta")).toContain("<math");
+    expect(parrafo(secciones.errores, "inviertes la relación")).toContain("<math");
+  });
+
+  it("ningún `$` crudo en todo el resultado", () => {
+    expect(html).not.toContain("$");
   });
 });
 

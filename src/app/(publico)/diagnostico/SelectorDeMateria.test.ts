@@ -32,7 +32,16 @@ const EN_CURSO: EnCurso = proyectarEnCurso({
 
 const pintar = (cambios: Partial<Parameters<typeof SelectorDeMateria>[0]> = {}) =>
   renderToStaticMarkup(
-    createElement(SelectorDeMateria, { materias: [FISICA, CALCULO], enCurso: null, mensaje: null, pendiente: false, ocupado: false, alEmpezar: vi.fn(), ...cambios }),
+    createElement(SelectorDeMateria, {
+      materias: [FISICA, CALCULO],
+      enCurso: null,
+      mensaje: null,
+      pendiente: false,
+      ocupado: false,
+      alEmpezar: vi.fn(),
+      alVolver: vi.fn(),
+      ...cambios,
+    }),
   );
 
 /** El texto visible, con los espacios normalizados y sin comentarios de React. */
@@ -108,17 +117,42 @@ describe("SelectorDeMateria: avisos y mensajes", () => {
     expect(t).toContain("Esa evaluación no está disponible");
   });
 
-  it("mientras hay una llamada el botón dice «Empezando…» y no se puede pulsar", () => {
+  it("mientras hay una llamada el botón dice «Empezando…» y queda inactivo", () => {
     const html = pintar({ pendiente: true, ocupado: true });
-    expect(html).toMatch(/<button type="submit"[^>]* disabled=""[^>]*>Empezando…<\/button>/);
+    expect(html).toMatch(/<button type="submit"[^>]* aria-disabled="true"[^>]*>Empezando…<\/button>/);
   });
 
-  it("ocupado sin llamada (ya va al resultado) deja el botón deshabilitado", () => {
-    expect(pintar({ ocupado: true })).toMatch(/<button type="submit"[^>]* disabled=""[^>]*>Empezar<\/button>/);
+  it("ocupado sin llamada (ya va al resultado) deja el botón inactivo", () => {
+    expect(pintar({ ocupado: true })).toMatch(/<button type="submit"[^>]* aria-disabled="true"[^>]*>Empezar<\/button>/);
+  });
+
+  it("«Empezar» no lleva `disabled` ocupado: con ese atributo pierde el foco y el teclado no puede reintentar tras un fallo (M49)", () => {
+    const boton = pintar({ pendiente: true, ocupado: true }).match(/<button type="submit"[^>]*>Empezando…<\/button>/)?.[0] ?? "";
+    expect(boton).not.toMatch(/\sdisabled(=|\s|>)/);
   });
 
   it("fuera de una llamada el botón está habilitado", () => {
-    expect(pintar()).not.toContain("disabled");
+    const html = pintar();
+    expect(html).not.toContain("disabled");
+    expect(html).not.toContain("aria-disabled");
+  });
+});
+
+describe("SelectorDeMateria: volver a la pregunta pendiente (M51)", () => {
+  const boton = /<button type="button"[^>]*>Volver a mi pregunta<\/button>/;
+
+  it("con un diagnóstico en curso hay un botón «Volver a mi pregunta» que no envía el formulario", () => {
+    expect(pintar({ enCurso: EN_CURSO })).toMatch(boton);
+  });
+
+  it("sin diagnóstico en curso no hay a qué volver", () => {
+    expect(pintar()).not.toContain("Volver a mi pregunta");
+    expect(pintar({ materias: [] })).not.toContain("Volver a mi pregunta");
+  });
+
+  it("mientras hay una llamada el botón queda deshabilitado: no se vuelve a una pregunta que la llamada va a cambiar", () => {
+    expect(pintar({ enCurso: EN_CURSO, ocupado: true })).toMatch(/<button type="button"[^>]* disabled=""[^>]*>Volver a mi pregunta<\/button>/);
+    expect(pintar({ enCurso: EN_CURSO })).not.toContain("disabled");
   });
 });
 
@@ -137,10 +171,23 @@ describe("SelectorDeMateria: sin materias", () => {
     expect(html).not.toContain("<input");
   });
 
-  it("sigue mostrando el mensaje y el aviso de lo que seguía en curso", () => {
-    const con = pintar({ materias: [], enCurso: EN_CURSO, mensaje: "Esa evaluación no está disponible" });
-    expect(texto(con)).toContain("Llevas un diagnóstico de Física II · Parcial 1");
+  it("sigue mostrando el mensaje", () => {
+    const con = pintar({ materias: [], mensaje: "Esa evaluación no está disponible" });
     expect(con).toMatch(/<p role="alert"[^>]*>Esa evaluación no está disponible<\/p>/);
+  });
+
+  it("con un diagnóstico en curso no avisa de un descarte que no puede pasar y ofrece volver a su pregunta (M51)", () => {
+    // Sin materias no hay otra Evaluación que empezar: «si empiezas otro se descarta este» promete algo que no se puede hacer.
+    const con = pintar({ materias: [], enCurso: EN_CURSO, mensaje: "Esa evaluación no está disponible" });
+    expect(con).not.toContain("Llevas un diagnóstico");
+    expect(con).not.toContain("se descarta");
+    expect(con).not.toContain('role="status"');
+    expect(con).toMatch(/<button type="button"[^>]*>Volver a mi pregunta<\/button>/);
+    expect(texto(con)).toContain("Todavía no hay diagnósticos disponibles");
+    expect(con).toMatch(/<p role="alert"[^>]*>Esa evaluación no está disponible<\/p>/);
+    // La salida va antes de la línea de monitores y no es un formulario: no hay nada que enviar.
+    expect(con.indexOf("Volver a mi pregunta")).toBeLessThan(con.indexOf("Mira los monitores"));
+    expect(con).not.toContain("<form");
   });
 });
 

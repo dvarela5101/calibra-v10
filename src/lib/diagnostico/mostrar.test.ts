@@ -35,7 +35,7 @@ describe("proyectarResultado", () => {
       habilidades: [
         { descripcion: "calcula la fuerza neta con $F = ma$", nivel: "lo_domina", respuestas: 3, aciertos: 3 },
         { descripcion: "aplica la conservación de la energía", nivel: "en_proceso", respuestas: 2, aciertos: 1 },
-        { descripcion: "interpreta gráficas de posición", nivel: "no_lo_domina", respuestas: 2, aciertos: 0 },
+        { descripcion: "interpreta gráficas de posición como $x = vt$", nivel: "no_lo_domina", respuestas: 2, aciertos: 0 },
         { descripcion: "resuelve problemas con rozamiento", nivel: "sin_medir", respuestas: 0, aciertos: 0 },
         { descripcion: "lee un diagrama de fuerzas", nivel: "no_lo_domina", respuestas: 0, aciertos: 0 },
       ],
@@ -44,8 +44,8 @@ describe("proyectarResultado", () => {
         {
           titulo: String.raw`inviertes la relación $\frac{1}{2}$ entre dos magnitudes`,
           estado: "confirmada",
-          descripcionDeLaHabilidad: "interpreta gráficas de posición",
-          detalles: ["Revisa qué magnitud va arriba."],
+          descripcionDeLaHabilidad: "interpreta gráficas de posición como $x = vt$",
+          detalles: [String.raw`Revisa qué magnitud va arriba en $\frac{a}{b}$.`],
         },
         {
           titulo: "ignoras la fricción",
@@ -55,7 +55,7 @@ describe("proyectarResultado", () => {
         },
       ],
       prerrequisitos: [
-        { materia: null, descripcion: "despeja una incógnita" },
+        { materia: null, descripcion: "despeja una incógnita en $ax + b = c$" },
         { materia: "Cálculo Diferencial", descripcion: "deriva polinomios" },
       ],
     });
@@ -117,7 +117,7 @@ describe("proyectarResultado", () => {
     copia.habilidades[0].descripcion = "cambiada";
     copia.errores[1].detalles.push("extra");
     expect(GUARDADO_DE_EJEMPLO.habilidades[0].descripcion).toBe("calcula la fuerza neta con $F = ma$");
-    expect(GUARDADO_DE_EJEMPLO.errores[1].detalles).toEqual(["Revisa qué magnitud va arriba."]);
+    expect(GUARDADO_DE_EJEMPLO.errores[1].detalles).toEqual([String.raw`Revisa qué magnitud va arriba en $\frac{a}{b}$.`]);
   });
 
   it("quita los prerrequisitos repetidos (el motor no los repite, pero se comprueba) y conserva el primero", () => {

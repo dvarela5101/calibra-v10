@@ -57,6 +57,11 @@ describe("Recorrido: el selector", () => {
     const html = pintar({ tipo: "selector", enCurso: pendiente(2), mensaje: null, enfocar: false });
     expect(texto(html)).toContain("Llevas un diagnóstico de Física II · Parcial 1");
   });
+
+  it("con un diagnóstico en curso ofrece volver a su pregunta, y sin él no (M51)", () => {
+    expect(texto(pintar({ tipo: "selector", enCurso: pendiente(2), mensaje: null, enfocar: false }))).toContain("Volver a mi pregunta");
+    expect(texto(pintar(pantallaInicial(null)))).not.toContain("Volver a mi pregunta");
+  });
 });
 
 describe("Recorrido: la pregunta pendiente", () => {
