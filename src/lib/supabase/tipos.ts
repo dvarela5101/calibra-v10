@@ -1307,6 +1307,11 @@ isOneToOne: false
               "libre_desde": string,"maximo": number,"usados": number
             }[]
                            },
+"mi_diagnostico":
+{ Args: { "p_id": string }; Returns: {
+              "aciertos": number,"codigo_materia": string,"fecha_realizacion": string,"id_diagnostico": string,"nombre_evaluacion": string,"nombre_materia": string,"respondidas": number,"resultado": Json
+            }[]
+                           },
 "mi_rol":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
