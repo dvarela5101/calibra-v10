@@ -483,7 +483,8 @@ test.describe("Criterios 3, 5 y 7 · el admin rechaza un pago", () => {
     await test.step("HU-076, criterio 4: la base anotó con el rechazo la fila del pagador y el aviso del monitor; el correo no sale en la acción", async () => {
       expect(await escenario.avisosDeRechazo(porCancelar.id)).toEqual([{ caso: "cita_cancelada", procesado_en: null }]);
       expect(await escenario.avisosAlMonitor(idCita)).toEqual(["pago_rechazado"]);
-      // `CRON_SECRETO` no está en el entorno del servidor de la prueba y la base local no tiene Vault: nadie corrió el proceso.
+      // La base local no tiene Vault (pg_cron no llama a los procesos) y los recorridos de HU-048, los únicos que llaman
+      // /api/procesos/* con el CRON_SECRETO de prueba, corren después de este proyecto: nadie corrió el proceso.
       expect(await escenario.correosDe(porCancelar.id)).toEqual([]);
       expect(await buzonDe(porCancelar.contacto)).toEqual([]);
     });
