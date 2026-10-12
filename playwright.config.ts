@@ -32,11 +32,28 @@ export default defineConfig({
     // El prototipo se diseñó y probó a 390x844; se mantiene como caso principal.
     {
       name: "movil",
+      testIgnore: "recorridos/**",
       use: { ...devices["Desktop Chrome"], channel: "chromium", viewport: { width: 390, height: 844 } },
     },
     {
       name: "escritorio",
+      testIgnore: "recorridos/**",
       use: { ...devices["Desktop Chrome"], channel: "chromium", viewport: { width: 1280, height: 800 } },
+    },
+    // HU-048: los recorridos de punta a punta, a 390 y a 1440 px. Corren después de las pruebas por HU (y solo si
+    // pasan): llaman a los procesos programados, que toman las filas pendientes de cualquier prueba. Para correr
+    // solo los recorridos: `npx playwright test --project=recorrido-movil --no-deps`.
+    {
+      name: "recorrido-movil",
+      testMatch: "recorridos/**/*.spec.ts",
+      dependencies: ["movil", "escritorio"],
+      use: { ...devices["Desktop Chrome"], channel: "chromium", viewport: { width: 390, height: 844 } },
+    },
+    {
+      name: "recorrido-escritorio",
+      testMatch: "recorridos/**/*.spec.ts",
+      dependencies: ["movil", "escritorio"],
+      use: { ...devices["Desktop Chrome"], channel: "chromium", viewport: { width: 1440, height: 900 } },
     },
   ],
   webServer: {
