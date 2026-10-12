@@ -400,6 +400,31 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"invitacion_admin": {
+                  Row: {
+                    "cancelada_en": string | null,"correo": string,"creada_en": string,"id": string,"id_admin": string,"id_admin_nuevo": string | null,"token_hash": string,"usada_en": string | null,"vence_en": string
+                  }
+                  Insert: {
+                    "cancelada_en"?: string | null,"correo": string,"creada_en"?: string,"id"?: string,"id_admin": string,"id_admin_nuevo"?: string | null,"token_hash": string,"usada_en"?: string | null,"vence_en"?: string
+                  }
+                  Update: {
+                    "cancelada_en"?: string | null,"correo"?: string,"creada_en"?: string,"id"?: string,"id_admin"?: string,"id_admin_nuevo"?: string | null,"token_hash"?: string,"usada_en"?: string | null,"vence_en"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "invitacion_admin_id_admin_fkey"
+      columns: ["id_admin"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "invitacion_admin_id_admin_nuevo_fkey"
+      columns: ["id_admin_nuevo"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"invitacion_monitor": {
                   Row: {
                     "correo": string,"creada_en": string,"id": string,"id_admin": string,"id_monitor": string | null,"token_hash": string,"usada_en": string | null,"vence_en": string
@@ -1133,6 +1158,9 @@ isOneToOne: false
 "cancelar_cita_por_token":
 { Args: { "p_token": string }; Returns: string
                            },
+"cancelar_invitacion_admin":
+{ Args: { "p_id": string }; Returns: string
+                           },
 "cancelar_mi_cita":
 { Args: { "p_id_monitoria": string }; Returns: string
                            },
@@ -1153,6 +1181,11 @@ isOneToOne: false
 "confirmar_correo_de_lead":
 { Args: { "p_id_sesion": string,"p_token_hash": string }; Returns: {
               "id_lead": string,"siguiente": string
+            }[]
+                           },
+"crear_invitacion_admin":
+{ Args: { "p_correo": string,"p_id_admin": string,"p_token_hash": string }; Returns: {
+              "id_invitacion": string,"resultado": string,"vencimiento": string
             }[]
                            },
 "crear_solicitud_monitor":
@@ -1282,10 +1315,18 @@ isOneToOne: false
 "invitacion_resena_en_espera":
 { Args: { "p_id_pago": string }; Returns: boolean
                            },
+"invitaciones_de_admin":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "correo": string,"creada_en": string,"id": string,"invitada_por": string,"invito_activo": boolean,"vence_en": string
+            }[]
+                           },
 "invitaciones_resena_por_procesar":
 { Args: { "p_limite": number }; Returns: {
               "id": string,"id_pago": string,"intentos": number
             }[]
+                           },
+"invitador_activo":
+{ Args: { "p_id_admin": string }; Returns: boolean
                            },
 "llaves_de_cancelacion":
 { Args: { "p_id_monitoria": string }; Returns: {
@@ -1368,6 +1409,9 @@ isOneToOne: false
                            },
 "reenviar_pedido_llave":
 { Args: { "p_id_reembolso": string }; Returns: string
+                           },
+"registrar_admin":
+{ Args: { "p_correo": string,"p_id_usuario": string,"p_nombre": string,"p_token_hash": string }; Returns: boolean
                            },
 "registrar_lead":
 { Args: { "p_acepta_contacto": boolean,"p_correo": string,"p_fecha_consentimiento": string,"p_id_sesion": string,"p_nombre": string,"p_numero_telefono": string,"p_origen": string,"p_version_autorizacion"?: string }; Returns: string

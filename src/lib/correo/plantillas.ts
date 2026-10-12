@@ -22,6 +22,7 @@ export const PLANTILLAS = [
   "pago_rechazado_grupal",
   "escalamiento_pago",
   "invitacion_monitor",
+  "invitacion_admin",
   "verificacion_lead",
   "aviso_monitor_confirmada",
   "aviso_monitor_cancelada",
@@ -44,6 +45,7 @@ export const NOMBRE_DE_PLANTILLA: Record<Plantilla, string> = {
   pago_rechazado_grupal: "Pago rechazado (grupal)",
   escalamiento_pago: "Pago escalado a otro admin",
   invitacion_monitor: "Invitación de monitor",
+  invitacion_admin: "Invitación de admin",
   verificacion_lead: "Confirmación de correo para agendar",
   aviso_monitor_confirmada: "Aviso al monitor: monitoría confirmada",
   aviso_monitor_cancelada: "Aviso al monitor: el estudiante canceló",
@@ -89,6 +91,11 @@ export type DatosPorPlantilla = {
   escalamiento_pago: { nombreAdmin: string; nombrePagador: string; monto: number; enlace: string };
   /** Invitación a crear la cuenta de monitor tras la evaluación presencial (P-20, HU-013). Al aspirante. */
   invitacion_monitor: { enlace: string; venceEn: string };
+  /**
+   * Un admin invita a una persona a crear su cuenta de admin (HU-072). A la persona invitada. `invitadoPor` es el nombre
+   * del admin que invita (una sola línea, no vacío); `venceEn`, un instante ISO.
+   */
+  invitacion_admin: { enlace: string; venceEn: string; invitadoPor: string };
   /**
    * Alguien quiso agendar con un correo que ya es de un Lead (P-23, HU-068): enlace para confirmar que
    * es suyo. Al Lead dueño del correo, con su nombre.
@@ -341,6 +348,25 @@ function contenidoDe<P extends Plantilla>(plantilla: P, datos: DatosPorPlantilla
             "Hola.",
             "Después de tu evaluación presencial, el equipo de Calibra te invita a crear tu cuenta de monitor. Con ella vas a abrir tus franjas y recibir tus pagos.",
             `El enlace sirve una sola vez y vence el ${formatearFechaHora(vence)}.`,
+          ],
+          boton: { texto: "Crear mi cuenta", enlace: d.enlace },
+          pie: "Este enlace es solo tuyo. No lo compartas. Si no esperabas esta invitación, ignora este correo.",
+        },
+      };
+    }
+    case "invitacion_admin": {
+      const d = datos as DatosPorPlantilla["invitacion_admin"];
+      const vence = instante(d.venceEn, "venceEn");
+      // El nombre de quien invita sale del cuerpo y nunca del asunto: un nombre raro no llega a la bandeja del invitado.
+      const invitadoPor = linea(d.invitadoPor, "invitadoPor");
+      return {
+        asunto: "Te invitaron al equipo de admins de Calibra",
+        contenido: {
+          titulo: "Ya puedes crear tu cuenta de admin",
+          parrafos: [
+            "Hola.",
+            `${invitadoPor} te invita al equipo de admins de Calibra. Con tu cuenta vas a revisar pagos y atender reembolsos y reportes junto al resto del equipo.`,
+            cerrar(`El enlace sirve una sola vez y vence el ${formatearFechaHora(vence)}`),
           ],
           boton: { texto: "Crear mi cuenta", enlace: d.enlace },
           pie: "Este enlace es solo tuyo. No lo compartas. Si no esperabas esta invitación, ignora este correo.",

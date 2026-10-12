@@ -598,9 +598,17 @@ export class Fixtures {
     if (monitorias.length) await intentar("borrar monitoria", this.admin.from("monitoria").delete().in("id", monitorias));
     if (franjas.length) await intentar("borrar franja", this.admin.from("franja").delete().in("id", franjas));
 
-    // invitacion_monitor.id_admin no cae en cascada: las invitaciones van antes que los admins.
+    // invitacion_monitor.id_admin e invitacion_admin.id_admin no caen en cascada: las invitaciones van antes que los
+    // admins. Las de admin dejan además una fila en correo_envio (clave invitacion_admin:<id>), que tampoco cae.
     if (usuarios.length) {
       await intentar("borrar invitacion_monitor", this.admin.from("invitacion_monitor").delete().in("id_admin", usuarios));
+      const { data: invitacionesDeAdmin, error: errorDeInvitaciones } = await this.admin.from("invitacion_admin").select("id").in("id_admin", usuarios);
+      if (errorDeInvitaciones) errores.push(`leer invitacion_admin: ${errorDeInvitaciones.message}`);
+      const clavesDeInvitaciones = (invitacionesDeAdmin ?? []).map(({ id }) => `invitacion_admin:${id}`);
+      if (clavesDeInvitaciones.length) {
+        await intentar("borrar correo_envio de invitacion_admin", this.admin.from("correo_envio").delete().in("clave", clavesDeInvitaciones));
+      }
+      await intentar("borrar invitacion_admin", this.admin.from("invitacion_admin").delete().in("id_admin", usuarios));
     }
 
     if (usuarios.length || materias.length) {

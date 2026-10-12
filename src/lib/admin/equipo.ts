@@ -1,14 +1,16 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { desactivarCuenta } from "@/lib/auth/cuentas";
+import { desactivarCuenta, reactivarCuenta } from "@/lib/auth/cuentas";
 import type { Database } from "@/lib/supabase/tipos";
 import {
   esResultadoDeMover,
   motivoParaNoDesactivar,
+  motivoParaNoReactivar,
   siguienteActivo,
   type Direccion,
   type MiembroDelEquipo,
   type MotivoParaNoDesactivar,
+  type MotivoParaNoReactivar,
   type ResultadoDeMover,
 } from "./equipo-reglas";
 
@@ -54,4 +56,21 @@ export async function desactivarAdmin(cliente: Cliente, idPropio: string, idObje
   const objetivo = equipo.find((m) => m.id === idObjetivo)!;
   await desactivarCuenta(idObjetivo);
   return { ok: true, nombre: objetivo.nombre, recibe: objetivo.casosAbiertos > 0 ? (siguienteActivo(equipo, idObjetivo)?.nombre ?? null) : null };
+}
+
+export type ResultadoDeReactivar = { ok: true; nombre: string } | { ok: false; motivo: MotivoParaNoReactivar };
+
+/**
+ * Reactiva a un admin desactivado (HU-072, D-64 a): su cuenta vuelve a poder iniciar sesión y `mi_rol()` lo reconoce al
+ * instante. Conserva su lugar en el orden de revisión y sus casos no se le devuelven (P-44 ya los pasó al desactivarlo).
+ * Antes de tocar Auth se carga el equipo con la sesión: quien no es admin activo lo ve vacío y recibe `no_encontrado`,
+ * como en `desactivarAdmin`.
+ */
+export async function reactivarAdmin(cliente: Cliente, idObjetivo: string): Promise<ResultadoDeReactivar> {
+  const equipo = await cargarEquipo(cliente);
+  const motivo = motivoParaNoReactivar(equipo, idObjetivo);
+  if (motivo) return { ok: false, motivo };
+  const objetivo = equipo.find((m) => m.id === idObjetivo)!;
+  await reactivarCuenta(idObjetivo);
+  return { ok: true, nombre: objetivo.nombre };
 }
