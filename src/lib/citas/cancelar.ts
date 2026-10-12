@@ -1,7 +1,8 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { LOTE_POR_DEFECTO, procesarBandeja, type DefinicionDeBandeja } from "@/lib/correo/bandeja";
 import type { Reconstruccion } from "@/lib/correo/plantillas";
-import { enviarCorreoDesdeServidor, urlDelSitio } from "@/lib/correo/servidor";
+import { urlDelSitio } from "@/lib/correo/servidor";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/tipos";
 import {
@@ -14,12 +15,12 @@ import {
   type ResultadoDeCancelar,
 } from "./cancelar-reglas";
 import { ESTADOS_DE_CITA, MOTIVOS_DE_CANCELACION, tieneFormaDeTokenDeCita, type MotivoDeCancelacion } from "./reglas";
-import { instanteIso, MAXIMO_DE_INTENTOS, PRESUPUESTO_DE_CORRIDA_MS, UUID, type DependenciasDeConfirmaciones, type ResumenDeConfirmaciones } from "./servidor";
+import { instanteIso, UUID, type DependenciasDeConfirmaciones, type ResumenDeConfirmaciones } from "./servidor";
 
 type Cliente = SupabaseClient<Database>;
 
 /** Cuántas cancelaciones toma cada corrida. Lo normal es una por corrida: la base la pide al anotarla. */
-export const LOTE_DE_CANCELACIONES = 10;
+export const LOTE_DE_CANCELACIONES = LOTE_POR_DEFECTO;
 
 // ---------------------------------------------------------------------------
 // Las dos puertas de la cancelación: el token del correo y la sesión del Lead (criterios 1 y 3)
@@ -135,76 +136,23 @@ export type DependenciasDeCancelaciones = DependenciasDeConfirmaciones;
 
 type Cancelacion = { id: string; id_monitoria: string; intentos: number };
 
+const BANDEJA = {
+  prefijo: "citas",
+  tabla: "cancelacion_cita",
+  lote: LOTE_DE_CANCELACIONES,
+  lectura: { columnas: "id, id_monitoria, intentos", orden: "creada_en" },
+  textos: { leer: "No se pudieron leer las cancelaciones", marcar: "No se pudo marcar la cancelación" },
+  nombrar: (cancelacion) => `la cancelación de la monitoría ${cancelacion.id_monitoria}`,
+  mandar: async (cancelacion, { cliente, enviar }) => {
+    const correo = await reconstruirCancelacionCita(cancelacion.id_monitoria, cliente);
+    return correo && enviar({ plantilla: "cancelacion_cita", ...correo, entidad: cancelacion.id_monitoria });
+  },
+} satisfies DefinicionDeBandeja<Cancelacion>;
+
 /**
- * Manda los correos de cancelación pendientes (HU-024), de la más antigua a la más reciente. Funciona como
- * `procesarConfirmacionesDeCita`: cada una queda procesada cuando su correo queda en `correo_envio` (enviado, o
- * fallido para reintentar) o cuando ya no vale; si no se pudo procesar, suma un intento y se abandona al llegar a
- * `MAXIMO_DE_INTENTOS`. Dos corridas a la vez no la mandan dos veces: la clave del correo
- * (`cancelacion_cita:<id_monitoria>`) es única.
+ * Manda los correos de cancelación pendientes (HU-024) con `procesarBandeja`, de la más antigua a la más reciente. Dos
+ * corridas a la vez no la mandan dos veces: la clave del correo (`cancelacion_cita:<id_monitoria>`) es única.
  */
-export async function procesarCancelacionesDeCita(dependencias?: Partial<DependenciasDeCancelaciones>): Promise<ResumenDeCancelaciones> {
-  const cliente = dependencias?.cliente ?? crearClienteAdmin();
-  const enviar = dependencias?.enviar ?? enviarCorreoDesdeServidor;
-  const reloj = dependencias?.reloj ?? Date.now;
-  const inicio = reloj();
-  const resumen: ResumenDeCancelaciones = { revisadas: 0, enviadas: 0, descartadas: 0, fallidas: 0, tomadasPorOtro: 0, conError: 0, pospuestas: 0 };
-
-  const { data: cancelaciones, error } = await cliente
-    .from("cancelacion_cita")
-    .select("id, id_monitoria, intentos")
-    .is("procesado_en", null)
-    .order("creada_en")
-    .limit(LOTE_DE_CANCELACIONES);
-  if (error) throw new Error(`No se pudieron leer las cancelaciones: ${error.message}`);
-
-  for (const cancelacion of cancelaciones ?? []) {
-    resumen.revisadas++;
-    if (reloj() - inicio >= PRESUPUESTO_DE_CORRIDA_MS) {
-      resumen.pospuestas++;
-      continue;
-    }
-    try {
-      const correo = await reconstruirCancelacionCita(cancelacion.id_monitoria, cliente);
-      const resultado = correo && (await enviar({ plantilla: "cancelacion_cita", ...correo, entidad: cancelacion.id_monitoria }));
-      if (!resultado) {
-        resumen.descartadas++;
-      } else if (resultado.ok) {
-        resumen.enviadas++;
-      } else if (resultado.motivo === "en_curso") {
-        resumen.tomadasPorOtro++;
-      } else if (resultado.motivo === "fallo_del_registro") {
-        // Sin registro no hay reintento de HU-065: la cancelación vuelve a intentarse en otra corrida.
-        throw new Error(resultado.error);
-      } else {
-        // Quedó `fallido` en el registro (o el correo del Lead no es un correo): HU-065 y la bandeja del admin.
-        console.error(`[citas] la cancelación de la monitoría ${cancelacion.id_monitoria} no salió: ${resultado.error}`);
-        resumen.fallidas++;
-      }
-      await marcar(cliente, cancelacion, { procesado_en: new Date().toISOString() });
-    } catch (falla) {
-      resumen.conError++;
-      await sumarIntento(cliente, cancelacion, falla);
-    }
-  }
-  return resumen;
-}
-
-async function marcar(cliente: Cliente, cancelacion: Cancelacion, cambios: { procesado_en?: string; intentos?: number }): Promise<void> {
-  const { error } = await cliente.from("cancelacion_cita").update(cambios).eq("id", cancelacion.id);
-  if (error) throw new Error(`No se pudo marcar la cancelación: ${error.message}`);
-}
-
-/** Suma un intento fallido; al llegar al máximo, abandona la cancelación (queda procesada y se avisa en el log). */
-async function sumarIntento(cliente: Cliente, cancelacion: Cancelacion, falla: unknown): Promise<void> {
-  const mensaje = falla instanceof Error ? falla.message : String(falla);
-  const intentos = cancelacion.intentos + 1;
-  const abandonar = intentos >= MAXIMO_DE_INTENTOS;
-  console.error(
-    `[citas] no se pudo procesar la cancelación de la monitoría ${cancelacion.id_monitoria} (intento ${intentos}${abandonar ? ", se abandona" : ""}): ${mensaje}`,
-  );
-  try {
-    await marcar(cliente, cancelacion, abandonar ? { intentos, procesado_en: new Date().toISOString() } : { intentos });
-  } catch (otra) {
-    console.error("[citas] tampoco se pudo anotar el intento:", otra instanceof Error ? otra.message : otra);
-  }
+export function procesarCancelacionesDeCita(dependencias?: Partial<DependenciasDeCancelaciones>): Promise<ResumenDeCancelaciones> {
+  return procesarBandeja(BANDEJA, dependencias);
 }
