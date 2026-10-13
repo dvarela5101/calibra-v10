@@ -1,0 +1,129 @@
+/* El resultado de un diagnóstico (HU-009): encabezado con el puntaje global, habilidades, errores y qué repasar antes. */
+
+.resultado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+}
+
+.encabezado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+.materia {
+  font-size: 17px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.dato {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* La cifra y el % no se separan en dos renglones. */
+.puntaje {
+  font-size: 20px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.titulo {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  list-style: none;
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  min-inline-size: 0;
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+  overflow-wrap: anywhere;
+}
+
+.descripcion {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/*
+ * El nivel va escrito: el borde de color solo lo refuerza. --success, --warn y --alert son relleno y no pasan AA como texto,
+ * por eso el texto va en --text.
+ */
+.nivel {
+  align-self: flex-start;
+  padding: 2px 10px;
+  font-size: var(--texto-min);
+  font-weight: 600;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-inline-start-width: 6px;
+  border-radius: var(--r-chico);
+}
+
+.lo_domina {
+  border-inline-start-color: var(--success);
+}
+
+.en_proceso {
+  border-inline-start-color: var(--warn);
+}
+
+.no_lo_domina {
+  border-inline-start-color: var(--alert);
+}
+
+.sin_medir {
+  border-inline-start-color: var(--border);
+}
+
+.prefijo {
+  font-weight: 600;
+}
+
+.textoDelError {
+  font-size: 16px;
+}
+
+.detalle {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+/* Debajo del resultado va el formulario de contacto de HU-010; sin él, este contenedor no se dibuja. */
+.ranura {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}

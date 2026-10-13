@@ -1,7 +1,15 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Plantilla, Reconstruccion } from "@/lib/correo/plantillas";
-import { enviarCorreoDesdeServidor, urlDelSitio, type EntradaDeEnvio, type ResultadoEnvio } from "@/lib/correo/servidor";
+import {
+  LOTE_POR_DEFECTO,
+  MAXIMO_DE_INTENTOS,
+  PRESUPUESTO_DE_CORRIDA_MS,
+  procesarBandeja,
+  type DefinicionDeBandeja,
+  type DependenciasDeBandeja,
+} from "@/lib/correo/bandeja";
+import type { Reconstruccion } from "@/lib/correo/plantillas";
+import { urlDelSitio, type ResultadoEnvio } from "@/lib/correo/servidor";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/tipos";
 import {
@@ -21,17 +29,10 @@ type Cliente = SupabaseClient<Database>;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Cuántos avisos toma cada corrida. Lo normal es uno por corrida: el trigger la pide al anotarlo. */
-export const LOTE_DE_AVISOS = 10;
+export const LOTE_DE_AVISOS = LOTE_POR_DEFECTO;
 
-/**
- * La corrida deja de tomar avisos pasado este tiempo, como los reintentos de HU-065: un envío con el proveedor caído
- * puede tardar unos 32 s, y 20 s más ese envío caben en el límite de la función (60 s). Cortar a mitad de un envío
- * podría dejarlo `pendiente` aunque haya salido, y el reintento lo mandaría otra vez.
- */
-export const PRESUPUESTO_DE_CORRIDA_MS = 20_000;
-
-/** Corridas en las que un aviso puede fallar antes de abandonarlo, para que no tape a los demás. */
-export const MAXIMO_DE_INTENTOS = 5;
+// El presupuesto de la corrida y el máximo de intentos viven en `procesarBandeja`; se reexportan porque las pruebas los importan de aquí.
+export { MAXIMO_DE_INTENTOS, PRESUPUESTO_DE_CORRIDA_MS };
 
 /** Los datos del correo de una monitoría, con la llave secreta. `null` si la monitoría ya no existe. */
 async function leerDatos(cliente: Cliente, idMonitoria: string): Promise<DatosDeAviso | null> {
@@ -134,6 +135,7 @@ async function mandarAviso(
   return correo && enviar({ plantilla: "aviso_monitor_cancelada", ...correo, entidad: idMonitoria });
 }
 
+/** El resumen de los avisos va en masculino (lo compara `integracion/avisos.test.ts` y lo devuelve la ruta); `procesarBandeja` lo da en femenino. */
 export type ResumenDeAvisos = {
   revisados: number;
   enviados: number;
@@ -149,84 +151,34 @@ export type ResumenDeAvisos = {
   pospuestos: number;
 };
 
-export type DependenciasDeAvisos = {
-  /** Con la llave secreta: `aviso_monitor` solo la lee y la marca el servidor. */
-  cliente: Cliente;
-  enviar: <P extends Plantilla>(entrada: EntradaDeEnvio<P>) => Promise<ResultadoEnvio>;
-  /** El reloj de la corrida, para el presupuesto de tiempo. */
-  reloj: () => number;
-};
+export type DependenciasDeAvisos = DependenciasDeBandeja;
 
 type Aviso = { id: string; id_monitoria: string; evento: string; intentos: number };
 
+const BANDEJA = {
+  prefijo: "avisos",
+  tabla: "aviso_monitor",
+  lote: LOTE_DE_AVISOS,
+  lectura: { columnas: "id, id_monitoria, evento, intentos", orden: "creado_en" },
+  textos: { leer: "No se pudieron leer los avisos", marcar: "No se pudo marcar el aviso" },
+  nombrar: (aviso) => `el aviso ${aviso.evento} de la monitoría ${aviso.id_monitoria}`,
+  mandar: (aviso, { cliente, enviar }) => (esEventoDeAviso(aviso.evento) ? mandarAviso(cliente, enviar, aviso.evento, aviso.id_monitoria) : Promise.resolve(null)),
+} satisfies DefinicionDeBandeja<Aviso>;
+
 /**
- * Manda los avisos pendientes (HU-051), del más antiguo al más reciente. Cada uno queda procesado cuando su
- * correo queda en `correo_envio` (enviado, o fallido para reintentar) o cuando ya no vale. Si no se pudo procesar,
- * suma un intento y se abandona al llegar a `MAXIMO_DE_INTENTOS`. Dos corridas a la vez no lo mandan dos veces: la
- * clave del correo es única.
+ * Manda los avisos pendientes (HU-051) con `procesarBandeja`, del más antiguo al más reciente. Dos corridas a la vez no
+ * lo mandan dos veces: la clave del correo es única. El resumen de la bandeja se traduce a masculino, con las claves en
+ * el orden de siempre.
  */
 export async function procesarAvisosAlMonitor(dependencias?: Partial<DependenciasDeAvisos>): Promise<ResumenDeAvisos> {
-  const cliente = dependencias?.cliente ?? crearClienteAdmin();
-  const enviar = dependencias?.enviar ?? enviarCorreoDesdeServidor;
-  const reloj = dependencias?.reloj ?? Date.now;
-  const inicio = reloj();
-  const resumen: ResumenDeAvisos = { revisados: 0, enviados: 0, descartados: 0, fallidos: 0, tomadosPorOtro: 0, conError: 0, pospuestos: 0 };
-
-  const { data: avisos, error } = await cliente
-    .from("aviso_monitor")
-    .select("id, id_monitoria, evento, intentos")
-    .is("procesado_en", null)
-    .order("creado_en")
-    .limit(LOTE_DE_AVISOS);
-  if (error) throw new Error(`No se pudieron leer los avisos: ${error.message}`);
-
-  for (const aviso of avisos ?? []) {
-    resumen.revisados++;
-    if (reloj() - inicio >= PRESUPUESTO_DE_CORRIDA_MS) {
-      resumen.pospuestos++;
-      continue;
-    }
-    try {
-      const resultado = esEventoDeAviso(aviso.evento) ? await mandarAviso(cliente, enviar, aviso.evento, aviso.id_monitoria) : null;
-      if (!resultado) {
-        resumen.descartados++;
-      } else if (resultado.ok) {
-        resumen.enviados++;
-      } else if (resultado.motivo === "en_curso") {
-        resumen.tomadosPorOtro++;
-      } else if (resultado.motivo === "fallo_del_registro") {
-        // Sin registro no hay reintento de HU-065: el aviso vuelve a intentarse en otra corrida.
-        throw new Error(resultado.error);
-      } else {
-        // Quedó `fallido` en el registro (o el correo del monitor no es un correo): HU-065 y la bandeja del admin.
-        console.error(`[avisos] el aviso ${aviso.evento} de la monitoría ${aviso.id_monitoria} no salió: ${resultado.error}`);
-        resumen.fallidos++;
-      }
-      await marcar(cliente, aviso, { procesado_en: new Date().toISOString() });
-    } catch (falla) {
-      resumen.conError++;
-      await sumarIntento(cliente, aviso, falla);
-    }
-  }
-  return resumen;
-}
-
-async function marcar(cliente: Cliente, aviso: Aviso, cambios: { procesado_en?: string; intentos?: number }): Promise<void> {
-  const { error } = await cliente.from("aviso_monitor").update(cambios).eq("id", aviso.id);
-  if (error) throw new Error(`No se pudo marcar el aviso: ${error.message}`);
-}
-
-/** Suma un intento fallido; al llegar al máximo, abandona el aviso (queda procesado y se avisa en el log). */
-async function sumarIntento(cliente: Cliente, aviso: Aviso, falla: unknown): Promise<void> {
-  const mensaje = falla instanceof Error ? falla.message : String(falla);
-  const intentos = aviso.intentos + 1;
-  const abandonar = intentos >= MAXIMO_DE_INTENTOS;
-  console.error(
-    `[avisos] no se pudo procesar el aviso ${aviso.evento} de la monitoría ${aviso.id_monitoria} (intento ${intentos}${abandonar ? ", se abandona" : ""}): ${mensaje}`,
-  );
-  try {
-    await marcar(cliente, aviso, abandonar ? { intentos, procesado_en: new Date().toISOString() } : { intentos });
-  } catch (otra) {
-    console.error("[avisos] tampoco se pudo anotar el intento:", otra instanceof Error ? otra.message : otra);
-  }
+  const resumen = await procesarBandeja(BANDEJA, dependencias);
+  return {
+    revisados: resumen.revisadas,
+    enviados: resumen.enviadas,
+    descartados: resumen.descartadas,
+    fallidos: resumen.fallidas,
+    tomadosPorOtro: resumen.tomadasPorOtro,
+    conError: resumen.conError,
+    pospuestos: resumen.pospuestas,
+  };
 }
