@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-13 12:10. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-13 17:39. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -36,9 +36,9 @@ _Generado automaticamente: 2026-10-13 12:10. No editar a mano; usa `scripts/back
 | [HU-049](backlog/HU-049.md) | [Monitor] Administrar mi perfil | En progreso | P2 | M | HU-013, HU-016, HU-069 |
 | [HU-052](backlog/HU-052.md) | [Admin] Autorizar una cancelación fuera de plazo en casos extremos | En progreso | P2 | M | HU-024, HU-026 |
 | [HU-072](backlog/HU-072.md) | [Admin] Agregar un admin al equipo por invitación | En progreso | P2 | M | HU-054, HU-013, HU-058, HU-065, HU-070 |
-| [HU-079](backlog/HU-079.md) | [Técnica] Unificar los procesadores de la bandeja de salida de correos | En progreso | P2 | S | HU-019, HU-024, HU-025, HU-030, HU-035, HU-051, HU-076, HU-080 |
 | [HU-083](backlog/HU-083.md) | [Técnica] Dibujar fórmulas y código del banco de preguntas | En revision | P0 | S | HU-005 |
 | [HU-055](backlog/HU-055.md) | [Admin] Gestionar materias y evaluaciones | En revision | P1 | L | HU-005, HU-012, HU-014, HU-016, HU-062 |
+| [HU-079](backlog/HU-079.md) | [Técnica] Unificar los procesadores de la bandeja de salida de correos | En revision | P2 | S | HU-019, HU-024, HU-025, HU-030, HU-035, HU-051, HU-076, HU-080 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |

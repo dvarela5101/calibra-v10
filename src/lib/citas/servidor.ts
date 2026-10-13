@@ -1,7 +1,16 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Plantilla, Reconstruccion } from "@/lib/correo/plantillas";
-import { enviarCorreoDesdeServidor, urlDelSitio, type EntradaDeEnvio, type ResultadoEnvio } from "@/lib/correo/servidor";
+import {
+  LOTE_POR_DEFECTO,
+  MAXIMO_DE_INTENTOS,
+  PRESUPUESTO_DE_CORRIDA_MS,
+  procesarBandeja,
+  type DefinicionDeBandeja,
+  type DependenciasDeBandeja,
+  type ResumenDeBandeja,
+} from "@/lib/correo/bandeja";
+import type { Reconstruccion } from "@/lib/correo/plantillas";
+import { urlDelSitio } from "@/lib/correo/servidor";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/tipos";
 import {
@@ -20,17 +29,10 @@ type Cliente = SupabaseClient<Database>;
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Cuántas confirmaciones toma cada corrida. Lo normal es una por corrida: el trigger la pide al anotarla. */
-export const LOTE_DE_CONFIRMACIONES = 10;
+export const LOTE_DE_CONFIRMACIONES = LOTE_POR_DEFECTO;
 
-/**
- * La corrida deja de tomar confirmaciones pasado este tiempo, como los avisos de HU-051: un envío con el proveedor
- * caído puede tardar unos 32 s, y 20 s más ese envío caben en el límite de la función (60 s). Cortar a mitad de un
- * envío podría dejarlo `pendiente` aunque haya salido, y el reintento lo mandaría otra vez.
- */
-export const PRESUPUESTO_DE_CORRIDA_MS = 20_000;
-
-/** Corridas en las que una confirmación puede fallar antes de abandonarla, para que no tape a las demás. */
-export const MAXIMO_DE_INTENTOS = 5;
+// El presupuesto de la corrida y el máximo de intentos viven en `procesarBandeja`; se reexportan porque las pruebas los importan de aquí.
+export { MAXIMO_DE_INTENTOS, PRESUPUESTO_DE_CORRIDA_MS };
 
 export const instanteIso = (valor: string): string => new Date(valor).toISOString();
 
@@ -88,102 +90,32 @@ export async function reconstruirConfirmacionCita(
   return { destinatario, datos: datosDeConfirmacion(d, urlDelSitio(rutaDeCita(d.token))) };
 }
 
-export type ResumenDeConfirmaciones = {
-  revisadas: number;
-  enviadas: number;
-  /** La confirmación ya no valía (la cita se canceló, ya empezó o no tiene a quién escribirle): no se manda. */
-  descartadas: number;
-  /** El correo falló y quedó `fallido` en `correo_envio`: lo reintenta HU-065 o lo ve el admin. */
-  fallidas: number;
-  /** Otra corrida lo estaba mandando (la clave del correo es única). */
-  tomadasPorOtro: number;
-  /** No se pudo procesar (error de la base o de los datos): se reintenta en otra corrida, hasta `MAXIMO_DE_INTENTOS`. */
-  conError: number;
-  /** Se acabó el presupuesto de tiempo: quedan para la próxima corrida. */
-  pospuestas: number;
-};
+/** El resumen que comparten las confirmaciones, las cancelaciones, los pedidos de llave y los avisos de rechazo. */
+export type ResumenDeConfirmaciones = ResumenDeBandeja;
 
-export type DependenciasDeConfirmaciones = {
-  /** Con la llave secreta: `confirmacion_cita` solo la lee y la marca el servidor. */
-  cliente: Cliente;
-  enviar: <P extends Plantilla>(entrada: EntradaDeEnvio<P>) => Promise<ResultadoEnvio>;
-  /** El reloj de la corrida, para el presupuesto de tiempo. */
-  reloj: () => number;
-};
+export type DependenciasDeConfirmaciones = DependenciasDeBandeja;
 
 type Confirmacion = { id: string; id_monitoria: string; intentos: number };
 
+const BANDEJA = {
+  prefijo: "citas",
+  tabla: "confirmacion_cita",
+  lote: LOTE_DE_CONFIRMACIONES,
+  lectura: { columnas: "id, id_monitoria, intentos", orden: "creada_en" },
+  textos: { leer: "No se pudieron leer las confirmaciones", marcar: "No se pudo marcar la confirmación" },
+  nombrar: (confirmacion) => `la confirmación de la monitoría ${confirmacion.id_monitoria}`,
+  mandar: async (confirmacion, { cliente, enviar }) => {
+    const correo = await reconstruirConfirmacionCita(confirmacion.id_monitoria, cliente);
+    return correo && enviar({ plantilla: "confirmacion_cita", ...correo, entidad: confirmacion.id_monitoria });
+  },
+} satisfies DefinicionDeBandeja<Confirmacion>;
+
 /**
- * Manda las confirmaciones pendientes (HU-019), de la más antigua a la más reciente. Cada una queda procesada
- * cuando su correo queda en `correo_envio` (enviado, o fallido para reintentar) o cuando ya no vale. Si no se
- * pudo procesar, suma un intento y se abandona al llegar a `MAXIMO_DE_INTENTOS`. Dos corridas a la vez no la
- * mandan dos veces: la clave del correo (`confirmacion_cita:<id_monitoria>`) es única.
+ * Manda las confirmaciones pendientes (HU-019) con `procesarBandeja`, de la más antigua a la más reciente. Dos corridas
+ * a la vez no la mandan dos veces: la clave del correo (`confirmacion_cita:<id_monitoria>`) es única.
  */
-export async function procesarConfirmacionesDeCita(dependencias?: Partial<DependenciasDeConfirmaciones>): Promise<ResumenDeConfirmaciones> {
-  const cliente = dependencias?.cliente ?? crearClienteAdmin();
-  const enviar = dependencias?.enviar ?? enviarCorreoDesdeServidor;
-  const reloj = dependencias?.reloj ?? Date.now;
-  const inicio = reloj();
-  const resumen: ResumenDeConfirmaciones = { revisadas: 0, enviadas: 0, descartadas: 0, fallidas: 0, tomadasPorOtro: 0, conError: 0, pospuestas: 0 };
-
-  const { data: confirmaciones, error } = await cliente
-    .from("confirmacion_cita")
-    .select("id, id_monitoria, intentos")
-    .is("procesado_en", null)
-    .order("creada_en")
-    .limit(LOTE_DE_CONFIRMACIONES);
-  if (error) throw new Error(`No se pudieron leer las confirmaciones: ${error.message}`);
-
-  for (const confirmacion of confirmaciones ?? []) {
-    resumen.revisadas++;
-    if (reloj() - inicio >= PRESUPUESTO_DE_CORRIDA_MS) {
-      resumen.pospuestas++;
-      continue;
-    }
-    try {
-      const correo = await reconstruirConfirmacionCita(confirmacion.id_monitoria, cliente);
-      const resultado = correo && (await enviar({ plantilla: "confirmacion_cita", ...correo, entidad: confirmacion.id_monitoria }));
-      if (!resultado) {
-        resumen.descartadas++;
-      } else if (resultado.ok) {
-        resumen.enviadas++;
-      } else if (resultado.motivo === "en_curso") {
-        resumen.tomadasPorOtro++;
-      } else if (resultado.motivo === "fallo_del_registro") {
-        // Sin registro no hay reintento de HU-065: la confirmación vuelve a intentarse en otra corrida.
-        throw new Error(resultado.error);
-      } else {
-        // Quedó `fallido` en el registro (o el correo del Lead no es un correo): HU-065 y la bandeja del admin.
-        console.error(`[citas] la confirmación de la monitoría ${confirmacion.id_monitoria} no salió: ${resultado.error}`);
-        resumen.fallidas++;
-      }
-      await marcar(cliente, confirmacion, { procesado_en: new Date().toISOString() });
-    } catch (falla) {
-      resumen.conError++;
-      await sumarIntento(cliente, confirmacion, falla);
-    }
-  }
-  return resumen;
-}
-
-async function marcar(cliente: Cliente, confirmacion: Confirmacion, cambios: { procesado_en?: string; intentos?: number }): Promise<void> {
-  const { error } = await cliente.from("confirmacion_cita").update(cambios).eq("id", confirmacion.id);
-  if (error) throw new Error(`No se pudo marcar la confirmación: ${error.message}`);
-}
-
-/** Suma un intento fallido; al llegar al máximo, abandona la confirmación (queda procesada y se avisa en el log). */
-async function sumarIntento(cliente: Cliente, confirmacion: Confirmacion, falla: unknown): Promise<void> {
-  const mensaje = falla instanceof Error ? falla.message : String(falla);
-  const intentos = confirmacion.intentos + 1;
-  const abandonar = intentos >= MAXIMO_DE_INTENTOS;
-  console.error(
-    `[citas] no se pudo procesar la confirmación de la monitoría ${confirmacion.id_monitoria} (intento ${intentos}${abandonar ? ", se abandona" : ""}): ${mensaje}`,
-  );
-  try {
-    await marcar(cliente, confirmacion, abandonar ? { intentos, procesado_en: new Date().toISOString() } : { intentos });
-  } catch (otra) {
-    console.error("[citas] tampoco se pudo anotar el intento:", otra instanceof Error ? otra.message : otra);
-  }
+export function procesarConfirmacionesDeCita(dependencias?: Partial<DependenciasDeConfirmaciones>): Promise<ResumenDeConfirmaciones> {
+  return procesarBandeja(BANDEJA, dependencias);
 }
 
 // ---------------------------------------------------------------------------

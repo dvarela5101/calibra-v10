@@ -444,6 +444,16 @@ Si un correo falla por algo temporal (red, un 4xx de SMTP, un 5xx o el límite d
 - Se reintentan los fallidos temporales que llevan al menos 2 minutos quietos y los `pendiente` abandonados (su envío murió hace más de 5 minutos). Cada corrida toma hasta 10 y deja de tomar pasados 20 s, para terminar antes del límite de la función (60 s).
 - La invitación de monitor se reconstruye con un token nuevo, porque el token no se guarda: el enlace que no llegó deja de servir. Si el primer envío sí llegó y solo se perdió la respuesta, ese enlace también deja de servir; es raro y se acepta. Con Resend, además, el reintento repetiría la `Idempotency-Key` con otro contenido y Resend lo rechazaría (409, definitivo): al pasar a Resend hay que revisar este caso.
 
+### Procesadores de la bandeja de salida (HU-079)
+
+Seis correos salen por una bandeja de salida: la base anota una fila en su tabla (`aviso_monitor`, `confirmacion_cita`, `cancelacion_cita`, `pedido_llave`, `aviso_rechazo_pago` o `invitacion_resena`) y le pide a la app que la procese por `/api/procesos/<ruta>`. El bucle que las recorre está una sola vez, en `procesarBandeja` (`src/lib/correo/bandeja.ts`). Toma hasta 10 filas sin `procesado_en`, de la más antigua a la más reciente, y deja de tomar pasados 20 s. Reconstruye y manda cada correo, marca la fila cuando quedó en `correo_envio` o ya no vale, y cuando algo falla suma un intento y la abandona al quinto.
+
+- Una bandeja declara una `DefinicionDeBandeja` en su propio módulo: la tabla, las columnas y el orden de la consulta (o su propia lectura), cómo armar y mandar el correo de una fila, y cómo nombrarla en el log. El texto `plantilla: "..."` se queda en ese módulo, porque `pruebas/reconstructores.test.ts` solo lo busca fuera de `src/lib/correo/`. La definición se escribe con `satisfies DefinicionDeBandeja<Fila>` y no con una anotación: con la anotación, TypeScript pierde el gancho `enEspera` y el resumen de las invitaciones de reseña deja de traerlo.
+- Aparte necesita su tabla (con `procesado_en` e `intentos`, y `select` y `update (procesado_en, intentos)` solo para `service_role`), su ruta en `src/app/api/procesos/` con `autorizaProceso`, su reconstructor en `src/lib/correo/reconstructores.ts` (HU-065) y su trabajo de pg_cron. Para pedirle a la app que procese se usa `privado.disparar_proceso`. La tabla nueva se suma a `TablaDeBandeja` y el módulo, a la lista de `pruebas/bandejas.test.ts`.
+- No se copia el bucle: `pruebas/bandejas.test.ts` falla si otro archivo marca `procesado_en`.
+- El resumen de cada corrida es lo que responde la ruta. Los avisos al monitor lo devuelven en masculino (`revisados`, `enviados`...) y las invitaciones de reseña le suman `enEspera`.
+- Si el correo salió y la fila no se pudo marcar, la corrida la cuenta como enviada y con error, y la siguiente la marca. Es el comportamiento de siempre y está fijado en `src/lib/correo/bandeja.test.ts`.
+
 ### Limpieza de sesiones anónimas (HU-056)
 
 Cada día a las 08:23 UTC (03:23 en Bogotá) pg_cron corre `privado.limpiar_sesiones_anonimas(now())` (trabajo `calibra-limpiar-sesiones-anonimas`). Borra de Auth las sesiones anónimas que no son de nadie y llevan más de 90 días sin actividad (P-13), y con ellas sus diagnósticos. Vive solo en la base: no pasa por `/api/procesos`, no usa Vault ni manda correos.
