@@ -1,9 +1,16 @@
 // Carga del banco de preguntas (HU-005) en la base, con upsert por la clave de cada fila en su materia.
 //
-// El markdown manda (decisión del 30-sep-2026): la carga deja la base como dice el banco, pero nunca borra
-// una materia, un tema, una habilidad, una misconcepción ni una pregunta. Lo que ya no está en el banco se
-// reporta como aviso; una pregunta queda retirada y una evaluación inactiva. Solo se reemplazan filas que
-// cuelgan de algo del banco: prerrequisitos, opciones, habilidades de una pregunta y temas de una evaluación.
+// El markdown manda (decisión del 30-sep-2026), salvo lo que un admin corrigió en la app (D-62 a, HU-055): la carga
+// deja la base como dice el banco, pero nunca borra una materia, un tema, una habilidad, una misconcepción ni una
+// pregunta. Lo que ya no está en el banco se reporta como aviso; una pregunta queda retirada y una evaluación
+// inactiva. Solo se reemplazan filas que cuelgan de algo del banco: prerrequisitos, opciones, habilidades de una
+// pregunta y temas de una evaluación.
+//
+// Lo que un admin cambió en la app (el nombre o el código de una materia, el nombre o la semana de una evaluación) lo
+// marca la base con `editada_en_app`: la carga conserva esos valores, avisa de la diferencia con los dos valores y baja
+// la marca cuando el markdown ya dice lo mismo. La materia se reconoce por su carpeta de contenido/ y no por el código,
+// para que corregir un código desde la app no cree otra materia. Todo lo demás (temas, habilidades, preguntas, qué
+// evaluaciones están activas, si son acumulativas y sus temas) sigue saliendo siempre del banco.
 //
 // Todo va en una sola transacción: si algo falla, la base queda como estaba. La conexión la abre y la cierra
 // quien llama (convertir.mts o la prueba de integración), que también se asegura de que la base sea la local.
@@ -37,6 +44,77 @@ interface FilaOpcion {
   error: string | null;
 }
 
+/** Una materia tal como está en la base. */
+interface FilaMateria {
+  id: string;
+  codigo: string;
+  nombre: string;
+  /** La carpeta de contenido/ de la que vino; nula si se creó en la app. */
+  carpeta: string | null;
+  /** Un admin cambió el nombre o el código desde la app. */
+  editada_en_app: boolean;
+}
+
+/** Un valor que en la base y en el markdown es distinto. */
+export interface Diferencia {
+  campo: "nombre" | "codigo" | "semana";
+  enBase: string | number;
+  delBanco: string | number;
+}
+
+export interface DecisionMateria {
+  /** Lo que la carga escribe en la fila: solo lo que difiere, y nada si la marca está puesta. */
+  cambios: { nombre?: string; codigo?: string };
+  /** Con la marca puesta, lo que la base conserva y es distinto de materia.md. Sin la marca, vacío (se aplica). */
+  diferencias: Diferencia[];
+  /** La marca está puesta y materia.md ya dice lo mismo que la base: vuelve a seguir al banco. */
+  bajarMarca: boolean;
+}
+
+/**
+ * Qué hace la carga con una materia que ya está en la base (D-62 a). Sin la marca, el markdown manda: el nombre y el
+ * código de materia.md se aplican si difieren. Con la marca, un admin los cambió en la app: no se aplica nada, se
+ * reportan las diferencias y, si no hay ninguna, la marca baja. Compara los valores tal cual están: un código guardado
+ * en minúsculas o con espacios no es el de materia.md.
+ */
+export function decidirMateria(
+  fila: Pick<FilaMateria, "nombre" | "codigo" | "editada_en_app">,
+  delBanco: Pick<Materia, "nombre" | "codigo">,
+): DecisionMateria {
+  const diferencias: Diferencia[] = [];
+  if (fila.nombre !== delBanco.nombre) diferencias.push({ campo: "nombre", enBase: fila.nombre, delBanco: delBanco.nombre });
+  if (fila.codigo !== delBanco.codigo) diferencias.push({ campo: "codigo", enBase: fila.codigo, delBanco: delBanco.codigo });
+  if (fila.editada_en_app) return { cambios: {}, diferencias, bajarMarca: diferencias.length === 0 };
+
+  const cambios: DecisionMateria["cambios"] = {};
+  if (fila.nombre !== delBanco.nombre) cambios.nombre = delBanco.nombre;
+  if (fila.codigo !== delBanco.codigo) cambios.codigo = delBanco.codigo;
+  return { cambios, diferencias: [], bajarMarca: false };
+}
+
+/**
+ * Lo que la base conserva de una evaluación que un admin corrigió, según la fila que devolvió el upsert. Vacío si la
+ * fila no tiene la marca (el banco la escribió) o si, con la marca, la base y el markdown ya dicen lo mismo.
+ */
+export function diferenciasDeEvaluacion(
+  fila: { nombre: string; semana: number; editada_en_app: boolean },
+  delBanco: { nombre: string; semana: number },
+): Diferencia[] {
+  if (!fila.editada_en_app) return [];
+  const diferencias: Diferencia[] = [];
+  if (fila.nombre !== delBanco.nombre) diferencias.push({ campo: "nombre", enBase: fila.nombre, delBanco: delBanco.nombre });
+  if (fila.semana !== delBanco.semana) diferencias.push({ campo: "semana", enBase: fila.semana, delBanco: delBanco.semana });
+  return diferencias;
+}
+
+const valorDelAviso = (valor: string | number) => (typeof valor === "number" ? String(valor) : `"${valor}"`);
+
+/** El aviso de una fila cuyos valores la base conservó. `etiqueta` es la carpeta, o carpeta/clave para una evaluación. */
+export function avisoDeConservada(etiqueta: string, diferencias: Diferencia[]): string {
+  const detalle = diferencias.map((d) => `${d.campo}: base ${valorDelAviso(d.enBase)}, materia.md ${valorDelAviso(d.delBanco)}`).join("; ");
+  return `${etiqueta}: la base conserva lo que un admin cambió en la app (${detalle}). Para que vuelva a seguir al banco, iguala materia.md con la base.`;
+}
+
 /** Carga el banco en una sola transacción y devuelve los conteos de la base y los avisos. */
 export async function cargarBanco(cliente: pg.ClientBase, banco: Banco, opciones: OpcionesCarga): Promise<ResultadoCarga> {
   await cliente.query("begin");
@@ -56,7 +134,7 @@ async function cargar(bd: pg.ClientBase, banco: Banco, opciones: OpcionesCarga):
 
   // 1-4. Materias, temas, habilidades y misconcepciones.
   const cargadas: MateriaCargada[] = [];
-  for (const materia of banco.materias) cargadas.push(await cargarMateria(bd, materia));
+  for (const materia of banco.materias) cargadas.push(await cargarMateria(bd, materia, avisos));
 
   // 5. Prerrequisitos: cruzan materias, así que van cuando ya existen las habilidades de todas.
   const habilidades = new Map<string, string>();
@@ -86,16 +164,63 @@ function exigir(ids: Map<string, string>, clave: string, que: string): string {
   return id;
 }
 
-// 1. La materia se busca por código y nunca se borra: tiene certificados, solicitudes y evaluaciones.
-// 2-4. Temas, habilidades y misconcepciones, por (id_materia, clave).
-async function cargarMateria(bd: pg.ClientBase, materia: Materia): Promise<MateriaCargada> {
-  const id = await idDe(
-    bd,
-    `insert into public.materia (codigo, nombre) values ($1, $2)
-     on conflict (codigo) do update set nombre = excluded.nombre
-     returning id`,
-    [materia.codigo, materia.nombre],
+/**
+ * 1. La materia se reconoce por su carpeta y nunca se borra: tiene certificados, solicitudes y evaluaciones.
+ *
+ * Primero por la carpeta, con la fila tomada (`for update`): un admin que edita la materia a la vez espera a que
+ * termine la carga, o la carga espera a que él termine y lee la marca ya puesta; sin el candado, la carga leería la
+ * marca vieja y pisaría lo que él acaba de guardar. Si no hay, adopta la que se creó sin carpeta (en la app, o en una
+ * base cargada antes de HU-055) con ese código. Si tampoco, inserta; pero antes comprueba que nadie más tenga el
+ * código, y si lo tiene falla con la transacción entera revertida. Con una fila ya existente, decidirMateria dice
+ * qué se aplica y qué se conserva, y el código nuevo de materia.md pasa por la misma comprobación.
+ */
+async function reconocerMateria(bd: pg.ClientBase, materia: Materia, avisos: string[]): Promise<string> {
+  const columnas = "id, codigo, nombre, carpeta, editada_en_app";
+  let { rows: [fila] } = await bd.query<FilaMateria>(`select ${columnas} from public.materia where carpeta = $1 for update`, [materia.carpeta]);
+  if (!fila) {
+    ({ rows: [fila] } = await bd.query<FilaMateria>(
+      `select ${columnas} from public.materia where carpeta is null and lower(btrim(codigo)) = lower(btrim($1)) for update`,
+      [materia.codigo],
+    ));
+    if (fila) await bd.query("update public.materia set carpeta = $2 where id = $1", [fila.id, materia.carpeta]);
+  }
+
+  if (!fila) {
+    await exigirCodigoLibre(bd, materia, null);
+    return idDe(bd, "insert into public.materia (carpeta, codigo, nombre) values ($1, $2, $3) returning id", [materia.carpeta, materia.codigo, materia.nombre]);
+  }
+
+  const decision = decidirMateria(fila, materia);
+  if (decision.cambios.codigo !== undefined) await exigirCodigoLibre(bd, materia, fila.id);
+  if (decision.cambios.nombre !== undefined || decision.cambios.codigo !== undefined) {
+    await bd.query("update public.materia set nombre = $2, codigo = $3 where id = $1", [
+      fila.id,
+      decision.cambios.nombre ?? fila.nombre,
+      decision.cambios.codigo ?? fila.codigo,
+    ]);
+  }
+  if (decision.bajarMarca) await bd.query("update public.materia set editada_en_app = false where id = $1", [fila.id]);
+  if (decision.diferencias.length > 0) avisos.push(avisoDeConservada(materia.carpeta, decision.diferencias));
+  return fila.id;
+}
+
+/** Falla si el código de la materia del banco lo tiene otra materia (aunque difiera en mayúsculas o espacios). */
+async function exigirCodigoLibre(bd: pg.ClientBase, materia: Materia, idPropio: string | null): Promise<void> {
+  const { rows } = await bd.query<{ nombre: string; carpeta: string | null }>(
+    "select nombre, carpeta from public.materia where lower(btrim(codigo)) = lower(btrim($1)) and id is distinct from $2::uuid",
+    [materia.codigo, idPropio],
   );
+  if (rows.length === 0) return;
+  const otra = rows[0];
+  throw new Error(
+    `contenido/${materia.carpeta} (${materia.nombre}) quiere el código ${materia.codigo}, pero ya lo tiene la materia "${otra.nombre}" ` +
+      `(${otra.carpeta ? `carpeta ${otra.carpeta}` : "creada en la app"}). La carga no cambió nada.`,
+  );
+}
+
+// 2-4. Temas, habilidades y misconcepciones, por (id_materia, clave).
+async function cargarMateria(bd: pg.ClientBase, materia: Materia, avisos: string[]): Promise<MateriaCargada> {
+  const id = await reconocerMateria(bd, materia, avisos);
   const c: MateriaCargada = { materia, id, temas: new Map(), habilidades: new Map(), misconcepciones: new Map() };
 
   for (const tema of materia.temas) {
@@ -240,16 +365,27 @@ async function cargarPreguntas(bd: pg.ClientBase, c: MateriaCargada, opciones: O
 
 // 9. Evaluaciones por (id_materia, clave), con sus temas ya expandidos. Las de la materia que no están en el
 // banco (otra clave, o sin clave) quedan inactivas: el banco decide cuáles se pueden usar.
+//
+// Una sola sentencia y sin lectura previa: el candado de la fila que toma el upsert es lo que hace esperar a la carga si un
+// admin la está editando, y la expresión se evalúa contra la fila ya confirmada. El nombre y la semana los conserva la
+// marca de la evaluación misma (la de la materia no cuenta); acumulativo y activa salen siempre del banco. La marca baja
+// cuando el banco ya dice lo mismo que la base. Lo que devuelve el upsert dice si se conservó algo, para avisarlo.
 async function cargarEvaluaciones(bd: pg.ClientBase, c: MateriaCargada, avisos: string[]) {
   for (const evaluacion of c.materia.evaluaciones) {
-    const id = await idDe(
-      bd,
+    const { rows: [fila] } = await bd.query<{ id: string; nombre: string; semana: number; editada_en_app: boolean }>(
       `insert into public.evaluacion (id_materia, clave, nombre, semana, acumulativo, activa) values ($1, $2, $3, $4, $5, $6)
        on conflict (id_materia, clave) do update set
-         nombre = excluded.nombre, semana = excluded.semana, acumulativo = excluded.acumulativo, activa = excluded.activa
-       returning id`,
+         nombre = case when evaluacion.editada_en_app then evaluacion.nombre else excluded.nombre end,
+         semana = case when evaluacion.editada_en_app then evaluacion.semana else excluded.semana end,
+         acumulativo = excluded.acumulativo,
+         activa = excluded.activa,
+         editada_en_app = evaluacion.editada_en_app and not (evaluacion.nombre = excluded.nombre and evaluacion.semana = excluded.semana)
+       returning id, nombre, semana, editada_en_app`,
       [c.id, evaluacion.clave, evaluacion.nombre, evaluacion.semana, evaluacion.acumulativa, evaluacion.activa],
     );
+    const id = fila.id;
+    const diferencias = diferenciasDeEvaluacion(fila, evaluacion);
+    if (diferencias.length > 0) avisos.push(avisoDeConservada(`${c.materia.carpeta}/${evaluacion.clave}`, diferencias));
     const temas = evaluacion.temas.map((clave) => exigir(c.temas, clave, "el tema"));
     await bd.query("delete from public.evaluacion_tema where id_evaluacion = $1 and not (id_tema = any($2::uuid[]))", [id, temas]);
     for (const idTema of temas) {

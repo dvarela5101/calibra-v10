@@ -18,11 +18,19 @@ import type { ArchivoBanco, Banco, OpcionesCarga } from "../scripts/contenido/mo
  *
  * Los códigos se cambian en memoria (los archivos no se tocan) y llevan un prefijo propio, distinto del `ZZPR` de `banco.test.ts`:
  * así un borrado de aquí no pisa el de esa suite. `fileParallelism: false` evita que corran a la vez.
+ *
+ * El cargador reconoce la materia por su carpeta (HU-055), no por el código. Por eso lo que va a la base nunca usa una carpeta
+ * que exista en `contenido/`: en una base que ya tenga el banco real cargado, la carga de Física II con la carpeta `fisica-2`
+ * le cambiaría el código a la Física II real y la limpieza la borraría. Física II se carga como una copia con la carpeta
+ * `zzdg-fisica-2` (las de `pruebas/banco-ejemplo`, `materia-a` y `materia-b`, tampoco existen en `contenido/`). El `Banco` en
+ * memoria que devuelve `bancoDeFisicaII()` conserva `fisica-2`: es la referencia que usan las pruebas, y no se carga.
  */
 
 const RAIZ = fileURLToPath(new URL("..", import.meta.url));
 const EJEMPLO = join(RAIZ, "pruebas", "banco-ejemplo");
 const FISICA_II = join(RAIZ, "contenido", "fisica-2");
+/** La carpeta con la que Física II se carga en la base. No existe en `contenido/`. */
+const CARPETA_FISICA_II_EN_LA_BASE = "zzdg-fisica-2";
 
 /** Las materias de estos bancos, por el código que les da la base. */
 export const CODIGO_A = "ZZDG-0001";
@@ -73,21 +81,38 @@ export function bancoDeEjemplo(cambios: [string, string][] = []): Banco {
   ]);
 }
 
-/** Física II del contenido real, con el código `ZZDG-0003`. Su carpeta es `fisica-2`. */
+/** Física II del contenido real, con el código `ZZDG-0003`. Su carpeta es `fisica-2`: es la referencia en memoria, no lo que se carga. */
 export function bancoDeFisicaII(): Banco {
   return analizar(archivosDe(FISICA_II, "fisica-2/"), [["FISI-1019", CODIGO_FISICA_II]]);
+}
+
+/**
+ * La misma Física II con la carpeta `zzdg-fisica-2`: es la que se carga en la base. Si algún texto nombra la carpeta (un
+ * prerrequisito `fisica-2/clave`), se reescribe también; si quedara una referencia rota, `analizarBanco` falla en claro.
+ */
+function bancoDeFisicaIIParaLaBase(): Banco {
+  const archivos = archivosDe(FISICA_II, `${CARPETA_FISICA_II_EN_LA_BASE}/`).map((archivo) => ({
+    ...archivo,
+    texto: archivo.texto.replaceAll("fisica-2/", `${CARPETA_FISICA_II_EN_LA_BASE}/`),
+  }));
+  return analizar(archivos, [["FISI-1019", CODIGO_FISICA_II]]);
 }
 
 /**
  * Borra los bancos de prueba. Primero los diagnósticos de esas materias (`diagnostico_evaluacion_fk` no tiene cascada: con uno
  * terminado el `delete from evaluacion` falla con 23503) y las evaluaciones (su llave a materia tampoco cae en cascada). El
  * diagnóstico en curso se va en cascada con la Evaluación, y el resto del banco con la materia.
+ *
+ * Las materias se buscan por el código `ZZDG-` y también por la carpeta (`zzdg-%`, y `materia-a` y `materia-b` del ejemplo): el
+ * cargador reconoce la materia por la carpeta, así que una fila que dejó otra suite con esas carpetas (por ejemplo `banco.test.ts`
+ * cortada a medias, con un código que ya no empieza por `ZZDG-`) sería la que se reutilizaría y no se encontraría por el código.
  */
 export async function borrarBancoDePrueba(bd: pg.ClientBase): Promise<void> {
-  const materias = "select id from public.materia where codigo like 'ZZDG-%'";
+  const materias =
+    "select id from public.materia where codigo like 'ZZDG-%' or carpeta like 'zzdg-%' or carpeta in ('materia-a', 'materia-b')";
   await bd.query(`delete from public.diagnostico where id_materia in (${materias})`);
   await bd.query(`delete from public.evaluacion where id_materia in (${materias})`);
-  await bd.query("delete from public.materia where codigo like 'ZZDG-%'");
+  await bd.query(`delete from public.materia where id in (${materias})`);
 }
 
 /** Deja la base con el banco de ejemplo (y, si se pide, Física II) y nada más de los bancos de prueba. */
@@ -98,8 +123,9 @@ export async function cargarBancoDePrueba(
   await borrarBancoDePrueba(bd);
   const ejemplo = bancoDeEjemplo(opciones.cambiosAlEjemplo);
   await cargarBanco(bd, ejemplo, opciones.borradores ? CON_BORRADORES : SOLO_REVISADAS);
+  // Lo que se devuelve es la referencia (carpeta `fisica-2`); lo que va a la base es la copia con otra carpeta.
   const fisicaII = opciones.fisicaII ? bancoDeFisicaII() : null;
-  if (fisicaII) await cargarBanco(bd, fisicaII, SOLO_REVISADAS);
+  if (fisicaII) await cargarBanco(bd, bancoDeFisicaIIParaLaBase(), SOLO_REVISADAS);
   return { ejemplo, fisicaII };
 }
 
