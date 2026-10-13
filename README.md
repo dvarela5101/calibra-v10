@@ -203,7 +203,24 @@ HU-076 (D-38, D-39): al rechazar un pago, los avisos salen de la base, en la mis
 
 - Solo un admin activo inserta, y a su nombre: la política "admin certifica" exige `privado.es_admin()` y que `id_admin` sea él. La fecha de emisión la pone la base. Nadie con sesión cambia ni borra un certificado: revocar está fuera de alcance.
 - Los certificados de un admin desactivado siguen vigentes (RN-23).
-- Las materias reales llegarán con el banco de preguntas (HU-005) o con la gestión de materias (HU-055). Mientras tanto (D-2), la semilla local trae tres de prueba: MATE-1214, MATE-1207 y FISI-1018.
+- Las materias reales vienen del banco de preguntas (HU-005), y un admin también las crea y las corrige en `/admin/materias` (HU-055, sección «Materias y evaluaciones»). La semilla local trae tres de prueba: MATE-1214, MATE-1207 y FISI-1018 (D-2).
+
+## Materias y evaluaciones
+
+`/admin/materias` y `/admin/materias/[id]` (HU-055, D-62): un admin activo crea materias, corrige el nombre y el código de cada una y el nombre y la semana de sus evaluaciones, y borra lo que no tiene nada ligado. Cualquier otro rol va a su panel o a `/ingresar`. Los temas, las habilidades, las preguntas, qué evaluaciones están activas y si son acumulativas siguen saliendo del banco (`contenido/`): la app no los toca. Una materia nueva nace sin evaluaciones (excepción a RN-20) y las trae el banco.
+
+- Todo se escribe con la sesión del admin, nunca con la llave secreta. Los permisos son por columna: `nombre` y `codigo` de `materia` (insert y update) y `nombre` y `semana` de `evaluacion` (solo update), con una política por tabla y acción que exige `privado.es_admin()`. `clave`, `activa`, `acumulativo`, `carpeta`, `editada_en_app` y `delete` quedan denegados, y nadie inserta evaluaciones.
+- El código se guarda en mayúsculas y sin espacios en los bordes, con la forma de un código Uniandes (`AAAA-9999`). El nombre tiene de 1 a 120 caracteres, contados por puntos de código como hace `char_length`. La app lo valida y el trigger de la base (`privado.al_escribir_materia`) lo exige otra vez a quien escriba por la Data API, pero solo en lo que cambió: un código guardado sin esa forma (los de prueba `INT-`, `E2E-` o `PRB-`) no impide corregir el nombre. Dos materias no pueden tener el mismo código aunque difieran en mayúsculas o en los espacios de los bordes (índice único sobre `lower(btrim(codigo))`), y el error nombra a quien ya lo tiene. La semana es un entero mayor que 0, sin más tope que el `integer` de la base. El nombre de una evaluación no repite el de otra de la misma materia: lo comprueba la app y no un índice, porque los datos de prueba lo repiten.
+- Cambiar el código no desliga nada: certificados, franjas, monitorías, solicitudes y diagnósticos cuelgan del `id`. Los enlaces `/monitores?materia=<código viejo>` dejan de encontrarla (no hay alias) y el formulario avisa antes de guardar.
+- `materia.carpeta` es la carpeta de `contenido/` de la que vino la materia (nula si se creó en la app), y `editada_en_app`, en `materia` y en `evaluacion`, dice que un admin cambió lo que la carga trae de `materia.md`. La sube un trigger solo cuando escribe el rol `authenticated` con usuario y el valor cambia. La carga, la semilla, el SQL Editor, la llave secreta y los fixtures de pgTAP no la suben: una edición hecha directo en la base no se marca y la siguiente carga la pisa. La carga conserva nombre y código de una materia marcada y nombre y semana de una evaluación marcada, avisa con los dos valores, y baja la marca cuando `materia.md` ya dice lo mismo que la base. Reconoce la materia por su carpeta, y a una creada en la app con el código de una carpeta la adopta. El detalle está en `contenido/README.md`.
+- Cambiar la semana de una evaluación en la app no mueve los temas de una acumulativa: la expansión de las acumulativas usa las semanas de `materia.md`. Mover temas es un PR a `materia.md`.
+- Borrar solo se ofrece en la página de la materia, nunca en la lista. Ligado a una materia son sus evaluaciones, temas (con ellos habilidades, misconcepciones, preguntas y opciones), certificados, solicitudes de monitor, diagnósticos y monitorías en cualquier estado. Ligado a una evaluación son sus temas (`evaluacion_tema`) y sus diagnósticos. `diagnostico_en_curso` no cuenta: su llave a la evaluación es en cascada a propósito (HU-081) y solo existe para una evaluación activa, que siempre tiene temas. El botón sale únicamente cuando la base dijo que no hay nada ligado; con algo ligado la página dice qué tiene, y si no se pudo preguntar, no hay botón. Una materia del banco con temas nunca se puede borrar desde la app.
+- Nadie con sesión borra directo. El `delete` va por `public.borrar_materia(id)` y `public.borrar_evaluacion(id)`, que son `security invoker` y llaman a `privado.borrar_*` (`security definer`, como en el equipo de admins, HU-054). Toman la fila con `for update` y vuelven a mirar lo ligado con el candado puesto, así que lo que otra transacción ligó mientras tanto se ve y nada cae en cascada. Responden `borrada`, `no_existe`, `no_autorizado` (a quien no es admin activo) o `ligada:<lista>`. `public.ligado_de_materia(id)` y `public.ligado_de_evaluacion(id)` devuelven qué tiene ligado, y vacío a quien no es admin activo. `anon` no ejecuta ninguna de las cuatro.
+- Si una HU futura agrega una llave foránea hacia `materia` o `evaluacion`, `supabase/tests/gestionar_materias.test.sql` falla y obliga a decidir si cuenta como ligada y a sumarla a `privado.ligado_de_*`.
+- Una materia o evaluación borrada en la app que siga en `contenido/` vuelve con la siguiente carga, sin aviso: la carga no distingue una que nunca existió de una que se borró. Para quitarla del banco se saca su carpeta o su entrada de `materia.md` en un PR. Una evaluación que sale del banco queda inactiva pero conserva sus temas, así que la app nunca la deja borrar.
+- Renombrar una carpeta de `contenido/` ya no es transparente: la fila conserva la carpeta vieja y la carga falla nombrando las dos materias. Antes de cargar se actualiza `materia.carpeta` en la base (`update public.materia set carpeta = '<nueva>' where carpeta = '<vieja>'`).
+- El nombre de lo borrado viaja en la URL (`?borrada=` en la lista, `?evaluacion_borrada=` en la materia), como `/admin/equipo?desactivado=`. React lo escapa y la página exige admin.
+- Se prueba con `npm run db:verificar` (pgTAP: `supabase/tests/gestionar_materias.test.sql`), `npm test` (`src/lib/materias`, `src/app/admin/materias` y `pruebas/cargar-editadas.test.ts`), `npm run test:integracion -- integracion/materias.test.ts integracion/banco.test.ts` (sesiones reales y las carreras de dos conexiones) y `CI=1 npx playwright test e2e/materias.spec.ts`.
 
 ## Solicitudes para ser monitor
 
@@ -316,6 +333,18 @@ Cada fecha libre de `/monitores` lleva a `/agendar?franja=…&fecha=…&materia=
 - `public.finalizar_monitoria(id)` (invoker, solo con sesión) sobre `privado.finalizar_monitoria` (definer): con `auth.uid()` y `now()`, la pasa a `realizada` con `fecha_finalizacion` si es del monitor, está confirmada y ya llegó su inicio (D-13, borde incluido).
 - Cierre automático (P-05, D-14): pg_cron corre cada 15 minutos `privado.cerrar_monitorias_sin_finalizar(now())`, que cierra cada individual confirmada que alcanzó `public.cierre_automatico_desde(fin programado)` = fin + `cierre_automatico_min` (24 h, en `parametros_negocio()`). Las grupales no se cierran solas (su monitor entrega el enlace de reseña, HU-046).
 - Al pasar a `realizada` se crea el desembolso pendiente del monitor (HU-028, ver "Ejecutar un desembolso"). El correo de reseña individual sale con HU-035 (ver "Reseña individual").
+
+## Mis desembolsos (monitor)
+
+`/monitor/desembolsos` (HU-050, enlazada desde `/monitor`): los desembolsos del monitor en tres grupos, por transferir, transferidos y anulados. Cada uno trae la materia y el día y la hora de la sesión y, según su situación, una frase: desde cuándo se puede transferir, qué lo retiene, cuándo y con qué referencia se transfirió, o que se anuló. Los por transferir y los transferidos muestran tres cifras en este orden: el total de la monitoría, la comisión de Calibra y lo que se le transfiere (D-59). Es la única pantalla que muestra cifras de comisión.
+
+- La da `public.mis_desembolsos()` (invoker, solo `authenticated`) sobre `privado.mis_desembolsos_de_la_sesion()` (definer, pasa `now()`) y `privado.desembolsos_del_monitor(ahora)` (definer, sin `grant`: ninguna sesión elige la hora). Filtra por `auth.uid()` a través de `monitoria.id_monitor`, así que un admin, un Lead o una sesión anónima reciben una lista vacía y `anon` no tiene permiso.
+- La tabla `desembolso` sigue cerrada para el monitor (solo la lee un admin). La función devuelve 13 columnas: ni el admin, ni el nombre o el contacto del estudiante o de quien pagó, ni los motivos internos (P-37).
+- La situación es una lista cerrada de siete: `en_plazo`, `listo`, `pago_en_revision`, `pago_rechazado`, `en_espera`, `transferido` y `anulado`. Sale de `privado.estado_para_ejecutar`, la misma función que usa el admin, así que `listo` coincide con «Desembolsos ejecutables». Los motivos sin frase propia (`con_reporte`, `sin_pagos_aprobados`, `no_realizada` y cualquiera que se agregue después) salen como `en_espera`. No existe una situación de reporte en revisión: así el monitor no puede leer por la Data API que hay un reporte de inasistencia (D-59 b).
+- Los montos de un por transferir son el cálculo de ahora (`privado.calcular_desembolso`), nunca la foto de la fila (P-29). Los de un transferido son los que quedaron al ejecutarlo, con su llave y su referencia. Un anulado no trae montos ni llave. La app no calcula nada, tampoco la comisión (N-2). `fecha_desembolso` llega ya como día de Bogotá.
+- Si la llave copiada a un desembolso por transferir no es la que el monitor tiene hoy (HU-013), la tarjeta dice a cuál se transferirá y, si `CORREO_DATOS_PERSONALES` está configurado, a qué correo escribir si esa llave ya no sirve.
+- La lectura no escribe ni toma candados: nunca espera a un admin que ejecuta, acepta un reporte o revisa un pago, y lee cada desembolso completo, o por transferir o ya transferido.
+- La excepción de la comisión la vigilan `pruebas/comision-solo-en-desembolsos.test.ts` (ninguna otra pantalla, correo o consulta del código, y que `CLAUDE.md` y este archivo la nombren), `supabase/tests/mis_desembolsos.test.sql` (ninguna otra función, vista o tabla entrega la comisión a una sesión) y `e2e/mis-desembolsos.spec.ts` (el HTML de las demás pantallas de cada rol). Mostrarla en otro lugar exige cambiar la regla, `CLAUDE.md` y esas pruebas a la vez.
 
 ## Avisos al monitor
 
@@ -441,6 +470,16 @@ Si un correo falla por algo temporal (red, un 4xx de SMTP, un 5xx o el límite d
 - Se reintentan los fallidos temporales que llevan al menos 2 minutos quietos y los `pendiente` abandonados (su envío murió hace más de 5 minutos). Cada corrida toma hasta 10 y deja de tomar pasados 20 s, para terminar antes del límite de la función (60 s).
 - La invitación de monitor se reconstruye con un token nuevo, porque el token no se guarda: el enlace que no llegó deja de servir. Si el primer envío sí llegó y solo se perdió la respuesta, ese enlace también deja de servir; es raro y se acepta. Con Resend, además, el reintento repetiría la `Idempotency-Key` con otro contenido y Resend lo rechazaría (409, definitivo): al pasar a Resend hay que revisar este caso.
 
+### Procesadores de la bandeja de salida (HU-079)
+
+Seis correos salen por una bandeja de salida: la base anota una fila en su tabla (`aviso_monitor`, `confirmacion_cita`, `cancelacion_cita`, `pedido_llave`, `aviso_rechazo_pago` o `invitacion_resena`) y le pide a la app que la procese por `/api/procesos/<ruta>`. El bucle que las recorre está una sola vez, en `procesarBandeja` (`src/lib/correo/bandeja.ts`). Toma hasta 10 filas sin `procesado_en`, de la más antigua a la más reciente, y deja de tomar pasados 20 s. Reconstruye y manda cada correo, marca la fila cuando quedó en `correo_envio` o ya no vale, y cuando algo falla suma un intento y la abandona al quinto.
+
+- Una bandeja declara una `DefinicionDeBandeja` en su propio módulo: la tabla, las columnas y el orden de la consulta (o su propia lectura), cómo armar y mandar el correo de una fila, y cómo nombrarla en el log. El texto `plantilla: "..."` se queda en ese módulo, porque `pruebas/reconstructores.test.ts` solo lo busca fuera de `src/lib/correo/`. La definición se escribe con `satisfies DefinicionDeBandeja<Fila>` y no con una anotación: con la anotación, TypeScript pierde el gancho `enEspera` y el resumen de las invitaciones de reseña deja de traerlo.
+- Aparte necesita su tabla (con `procesado_en` e `intentos`, y `select` y `update (procesado_en, intentos)` solo para `service_role`), su ruta en `src/app/api/procesos/` con `autorizaProceso`, su reconstructor en `src/lib/correo/reconstructores.ts` (HU-065) y su trabajo de pg_cron. Para pedirle a la app que procese se usa `privado.disparar_proceso`. La tabla nueva se suma a `TablaDeBandeja` y el módulo, a la lista de `pruebas/bandejas.test.ts`.
+- No se copia el bucle: `pruebas/bandejas.test.ts` falla si otro archivo marca `procesado_en`.
+- El resumen de cada corrida es lo que responde la ruta. Los avisos al monitor lo devuelven en masculino (`revisados`, `enviados`...) y las invitaciones de reseña le suman `enEspera`.
+- Si el correo salió y la fila no se pudo marcar, la corrida la cuenta como enviada y con error, y la siguiente la marca. Es el comportamiento de siempre y está fijado en `src/lib/correo/bandeja.test.ts`.
+
 ### Limpieza de sesiones anónimas (HU-056)
 
 Cada día a las 08:23 UTC (03:23 en Bogotá) pg_cron corre `privado.limpiar_sesiones_anonimas(now())` (trabajo `calibra-limpiar-sesiones-anonimas`). Borra de Auth las sesiones anónimas que no son de nadie y llevan más de 90 días sin actividad (P-13), y con ellas sus diagnósticos. Vive solo en la base: no pasa por `/api/procesos`, no usa Vault ni manda correos.
@@ -477,7 +516,7 @@ Mientras falten los secretos, el paso de despliegue se salta con un aviso y el p
 
 - Zona horaria de negocio `America/Bogota`, idioma `es`, locale `es-CO`: `src/config/regional.ts`. Toda fecha se muestra en esa zona aunque el servidor corra en UTC (`src/lib/fechas.ts`).
 - Tokens de diseño del prototipo: `src/styles/tokens.css`. Los colores `--alert`, `--warn` y `--success` son solo relleno; para texto se usan `--alert-text`, `--success-text` y `--muted`, que pasan WCAG AA. `src/styles/tokens.test.ts` lo comprueba.
-- Reglas que no se negocian: ningún texto por debajo de 14 px, áreas táctiles de 44 px o más, sin degradados, sin emojis decorativos, sin iconos de cerebro, robot o IA, y nunca mostrar cifras de comisión, salvo al monitor en sus desembolsos (D-59).
+- Reglas que no se negocian: ningún texto por debajo de 14 px, áreas táctiles de 44 px o más, sin degradados, sin emojis decorativos, sin iconos de cerebro, robot o IA, y nunca mostrar cifras de comisión; única excepción (D-59): `/monitor/desembolsos`, al monitor dueño del desembolso (ver «Mis desembolsos (monitor)»).
 
 ## Estructura
 
@@ -487,7 +526,7 @@ src/config/           Configuración regional
 src/lib/              Utilidades compartidas
 src/styles/           Tokens de diseño
 e2e/                  Pruebas de Playwright
-pruebas/              Pruebas del repo (secretos, convertidor y banco de ejemplo)
+pruebas/              Pruebas del repo (secretos, convertidor, banco de ejemplo y la excepción de la comisión)
 contenido/            Banco de preguntas por habilidades, una carpeta por materia (ver contenido/README.md)
 scripts/contenido/    Convertidor del banco: valida, carga y migración del prototipo
 supabase/migrations/  Esquema de la base (migraciones idempotentes)

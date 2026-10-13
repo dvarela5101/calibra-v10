@@ -87,6 +87,11 @@ export default async function PanelMonitor() {
         </Link>
       )}
       {conCertificados && (
+        <Link href="/monitor/desembolsos" className={formulario.enlace}>
+          Mis desembolsos
+        </Link>
+      )}
+      {conCertificados && (
         <Link href="/monitor/franjas" className={formulario.enlace}>
           Mis franjas
         </Link>
