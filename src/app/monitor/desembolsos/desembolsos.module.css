@@ -1,0 +1,112 @@
+/* Mis desembolsos (HU-050). Tarjetas como las de la agenda; solo variables de tokens.css (la prueba estilos.test.ts lo vigila). */
+
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-block-start: var(--e4);
+}
+
+.titulo {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  list-style: none;
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  min-inline-size: 0;
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+.cabeza {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.detalle {
+  font-size: 15px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* --success y --alert son solo relleno: el texto de la situación va en --text, --success-text o --alert-text. */
+.situacion {
+  margin-block-start: var(--e1);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.transferido {
+  color: var(--success-text);
+}
+
+.anulado {
+  color: var(--alert-text);
+}
+
+.montos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  margin: var(--e2) 0 0;
+  font-size: 15px;
+}
+
+.fila {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--e1) var(--e2);
+}
+
+.rotulo {
+  overflow-wrap: anywhere;
+}
+
+/* El valor no se parte: "$ 150.000" en un renglón, y si no cabe junto al rótulo, baja entero. */
+.valor {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.neto {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.dato {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.mas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+/* list-item conserva el triángulo que dice si está abierto. */
+.resumen {
+  display: list-item;
+  min-block-size: var(--toque-min);
+  padding-block: var(--e2);
+  font-size: 15px;
+  color: var(--primary);
+  cursor: pointer;
+}
