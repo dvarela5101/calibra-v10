@@ -295,13 +295,13 @@ isOneToOne: true
                   ]
                 },"evaluacion": {
                   Row: {
-                    "activa": boolean,"acumulativo": boolean,"clave": string | null,"id": string,"id_materia": string,"nombre": string,"semana": number
+                    "activa": boolean,"acumulativo": boolean,"clave": string | null,"editada_en_app": boolean,"id": string,"id_materia": string,"nombre": string,"semana": number
                   }
                   Insert: {
-                    "activa"?: boolean,"acumulativo"?: boolean,"clave"?: string | null,"id"?: string,"id_materia": string,"nombre": string,"semana": number
+                    "activa"?: boolean,"acumulativo"?: boolean,"clave"?: string | null,"editada_en_app"?: boolean,"id"?: string,"id_materia": string,"nombre": string,"semana": number
                   }
                   Update: {
-                    "activa"?: boolean,"acumulativo"?: boolean,"clave"?: string | null,"id"?: string,"id_materia"?: string,"nombre"?: string,"semana"?: number
+                    "activa"?: boolean,"acumulativo"?: boolean,"clave"?: string | null,"editada_en_app"?: boolean,"id"?: string,"id_materia"?: string,"nombre"?: string,"semana"?: number
                   }
                   Relationships: [
                     {
@@ -564,13 +564,13 @@ isOneToOne: true
                   ]
                 },"materia": {
                   Row: {
-                    "codigo": string,"id": string,"nombre": string
+                    "carpeta": string | null,"codigo": string,"editada_en_app": boolean,"id": string,"nombre": string
                   }
                   Insert: {
-                    "codigo": string,"id"?: string,"nombre": string
+                    "carpeta"?: string | null,"codigo": string,"editada_en_app"?: boolean,"id"?: string,"nombre": string
                   }
                   Update: {
-                    "codigo"?: string,"id"?: string,"nombre"?: string
+                    "carpeta"?: string | null,"codigo"?: string,"editada_en_app"?: boolean,"id"?: string,"nombre"?: string
                   }
                   Relationships: [
                     
@@ -1127,6 +1127,12 @@ isOneToOne: false
 "banco_de_la_evaluacion":
 { Args: { "p_id_evaluacion": string }; Returns: Json
                            },
+"borrar_evaluacion":
+{ Args: { "p_id": string }; Returns: string
+                           },
+"borrar_materia":
+{ Args: { "p_id": string }; Returns: string
+                           },
 "cancelable_hasta":
 { Args: { "p_es_grupal": boolean,"p_inicio": string }; Returns: string
                            },
@@ -1286,6 +1292,12 @@ isOneToOne: false
 { Args: { "p_limite": number }; Returns: {
               "id": string,"id_pago": string,"intentos": number
             }[]
+                           },
+"ligado_de_evaluacion":
+{ Args: { "p_id": string }; Returns: (string)[]
+                           },
+"ligado_de_materia":
+{ Args: { "p_id": string }; Returns: (string)[]
                            },
 "llaves_de_cancelacion":
 { Args: { "p_id_monitoria": string }; Returns: {
