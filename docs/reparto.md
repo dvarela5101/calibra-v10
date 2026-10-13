@@ -14,7 +14,7 @@
 | Persona | Siguiente, en orden |
 |---|---|
 | Juzou04 | 1) Fusionar [HU-081](../backlog/HU-081.md) ([PR #51](https://github.com/dvarela5101/calibra-v10/pull/51)) y [HU-083](../backlog/HU-083.md) ([PR #52](https://github.com/dvarela5101/calibra-v10/pull/52)). 2) [HU-009](../backlog/HU-009.md) (M). 3) [HU-011](../backlog/HU-011.md) (M). 4) [HU-022](../backlog/HU-022.md) (L; su punto 8 espera HU-087). 5) [HU-084](../backlog/HU-084.md) (S). 6) [HU-055](../backlog/HU-055.md) (L). 7) Volver a refinar [HU-034](../backlog/HU-034.md) con D-56 y construirla. 8) [HU-052](../backlog/HU-052.md) (M) y [HU-050](../backlog/HU-050.md) (M) |
-| dvarela5101 | 1) [HU-056](../backlog/HU-056.md) (S). 2) [HU-087](../backlog/HU-087.md) (S). 3) [HU-053](../backlog/HU-053.md) (M) y después [HU-089](../backlog/HU-089.md) (S). 4) [HU-010](../backlog/HU-010.md) (M), cuando HU-009 esté `Hecha`. 5) [HU-031](../backlog/HU-031.md) (M). 6) [HU-048](../backlog/HU-048.md) (M). 7) [HU-049](../backlog/HU-049.md) (L) |
+| dvarela5101 | 1) [HU-056](../backlog/HU-056.md) (S). 2) [HU-087](../backlog/HU-087.md) (S). 3) [HU-053](../backlog/HU-053.md) (M) y después [HU-089](../backlog/HU-089.md) (S). 4) [HU-010](../backlog/HU-010.md) (M), cuando HU-009 esté `Hecha`. 5) [HU-031](../backlog/HU-031.md) (M). 6) [HU-048](../backlog/HU-048.md) (M). 7) [HU-049](../backlog/HU-049.md) (M) y después [HU-092](../backlog/HU-092.md) (M), partición de HU-049 (D-58, 13-oct) |
 
 Sin dueño, después del corte: HU-032, HU-033, HU-072, HU-079, HU-085, HU-086, HU-088, HU-090 y las grupales (D-47).
 
