@@ -2,7 +2,7 @@
 
 De aquí saca Calibra las preguntas del diagnóstico. Cada materia tiene su carpeta y cada tema su archivo de Markdown, para que cualquiera del equipo pueda escribir y revisar preguntas en un PR sin programar.
 
-**Esta carpeta manda.** La base de datos se carga desde aquí con `npm run contenido:cargar`. Lo que se edite a mano en la base se pierde en la siguiente carga.
+**Esta carpeta manda, salvo lo que un admin corrigió en la app.** La base de datos se carga desde aquí con `npm run contenido:cargar`. Lo que un admin cambia en `/admin/materias` (el nombre y el código de una materia, el nombre y la semana de una evaluación) lo conserva la carga y lo avisa (ver «Comandos»). Lo que se edite a mano en la base, sin pasar por la app, se pierde en la siguiente carga.
 
 El diseño completo, con el porqué de cada regla, está en [docs/diseno/2026-09-29-banco-por-habilidades.md](../docs/diseno/2026-09-29-banco-por-habilidades.md). El material fuente (parciales, talleres, guías) nunca entra a este repo: es de los profesores y de la universidad, y el repo es público.
 
@@ -39,7 +39,7 @@ temas: partes
 temas: sustitucion
 ```
 
-- `codigo` es el código Uniandes en mayúsculas (`MATE-1214`) y es lo que identifica la materia en la base. Cambiarlo después crea otra materia, así que confírmalo antes de cargar en producción.
+- `codigo` es el código Uniandes en mayúsculas (`MATE-1214`). La carga reconoce la materia por su carpeta y no por el código, así que cambiarlo después no crea otra materia: si nadie lo editó en la app, la siguiente carga lo aplica. Si otra materia ya tiene el código nuevo, la carga falla entera y nombra las dos.
 - `## Temas` da el orden de los temas. Cada clave tiene su archivo `<clave>.md` y cada archivo de tema está en la lista.
 - Cada materia tiene al menos una evaluación. La semana es la del curso, según el programa de la materia.
 - Una evaluación `acumulativa` cubre sus temas y los de todas las evaluaciones de la misma materia con semana menor. Si no agrega temas propios, la línea queda como `temas:`.
@@ -127,7 +127,13 @@ npm run contenido:cargar -- --borradores  # carga también los borradores
 ```
 
 - La validación señala cada error con archivo y línea, y no carga nada si hay errores. Imprime los avisos, las filas que se cargarían, la cobertura y qué evaluaciones quedan activas. El CI la corre en cada PR.
-- La carga solo acepta la base local. Se puede correr las veces que quieras: cada fila se reconoce por su clave dentro de la materia, así que nada se duplica. Sin `--borradores` solo carga las revisadas. Una pregunta que desaparece del banco queda `retirada` en la base. Un tema, una habilidad, una misconcepción o una evaluación que desaparecen no se borran: la carga lo avisa y termina con error porque la base queda con más filas que el banco. Hay que borrarlos a mano en la base local. Una evaluación que ya no está en el banco queda inactiva.
+- La carga solo acepta la base local. Se puede correr las veces que quieras: cada fila se reconoce por su clave dentro de la materia, y la materia por su carpeta, así que nada se duplica. Sin `--borradores` solo carga las revisadas. Una pregunta que desaparece del banco queda `retirada` en la base. Un tema, una habilidad, una misconcepción o una evaluación que desaparecen no se borran: la carga lo avisa y termina con error porque la base queda con más filas que el banco. Hay que borrarlos a mano en la base local. Una evaluación que ya no está en el banco queda inactiva.
+- Lo que un admin corrigió en la app (`/admin/materias`) se conserva: el nombre y el código de una materia, y el nombre y la semana de una evaluación. La carga no los vuelve a poner y deja una línea de aviso por fila, con los dos valores: `materia-a: la base conserva lo que un admin cambió en la app (nombre: base "X", materia.md "Y"). Para que vuelva a seguir al banco, iguala materia.md con la base.` Cuando `materia.md` ya dice lo mismo que la base, la carga baja la marca y esa fila vuelve a seguir al banco. Todo lo demás sigue saliendo del banco: temas, habilidades, preguntas, qué evaluaciones están activas, si son acumulativas y los temas de cada una. La marca es por fila: si un admin corrige solo el nombre de una materia, un PR que cambie su código tampoco se aplica hasta que `materia.md` iguale la base.
+- Cambiar la semana de una evaluación en la app no mueve los temas de una acumulativa, porque las acumulativas se expanden con las semanas de `materia.md`. Para mover temas se cambia `materia.md` en un PR.
+- La carga reconoce la materia por su carpeta (`materia.carpeta`) y no por el código. Una materia que un admin creó en la app con el código de una carpeta se adopta en la primera carga: queda con esa carpeta y recibe sus temas, sin duplicarse. Si el código de `materia.md` ya lo tiene otra materia, la carga falla entera con un mensaje que nombra las dos y no cambia nada.
+- Renombrar una carpeta de `contenido/` necesita un paso a mano. La fila conserva la carpeta vieja y la carga falla nombrando las dos materias, así que antes de cargar se corrige en la base local: `update public.materia set carpeta = '<nueva>' where carpeta = '<vieja>'`.
+- Una materia o una evaluación borrada desde la app que siga en `contenido/` vuelve con la siguiente carga, sin aviso: la carga no distingue una que nunca existió de una que se borró. Para quitarla del banco se saca su carpeta o su entrada de `materia.md` en un PR. Una evaluación que sale del banco queda inactiva y conserva sus temas, así que la app no deja borrarla. La app solo borra lo que no tiene nada ligado, y una materia con temas cargados nunca se borra desde ahí.
+- Una edición hecha directo en la base, sin pasar por la app (SQL Editor, `psql` o la llave secreta), no se marca y la siguiente carga la pisa.
 
 ## De dónde viene este contenido
 

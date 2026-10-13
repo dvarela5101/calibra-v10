@@ -1,7 +1,16 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Plantilla, Reconstruccion } from "@/lib/correo/plantillas";
-import { enviarCorreoDesdeServidor, urlDelSitio, type EntradaDeEnvio, type ResultadoEnvio } from "@/lib/correo/servidor";
+import {
+  LOTE_POR_DEFECTO,
+  MAXIMO_DE_INTENTOS,
+  PRESUPUESTO_DE_CORRIDA_MS,
+  procesarBandeja,
+  type DefinicionDeBandeja,
+  type DependenciasDeBandeja,
+  type ResumenDeBandejaConEspera,
+} from "@/lib/correo/bandeja";
+import type { Reconstruccion } from "@/lib/correo/plantillas";
+import { urlDelSitio } from "@/lib/correo/servidor";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/tipos";
 import { datosDeResenaIndividual, rutaDeResena, tieneFormaDeTokenDeResena, type DatosDeInvitacion, type EstadoDeResena } from "./reglas";
@@ -11,17 +20,10 @@ type Cliente = SupabaseClient<Database>;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Cuántas invitaciones toma cada corrida. Lo normal es una por corrida: el trigger la pide al anotarla. */
-export const LOTE_DE_INVITACIONES = 10;
+export const LOTE_DE_INVITACIONES = LOTE_POR_DEFECTO;
 
-/**
- * La corrida deja de tomar invitaciones pasado este tiempo, como los avisos de HU-051: un envío con el proveedor
- * caído puede tardar unos 32 s, y 20 s más ese envío caben en el límite de la función (60 s). Cortar a mitad de
- * un envío podría dejarlo `pendiente` aunque haya salido, y el reintento lo mandaría otra vez.
- */
-export const PRESUPUESTO_DE_CORRIDA_MS = 20_000;
-
-/** Corridas en las que una invitación puede fallar antes de abandonarla, para que no tape a las demás. */
-export const MAXIMO_DE_INTENTOS = 5;
+// El presupuesto de la corrida y el máximo de intentos viven en `procesarBandeja`; se reexportan porque las pruebas los importan de aquí.
+export { MAXIMO_DE_INTENTOS, PRESUPUESTO_DE_CORRIDA_MS };
 
 /** Los datos del correo de un pago, con la llave secreta. `null` si el pago no tiene invitación. */
 async function leerDatos(cliente: Cliente, idPago: string): Promise<DatosDeInvitacion | null> {
@@ -53,86 +55,12 @@ export async function reconstruirInvitacionResena(
   return d?.disponible ? { destinatario: d.correoLead, datos: datosDeResenaIndividual(d, urlDelSitio(rutaDeResena(d.token))) } : null;
 }
 
-export type ResumenDeInvitaciones = {
-  revisadas: number;
-  enviadas: number;
-  /** Tiene un reporte de inasistencia abierto (HU-080, D-40): se salta sin marcarla ni sumar intento, y sale al rechazarse el reporte. */
-  enEspera: number;
-  /** La invitación ya no valía (ya hay reseña, el pago se rechazó o no tiene datos): no se manda. */
-  descartadas: number;
-  /** El correo falló y quedó `fallido` en `correo_envio`: lo reintenta HU-065 o lo ve el admin. */
-  fallidas: number;
-  /** Otra corrida lo estaba mandando (la clave del correo es única). */
-  tomadasPorOtro: number;
-  /** No se pudo procesar (error de la base o de los datos): se reintenta en otra corrida, hasta `MAXIMO_DE_INTENTOS`. */
-  conError: number;
-  /** Se acabó el presupuesto de tiempo: quedan para la próxima corrida. */
-  pospuestas: number;
-};
+/** El resumen de las otras bandejas, más las invitaciones que esperan a que se decida un reporte (HU-080, D-40). */
+export type ResumenDeInvitaciones = ResumenDeBandejaConEspera;
 
-export type DependenciasDeInvitaciones = {
-  /** Con la llave secreta: `invitacion_resena` solo la lee y la marca el servidor. */
-  cliente: Cliente;
-  enviar: <P extends Plantilla>(entrada: EntradaDeEnvio<P>) => Promise<ResultadoEnvio>;
-  /** El reloj de la corrida, para el presupuesto de tiempo. */
-  reloj: () => number;
-};
+export type DependenciasDeInvitaciones = DependenciasDeBandeja;
 
 type Invitacion = { id: string; id_pago: string; intentos: number };
-
-/**
- * Manda las invitaciones pendientes (HU-035), de la más antigua a la más reciente. Cada una queda procesada cuando
- * su correo queda en `correo_envio` (enviado, o fallido para reintentar) o cuando ya no vale. Si no se pudo
- * procesar, suma un intento y se abandona al llegar a `MAXIMO_DE_INTENTOS`. Las que tienen un reporte abierto se saltan (HU-080). Dos corridas a la vez no lo mandan dos
- * veces: la clave del correo (`resena_individual:<id_pago>`) es única.
- */
-export async function procesarInvitacionesResena(dependencias?: Partial<DependenciasDeInvitaciones>): Promise<ResumenDeInvitaciones> {
-  const cliente = dependencias?.cliente ?? crearClienteAdmin();
-  const enviar = dependencias?.enviar ?? enviarCorreoDesdeServidor;
-  const reloj = dependencias?.reloj ?? Date.now;
-  const inicio = reloj();
-  const resumen: ResumenDeInvitaciones = { revisadas: 0, enviadas: 0, enEspera: 0, descartadas: 0, fallidas: 0, tomadasPorOtro: 0, conError: 0, pospuestas: 0 };
-
-  // Sin las que están en espera por un reporte abierto: las excluye la base (HU-080).
-  const { data: invitaciones, error } = await cliente.rpc("invitaciones_resena_por_procesar", { p_limite: LOTE_DE_INVITACIONES });
-  if (error) throw new Error(`No se pudieron leer las invitaciones: ${error.message}`);
-
-  for (const invitacion of invitaciones ?? []) {
-    resumen.revisadas++;
-    if (reloj() - inicio >= PRESUPUESTO_DE_CORRIDA_MS) {
-      resumen.pospuestas++;
-      continue;
-    }
-    try {
-      const correo = await reconstruirInvitacionResena(invitacion.id_pago, cliente);
-      const resultado = correo && (await enviar({ plantilla: "resena_individual", ...correo, entidad: invitacion.id_pago }));
-      if (!resultado) {
-        // Un reporte abierto que llegó después del listado no descarta la invitación: queda para cuando se decida.
-        if (await invitacionEnEspera(cliente, invitacion.id_pago)) {
-          resumen.enEspera++;
-          continue;
-        }
-        resumen.descartadas++;
-      } else if (resultado.ok) {
-        resumen.enviadas++;
-      } else if (resultado.motivo === "en_curso") {
-        resumen.tomadasPorOtro++;
-      } else if (resultado.motivo === "fallo_del_registro") {
-        // Sin registro no hay reintento de HU-065: la invitación vuelve a intentarse en otra corrida.
-        throw new Error(resultado.error);
-      } else {
-        // Quedó `fallido` en el registro (o el correo del Lead no es un correo): HU-065 y la bandeja del admin.
-        console.error(`[resenas] la invitación del pago ${invitacion.id_pago} no salió: ${resultado.error}`);
-        resumen.fallidas++;
-      }
-      await marcar(cliente, invitacion, { procesado_en: new Date().toISOString() });
-    } catch (falla) {
-      resumen.conError++;
-      await sumarIntento(cliente, invitacion, falla);
-    }
-  }
-  return resumen;
-}
 
 /** ¿La invitación sigue sin procesar y su monitoría tiene un reporte de inasistencia abierto? (HU-080) */
 async function invitacionEnEspera(cliente: Cliente, idPago: string): Promise<boolean> {
@@ -141,24 +69,29 @@ async function invitacionEnEspera(cliente: Cliente, idPago: string): Promise<boo
   return data === true;
 }
 
-async function marcar(cliente: Cliente, invitacion: Invitacion, cambios: { procesado_en?: string; intentos?: number }): Promise<void> {
-  const { error } = await cliente.from("invitacion_resena").update(cambios).eq("id", invitacion.id);
-  if (error) throw new Error(`No se pudo marcar la invitación: ${error.message}`);
-}
+const BANDEJA = {
+  prefijo: "resenas",
+  tabla: "invitacion_resena",
+  lote: LOTE_DE_INVITACIONES,
+  // Sin las que están en espera por un reporte abierto: las excluye la base (HU-080).
+  lectura: { leer: (cliente, lote) => cliente.rpc("invitaciones_resena_por_procesar", { p_limite: lote }) },
+  textos: { leer: "No se pudieron leer las invitaciones", marcar: "No se pudo marcar la invitación" },
+  nombrar: (invitacion) => `la invitación del pago ${invitacion.id_pago}`,
+  mandar: async (invitacion, { cliente, enviar }) => {
+    const correo = await reconstruirInvitacionResena(invitacion.id_pago, cliente);
+    return correo && enviar({ plantilla: "resena_individual", ...correo, entidad: invitacion.id_pago });
+  },
+  // Un reporte abierto que llegó después del listado no descarta la invitación: queda para cuando se decida.
+  enEspera: (invitacion, cliente) => invitacionEnEspera(cliente, invitacion.id_pago),
+} satisfies DefinicionDeBandeja<Invitacion>;
 
-/** Suma un intento fallido; al llegar al máximo, abandona la invitación (queda procesada y se avisa en el log). */
-async function sumarIntento(cliente: Cliente, invitacion: Invitacion, falla: unknown): Promise<void> {
-  const mensaje = falla instanceof Error ? falla.message : String(falla);
-  const intentos = invitacion.intentos + 1;
-  const abandonar = intentos >= MAXIMO_DE_INTENTOS;
-  console.error(
-    `[resenas] no se pudo procesar la invitación del pago ${invitacion.id_pago} (intento ${intentos}${abandonar ? ", se abandona" : ""}): ${mensaje}`,
-  );
-  try {
-    await marcar(cliente, invitacion, abandonar ? { intentos, procesado_en: new Date().toISOString() } : { intentos });
-  } catch (otra) {
-    console.error("[resenas] tampoco se pudo anotar el intento:", otra instanceof Error ? otra.message : otra);
-  }
+/**
+ * Manda las invitaciones pendientes (HU-035) con `procesarBandeja`, de la más antigua a la más reciente. Las que tienen
+ * un reporte abierto se saltan (HU-080). Dos corridas a la vez no lo mandan dos veces: la clave del correo
+ * (`resena_individual:<id_pago>`) es única.
+ */
+export function procesarInvitacionesResena(dependencias?: Partial<DependenciasDeInvitaciones>): Promise<ResumenDeInvitaciones> {
+  return procesarBandeja(BANDEJA, dependencias);
 }
 
 const ESTADOS: readonly EstadoDeResena[] = ["disponible", "ya_resenada", "con_reporte", "no_disponible"];

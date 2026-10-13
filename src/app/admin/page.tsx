@@ -54,6 +54,9 @@ export default async function PanelAdmin({ searchParams }: PageProps<"/admin">) 
       <Link href="/admin/certificados" className={formulario.enlace}>
         Certificar monitores
       </Link>
+      <Link href="/admin/materias" className={formulario.enlace}>
+        Materias y evaluaciones
+      </Link>
       <Link href="/admin/solicitudes" className={formulario.enlace}>
         Solicitudes para ser monitor
       </Link>
