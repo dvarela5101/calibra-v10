@@ -64,6 +64,15 @@ describe("La bandeja: los avisos de las acciones de reembolsos", () => {
   });
 });
 
+describe("La bandeja: los enlaces a otras pantallas", () => {
+  it("HU-052: lleva a las citas sin plazo para cancelar, con un enlace y sin contador ni consulta nueva", async () => {
+    const html = await pintar({});
+    expect(html).toMatch(/<a [^>]*href="\/admin\/citas"[^>]*>Citas sin plazo para cancelar<\/a>/);
+    // Solo el enlace: ningún número lo acompaña.
+    expect(html).not.toMatch(/Citas sin plazo para cancelar[^<]*<span/);
+  });
+});
+
 describe("El panel: los enlaces a las pantallas de administración", () => {
   it("HU-055: ofrece «Materias y evaluaciones», que lleva a /admin/materias, justo después de «Certificar monitores»", async () => {
     const html = await pintar({});
