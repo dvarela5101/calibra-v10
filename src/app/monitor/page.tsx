@@ -96,6 +96,10 @@ export default async function PanelMonitor() {
           Mis franjas
         </Link>
       )}
+      {/* HU-049: entra aunque todavía no tenga certificados. */}
+      <Link href="/monitor/perfil" className={formulario.enlace}>
+        Mi perfil
+      </Link>
       {privado && <FormularioLlave llave={privado.llave} />}
       <BotonSalir />
     </Pantalla>

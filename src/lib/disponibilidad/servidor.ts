@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/tipos";
+import type { DatosDelPerfil } from "@/lib/monitores/perfil";
 import type { FechaLibre } from "./reglas";
 
 /**
@@ -45,4 +46,21 @@ export async function cargarFechasLibres(cliente: Cliente, codigoMateria: string
     presencial: f.presencial,
     precio: f.precio,
   }));
+}
+
+/**
+ * HU-049: los perfiles de los monitores que ya trajo la lista, en una segunda consulta. La política de
+ * `perfil_monitor` solo deja ver los de monitores certificados con la cuenta activa. HU-092 le sumará los temas.
+ * Si la lectura falla, la lista sale sin perfiles y el error queda en el log (solo el código, nunca el texto).
+ */
+export async function cargarPerfiles(cliente: Cliente, ids: string[]): Promise<Map<string, DatosDelPerfil>> {
+  const perfiles = new Map<string, DatosDelPerfil>();
+  if (ids.length === 0) return perfiles;
+  const { data, error } = await cliente.from("perfil_monitor").select("id_monitor, carrera, semestre, presentacion").in("id_monitor", ids);
+  if (error) {
+    console.error("[monitores] no se pudieron leer los perfiles:", error.code ?? "sin código");
+    return perfiles;
+  }
+  for (const { id_monitor, ...perfil } of data ?? []) perfiles.set(id_monitor, perfil);
+  return perfiles;
 }

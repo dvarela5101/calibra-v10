@@ -893,13 +893,13 @@ isOneToOne: false
                   ]
                 },"perfil_monitor": {
                   Row: {
-                    "id_monitor": string
+                    "carrera": string | null,"id_monitor": string,"presentacion": string | null,"semestre": number | null
                   }
                   Insert: {
-                    "id_monitor": string
+                    "carrera"?: string | null,"id_monitor": string,"presentacion"?: string | null,"semestre"?: number | null
                   }
                   Update: {
-                    "id_monitor"?: string
+                    "carrera"?: string | null,"id_monitor"?: string,"presentacion"?: string | null,"semestre"?: number | null
                   }
                   Relationships: [
                     {

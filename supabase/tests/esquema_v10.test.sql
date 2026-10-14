@@ -352,7 +352,7 @@ select is(
 select is(
   (select count(*)::int from public.perfil_monitor
    where id_monitor in ('b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000002')),
-  2, 'RLS: anon lee el perfil del monitor');
+  1, 'RLS: anon lee el perfil del monitor certificado, no el del que no tiene certificado (HU-049)');
 select is(
   (select count(*)::int from public.certificado where id = '90000000-0000-0000-0000-000000000001'),
   1, 'RLS: anon lee los certificados');
