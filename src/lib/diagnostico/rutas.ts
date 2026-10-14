@@ -14,3 +14,8 @@ export function rutaDeDiagnostico(): string {
 export function rutaDeResultado(id: string): string {
   return `${RUTA_DIAGNOSTICO}/resultado/${id}`;
 }
+
+/** HU-031: el enlace del correo de recuperación, que se abre sin sesión desde cualquier dispositivo. */
+export function rutaDeResultados(token: string): string {
+  return `/resultados?token=${encodeURIComponent(token)}`;
+}

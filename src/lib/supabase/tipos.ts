@@ -1570,6 +1570,11 @@ isOneToOne: false
 "responder_diagnostico":
 { Args: { "p_copia": Json,"p_id": string,"p_id_sesion": string,"p_paso": number }; Returns: boolean
                            },
+"resultado_por_token":
+{ Args: { "p_token": string }; Returns: {
+              "aciertos": number,"codigo_materia": string,"fecha_realizacion": string,"id_diagnostico": string,"nombre_evaluacion": string,"nombre_materia": string,"respondidas": number,"resultado": Json
+            }[]
+                           },
 "revisar_pago":
 { Args: { "p_decision": string,"p_id_pago": string,"p_observaciones"?: string }; Returns: {
               "cancelo_monitoria": boolean,"resultado": string

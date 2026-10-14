@@ -9,6 +9,7 @@ import {
 } from "@/lib/avisos/servidor";
 import { reconstruirCancelacionCita } from "@/lib/citas/cancelar";
 import { reconstruirConfirmacionCita } from "@/lib/citas/servidor";
+import { reconstruirRecuperacion } from "@/lib/diagnostico/recuperacion";
 import { reconstruirVerificacion } from "@/lib/leads/servidor";
 import { reconstruirInvitacion } from "@/lib/monitores/servidor";
 import { reconstruirPedidoDeLlave, reconstruirRecordatorioDeLlave } from "@/lib/reembolsos/pedidos";
@@ -35,8 +36,8 @@ export const RECONSTRUCTORES: Reconstructores = {
   aviso_monitor_pago_rechazado: (entidad) => reconstruirAvisoPagoRechazado(entidad),
   pago_rechazado_sin_reembolso: (entidad) => reconstruirPagoRechazadoSinReembolso(entidad),
   aviso_monitor_inasistencia_aceptada: (entidad) => reconstruirAvisoInasistenciaAceptada(entidad),
+  recuperacion_diagnostico: (entidad) => reconstruirRecuperacion(entidad),
   // Todavía ninguna HU dispara estas plantillas.
-  recuperacion_diagnostico: null,
   pago_rechazado_grupal: null,
   escalamiento_pago: null,
 };

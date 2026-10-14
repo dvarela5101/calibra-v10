@@ -23,6 +23,9 @@ const falsos = vi.hoisted(() => ({
   responder: vi.fn(),
   leer: vi.fn(),
   cliente: { rpc: vi.fn() } as { rpc: unknown } | null,
+  // HU-031: lo que se programa para después de responder, sin correrlo.
+  programadas: [] as (() => Promise<unknown>)[],
+  mandar: vi.fn(),
 }));
 
 vi.mock("@/lib/auth/sesion", () => ({ obtenerSesion: async () => falsos.sesion }));
@@ -32,6 +35,10 @@ vi.mock("@/lib/diagnostico/servidor", () => ({
 }));
 vi.mock("@/lib/diagnostico/lectura", () => ({ leerMiDiagnostico: (...args: unknown[]) => falsos.leer(...args) }));
 vi.mock("@/lib/supabase/servidor", () => ({ crearClienteServidor: async () => falsos.cliente }));
+vi.mock("@/lib/diagnostico/recuperacion", () => ({
+  programarEnlace: (tarea: () => Promise<unknown>) => falsos.programadas.push(tarea),
+  mandarEnlaceDeResultados: (...args: unknown[]) => falsos.mandar(...args),
+}));
 
 import { empezarDiagnostico, responderPregunta } from "./acciones";
 
@@ -230,6 +237,27 @@ describe("responderPregunta: lo que responde", () => {
   it("terminado lleva la ruta del resultado", async () => {
     falsos.responder.mockResolvedValue(proyectarTerminado(ID_DIAGNOSTICO));
     expect(await responderPregunta(pedido)).toEqual({ tipo: "terminado", ruta: `/diagnostico/resultado/${ID_DIAGNOSTICO}` });
+  });
+
+  it("terminado programa el enlace de resultados de ese diagnóstico para después de responder (HU-031)", async () => {
+    falsos.programadas = [];
+    // El proveedor nunca contesta: la acción responde igual, porque el envío no se espera.
+    falsos.mandar.mockReset().mockReturnValue(new Promise(() => {}));
+    falsos.responder.mockResolvedValue(proyectarTerminado(ID_DIAGNOSTICO));
+    await expect(responderPregunta(pedido)).resolves.toMatchObject({ tipo: "terminado" });
+    expect(falsos.mandar).not.toHaveBeenCalled();
+    expect(falsos.programadas).toHaveLength(1);
+    void falsos.programadas[0]();
+    expect(falsos.mandar).toHaveBeenCalledExactlyOnceWith(ID_DIAGNOSTICO);
+  });
+
+  it("una pregunta siguiente, un reemplazo o un vencido no programan el enlace (HU-031)", async () => {
+    falsos.programadas = [];
+    for (const respuesta of [enCurso(ID_DIAGNOSTICO, 1), enCurso(ID_OTRO), proyectarNinguno()]) {
+      falsos.responder.mockResolvedValue(respuesta);
+      await responderPregunta(pedido);
+    }
+    expect(falsos.programadas).toHaveLength(0);
   });
 
   it("ninguno es un diagnóstico vencido", async () => {

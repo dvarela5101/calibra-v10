@@ -43,7 +43,7 @@ async function leadQueAcepta() {
   const sesion = await fx.crearAnonimo();
   const origen = `hu089-${randomUUID().slice(0, 8)}`;
   const correo = `lead-hu089-${randomUUID()}@calibra.test`;
-  expect(await registrarContacto(entrada(sesion.id, correo, true, origen))).toEqual({ resultado: "lead" });
+  expect(await registrarContacto(entrada(sesion.id, correo, true, origen))).toEqual({ resultado: "lead", idLeadNuevo: expect.any(String) });
   const lead = (await fx.admin.from("lead").select("id, estado, acepta_contacto").eq("id_sesion_anonima", sesion.id).single()).data;
   if (!lead) throw new Error("No se creó el Lead");
   fx.registrarLead(lead.id);
