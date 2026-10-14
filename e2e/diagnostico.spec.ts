@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Browser, BrowserContext, ElementHandle, Locator, Page, Request, Response } from "@playwright/test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -14,7 +15,8 @@ import {
   FORMULA_MAS_ANCHA,
   type BancoCargado,
 } from "./banco-del-proyecto";
-import { crearClienteAdmin, enviarCredenciales, esperarSesion, expect, leerSesion, test as base, usarTurnstileDePrueba } from "./utilidades";
+import { COOKIE_ORIGEN } from "../src/lib/leads/origen";
+import { crearClienteAdmin, enviarCredenciales, esperarSesion, expect, leerSesion, test as base, usarTurnstileDePrueba, variable } from "./utilidades";
 
 // HU-009: tomar el diagnóstico sin iniciar sesión, de /diagnostico al resultado, medido en un navegador a 390×844 (`movil`) y a
 // 1280×800 (`escritorio`). La lógica está en src/lib/diagnostico/*.test.ts y en los Vitest de las pantallas; aquí se prueba lo
@@ -1713,5 +1715,175 @@ test("Dueño · otra persona, un monitor con una cita que apunta al diagnóstico
   for (const invalido of ["no-es-un-uuid", "00000000-0000-4000-8000-000000000000"]) {
     const respuesta = await page.goto(`/diagnostico/resultado/${invalido}`);
     await expectNoEncontrado(page, respuesta, `la dirección ${invalido}`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// HU-010: dejar el contacto al terminar el diagnóstico y quedar como Lead
+// ---------------------------------------------------------------------------
+
+const TITULO_DEL_CONTACTO = "Déjanos tu contacto para agendar una monitoría y que Calibra te pueda escribir";
+const AUTORIZO = /Autorizo a Calibra a tratar mis datos personales/;
+const campoDeContacto = (page: Page, etiqueta: string) => page.getByLabel(etiqueta, { exact: true });
+const guardarMisDatos = (page: Page) => page.getByRole("button", { name: "Guardar mis datos" });
+
+/**
+ * Borra los Leads de la prueba (por correo y por sesión) con lo que cuelga de ellos: los diagnósticos ligados, el registro de
+ * los correos de verificación y el buzón. Va en un `finally`, antes de que `limpieza` borre las sesiones.
+ */
+async function borrarLeads(admin: SupabaseClient, correos: string[], sesiones: string[]): Promise<void> {
+  const ids = new Set<string>();
+  const { data: porCorreo } = await admin.from("lead").select("id").in("correo", correos);
+  const { data: porSesion } = await admin.from("lead").select("id").in("id_sesion_anonima", sesiones);
+  for (const { id } of [...(porCorreo ?? []), ...(porSesion ?? [])] as { id: string }[]) ids.add(id);
+  if (ids.size) {
+    const { data: enlaces } = await admin.from("verificacion_lead").select("id").in("id_lead", [...ids]);
+    const claves = ((enlaces ?? []) as { id: string }[]).map(({ id }) => `verificacion_lead:${id}`);
+    if (claves.length) await admin.from("correo_envio").delete().in("clave", claves);
+    await admin.from("diagnostico").delete().in("id_lead", [...ids]);
+  }
+  await admin.from("correo_envio").delete().in("destinatario", correos);
+  for (const correo of correos) {
+    await fetch(`${variable("MAILPIT_URL")}/api/v1/search?query=${encodeURIComponent(`to:"${correo}"`)}`, { method: "DELETE" }).catch(() => {});
+  }
+  if (ids.size) {
+    const { error } = await admin.from("lead").delete().in("id", [...ids]);
+    if (error) throw new Error(`borrar los Leads de HU-010: ${error.message}`);
+  }
+}
+
+test("HU-010 · criterios 1, 2, 4, 5, 6 y 7: debajo del resultado deja su contacto con su campaña y queda como Lead con su diagnóstico", async ({
+  page,
+  context,
+  banco,
+  limpieza,
+}) => {
+  const correo = `e2e-hu010-${randomUUID()}@calibra.test`;
+  // Llega por un enlace de campaña (RN-01): la cookie la recuerda para cuando deje su contacto.
+  await page.goto("/diagnostico?utm_campaign=feria-hu010");
+  await expect(titulo(page, TITULO_DEL_SELECTOR)).toBeVisible(ESPERA);
+  const sesion = await esperarSesion(context);
+  limpieza.anotar(sesion.id);
+  await expect.poll(async () => (await context.cookies()).find((c) => c.name === COOKIE_ORIGEN)?.value).toBe("feria-hu010");
+
+  try {
+    const sembrado = await sembrarDiagnostico(banco.bd, { idSesionAnonima: sesion.id, idEvaluacion: banco.idParcial1 });
+    const ruta = `/diagnostico/resultado/${sembrado.id}`;
+    await page.goto(ruta);
+    await expect(titulo(page, TITULO_DEL_RESULTADO)).toBeVisible(ESPERA);
+    // Hidratado: el envío pasa por la espera de la sesión anónima (HU-058), como el de una persona.
+    await page.waitForLoadState("networkidle");
+
+    await test.step("criterio 4 (P-34): el resultado sale completo y el contacto va después, como paso siguiente", async () => {
+      const puntaje = page.getByText("Puntaje global");
+      await expect(puntaje).toBeVisible();
+      const bloque = page.getByRole("region", { name: TITULO_DEL_CONTACTO });
+      await expect(bloque).toBeVisible();
+      expect((await bloque.boundingBox())!.y).toBeGreaterThan((await puntaje.boundingBox())!.y);
+      await expectReglasDelProducto(page, "el resultado con el formulario de contacto");
+    });
+
+    await test.step("criterio 2: con un correo inválido no se envía", async () => {
+      await campoDeContacto(page, "Tu nombre").fill("Ana Pérez");
+      await campoDeContacto(page, "Tu correo").fill("no-es-un-correo");
+      await page.getByLabel(AUTORIZO).check();
+      await guardarMisDatos(page).click();
+      await expect(page.getByRole("alert").filter({ hasText: /correo/i }).first()).toBeVisible(ESPERA);
+      await expect(page).toHaveURL(ruta);
+    });
+
+    await test.step("criterio 6: sin aceptar el tratamiento de datos no se guarda nada", async () => {
+      await campoDeContacto(page, "Tu correo").fill(correo);
+      await page.getByLabel(AUTORIZO).uncheck();
+      await guardarMisDatos(page).click();
+      await expect(page.getByRole("alert").filter({ hasText: /autoriz/i }).first()).toBeVisible(ESPERA);
+      const { data } = await limpieza.admin.from("lead").select("id").eq("correo", correo);
+      expect(data).toEqual([]);
+    });
+
+    await test.step("criterios 1 y 7: con la autorización queda como Lead nuevo, con su campaña, y su diagnóstico ligado", async () => {
+      await campoDeContacto(page, "Tu nombre").fill("Ana Pérez");
+      await campoDeContacto(page, "Tu correo").fill(correo);
+      await campoDeContacto(page, "Tu teléfono (opcional)").fill("+57 300 123 4567");
+      await page.getByLabel(AUTORIZO).check();
+      await guardarMisDatos(page).click();
+      await expect(page.getByRole("heading", { level: 2, name: "Ya tenemos tu contacto" })).toBeVisible(ESPERA);
+      await expect(page).toHaveURL(ruta);
+
+      const { data: leads } = await limpieza.admin.from("lead").select("id, nombre, numero_telefono, origen, estado").eq("correo", correo);
+      expect(leads).toEqual([
+        expect.objectContaining({ nombre: "Ana Pérez", numero_telefono: "+573001234567", estado: "nuevo", origen: "feria-hu010" }),
+      ]);
+      const { data: diagnostico } = await limpieza.admin.from("diagnostico").select("id_lead").eq("id", sembrado.id).single();
+      expect(diagnostico?.id_lead).toBe((leads as { id: string }[])[0].id);
+    });
+
+    await test.step("criterio 5 (D-68 b): ya es Lead: sin formulario y con el enlace para cambiar sus datos, que actualiza el mismo Lead", async () => {
+      await expect(guardarMisDatos(page)).toHaveCount(0);
+      await expectReglasDelProducto(page, "el resultado de quien ya es Lead");
+      await page.getByRole("link", { name: "Cambiar mis datos" }).click();
+      await expect(page).toHaveURL(/\/agendar\/contacto\?editar=1/, ESPERA);
+      await campoDeContacto(page, "Tu nombre").fill("Ana María Pérez");
+      await page.getByLabel(AUTORIZO).check();
+      await page.getByRole("button", { name: "Seguir" }).click();
+      await expect(page).toHaveURL(ruta, ESPERA);
+      const { data } = await limpieza.admin.from("lead").select("nombre").eq("correo", correo);
+      expect(data).toEqual([{ nombre: "Ana María Pérez" }]);
+    });
+  } finally {
+    await borrarLeads(limpieza.admin, [correo], [sesion.id]);
+  }
+});
+
+test("HU-010 · criterio 3 (P-23, D-68 c): con el correo de otro Lead no se liga; el enlace de verificación lleva a /agendar", async ({
+  page,
+  context,
+  banco,
+  limpieza,
+  cuentas,
+}) => {
+  const correoDelDueno = `e2e-hu010-${randomUUID()}@calibra.test`;
+  const { data: dueno, error } = await limpieza.admin
+    .from("lead")
+    .insert({ nombre: "Dueña del correo", correo: correoDelDueno, acepta_tratamiento_datos: true, fecha_consentimiento: new Date().toISOString() })
+    .select("id")
+    .single();
+  if (error || !dueno) throw new Error(`insertar el Lead dueño: ${error?.message}`);
+
+  // El `try` empieza aquí: si la sesión no llega, el Lead dueño igual se borra.
+  const sesiones: string[] = [];
+  try {
+    await abrirSelector(page);
+    const sesion = await esperarSesion(context);
+    limpieza.anotar(sesion.id);
+    sesiones.push(sesion.id);
+    const sembrado = await sembrarDiagnostico(banco.bd, { idSesionAnonima: sesion.id, idEvaluacion: banco.idParcial1 });
+    await page.goto(`/diagnostico/resultado/${sembrado.id}`);
+    await expect(titulo(page, TITULO_DEL_RESULTADO)).toBeVisible(ESPERA);
+    await page.waitForLoadState("networkidle");
+    await campoDeContacto(page, "Tu nombre").fill("Otra Persona");
+    await campoDeContacto(page, "Tu correo").fill(correoDelDueno);
+    await page.getByLabel(AUTORIZO).check();
+    await guardarMisDatos(page).click();
+    await expect(page.getByRole("status").filter({ hasText: "Ese correo ya está en Calibra." })).toBeVisible(ESPERA);
+
+    // No se ligó: el diagnóstico sigue sin Lead, y el enlace guardado lleva a /agendar.
+    const { data: antes } = await limpieza.admin.from("diagnostico").select("id_lead").eq("id", sembrado.id).single();
+    expect(antes?.id_lead).toBeNull();
+    const { data: enlaces } = await limpieza.admin.from("verificacion_lead").select("siguiente").eq("id_lead", dueno.id);
+    expect(enlaces).toEqual([{ siguiente: "/agendar" }]);
+
+    const mensaje = await cuentas.esperarCorreo(correoDelDueno);
+    const enlace = /href="([^"]*\/contacto\/verificar\?[^"]*)"/.exec(mensaje.html)?.[1]?.replaceAll("&amp;", "&");
+    expect(enlace, "el correo debía traer el enlace de verificación").toBeTruthy();
+    await page.goto(enlace!);
+    await page.getByRole("button", { name: "Sí, es mi correo" }).click();
+    await expect(page).toHaveURL(/\/agendar(\?|$)/, ESPERA);
+
+    // Al confirmar, la sesión queda ligada al Lead dueño, con su diagnóstico.
+    const { data: despues } = await limpieza.admin.from("diagnostico").select("id_lead").eq("id", sembrado.id).single();
+    expect(despues?.id_lead).toBe(dueno.id);
+  } finally {
+    await borrarLeads(limpieza.admin, [correoDelDueno], sesiones);
   }
 });

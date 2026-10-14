@@ -13,12 +13,19 @@ const falsos = vi.hoisted(() => ({
   sesion: null as { idUsuario: string; rol: Rol | null } | null,
   cliente: {} as object | null,
   leer: vi.fn(),
+  lead: vi.fn(),
 }));
 
 vi.mock("@/lib/auth/sesion", () => ({ obtenerSesion: async () => falsos.sesion }));
 vi.mock("@/lib/supabase/servidor", () => ({ crearClienteServidor: async () => falsos.cliente }));
 vi.mock("@/lib/diagnostico/lectura", () => ({ leerMiDiagnostico: (...args: unknown[]) => falsos.leer(...args) }));
 vi.mock("next/server", () => ({ connection: async () => falsos.conexion() }));
+// HU-010: si la sesión ya es Lead decide qué va en la ranura. La acción y la espera de la sesión anónima no corren aquí.
+vi.mock("@/lib/leads/servidor", () => ({ leadDeLaSesion: (...args: unknown[]) => falsos.lead(...args) }));
+vi.mock("./acciones", () => ({ dejarContactoDelDiagnostico: async () => ({ error: null, aviso: null, valores: {} }) }));
+vi.mock("@/components/captcha/useExigirSesionAnonima", () => ({
+  useExigirSesionAnonima: () => ({ alEnviar: () => false, aviso: null, verificando: false, reintentar: () => undefined }),
+}));
 vi.mock("next/navigation", () => ({
   notFound: () => {
     throw new Error("notFound");
@@ -40,6 +47,7 @@ beforeEach(() => {
   falsos.cliente = {};
   falsos.conexion.mockReset();
   falsos.leer.mockReset().mockResolvedValue(proyectarResultado(FILA_DE_EJEMPLO));
+  falsos.lead.mockReset().mockResolvedValue(null);
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 });
 
@@ -63,10 +71,33 @@ describe("/diagnostico/resultado/[id]: la página", () => {
     expect(html).toContain("Física II");
   });
 
-  it("deja la ranura de HU-010 vacía: sin formulario ni contenedor de más", async () => {
+  it("HU-010: sin Lead, después del resultado pide el contacto con el título y el botón de D-68 a", async () => {
     const html = await abrir(ID);
+    expect(falsos.lead).toHaveBeenCalledExactlyOnceWith(PERSONA.idUsuario);
+    expect(html).toContain("Déjanos tu contacto para agendar una monitoría y que Calibra te pueda escribir");
+    expect(html).toContain("Guardar mis datos");
+    expect(html).toContain(`name="id_diagnostico" value="${ID}"`);
+    // P-34: el formulario va después del resultado, no lo tapa.
+    expect(html.indexOf("Puntaje global")).toBeLessThan(html.indexOf("<form"));
+    expect(html).not.toContain("Ya tenemos tu contacto");
+  });
+
+  it("HU-010 (D-68 b): si la sesión ya es Lead, no hay formulario: «Ya tenemos tu contacto» y el enlace para cambiar sus datos", async () => {
+    falsos.lead.mockResolvedValue({ id: "l1", nombre: "Ana", correo: "ana@calibra.test", numeroTelefono: null });
+    const html = await abrir(ID);
+    expect(html).toContain("Ya tenemos tu contacto");
+    expect(html).toContain(`href="/agendar/contacto?editar=1&amp;siguiente=${encodeURIComponent(`/diagnostico/resultado/${ID}`)}"`);
     expect(html).not.toContain("<form");
-    expect(html).not.toContain("<input");
+    expect(html).not.toContain("ana@calibra.test");
+  });
+
+  it("HU-010 (P-34): si no se sabe si es Lead, el resultado sale completo y sin el bloque; el error queda en el log", async () => {
+    falsos.lead.mockRejectedValue(new Error("caída"));
+    const html = await abrir(ID);
+    expect(html).toContain("Puntaje global: 63 %");
+    expect(html).not.toContain("<form");
+    expect(html).not.toContain("Ya tenemos tu contacto");
+    expect(console.error).toHaveBeenCalled();
   });
 
   it("no dice nada de repetido", async () => {

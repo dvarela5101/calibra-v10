@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-14 08:01. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-14 12:56. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -27,10 +27,10 @@ _Generado automaticamente: 2026-10-14 08:01. No editar a mano; usa `scripts/back
 | [HU-084](backlog/HU-084.md) | [Técnica] Recorrido de punta a punta del diagnóstico: de la prueba al monitor | Lista | P1 | S | HU-048, HU-010, HU-011, HU-022 |
 | [HU-085](backlog/HU-085.md) | [Sistema] Borrar o anonimizar los datos de un Lead o aspirante que retiró su autorización o lleva 24 meses sin actividad | Lista | P2 | L | HU-056, HU-006, HU-062, HU-068 |
 | [HU-092](backlog/HU-092.md) | [Monitor] Marcar en mi perfil los temas en los que soy fuerte | Lista | P2 | M | HU-049 |
-| [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | En progreso | P0 | M | HU-009, HU-008, HU-068 |
 | [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | En progreso | P0 | M | HU-009, HU-081 |
 | [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | En progreso | P0 | L | HU-021, HU-009, HU-081, HU-087 |
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | En progreso | P1 | M | HU-004, HU-019, HU-068 |
+| [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | En revision | P0 | M | HU-009, HU-008, HU-068 |
 | [HU-083](backlog/HU-083.md) | [Técnica] Dibujar fórmulas y código del banco de preguntas | En revision | P0 | S | HU-005 |
 | [HU-093](backlog/HU-093.md) | [Técnica] Acelerar el CI: jobs en paralelo y E2E repartidas con --shard | En revision | P1 | S |  |
 | [HU-049](backlog/HU-049.md) | [Monitor] Administrar mi perfil | En revision | P2 | M | HU-013, HU-016, HU-069 |
