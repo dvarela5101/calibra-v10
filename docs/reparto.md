@@ -15,8 +15,8 @@
 
 | Persona | Siguiente, en orden |
 |---|---|
-| Juzou04 | Sigue su lista: [HU-011](../backlog/HU-011.md), [HU-022](../backlog/HU-022.md) y [HU-032](../backlog/HU-032.md) (en progreso), [HU-084](../backlog/HU-084.md) (S) y volver a refinar [HU-034](../backlog/HU-034.md) con D-56 |
-| dvarela5101 | [HU-031](../backlog/HU-031.md) (M) fusionada y en revisión; dudas de HU-092 respondidas (D-69). Revisar o aprobar lo que esté `En revision` |
+| Juzou04 | Sigue su lista: [HU-011](../backlog/HU-011.md), [HU-022](../backlog/HU-022.md) y [HU-032](../backlog/HU-032.md) (en progreso) y [HU-084](../backlog/HU-084.md) (S). [HU-034](../backlog/HU-034.md) pasó a dvarela5101 (14-oct) |
+| dvarela5101 | [HU-031](../backlog/HU-031.md) (M) fusionada y en revisión; dudas de HU-092 respondidas (D-69). Revisar o aprobar lo que esté `En revision`. Construir [HU-034](../backlog/HU-034.md) (M), que pasa de Juzou04 el 14-oct: es la única dependencia del corte que nadie había empezado |
 | Lorenzo | 1) Entorno. 2) [HU-094](../backlog/HU-094.md) (S). 3) [HU-092](../backlog/HU-092.md) (M). 4) Refinar y construir [HU-088](../backlog/HU-088.md) (M). 5) Después del corte: [HU-085](../backlog/HU-085.md) (L) y [HU-090](../backlog/HU-090.md) (S) |
 
 **Choques a tener en cuenta**

@@ -1,11 +1,10 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-14 15:25. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-14 18:40. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | Backlog | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056, HU-084, HU-089 |
-| [HU-034](backlog/HU-034.md) | [Admin] Revisar pagos desde una bandeja común y avisar a todos los admins cuando llega uno | Backlog | P1 | M | HU-020, HU-006, HU-054, HU-065, HU-074, HU-077 |
 | [HU-086](backlog/HU-086.md) | [Estudiante] Ligar a mi cita un diagnóstico hecho después de agendar | Backlog | P1 | M | HU-022, HU-019 |
 | [HU-091](backlog/HU-091.md) | [Técnica] Borradores para activar las Evaluaciones de Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | Backlog | P1 | S | HU-061 |
 | [HU-088](backlog/HU-088.md) | [Estudiante] Ver la calificación y las reseñas del monitor en su tarjeta | Backlog | P2 | M | HU-049, HU-035 |
@@ -30,6 +29,7 @@ _Generado automaticamente: 2026-10-14 15:25. No editar a mano; usa `scripts/back
 | [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | En progreso | P0 | M | HU-009, HU-081 |
 | [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | En progreso | P0 | L | HU-021, HU-009, HU-081, HU-087 |
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | En progreso | P1 | M | HU-004, HU-019, HU-068 |
+| [HU-034](backlog/HU-034.md) | [Admin] Revisar pagos desde una bandeja común y avisar a todos los admins cuando llega uno | En progreso | P1 | M | HU-020, HU-006, HU-054, HU-065, HU-074, HU-077 |
 | [HU-083](backlog/HU-083.md) | [Técnica] Dibujar fórmulas y código del banco de preguntas | En revision | P0 | S | HU-005 |
 | [HU-031](backlog/HU-031.md) | [Lead] Recuperar mis resultados desde otro dispositivo con un enlace | En revision | P1 | M | HU-006, HU-009, HU-010, HU-081 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
