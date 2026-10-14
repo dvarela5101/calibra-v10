@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
+import { PerfilDelMonitor } from "@/components/PerfilDelMonitor";
 import {
   agruparPorMonitor,
   FECHAS_A_LA_VISTA,
@@ -11,10 +12,11 @@ import {
   type FechaLibre,
   type MonitorConFechas,
 } from "@/lib/disponibilidad/reglas";
-import { cargarFechasLibres, cargarMaterias, type MateriaDeLaLista } from "@/lib/disponibilidad/servidor";
+import { cargarFechasLibres, cargarMaterias, cargarPerfiles, type MateriaDeLaLista } from "@/lib/disponibilidad/servidor";
 import { rutaDeAgendar } from "@/lib/agendar/reglas";
 import { formatearDiaConSemana } from "@/lib/fechas";
 import { horaCorta, horaDeFin } from "@/lib/franjas/reglas";
+import type { DatosDelPerfil } from "@/lib/monitores/perfil";
 import { formatearPesos } from "@/lib/moneda";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import estilos from "./monitores.module.css";
@@ -58,6 +60,8 @@ export default async function Monitores({ searchParams }: PageProps<"/monitores"
   if (!elegida) return <ElegirMateria materias={materias.filter((m) => m.conCertificados)} noEncontrada={traiaMateria} />;
 
   const monitores = agruparPorMonitor(fechas);
+  // HU-049: si los perfiles no cargan, la lista sale sin ellos (cargarPerfiles deja el error en el log).
+  const perfiles = await cargarPerfiles(supabase!, monitores.map((m) => m.idMonitor));
   return (
     <Pantalla
       eyebrow={EYEBROW}
@@ -79,7 +83,7 @@ export default async function Monitores({ searchParams }: PageProps<"/monitores"
         <ul className={estilos.monitores}>
           {monitores.map((monitor) => (
             <li key={monitor.idMonitor}>
-              <TarjetaDeMonitor monitor={monitor} codigoMateria={elegida.codigo} />
+              <TarjetaDeMonitor monitor={monitor} perfil={perfiles.get(monitor.idMonitor)} codigoMateria={elegida.codigo} />
             </li>
           ))}
         </ul>
@@ -124,7 +128,9 @@ function ElegirMateria({ materias, noEncontrada }: { materias: MateriaDeLaLista[
   );
 }
 
-function TarjetaDeMonitor({ monitor, codigoMateria }: { monitor: MonitorConFechas; codigoMateria: string }) {
+type PropsDeTarjeta = { monitor: MonitorConFechas; perfil: DatosDelPerfil | undefined; codigoMateria: string };
+
+function TarjetaDeMonitor({ monitor, perfil, codigoMateria }: PropsDeTarjeta) {
   const titulo = `monitor-${monitor.idMonitor}`;
   const aLaVista = monitor.fechas.slice(0, FECHAS_A_LA_VISTA);
   const resto = monitor.fechas.slice(FECHAS_A_LA_VISTA);
@@ -133,6 +139,7 @@ function TarjetaDeMonitor({ monitor, codigoMateria }: { monitor: MonitorConFecha
       <h2 id={titulo} className={estilos.nombre}>
         {monitor.nombre}
       </h2>
+      <PerfilDelMonitor perfil={perfil} />
       <ListaDeFechas fechas={aLaVista} codigoMateria={codigoMateria} />
       {resto.length > 0 && (
         <details className={estilos.mas}>
