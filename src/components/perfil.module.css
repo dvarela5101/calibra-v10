@@ -1,0 +1,19 @@
+/* Perfil del monitor en su tarjeta y en la vista previa (HU-049). */
+
+.perfil {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.estudios {
+  font-size: 15px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.parrafo {
+  font-size: 16px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
