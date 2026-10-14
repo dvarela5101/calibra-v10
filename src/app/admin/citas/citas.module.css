@@ -1,0 +1,58 @@
+/* Citas sin plazo para cancelar (HU-052). Colores solo de tokens.css; ningún texto por debajo de 14 px. */
+
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-block-start: var(--e3);
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  list-style: none;
+}
+
+/* Toda la tarjeta lleva a la página de la cita, como un pago o un reporte en la bandeja. */
+.filaEnlace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  min-block-size: var(--toque-min);
+  padding: var(--e3);
+  color: var(--text);
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .filaEnlace:hover {
+    border-color: var(--primary);
+  }
+}
+
+.nombre {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.meta {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* Los nombres y los contactos son texto libre: un correo largo sin espacios no se sale de la tarjeta a 390 px. */
+.metaLarga {
+  composes: meta;
+  overflow-wrap: anywhere;
+}
+
+.ayuda,
+.vacio {
+  font-size: 15px;
+  color: var(--muted);
+}

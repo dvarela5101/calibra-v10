@@ -16,6 +16,7 @@ import {
   mensajeDeEntregar,
   MENSAJES_DE_ENTREGAR,
   MOTIVO_CANCELACION_A_TIEMPO,
+  MOTIVO_CANCELACION_AUTORIZADA,
   normalizarLlave,
   pedidoVigente,
   plantillaDelPedido,
@@ -60,6 +61,13 @@ describe("el enlace de la llave (HU-024, D-27)", () => {
 describe("los textos fijos del reembolso al cancelar", () => {
   it("el motivo es el de D-26, exacto", () => {
     expect(MOTIVO_CANCELACION_A_TIEMPO).toBe("Cancelaste la monitoría dentro del plazo.");
+  });
+
+  it("HU-052: el motivo de una cancelación autorizada fuera de plazo es el de D-60, exacto, y distinto del de a tiempo", () => {
+    expect(MOTIVO_CANCELACION_AUTORIZADA).toBe("Cancelaste la monitoría y un admin autorizó hacerlo fuera del plazo.");
+    expect(MOTIVO_CANCELACION_AUTORIZADA).not.toBe(MOTIVO_CANCELACION_A_TIEMPO);
+    // Lo lee quien pagó: sin el motivo de la excepción, sin la nota ni cifras de comisión.
+    expect(MOTIVO_CANCELACION_AUTORIZADA).not.toMatch(/comisi|neto|fuerza mayor|falla|nota/i);
   });
 
   it("el pago en revisión explica las dos salidas (D-27), sin cifras de comisión", () => {

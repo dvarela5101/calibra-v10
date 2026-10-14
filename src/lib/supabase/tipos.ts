@@ -33,6 +33,12 @@ export type Database = {
       foreignKeyName: "aviso_monitor_id_monitoria_fkey"
       columns: ["id_monitoria"]
 isOneToOne: false
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
+    },{
+      foreignKeyName: "aviso_monitor_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: false
       referencedRelation: "monitoria"
       referencedColumns: ["id"]
     },{
@@ -77,10 +83,53 @@ isOneToOne: true
       foreignKeyName: "cancelacion_cita_id_monitoria_fkey"
       columns: ["id_monitoria"]
 isOneToOne: true
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
+    },{
+      foreignKeyName: "cancelacion_cita_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
       referencedRelation: "monitoria"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "cancelacion_cita_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "monitoria_plazos"
+      referencedColumns: ["id_monitoria"]
+    }
+                  ]
+                },"cancelacion_excepcional": {
+                  Row: {
+                    "autorizada_en": string,"categoria": string,"id_admin": string,"id_monitoria": string,"nota": string | null
+                  }
+                  Insert: {
+                    "autorizada_en"?: string,"categoria": string,"id_admin": string,"id_monitoria": string,"nota"?: string | null
+                  }
+                  Update: {
+                    "autorizada_en"?: string,"categoria"?: string,"id_admin"?: string,"id_monitoria"?: string,"nota"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "cancelacion_excepcional_id_admin_fkey"
+      columns: ["id_admin"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cancelacion_excepcional_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
+    },{
+      foreignKeyName: "cancelacion_excepcional_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "monitoria"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "cancelacion_excepcional_id_monitoria_fkey"
       columns: ["id_monitoria"]
 isOneToOne: true
       referencedRelation: "monitoria_plazos"
@@ -146,6 +195,12 @@ isOneToOne: false
       foreignKeyName: "confirmacion_cita_id_monitoria_fkey"
       columns: ["id_monitoria"]
 isOneToOne: true
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
+    },{
+      foreignKeyName: "confirmacion_cita_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
       referencedRelation: "monitoria"
       referencedColumns: ["id"]
     },{
@@ -186,6 +241,12 @@ isOneToOne: true
 isOneToOne: false
       referencedRelation: "admin"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "desembolso_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
     },{
       foreignKeyName: "desembolso_id_monitoria_fkey"
       columns: ["id_monitoria"]
@@ -295,13 +356,13 @@ isOneToOne: true
                   ]
                 },"evaluacion": {
                   Row: {
-                    "activa": boolean,"acumulativo": boolean,"clave": string | null,"id": string,"id_materia": string,"nombre": string,"semana": number
+                    "activa": boolean,"acumulativo": boolean,"clave": string | null,"editada_en_app": boolean,"id": string,"id_materia": string,"nombre": string,"semana": number
                   }
                   Insert: {
-                    "activa"?: boolean,"acumulativo"?: boolean,"clave"?: string | null,"id"?: string,"id_materia": string,"nombre": string,"semana": number
+                    "activa"?: boolean,"acumulativo"?: boolean,"clave"?: string | null,"editada_en_app"?: boolean,"id"?: string,"id_materia": string,"nombre": string,"semana": number
                   }
                   Update: {
-                    "activa"?: boolean,"acumulativo"?: boolean,"clave"?: string | null,"id"?: string,"id_materia"?: string,"nombre"?: string,"semana"?: number
+                    "activa"?: boolean,"acumulativo"?: boolean,"clave"?: string | null,"editada_en_app"?: boolean,"id"?: string,"id_materia"?: string,"nombre"?: string,"semana"?: number
                   }
                   Relationships: [
                     {
@@ -589,13 +650,13 @@ isOneToOne: true
                   ]
                 },"materia": {
                   Row: {
-                    "codigo": string,"id": string,"nombre": string
+                    "carpeta": string | null,"codigo": string,"editada_en_app": boolean,"id": string,"nombre": string
                   }
                   Insert: {
-                    "codigo": string,"id"?: string,"nombre": string
+                    "carpeta"?: string | null,"codigo": string,"editada_en_app"?: boolean,"id"?: string,"nombre": string
                   }
                   Update: {
-                    "codigo"?: string,"id"?: string,"nombre"?: string
+                    "carpeta"?: string | null,"codigo"?: string,"editada_en_app"?: boolean,"id"?: string,"nombre"?: string
                   }
                   Relationships: [
                     
@@ -715,6 +776,12 @@ isOneToOne: false
       foreignKeyName: "monitoria_grupal_id_monitoria_fkey"
       columns: ["id_monitoria"]
 isOneToOne: true
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
+    },{
+      foreignKeyName: "monitoria_grupal_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
       referencedRelation: "monitoria"
       referencedColumns: ["id"]
     },{
@@ -785,6 +852,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "admin"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "pago_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: false
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
     },{
       foreignKeyName: "pago_id_monitoria_fkey"
       columns: ["id_monitoria"]
@@ -929,6 +1002,12 @@ isOneToOne: true
 isOneToOne: false
       referencedRelation: "admin"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reporte_inasistencia_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
     },{
       foreignKeyName: "reporte_inasistencia_id_monitoria_fkey"
       columns: ["id_monitoria"]
@@ -1078,12 +1157,25 @@ isOneToOne: false
                 }
           }
           Views: {
-            "desembolsos_ejecutables": {
+            "citas_sin_plazo_para_cancelar": {
+                  Row: {
+                    "cancelable_hasta": string | null,"id_monitoria": string | null,"inicio": string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"desembolsos_ejecutables": {
                   Row: {
                     "desembolsable_desde": string | null,"fecha_generacion": string | null,"fecha_sesion": string | null,"id": string | null,"id_monitoria": string | null,"monto_neto": number | null
                   }
                   Relationships: [
                     {
+      foreignKeyName: "desembolso_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
+    },{
       foreignKeyName: "desembolso_id_monitoria_fkey"
       columns: ["id_monitoria"]
 isOneToOne: true
@@ -1149,8 +1241,17 @@ isOneToOne: false
 "anotar_correo_de_contacto":
 { Args: { "p_correo": string,"p_id_sesion": string }; Returns: boolean
                            },
+"autorizar_cancelacion_fuera_de_plazo":
+{ Args: { "p_categoria": string,"p_id_monitoria": string,"p_nota": string }; Returns: string
+                           },
 "banco_de_la_evaluacion":
 { Args: { "p_id_evaluacion": string }; Returns: Json
+                           },
+"borrar_evaluacion":
+{ Args: { "p_id": string }; Returns: string
+                           },
+"borrar_materia":
+{ Args: { "p_id": string }; Returns: string
                            },
 "cancelable_hasta":
 { Args: { "p_es_grupal": boolean,"p_inicio": string }; Returns: string
@@ -1328,6 +1429,12 @@ isOneToOne: false
 "invitador_activo":
 { Args: { "p_id_admin": string }; Returns: boolean
                            },
+"ligado_de_evaluacion":
+{ Args: { "p_id": string }; Returns: (string)[]
+                           },
+"ligado_de_materia":
+{ Args: { "p_id": string }; Returns: (string)[]
+                           },
 "llaves_de_cancelacion":
 { Args: { "p_id_monitoria": string }; Returns: {
               "id_reembolso": string,"monto": number,"token": string
@@ -1348,12 +1455,22 @@ isOneToOne: false
               "libre_desde": string,"maximo": number,"usados": number
             }[]
                            },
+"mi_diagnostico":
+{ Args: { "p_id": string }; Returns: {
+              "aciertos": number,"codigo_materia": string,"fecha_realizacion": string,"id_diagnostico": string,"nombre_evaluacion": string,"nombre_materia": string,"respondidas": number,"resultado": Json
+            }[]
+                           },
 "mi_rol":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "mis_citas":
 { Args: Record<PropertyKey, never>; Returns: {
               "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"observaciones_reporte": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
+            }[]
+                           },
+"mis_desembolsos":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "comision": number,"desembolsable_desde": string,"duracion_min": number,"fecha": string,"fecha_desembolso": string,"hora": string,"id_desembolso": string,"llave_destino": string,"monto_bruto": number,"monto_neto": number,"nombre_materia": string,"referencia_transferencia": string,"situacion": string
             }[]
                            },
 "monto_neto":

@@ -33,7 +33,7 @@ const notoSansMath = localFont({
 export const metadata: Metadata = {
   title: "Calibra",
   description:
-    "Un diagnóstico corto te dice en qué subtema fallas y te conecta con un monitor certificado de tu materia.",
+    "Un diagnóstico corto te dice en qué habilidad fallas y te conecta con un monitor certificado de tu materia.",
 };
 
 export const viewport: Viewport = {

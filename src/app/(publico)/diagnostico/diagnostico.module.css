@@ -1,0 +1,166 @@
+/* El recorrido del diagnóstico (HU-009): selector de materia, pregunta y mensaje de D-51. Los botones y los mensajes son los de formulario.module.css. */
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+/* Una tarjeta es un label de al menos 44 px: el radio nativo va dentro, como las casillas de casillas.module.css. */
+.tarjeta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e3);
+  min-block-size: var(--toque-min);
+  min-inline-size: 0;
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+/* La opción de una pregunta gasta menos ancho en relleno y separaciones: una fórmula ancha del banco tiene que caber en la tarjeta. */
+.opcion {
+  composes: tarjeta;
+  gap: var(--e2);
+  padding-inline: var(--e3);
+}
+
+/* La elegida cambia de borde (2 px en total, sin mover nada) y de fondo; el foco visible del radio no se anula. */
+.elegida {
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.radio {
+  flex: none;
+  inline-size: 24px;
+  block-size: 24px;
+  margin-block-start: 2px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.letra {
+  flex: none;
+  inline-size: 16px;
+  margin-block-start: 2px;
+  font-size: var(--texto-min);
+  font-weight: 700;
+  line-height: 24px;
+  text-align: center;
+}
+
+.textoDeOpcion {
+  flex: 1;
+  min-inline-size: 0;
+  font-size: 16px;
+}
+
+.contenidoDeTarjeta {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--e1);
+  min-inline-size: 0;
+}
+
+.nombreDeTarjeta {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.temas {
+  font-size: var(--texto-min);
+  color: var(--muted);
+}
+
+/* La única Evaluación de la materia: ya elegida, sin radio. */
+.fija {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow-wrap: anywhere;
+}
+
+/* Hay un diagnóstico en curso: --warn es solo relleno, el texto va en --text. */
+.aviso {
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-inline-start: 6px solid var(--warn);
+  border-radius: var(--r);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.lineaDeMonitores {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--e2);
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.avance {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* El enunciado recibe el foco al llegar una pregunta nueva (tabindex="-1"): el anillo de globals.css se ve, sin más relleno. */
+.enunciado {
+  min-inline-size: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.subtitulo {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.mensaje {
+  font-size: 16px;
+}
+
+.botones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+/*
+ * El botón de envío mientras hay una llamada en curso (o se verifica el navegador): se ve inactivo, pero no lleva `disabled`.
+ * Un botón con `disabled` pierde el foco y no lo recupera al habilitarse, así que quien usa el teclado tendría que recorrer la
+ * página desde el principio para reintentar tras un fallo. Con `aria-disabled` sigue enfocable y el envío se ignora en el código.
+ */
+.envio[aria-disabled="true"],
+.envio[aria-disabled="true"]:not(:disabled):hover {
+  background: var(--border);
+  border-color: var(--border);
+  color: var(--muted-disabled);
+  cursor: not-allowed;
+  filter: none;
+}

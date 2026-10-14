@@ -88,7 +88,7 @@ export async function principal(argv: string[]): Promise<number> {
   }
 
   if (carga.avisos.length > 0) {
-    console.log(`\nAvisos de la carga (${carga.avisos.length}, lo que está en la base y no en el banco):`);
+    console.log(`\nAvisos de la carga (${carga.avisos.length}):`);
     for (const aviso of carga.avisos) console.log(`  ${aviso}`);
   }
   const esperados = contar(resultado.banco, opciones);

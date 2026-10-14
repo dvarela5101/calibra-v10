@@ -1,11 +1,11 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import pg from "pg";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { analizarBanco, contar, leerBanco } from "../scripts/contenido/banco.mts";
-import { cargarBanco } from "../scripts/contenido/cargar.mts";
+import { cargarBanco, type ResultadoCarga } from "../scripts/contenido/cargar.mts";
 import type { ArchivoBanco, Banco, Conteos } from "../scripts/contenido/modelo.mts";
-import { crearCliente, exigirSupabaseLocal, Fixtures, type Cliente } from "./utilidades";
+import { crearCliente, exigirSupabaseLocal, exito, Fixtures, type Cliente } from "./utilidades";
 
 // HU-005 contra el Supabase LOCAL: el cargador (scripts/contenido/cargar.mts) deja en la base el banco de
 // ejemplo (pruebas/banco-ejemplo, materias ZZPR-0001 y ZZPR-0002) con los conteos del --dry-run, sin duplicar
@@ -16,6 +16,11 @@ import { crearCliente, exigirSupabaseLocal, Fixtures, type Cliente } from "./uti
 // parcial-2 es acumulativa y hereda el tema de parcial-1.
 //
 // Cada prueba parte sin las materias ZZPR: se borran antes de cada una y al final.
+//
+// HU-055 (D-62 a): la carga reconoce la materia por su carpeta y conserva lo que un admin corrigió en la app (nombre y código de
+// la materia, nombre y semana de la evaluación). Al final del archivo, las pruebas de esa regla: el admin corrige por la Data API
+// con una sesión real, y la carga se mide con las marcas puestas, con la adopción de una materia creada en la app, con un código
+// que otra materia ya tiene y con un admin que guarda mientras la carga lee.
 
 const URL_BD = process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 const EJEMPLO = join(__dirname, "..", "pruebas", "banco-ejemplo");
@@ -24,10 +29,18 @@ const CON_BORRADORES = { borradores: true };
 
 let bd: pg.Client;
 
+/**
+ * Las materias del ejemplo: por su código (`ZZPR-`) y también por su carpeta, porque un admin pudo cambiar el código (y entonces ya
+ * no empieza por `ZZPR-`) y la carga reconoce la materia por la carpeta. El código se compara sin mayúsculas ni espacios: una
+ * fila de confianza puede traerlos.
+ */
+const DEL_EJEMPLO =
+  "select id from public.materia where lower(btrim(codigo)) like 'zzpr-%' or carpeta in ('materia-a', 'materia-b')";
+
 /** Las evaluaciones primero: su llave a materia no cae en cascada. La materia se lleva el resto del banco. */
 async function borrarEjemplo() {
-  await bd.query("delete from public.evaluacion where id_materia in (select id from public.materia where codigo like 'ZZPR-%')");
-  await bd.query("delete from public.materia where codigo like 'ZZPR-%'");
+  await bd.query(`delete from public.evaluacion where id_materia in (${DEL_EJEMPLO})`);
+  await bd.query(`delete from public.materia where id in (${DEL_EJEMPLO})`);
 }
 
 beforeAll(async () => {
@@ -335,5 +348,509 @@ describe("criterio 7: anon y authenticated no leen el banco por la Data API", ()
     } finally {
       await fx.limpiar();
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// HU-055 (D-62 a): la carga conserva lo que un admin corrigió en la app
+// ---------------------------------------------------------------------------
+// El admin corrige por la Data API con una sesión real (políticas, permisos por columna y triggers, como desde la pantalla), y la
+// carga reconoce la materia por su carpeta. Las marcas `editada_en_app` las pone la base; la carga no las pone nunca.
+
+const CIERRE = "Para que vuelva a seguir al banco, iguala materia.md con la base.";
+const pausa = (ms: number) => new Promise((resolver) => setTimeout(resolver, ms));
+
+/** El ejemplo con cambios de texto en sus archivos, por la ruta del banco ("materia-a/materia.md"). Falla si el banco cambiado no es válido. */
+function ejemploCambiado(cambios: Record<string, (texto: string) => string>): Banco {
+  const archivos = archivosDelEjemplo();
+  for (const ruta of Object.keys(cambios)) {
+    if (!archivos.some((a) => a.ruta === ruta)) throw new Error(`el ejemplo no tiene ${ruta}`);
+  }
+  const resultado = analizarBanco(archivos.map((a) => (cambios[a.ruta] ? { ...a, texto: cambios[a.ruta](a.texto) } : a)));
+  expect(resultado.errores).toEqual([]);
+  return resultado.banco;
+}
+
+/** El ejemplo con la carpeta de materia-b renombrada a materia-c. */
+function ejemploConCarpetaRenombrada(): Banco {
+  const archivos = archivosDelEjemplo().map((a) => (a.ruta.startsWith("materia-b/") ? { ...a, ruta: a.ruta.replace("materia-b/", "materia-c/") } : a));
+  const resultado = analizarBanco(archivos);
+  expect(resultado.errores).toEqual([]);
+  return resultado.banco;
+}
+
+type FilaMateria = { id: string; codigo: string; nombre: string; carpeta: string | null; editada_en_app: boolean };
+
+/** La materia del banco con esa carpeta, tal como está en la base. */
+async function materiaDeCarpeta(carpeta: string): Promise<FilaMateria> {
+  const { rows } = await bd.query<FilaMateria>(
+    "select id, codigo, nombre, carpeta, editada_en_app from public.materia where carpeta = $1",
+    [carpeta],
+  );
+  if (rows.length !== 1) throw new Error(`Se esperaba una materia con la carpeta ${carpeta} y hay ${rows.length}`);
+  return rows[0];
+}
+
+/** Todas las materias del ejemplo, tengan el código que tengan (un admin pudo cambiarlo), en un orden fijo. */
+async function materiasDelEjemplo(): Promise<FilaMateria[]> {
+  const { rows } = await bd.query<FilaMateria>(
+    `select id, codigo, nombre, carpeta, editada_en_app from public.materia where id in (${DEL_EJEMPLO}) order by nombre, id`,
+  );
+  return rows;
+}
+
+type FilaEvaluacion = {
+  id: string;
+  clave: string;
+  nombre: string;
+  semana: number;
+  acumulativo: boolean;
+  activa: boolean;
+  editada_en_app: boolean;
+  temas: string[];
+};
+
+/** Las evaluaciones de la materia con esa carpeta, por clave, con las claves de sus temas en el orden de la materia. */
+async function evaluacionesDe(carpeta: string): Promise<Map<string, FilaEvaluacion>> {
+  const { rows } = await bd.query<FilaEvaluacion>(
+    `select e.id, e.clave, e.nombre, e.semana, e.acumulativo, e.activa, e.editada_en_app,
+            array(select t.clave from public.evaluacion_tema et join public.tema t on t.id = et.id_tema
+                   where et.id_evaluacion = e.id order by t.orden) as temas
+       from public.evaluacion e join public.materia m on m.id = e.id_materia
+      where m.carpeta = $1
+      order by e.clave`,
+    [carpeta],
+  );
+  return new Map(rows.map((fila) => [fila.clave, fila]));
+}
+
+async function evaluacionDe(carpeta: string, clave: string): Promise<FilaEvaluacion> {
+  const fila = (await evaluacionesDe(carpeta)).get(clave);
+  if (!fila) throw new Error(`No encontré la evaluación ${carpeta}/${clave} en la base`);
+  return fila;
+}
+
+describe("HU-055 (D-62 a): la carga conserva lo que un admin corrigió en la app y avisa", () => {
+  let fx: Fixtures;
+
+  beforeEach(() => {
+    fx = new Fixtures();
+  });
+
+  afterEach(async () => {
+    await fx.limpiar();
+  });
+
+  /** Un admin con sesión real: lo que cambia por aquí pasa por la Data API, las políticas y los triggers. */
+  const conAdmin = async () => fx.iniciarSesion(await fx.crearAdmin());
+
+  async function corregirMateria(admin: Cliente, codigo: string, cambios: { nombre?: string; codigo?: string }) {
+    const filas = exito(await admin.from("materia").update(cambios).eq("codigo", codigo).select("id"), `el admin corrige la materia ${codigo}`);
+    expect(filas, "el admin debía corregir una sola materia").toHaveLength(1);
+  }
+
+  async function corregirEvaluacion(admin: Cliente, carpeta: string, clave: string, cambios: { nombre?: string; semana?: number }) {
+    const { id } = await materiaDeCarpeta(carpeta);
+    const filas = exito(
+      await admin.from("evaluacion").update(cambios).eq("id_materia", id).eq("clave", clave).select("id"),
+      `el admin corrige la evaluación ${carpeta}/${clave}`,
+    );
+    expect(filas, "el admin debía corregir una sola evaluación").toHaveLength(1);
+  }
+
+  it("a. renombrar la materia: la carga conserva el nombre, avisa, sigue cargando lo demás, y la marca de la materia no protege a sus evaluaciones", async () => {
+    await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+    const antes = await materiaDeCarpeta("materia-a");
+    await corregirMateria(await conAdmin(), "ZZPR-0001", { nombre: "Nombre del admin" });
+    expect(await materiaDeCarpeta("materia-a")).toEqual({ ...antes, nombre: "Nombre del admin", editada_en_app: true });
+    // El banco manda en lo que la app no toca: una evaluación apagada a mano vuelve a quedar activa por cobertura.
+    await bd.query("update public.evaluacion set activa = false where id_materia = $1 and clave = 'parcial-1'", [antes.id]);
+
+    // materia.md cambia el nombre de la materia, y el nombre y la semana de una evaluación que nadie editó; derivadas.md, el
+    // título de un tema y agrega una pregunta.
+    const banco = ejemploCambiado({
+      "materia-a/materia.md": (texto) =>
+        reemplazar(
+          reemplazar(texto, "nombre: Materia de prueba A", "nombre: Nombre del markdown"),
+          "### parcial-2 · Parcial 2 · semana 12",
+          "### parcial-2 · Parcial dos · semana 13",
+        ),
+      "materia-a/derivadas.md": (texto) =>
+        reemplazar(
+          reemplazar(texto, "# Derivadas", "# Derivadas, con otro título"),
+          "### P2 ",
+          [
+            "### P10 · dificultad 1 · kc: potencia · revisada · origen: humano · revisó: Ana",
+            "Si f(x) = 7x², entonces f'(x) es:",
+            "",
+            "- A) 14x · CORRECTA",
+            "- B) 14x² · [no-resta-uno]",
+            "- C) 7x³/3 · [suma-uno]",
+            "- D) 7x · [no-baja]",
+            "",
+            "### P2 ",
+          ].join("\n"),
+        ),
+    });
+    const { conteos, avisos } = await cargarBanco(bd, banco, SOLO_REVISADAS);
+
+    expect(avisos).toEqual([`materia-a: la base conserva lo que un admin cambió en la app (nombre: base "Nombre del admin", materia.md "Nombre del markdown"). ${CIERRE}`]);
+    expect(await materiaDeCarpeta("materia-a")).toEqual({ ...antes, nombre: "Nombre del admin", editada_en_app: true });
+    // Lo demás sigue al banco: el tema, la pregunta nueva, la evaluación apagada y los datos de la evaluación sin editar.
+    const { rows: [tema] } = await bd.query("select nombre from public.tema where id_materia = $1 and clave = 'derivadas'", [antes.id]);
+    expect(tema.nombre).toBe("Derivadas, con otro título");
+    expect((await preguntasEnBase()).has("ZZPR-0001/P10")).toBe(true);
+    expect(await evaluacionDe("materia-a", "parcial-1")).toMatchObject({ activa: true, editada_en_app: false });
+    expect(await evaluacionDe("materia-a", "parcial-2")).toMatchObject({ nombre: "Parcial dos", semana: 13, editada_en_app: false });
+    expect(conteos).toEqual(contar(banco, SOLO_REVISADAS));
+  });
+
+  it("b. cambiar el código: la carga encuentra la materia por su carpeta (mismo id, sin otra fila) y avisa del código", async () => {
+    await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+    const antes = await materiaDeCarpeta("materia-a");
+    // Un código que ya no empieza por ZZPR-: la limpieza de la prueba tiene que encontrarlo por la carpeta.
+    await corregirMateria(await conAdmin(), "ZZPR-0001", { codigo: "ZZPX-0011" });
+
+    const banco = ejemploCambiado({
+      "materia-a/materia.md": (texto) => reemplazar(texto, "### parcial-2 · Parcial 2 · semana 12", "### parcial-2 · Parcial dos · semana 13"),
+    });
+    const { conteos, avisos } = await cargarBanco(bd, banco, SOLO_REVISADAS);
+
+    expect(avisos).toEqual([`materia-a: la base conserva lo que un admin cambió en la app (codigo: base "ZZPX-0011", materia.md "ZZPR-0001"). ${CIERRE}`]);
+    expect((await materiasDelEjemplo()).map((m) => m.carpeta).sort()).toEqual(["materia-a", "materia-b"]);
+    expect(await materiaDeCarpeta("materia-a")).toEqual({ ...antes, codigo: "ZZPX-0011", editada_en_app: true });
+    const { rows: [otra] } = await bd.query("select count(*)::int as n from public.materia where codigo = 'ZZPR-0001'");
+    expect(otra.n).toBe(0);
+    // La marca es de la materia: la evaluación que nadie editó sigue al markdown.
+    expect(await evaluacionDe("materia-a", "parcial-2")).toMatchObject({ nombre: "Parcial dos", semana: 13, editada_en_app: false });
+    expect(conteos).toEqual(contar(banco, SOLO_REVISADAS));
+  });
+
+  it("c. una materia creada en la app con el código de una carpeta se adopta: mismo id, carpeta puesta, temas cargados y aviso del nombre", async () => {
+    const admin = await conAdmin();
+    const { id } = exito(await admin.from("materia").insert({ nombre: "Creada en la app", codigo: "ZZPR-0001" }).select("id").single(), "el admin crea la materia");
+    const { rows: [creada] } = await bd.query("select carpeta, editada_en_app from public.materia where id = $1", [id]);
+    expect(creada).toEqual({ carpeta: null, editada_en_app: true });
+
+    const { conteos, avisos } = await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+
+    expect(avisos).toEqual([`materia-a: la base conserva lo que un admin cambió en la app (nombre: base "Creada en la app", materia.md "Materia de prueba A"). ${CIERRE}`]);
+    expect(await materiaDeCarpeta("materia-a")).toEqual({ id, codigo: "ZZPR-0001", nombre: "Creada en la app", carpeta: "materia-a", editada_en_app: true });
+    expect((await materiasDelEjemplo()).map((m) => m.carpeta).sort()).toEqual(["materia-a", "materia-b"]);
+    expect((await filasDelEjemplo()).temas).toBe(3);
+    expect(conteos).toEqual(contar(ejemplo(), SOLO_REVISADAS));
+  });
+
+  it("c. la materia creada en la app con el mismo nombre se adopta sin aviso y la marca baja", async () => {
+    const admin = await conAdmin();
+    const { id } = exito(await admin.from("materia").insert({ nombre: "Materia de prueba A", codigo: "ZZPR-0001" }).select("id").single(), "el admin crea la materia");
+
+    const { avisos } = await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+
+    expect(avisos).toEqual([]);
+    expect(await materiaDeCarpeta("materia-a")).toEqual({ id, codigo: "ZZPR-0001", nombre: "Materia de prueba A", carpeta: "materia-a", editada_en_app: false });
+  });
+
+  it("c. una fila de confianza con el código en minúsculas y con espacios también se adopta, y el banco le corrige el código y el nombre", async () => {
+    const { rows: [fila] } = await bd.query<{ id: string }>("insert into public.materia (nombre, codigo) values ('Fixture de confianza', ' zzpr-0001 ') returning id");
+
+    const { avisos } = await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+
+    expect(avisos).toEqual([]);
+    expect(await materiaDeCarpeta("materia-a")).toEqual({ id: fila.id, codigo: "ZZPR-0001", nombre: "Materia de prueba A", carpeta: "materia-a", editada_en_app: false });
+    expect(await materiasDelEjemplo()).toHaveLength(2);
+  });
+
+  it("d. sin edición, materia.md con otro nombre, otro código y otra semana se aplica, y las marcas siguen en falso", async () => {
+    await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+    const antes = await materiaDeCarpeta("materia-a");
+
+    const banco = ejemploCambiado({
+      "materia-a/materia.md": (texto) =>
+        reemplazar(
+          reemplazar(
+            reemplazar(texto, "codigo: ZZPR-0001", "codigo: ZZPR-0011"),
+            "nombre: Materia de prueba A",
+            "nombre: Otro nombre en el markdown",
+          ),
+          "### parcial-1 · Parcial 1 · semana 6",
+          "### parcial-1 · Parcial uno · semana 7",
+        ),
+    });
+    const { conteos, avisos } = await cargarBanco(bd, banco, SOLO_REVISADAS);
+
+    expect(avisos).toEqual([]);
+    expect(await materiaDeCarpeta("materia-a")).toEqual({ id: antes.id, codigo: "ZZPR-0011", nombre: "Otro nombre en el markdown", carpeta: "materia-a", editada_en_app: false });
+    expect(await evaluacionDe("materia-a", "parcial-1")).toMatchObject({ nombre: "Parcial uno", semana: 7, editada_en_app: false });
+    expect((await materiasDelEjemplo()).map((m) => m.carpeta).sort()).toEqual(["materia-a", "materia-b"]);
+    expect(conteos).toEqual(contar(banco, SOLO_REVISADAS));
+  });
+
+  it("e1. otra materia con carpeta propia tiene el código que pide materia-b: la carga falla nombrando las dos y no cambia nada", async () => {
+    // La otra materia está en la base antes de la carga; materia-a, que se procesa primero, se escribiría en la misma transacción.
+    await bd.query("insert into public.materia (codigo, nombre, carpeta) values ('ZZPR-0002', 'Otra materia', 'zzpr-otra')");
+    const antes = await materiasDelEjemplo();
+
+    await expect(cargarBanco(bd, ejemplo(), SOLO_REVISADAS)).rejects.toThrow(
+      'contenido/materia-b (Materia de prueba B) quiere el código ZZPR-0002, pero ya lo tiene la materia "Otra materia" (carpeta zzpr-otra). La carga no cambió nada.',
+    );
+
+    expect(await materiasDelEjemplo()).toEqual(antes);
+    expect(await filasDelEjemplo()).toMatchObject({ materias: 1, temas: 0, preguntas: 0, evaluaciones: 0 });
+  });
+
+  it("e2. materia.md le cambia el código a una materia ya cargada por el de otra materia creada en la app: falla nombrando las dos y revierte también lo anterior", async () => {
+    await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+    await bd.query("insert into public.materia (codigo, nombre) values ('ZZPR-0012', 'Materia de la app')");
+    const antes = await materiasDelEjemplo();
+    const evaluacionesAntes = await evaluacionesDe("materia-a");
+
+    // materia-a se procesa primero: su cambio de nombre y de semana se escribe antes de que materia-b falle.
+    const banco = ejemploCambiado({
+      "materia-a/materia.md": (texto) =>
+        reemplazar(
+          reemplazar(texto, "nombre: Materia de prueba A", "nombre: Nombre que no debe quedar"),
+          "### parcial-1 · Parcial 1 · semana 6",
+          "### parcial-1 · Parcial uno · semana 7",
+        ),
+      "materia-b/materia.md": (texto) => reemplazar(texto, "codigo: ZZPR-0002", "codigo: ZZPR-0012"),
+    });
+    await expect(cargarBanco(bd, banco, SOLO_REVISADAS)).rejects.toThrow(
+      'contenido/materia-b (Materia de prueba B) quiere el código ZZPR-0012, pero ya lo tiene la materia "Materia de la app" (creada en la app). La carga no cambió nada.',
+    );
+
+    expect(await materiasDelEjemplo()).toEqual(antes);
+    expect(await evaluacionesDe("materia-a")).toEqual(evaluacionesAntes);
+  });
+
+  it("e1. lo mismo cuando la otra materia guarda el código en minúsculas y con espacios: la comprobación no distingue mayúsculas ni espacios y el mensaje es el de la carga, no el del índice", async () => {
+    await bd.query("insert into public.materia (codigo, nombre, carpeta) values (' zzpr-0002 ', 'Otra materia', 'zzpr-otra')");
+    const antes = await materiasDelEjemplo();
+
+    await expect(cargarBanco(bd, ejemplo(), SOLO_REVISADAS)).rejects.toThrow(
+      'contenido/materia-b (Materia de prueba B) quiere el código ZZPR-0002, pero ya lo tiene la materia "Otra materia" (carpeta zzpr-otra). La carga no cambió nada.',
+    );
+
+    expect(await materiasDelEjemplo()).toEqual(antes);
+    expect(await filasDelEjemplo()).toMatchObject({ materias: 0, temas: 0, preguntas: 0, evaluaciones: 0 });
+  });
+
+  it("e2. lo mismo cuando la materia creada en la app guarda el código en minúsculas y con espacios", async () => {
+    await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+    await bd.query("insert into public.materia (codigo, nombre) values (' zzpr-0012 ', 'Materia de la app')");
+    const antes = await materiasDelEjemplo();
+
+    const banco = ejemploCambiado({ "materia-b/materia.md": (texto) => reemplazar(texto, "codigo: ZZPR-0002", "codigo: ZZPR-0012") });
+    await expect(cargarBanco(bd, banco, SOLO_REVISADAS)).rejects.toThrow(
+      'contenido/materia-b (Materia de prueba B) quiere el código ZZPR-0012, pero ya lo tiene la materia "Materia de la app" (creada en la app). La carga no cambió nada.',
+    );
+
+    expect(await materiasDelEjemplo()).toEqual(antes);
+  });
+
+  it("f. la marca baja cuando materia.md alcanza lo editado, sin aviso, y el cambio posterior de materia.md se aplica", async () => {
+    await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+    await corregirMateria(await conAdmin(), "ZZPR-0001", { nombre: "Nombre del admin" });
+
+    const alcanzado = ejemploCambiado({ "materia-a/materia.md": (texto) => reemplazar(texto, "nombre: Materia de prueba A", "nombre: Nombre del admin") });
+    const primera = await cargarBanco(bd, alcanzado, SOLO_REVISADAS);
+    expect(primera.avisos).toEqual([]);
+    expect(await materiaDeCarpeta("materia-a")).toMatchObject({ nombre: "Nombre del admin", editada_en_app: false });
+
+    const siguiente = ejemploCambiado({ "materia-a/materia.md": (texto) => reemplazar(texto, "nombre: Materia de prueba A", "nombre: Tercer nombre") });
+    const segunda = await cargarBanco(bd, siguiente, SOLO_REVISADAS);
+    expect(segunda.avisos).toEqual([]);
+    expect(await materiaDeCarpeta("materia-a")).toMatchObject({ nombre: "Tercer nombre", editada_en_app: false });
+  });
+
+  it("f. lo mismo en una evaluación: la marca baja cuando materia.md alcanza lo editado y el cambio posterior se aplica", async () => {
+    await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+    await corregirEvaluacion(await conAdmin(), "materia-a", "parcial-1", { nombre: "Primer parcial", semana: 9 });
+    expect(await evaluacionDe("materia-a", "parcial-1")).toMatchObject({ nombre: "Primer parcial", semana: 9, editada_en_app: true });
+
+    const alcanzado = ejemploCambiado({
+      "materia-a/materia.md": (texto) => reemplazar(texto, "### parcial-1 · Parcial 1 · semana 6", "### parcial-1 · Primer parcial · semana 9"),
+    });
+    const primera = await cargarBanco(bd, alcanzado, SOLO_REVISADAS);
+    expect(primera.avisos).toEqual([]);
+    expect(await evaluacionDe("materia-a", "parcial-1")).toMatchObject({ nombre: "Primer parcial", semana: 9, editada_en_app: false });
+
+    const siguiente = ejemploCambiado({
+      "materia-a/materia.md": (texto) => reemplazar(texto, "### parcial-1 · Parcial 1 · semana 6", "### parcial-1 · Parcial uno · semana 8"),
+    });
+    const segunda = await cargarBanco(bd, siguiente, SOLO_REVISADAS);
+    expect(segunda.avisos).toEqual([]);
+    expect(await evaluacionDe("materia-a", "parcial-1")).toMatchObject({ nombre: "Parcial uno", semana: 8, editada_en_app: false });
+  });
+
+  it("g. evaluación editada: nombre y semana se conservan con aviso; acumulativo, activa y sus temas siguen al banco; otra evaluación sin editar se actualiza", async () => {
+    await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+    const antes = await evaluacionDe("materia-a", "parcial-2");
+    expect(antes).toMatchObject({ acumulativo: true, activa: false, temas: ["derivadas", "integrales"] });
+    await corregirEvaluacion(await conAdmin(), "materia-a", "parcial-2", { nombre: "Segundo parcial", semana: 13 });
+    // La encendemos a mano: el banco dice que no cumple la cobertura.
+    await bd.query("update public.evaluacion set activa = true where id = $1", [antes.id]);
+
+    // parcial-2 deja de ser acumulativa (sus temas bajan a integrales) y parcial-1, que nadie editó, cambia de nombre y de semana.
+    const banco = ejemploCambiado({
+      "materia-a/materia.md": (texto) =>
+        reemplazar(
+          reemplazar(texto, "### parcial-1 · Parcial 1 · semana 6", "### parcial-1 · Parcial uno · semana 7"),
+          "### parcial-2 · Parcial 2 · semana 12 · acumulativa",
+          "### parcial-2 · Parcial 2 · semana 12",
+        ),
+    });
+    const { avisos } = await cargarBanco(bd, banco, SOLO_REVISADAS);
+
+    expect(avisos).toEqual([
+      `materia-a/parcial-2: la base conserva lo que un admin cambió en la app (nombre: base "Segundo parcial", materia.md "Parcial 2"; semana: base 13, materia.md 12). ${CIERRE}`,
+    ]);
+    expect(await evaluacionDe("materia-a", "parcial-2")).toEqual({
+      ...antes,
+      nombre: "Segundo parcial",
+      semana: 13,
+      acumulativo: false,
+      activa: false,
+      temas: ["integrales"],
+      editada_en_app: true,
+    });
+    expect(await evaluacionDe("materia-a", "parcial-1")).toMatchObject({ nombre: "Parcial uno", semana: 7, editada_en_app: false });
+  });
+
+  it("h. la carga no marca nada, ni al insertar ni al actualizar, y una carga limpia no avisa", async () => {
+    const marcadas = async () => {
+      const { rows: [fila] } = await bd.query<{ materias: number; evaluaciones: number }>(
+        `select (select count(*) from public.materia where id in (${DEL_EJEMPLO}) and editada_en_app)::int as materias,
+                (select count(*) from public.evaluacion where id_materia in (${DEL_EJEMPLO}) and editada_en_app)::int as evaluaciones`,
+      );
+      return fila;
+    };
+
+    expect((await cargarBanco(bd, ejemplo(), SOLO_REVISADAS)).avisos).toEqual([]);
+    expect(await marcadas()).toEqual({ materias: 0, evaluaciones: 0 });
+
+    // Actualiza materias y evaluaciones con valores distintos: la carga escribe, y no marca.
+    const otros = ejemploCambiado({
+      "materia-a/materia.md": (texto) =>
+        reemplazar(reemplazar(texto, "nombre: Materia de prueba A", "nombre: Nombre B"), "### parcial-1 · Parcial 1 · semana 6", "### parcial-1 · Parcial uno · semana 7"),
+      "materia-b/materia.md": (texto) => reemplazar(texto, "### examen-final · Examen final · semana 16", "### examen-final · Final · semana 15"),
+    });
+    expect((await cargarBanco(bd, otros, SOLO_REVISADAS)).avisos).toEqual([]);
+    expect(await materiaDeCarpeta("materia-a")).toMatchObject({ nombre: "Nombre B" });
+    expect(await evaluacionDe("materia-b", "examen-final")).toMatchObject({ nombre: "Final", semana: 15 });
+    expect(await marcadas()).toEqual({ materias: 0, evaluaciones: 0 });
+
+    expect((await cargarBanco(bd, ejemplo(), SOLO_REVISADAS)).avisos).toEqual([]);
+    expect(await marcadas()).toEqual({ materias: 0, evaluaciones: 0 });
+  });
+
+  it("i. renombrar la carpeta de una materia ya cargada falla nombrando las dos y no cambia nada", async () => {
+    await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+    const antes = await materiasDelEjemplo();
+
+    await expect(cargarBanco(bd, ejemploConCarpetaRenombrada(), SOLO_REVISADAS)).rejects.toThrow(
+      'contenido/materia-c (Materia de prueba B) quiere el código ZZPR-0002, pero ya lo tiene la materia "Materia de prueba B" (carpeta materia-b). La carga no cambió nada.',
+    );
+
+    expect(await materiasDelEjemplo()).toEqual(antes);
+  });
+
+  it("j. con las marcas puestas, dos cargas seguidas dan los mismos avisos y dejan las mismas filas", async () => {
+    await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+    const admin = await conAdmin();
+    await corregirMateria(admin, "ZZPR-0001", { nombre: "Nombre del admin" });
+    await corregirEvaluacion(admin, "materia-a", "parcial-1", { nombre: "Primer parcial" });
+
+    const esperados = [
+      `materia-a: la base conserva lo que un admin cambió en la app (nombre: base "Nombre del admin", materia.md "Materia de prueba A"). ${CIERRE}`,
+      `materia-a/parcial-1: la base conserva lo que un admin cambió en la app (nombre: base "Primer parcial", materia.md "Parcial 1"). ${CIERRE}`,
+    ];
+    const primera = await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+    const materias = await materiasDelEjemplo();
+    const evaluaciones = await evaluacionesDe("materia-a");
+    const segunda = await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+
+    expect(primera.avisos).toEqual(esperados);
+    expect(segunda.avisos).toEqual(esperados);
+    expect(segunda.conteos).toEqual(primera.conteos);
+    expect(await materiasDelEjemplo()).toEqual(materias);
+    expect(await evaluacionesDe("materia-a")).toEqual(evaluaciones);
+  });
+
+  // Carrera: el admin guarda mientras la carga lee. La conexión A es el admin (rol authenticated y sus claims dentro de una
+  // transacción) y no confirma; la B es la carga, que tiene que quedar esperando y, al confirmar A, ver la marca ya puesta.
+  async function cargaMientrasUnAdminEdita(editarComoAdmin: (admin: pg.Client) => Promise<void>, banco: Banco): Promise<ResultadoCarga> {
+    const A = new pg.Client({ connectionString: URL_BD });
+    const B = new pg.Client({ connectionString: URL_BD });
+    await Promise.all([A.connect(), B.connect()]);
+    let carga: Promise<ResultadoCarga> | undefined;
+    try {
+      const admin = await fx.crearAdmin();
+      await A.query("begin");
+      await A.query("set local role authenticated");
+      await A.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: admin.id, role: "authenticated" })]);
+      await editarComoAdmin(A);
+
+      let terminada = false;
+      carga = cargarBanco(B, banco, SOLO_REVISADAS).finally(() => {
+        terminada = true;
+      });
+      await pausa(400);
+      expect(terminada, "la carga debía quedar esperando a que el admin confirmara").toBe(false);
+      await A.query("commit");
+      return await carga;
+    } finally {
+      // Si algo falló antes del commit, suelta los candados para que la carga termine.
+      await A.query("rollback").catch(() => {});
+      await carga?.catch(() => {});
+      await Promise.all([A.end(), B.end()]);
+    }
+  }
+
+  it("carrera: un admin guarda el nombre de la materia mientras la carga lee; la carga espera y su nombre sobrevive", async () => {
+    await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+    const banco = ejemploCambiado({ "materia-a/materia.md": (texto) => reemplazar(texto, "nombre: Materia de prueba A", "nombre: Nombre del markdown") });
+
+    const { avisos } = await cargaMientrasUnAdminEdita(async (admin) => {
+      const { rowCount } = await admin.query("update public.materia set nombre = 'Nombre del admin en carrera' where carpeta = 'materia-a'");
+      expect(rowCount).toBe(1);
+    }, banco);
+
+    expect(await materiaDeCarpeta("materia-a")).toMatchObject({ nombre: "Nombre del admin en carrera", editada_en_app: true });
+    expect(avisos).toEqual([`materia-a: la base conserva lo que un admin cambió en la app (nombre: base "Nombre del admin en carrera", materia.md "Nombre del markdown"). ${CIERRE}`]);
+  });
+
+  it("carrera: un admin guarda el nombre de una evaluación mientras la carga lee; la carga espera y su nombre sobrevive", async () => {
+    await cargarBanco(bd, ejemplo(), SOLO_REVISADAS);
+    const banco = ejemploCambiado({
+      "materia-a/materia.md": (texto) => reemplazar(texto, "### parcial-1 · Parcial 1 · semana 6", "### parcial-1 · Parcial uno · semana 6"),
+    });
+
+    const { avisos } = await cargaMientrasUnAdminEdita(async (admin) => {
+      const { rowCount } = await admin.query(
+        "update public.evaluacion set nombre = 'Nombre del admin en carrera' where clave = 'parcial-1' and id_materia = (select id from public.materia where carpeta = 'materia-a')",
+      );
+      expect(rowCount).toBe(1);
+    }, banco);
+
+    expect(await evaluacionDe("materia-a", "parcial-1")).toMatchObject({ nombre: "Nombre del admin en carrera", editada_en_app: true });
+    expect(avisos).toEqual([`materia-a/parcial-1: la base conserva lo que un admin cambió en la app (nombre: base "Nombre del admin en carrera", materia.md "Parcial uno"). ${CIERRE}`]);
+  });
+
+  it("carrera: un admin renombra una materia creada en la app mientras la carga la adopta; la carga espera y el nombre del admin sobrevive con su marca", async () => {
+    // Creada en la app con el nombre de materia.md: si la carga leyera la fila sin esperar al admin vería el nombre viejo, con la
+    // marca puesta, y como ya coincide con materia.md bajaría la marca: el nombre del admin quedaría sin protección en la carga siguiente.
+    const { id } = exito(
+      await (await conAdmin()).from("materia").insert({ nombre: "Materia de prueba A", codigo: "ZZPR-0001" }).select("id").single(),
+      "el admin crea la materia",
+    );
+
+    const { avisos } = await cargaMientrasUnAdminEdita(async (admin) => {
+      const { rowCount } = await admin.query("update public.materia set nombre = 'Nombre del admin en carrera' where id = $1", [id]);
+      expect(rowCount).toBe(1);
+    }, ejemplo());
+
+    expect(await materiaDeCarpeta("materia-a")).toEqual({ id, codigo: "ZZPR-0001", nombre: "Nombre del admin en carrera", carpeta: "materia-a", editada_en_app: true });
+    expect(avisos).toEqual([`materia-a: la base conserva lo que un admin cambió en la app (nombre: base "Nombre del admin en carrera", materia.md "Materia de prueba A"). ${CIERRE}`]);
   });
 });

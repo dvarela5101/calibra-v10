@@ -63,3 +63,32 @@ describe("La bandeja: los avisos de las acciones de reembolsos", () => {
     expect(await pintar({ reembolso: "reabierto" })).toMatch(/<p role="status"[^>]*>Reabriste el caso/);
   });
 });
+
+describe("La bandeja: los enlaces a otras pantallas", () => {
+  it("HU-052: lleva a las citas sin plazo para cancelar, con un enlace y sin contador ni consulta nueva", async () => {
+    const html = await pintar({});
+    expect(html).toMatch(/<a [^>]*href="\/admin\/citas"[^>]*>Citas sin plazo para cancelar<\/a>/);
+    // Solo el enlace: ningún número lo acompaña.
+    expect(html).not.toMatch(/Citas sin plazo para cancelar[^<]*<span/);
+  });
+});
+
+describe("El panel: los enlaces a las pantallas de administración", () => {
+  it("HU-055: ofrece «Materias y evaluaciones», que lleva a /admin/materias, justo después de «Certificar monitores»", async () => {
+    const html = await pintar({});
+    expect(html).toMatch(/<a[^>]*href="\/admin\/materias"[^>]*>Materias y evaluaciones<\/a>/);
+    expect(html).toMatch(/href="\/admin\/certificados"[^>]*>Certificar monitores<\/a><a[^>]*href="\/admin\/materias"/);
+  });
+
+  it("sigue ofreciendo los demás enlaces", async () => {
+    const html = await pintar({});
+    for (const [ruta, nombre] of [
+      ["/admin/monitores", "Invitar a un monitor"],
+      ["/admin/certificados", "Certificar monitores"],
+      ["/admin/solicitudes", "Solicitudes para ser monitor"],
+      ["/admin/equipo", "Equipo de admins"],
+    ]) {
+      expect(html, nombre).toMatch(new RegExp(`<a[^>]*href="${ruta.replace(/\//g, "\\/")}"[^>]*>${nombre}</a>`));
+    }
+  });
+});
