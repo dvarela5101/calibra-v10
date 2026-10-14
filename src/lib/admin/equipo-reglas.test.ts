@@ -4,7 +4,10 @@ import {
   esResultadoDeMover,
   MENSAJES_DE_MOVER,
   MENSAJES_PARA_NO_DESACTIVAR,
+  MENSAJES_PARA_NO_REACTIVAR,
   motivoParaNoDesactivar,
+  motivoParaNoReactivar,
+  quedariaPrimero,
   RESULTADOS_DE_MOVER,
   siguienteActivo,
   textoDeCasos,
@@ -66,6 +69,50 @@ describe("motivoParaNoDesactivar", () => {
     for (const motivo of ["propio", "no_encontrado", "ya_inactivo", "ultimo_activo"] as const) {
       expect(MENSAJES_PARA_NO_DESACTIVAR[motivo]).toMatch(/\S/);
     }
+  });
+});
+
+describe("motivoParaNoReactivar (HU-072, D-64 a)", () => {
+  it("se puede reactivar a un admin desactivado del equipo", () => {
+    expect(motivoParaNoReactivar(EQUIPO, "b")).toBeNull();
+  });
+
+  it("no a uno que ya está activo", () => {
+    expect(motivoParaNoReactivar(EQUIPO, "a")).toBe("ya_activo");
+    expect(motivoParaNoReactivar(EQUIPO, "d")).toBe("ya_activo");
+  });
+
+  it("no a quien no está en el equipo, ni con el equipo vacío (así lo ve quien no es un admin activo)", () => {
+    expect(motivoParaNoReactivar(EQUIPO, "x")).toBe("no_encontrado");
+    expect(motivoParaNoReactivar([], "b")).toBe("no_encontrado");
+  });
+
+  it("cada motivo tiene su mensaje", () => {
+    expect(MENSAJES_PARA_NO_REACTIVAR.no_encontrado).toBe("No encontramos a ese admin en el equipo.");
+    expect(MENSAJES_PARA_NO_REACTIVAR.ya_activo).toBe("Ese admin ya estaba activo.");
+  });
+});
+
+describe("quedariaPrimero (RN-42)", () => {
+  it("es verdadero si, reactivado, queda primero entre los activos, aunque haya desactivados antes", () => {
+    // Orden: z (0, desactivado), b (2, desactivado), a (3), c (5). Los desactivados no cuentan como «antes».
+    const equipo = [miembro("z", 0, false), miembro("b", 2, false), miembro("a", 3), miembro("c", 5)];
+    expect(quedariaPrimero(equipo, "b")).toBe(true);
+    expect(quedariaPrimero(equipo, "z")).toBe(true);
+    expect(quedariaPrimero([miembro("b", 1, false), miembro("a", 3), miembro("c", 5)], "b")).toBe(true);
+  });
+
+  it("es falso si hay un activo antes en el orden", () => {
+    expect(quedariaPrimero(EQUIPO, "b")).toBe(false);
+  });
+
+  it("es verdadero si es el único que quedaría activo", () => {
+    expect(quedariaPrimero([miembro("b", 2, false), miembro("a", 1, false)], "b")).toBe(true);
+  });
+
+  it("es falso para quien no está en el equipo", () => {
+    expect(quedariaPrimero(EQUIPO, "x")).toBe(false);
+    expect(quedariaPrimero([], "x")).toBe(false);
   });
 });
 

@@ -1,4 +1,5 @@
 import "server-only";
+import { reconstruirInvitacionDeAdmin } from "@/lib/admin/invitaciones";
 import { reconstruirPagoRechazado, reconstruirPagoRechazadoSinReembolso } from "@/lib/admin/pagos";
 import {
   reconstruirAvisoCancelada,
@@ -21,6 +22,7 @@ import type { Reconstructores } from "./reintentos";
  */
 export const RECONSTRUCTORES: Reconstructores = {
   invitacion_monitor: (entidad) => reconstruirInvitacion(entidad),
+  invitacion_admin: (entidad) => reconstruirInvitacionDeAdmin(entidad),
   verificacion_lead: (entidad) => reconstruirVerificacion(entidad),
   aviso_monitor_confirmada: (entidad) => reconstruirAvisoConfirmada(entidad),
   aviso_monitor_cancelada: (entidad) => reconstruirAvisoCancelada(entidad),

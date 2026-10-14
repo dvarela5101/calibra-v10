@@ -1,0 +1,11 @@
+/* Registro de un admin invitado (HU-072). */
+
+/*
+ * El correo de la invitación se lee y no se edita: va como texto, no en un campo. Un <input> con más de unos 40 caracteres
+ * desplaza su texto adentro a 390 px y se corta justo el dominio, que es lo que confirma a qué correo se crea la cuenta.
+ * Un correo puede tener hasta 254 caracteres sin un solo espacio, así que se parte donde haga falta.
+ */
+.correo {
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}

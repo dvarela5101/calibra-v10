@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { formatearFechaHora } from "@/lib/fechas";
 import { armarHtml, armarTexto, enlaceSeguro, escaparHtml, protocoloAdmitido } from "./html";
-import { PLANTILLAS, renderizar, type DatosPorPlantilla, type Plantilla } from "./plantillas";
+import { NOMBRE_DE_PLANTILLA, PLANTILLAS, renderizar, type DatosPorPlantilla, type Plantilla } from "./plantillas";
 
 const ENLACE = "https://calibra.example/resultados?token=abc123";
 
@@ -31,6 +32,7 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
   pago_rechazado_grupal: { nombre: "Ana", monto: 20_000, fechaSesion: "2020-01-13", enlace: ENLACE },
   escalamiento_pago: { nombreAdmin: "Admin Uno", nombrePagador: "Ana Pérez", monto: 25_000, enlace: "https://calibra.example/admin" },
   invitacion_monitor: { enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
+  invitacion_admin: { enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z", invitadoPor: "Admin Uno" },
   verificacion_lead: { nombre: "Ana", enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
   aviso_monitor_confirmada: {
     nombreMonitor: "Camilo Rojas",
@@ -89,9 +91,9 @@ const render = <P extends Plantilla>(plantilla: P, cambios: Partial<DatosPorPlan
   renderizar(plantilla, { ...EJEMPLOS[plantilla], ...cambios });
 
 describe("las plantillas de correo", () => {
-  it("son las que salen por correo: diagnóstico, reseña, llave y su recordatorio, dos rechazos, escalamiento, invitación de monitor, verificación del correo del Lead, cuatro avisos al monitor (confirmada, cancelada, pago rechazado y reporte de inasistencia aceptado), la confirmación y la cancelación de la cita y el pago rechazado con la cita ya cancelada", () => {
+  it("son las que salen por correo: diagnóstico, reseña, llave y su recordatorio, dos rechazos, escalamiento, invitación de monitor, invitación de admin, verificación del correo del Lead, cuatro avisos al monitor (confirmada, cancelada, pago rechazado y reporte de inasistencia aceptado), la confirmación y la cancelación de la cita y el pago rechazado con la cita ya cancelada", () => {
     expect([...PLANTILLAS].sort()).toEqual(Object.keys(EJEMPLOS).sort());
-    expect(PLANTILLAS).toHaveLength(16);
+    expect(PLANTILLAS).toHaveLength(17);
   });
 
   it.each(PLANTILLAS)("%s sale en español con HTML y texto plano", (plantilla) => {
@@ -957,6 +959,59 @@ describe("el HTML respeta las reglas de diseño del producto", () => {
     const relleno = Number(/padding:(\d+)px/.exec(boton)![1]);
     const interlineado = 16 * 1.5; // font-size y line-height que hereda del body
     expect(2 * relleno + interlineado).toBeGreaterThanOrEqual(44);
+  });
+});
+
+describe("invitación de admin (HU-072)", () => {
+  it("el asunto no lleva el nombre de quien invita; el cuerpo sí, con el título, el botón y el pie", () => {
+    const { asunto, texto } = render("invitacion_admin");
+    expect(asunto).toBe("Te invitaron al equipo de admins de Calibra");
+    expect(asunto).not.toContain("Admin Uno");
+    expect(texto).toContain("Ya puedes crear tu cuenta de admin");
+    expect(texto).toContain("Admin Uno te invita al equipo de admins de Calibra.");
+    expect(texto).toContain(`Crear mi cuenta: ${ENLACE}`);
+    expect(texto).toContain("Este enlace es solo tuyo. No lo compartas. Si no esperabas esta invitación, ignora este correo.");
+  });
+
+  it("dice que el enlace sirve una sola vez y cuándo vence, en hora de Bogotá", () => {
+    // 15:00 UTC es 10:00 en Bogotá (UTC-5, sin horario de verano).
+    const { texto } = render("invitacion_admin", { venceEn: "2026-10-19T15:00:00.000Z" });
+    expect(texto).toContain("El enlace sirve una sola vez y vence el");
+    expect(texto).toContain(formatearFechaHora(new Date("2026-10-19T15:00:00.000Z")));
+    expect(texto).toMatch(/10:00/);
+    // La fecha de la mañana termina en «a. m.»: el párrafo no cierra con un segundo punto.
+    expect(texto).not.toContain("..");
+  });
+
+  it("en «Correos que no salieron» se llama «Invitación de admin»", () => {
+    expect(NOMBRE_DE_PLANTILLA.invitacion_admin).toBe("Invitación de admin");
+  });
+
+  it("el botón del HTML lleva el enlace de registro", () => {
+    expect(render("invitacion_admin").html).toContain(`href="${ENLACE}"`);
+  });
+
+  it("escapa en el HTML el nombre de quien invita: <b> queda como texto", () => {
+    const { html } = render("invitacion_admin", { invitadoPor: "<b>Admin</b> & Cía" });
+    expect(html).toContain("&lt;b&gt;Admin&lt;/b&gt; &amp; Cía te invita");
+    expect(html).not.toContain("<b>Admin</b>");
+  });
+
+  it("un salto de línea en el nombre se vuelve un espacio: no parte el párrafo", () => {
+    const { texto } = render("invitacion_admin", { invitadoPor: "  Admin\r\nUno \n " });
+    expect(texto).toContain("Admin Uno te invita");
+  });
+
+  it.each<[string, Partial<DatosPorPlantilla["invitacion_admin"]>]>([
+    ["un nombre vacío", { invitadoPor: "" }],
+    ["un nombre de solo espacios", { invitadoPor: "  \n " }],
+    ["un vencimiento que no es un instante", { venceEn: "mañana" }],
+  ])("%s es un error de quien llama, no un correo con hueco", (_caso, cambios) => {
+    expect(() => render("invitacion_admin", cambios)).toThrow(RangeError);
+  });
+
+  it("un enlace peligroso falla en vez de armar el correo", () => {
+    expect(() => render("invitacion_admin", { enlace: "javascript:alert(1)" })).toThrow(RangeError);
   });
 });
 
