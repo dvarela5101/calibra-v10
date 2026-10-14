@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
+import { FormularioContacto } from "@/components/contacto/FormularioContacto";
 import { ResultadoDelDiagnostico } from "@/components/diagnostico/ResultadoDelDiagnostico";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
@@ -11,7 +13,11 @@ import { leerMiDiagnostico } from "@/lib/diagnostico/lectura";
 import type { ResultadoParaMostrar } from "@/lib/diagnostico/mostrar";
 import { TEXTOS } from "@/lib/diagnostico/presentacion";
 import { esUuid } from "@/lib/diagnostico/reglas";
+import { resumenDeError } from "@/lib/leads/reglas";
+import { leadDeLaSesion, type LeadDeSesion } from "@/lib/leads/servidor";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { dejarContactoDelDiagnostico } from "./acciones";
+import estilos from "./resultado.module.css";
 
 // Es personal: no se indexa.
 export const metadata: Metadata = { title: "Tu resultado · Calibra", robots: { index: false } };
@@ -54,12 +60,59 @@ export default async function ResultadoDeUnDiagnostico({ params }: PageProps<"/d
   }
   if (!resultado) notFound();
 
-  // HU-010 pone aquí su formulario de contacto.
-  const ranura: ReactNode = null;
+  const ranura = await contactoDelResultado(sesion.idUsuario, id);
 
   return (
     <Pantalla eyebrow={resultado.materia.nombre} titulo={TEXTOS.tituloDelResultado}>
       <ResultadoDelDiagnostico resultado={resultado} ranura={ranura} />
     </Pantalla>
+  );
+}
+
+/** D-68 a: el título del bloque. No promete el correo con el enlace (HU-031). */
+const TITULO_DEL_CONTACTO = "Déjanos tu contacto para agendar una monitoría y que Calibra te pueda escribir";
+
+/**
+ * HU-010 (P-34, D-68): el contacto va después del resultado, como paso siguiente, sin taparlo. Quien ya es Lead (la sesión
+ * propia, la confirmada por P-23 o la cuenta de Estudiante) no ve el formulario: ve «Ya tenemos tu contacto» y puede cambiar
+ * sus datos en la pantalla de HU-068, que actualiza su Lead. Si no se sabe si es Lead, el resultado sale solo.
+ */
+async function contactoDelResultado(idSesion: string, idDiagnostico: string): Promise<ReactNode> {
+  let lead: LeadDeSesion | null;
+  try {
+    lead = await leadDeLaSesion(idSesion);
+  } catch (error) {
+    console.error("[diagnostico] no se pudo saber si la sesión ya es Lead:", resumenDeError(error));
+    return null;
+  }
+
+  if (lead) {
+    const editar = `/agendar/contacto?editar=1&siguiente=${encodeURIComponent(`/diagnostico/resultado/${idDiagnostico}`)}`;
+    return (
+      <section aria-labelledby="contacto-guardado" className={estilos.bloque}>
+        <h2 id="contacto-guardado" className={estilos.titulo}>
+          Ya tenemos tu contacto
+        </h2>
+        <p className={formulario.ayuda}>Con él agendas tus monitorías y Calibra te puede escribir.</p>
+        <Link href={editar} className={formulario.enlace}>
+          Cambiar mis datos
+        </Link>
+      </section>
+    );
+  }
+
+  return (
+    <section aria-labelledby="contacto" className={estilos.bloque}>
+      <h2 id="contacto" className={estilos.titulo}>
+        {TITULO_DEL_CONTACTO}
+      </h2>
+      <FormularioContacto
+        accion={dejarContactoDelDiagnostico}
+        ocultos={{ id_diagnostico: idDiagnostico }}
+        iniciales={{ nombre: "", correo: "", numero_telefono: "" }}
+        ayudaDelCorreo="Por ahí te escribimos y te confirmamos tus citas."
+        textoDelBoton="Guardar mis datos"
+      />
+    </section>
   );
 }

@@ -1,0 +1,19 @@
+/* HU-010: el bloque del contacto debajo del resultado. */
+
+.bloque {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e3);
+}
+
+/* El formulario ocupa todo el ancho del bloque. */
+.bloque > form {
+  align-self: stretch;
+}
+
+.titulo {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+}

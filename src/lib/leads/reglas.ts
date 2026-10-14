@@ -114,3 +114,9 @@ export function resumenDeError(error: unknown): string {
   }
   return String(error);
 }
+
+/**
+ * Lo que muestra el formulario de contacto (HU-068 y HU-010) tras enviarlo: `valores` devuelve lo escrito para no vaciarlo y
+ * `aviso` es el «revisa tu correo» de P-23. Vive aquí, y no en `dejar-contacto.ts` (`server-only`), porque lo usa el formulario.
+ */
+export type EstadoContacto = { error: string | null; aviso: string | null; valores: Record<string, string> };

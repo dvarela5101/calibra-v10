@@ -5,15 +5,26 @@ import { useExigirSesionAnonima } from "@/components/captcha/useExigirSesionAnon
 import { CasillasConsentimiento } from "@/components/CasillasConsentimiento";
 import formulario from "@/components/formulario.module.css";
 import { TEXTO_VERIFICANDO } from "@/lib/captcha/textos";
-import { dejarContacto, type EstadoContacto } from "./acciones";
-
-export type ValoresDeContacto = { nombre: string; correo: string; numero_telefono: string };
+import type { EstadoContacto } from "@/lib/leads/reglas";
 
 const estadoInicial: EstadoContacto = { error: null, aviso: null, valores: {} };
 
-/** HU-068: nombre, correo y teléfono opcional (P-21, P-22), con la autorización de datos (RN-13). */
-export function FormularioContacto({ siguiente, iniciales }: { siguiente: string; iniciales: ValoresDeContacto }) {
-  const [estado, accion, enviando] = useActionState(dejarContacto, estadoInicial);
+export type ValoresDeContacto = { nombre: string; correo: string; numero_telefono: string };
+
+type Props = {
+  /** La acción del servidor que guarda el contacto: la de agendar (HU-068) o la del resultado del diagnóstico (HU-010). */
+  accion: (anterior: EstadoContacto, datos: FormData) => Promise<EstadoContacto>;
+  /** Campos ocultos que la acción necesita (a dónde sigue al agendar, qué diagnóstico se está viendo). */
+  ocultos: Record<string, string>;
+  iniciales: ValoresDeContacto;
+  /** Para qué se usa el correo, bajo su campo. */
+  ayudaDelCorreo: string;
+  textoDelBoton: string;
+};
+
+/** HU-068 y HU-010: nombre, correo y teléfono opcional (P-21, P-22), con la autorización de datos (RN-13). */
+export function FormularioContacto({ accion, ocultos, iniciales, ayudaDelCorreo, textoDelBoton }: Props) {
+  const [estado, enviar, enviando] = useActionState(accion, estadoInicial);
   // HU-058: sin sesión lista, el envío espera la verificación; el aviso solo sale si no se logra.
   const sesion = useExigirSesionAnonima();
   const valor = (campo: keyof ValoresDeContacto) => estado.valores[campo] ?? iniciales[campo];
@@ -21,8 +32,10 @@ export function FormularioContacto({ siguiente, iniciales }: { siguiente: string
   const llave = JSON.stringify(estado.valores);
 
   return (
-    <form key={llave} action={accion} onSubmit={sesion.alEnviar} className={formulario.formulario} noValidate>
-      <input type="hidden" name="siguiente" value={siguiente} />
+    <form key={llave} action={enviar} onSubmit={sesion.alEnviar} className={formulario.formulario} noValidate>
+      {Object.entries(ocultos).map(([nombre, valorOculto]) => (
+        <input key={nombre} type="hidden" name={nombre} value={valorOculto} />
+      ))}
 
       <div className={formulario.campo}>
         <label htmlFor="nombre" className={formulario.etiqueta}>
@@ -36,7 +49,7 @@ export function FormularioContacto({ siguiente, iniciales }: { siguiente: string
           Tu correo
         </label>
         <p id="correo-ayuda" className={formulario.ayuda}>
-          Ahí te llega la confirmación de tu cita.
+          {ayudaDelCorreo}
         </p>
         <input
           id="correo"
@@ -83,7 +96,7 @@ export function FormularioContacto({ siguiente, iniciales }: { siguiente: string
       {sesion.aviso}
 
       <button type="submit" className={formulario.boton} disabled={enviando || sesion.verificando}>
-        {sesion.verificando ? TEXTO_VERIFICANDO : enviando ? "Guardando…" : "Seguir"}
+        {sesion.verificando ? TEXTO_VERIFICANDO : enviando ? "Guardando…" : textoDelBoton}
       </button>
     </form>
   );
