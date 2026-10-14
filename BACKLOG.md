@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-14 01:46. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-14 08:01. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -10,7 +10,6 @@ _Generado automaticamente: 2026-10-14 01:46. No editar a mano; usa `scripts/back
 | [HU-091](backlog/HU-091.md) | [Técnica] Borradores para activar las Evaluaciones de Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | Backlog | P1 | S | HU-061 |
 | [HU-088](backlog/HU-088.md) | [Estudiante] Ver la calificación y las reseñas del monitor en su tarjeta | Backlog | P2 | M | HU-049, HU-035 |
 | [HU-090](backlog/HU-090.md) | [Admin] Registrar desde la gestión de leads el retiro de la autorización de datos | Backlog | P2 | S | HU-053, HU-085 |
-| [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | Lista | P0 | M | HU-009, HU-008, HU-068 |
 | [HU-031](backlog/HU-031.md) | [Lead] Recuperar mis resultados desde otro dispositivo con un enlace | Lista | P1 | M | HU-006, HU-009, HU-010, HU-081 |
 | [HU-033](backlog/HU-033.md) | [Estudiante] Gestionar mis citas y diagnósticos desde mi cuenta | Lista | P1 | M | HU-032, HU-019, HU-024, HU-029, HU-009, HU-081 |
 | [HU-036](backlog/HU-036.md) | [Estudiante] Agendar una sesión grupal como organizador | Lista | P1 | L | HU-032, HU-017, HU-018 |
@@ -28,6 +27,7 @@ _Generado automaticamente: 2026-10-14 01:46. No editar a mano; usa `scripts/back
 | [HU-084](backlog/HU-084.md) | [Técnica] Recorrido de punta a punta del diagnóstico: de la prueba al monitor | Lista | P1 | S | HU-048, HU-010, HU-011, HU-022 |
 | [HU-085](backlog/HU-085.md) | [Sistema] Borrar o anonimizar los datos de un Lead o aspirante que retiró su autorización o lleva 24 meses sin actividad | Lista | P2 | L | HU-056, HU-006, HU-062, HU-068 |
 | [HU-092](backlog/HU-092.md) | [Monitor] Marcar en mi perfil los temas en los que soy fuerte | Lista | P2 | M | HU-049 |
+| [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | En progreso | P0 | M | HU-009, HU-008, HU-068 |
 | [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | En progreso | P0 | M | HU-009, HU-081 |
 | [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | En progreso | P0 | L | HU-021, HU-009, HU-081, HU-087 |
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | En progreso | P1 | M | HU-004, HU-019, HU-068 |
