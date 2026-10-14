@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { obtenerSesion } from "@/lib/auth/sesion";
+import { mandarEnlaceDelUltimoDiagnostico, programarEnlace } from "@/lib/diagnostico/recuperacion";
 import { COOKIE_ORIGEN, leerOrigen } from "@/lib/leads/origen";
 import { leerContacto, resumenDeError, type EstadoContacto } from "@/lib/leads/reglas";
 import { registrarContacto, type EnvioDeVerificacion, type ResultadoContacto } from "@/lib/leads/servidor";
@@ -67,5 +68,9 @@ export async function procesarContacto(
 
   if (resultado.resultado === "error") return fallo(resultado.error);
   if (resultado.resultado === "verificar") return { error: null, aviso: AVISO_DE_VERIFICACION[resultado.envio], valores };
+  // HU-031 (P-33, P-34): el Lead se acaba de crear con los diagnósticos que la sesión ya tenía; le llega el enlace del más
+  // reciente, sin esperar al proveedor. Al actualizar un Lead o al confirmar uno ajeno (P-23) no sale nada.
+  const { idLeadNuevo } = resultado;
+  if (idLeadNuevo) programarEnlace(() => mandarEnlaceDelUltimoDiagnostico(idLeadNuevo));
   return { listo: true };
 }

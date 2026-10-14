@@ -46,7 +46,8 @@ export async function leadDeLaSesion(idSesion: string): Promise<LeadDeSesion | n
 export type EnvioDeVerificacion = "enviado" | "frenado" | "fallido";
 
 export type ResultadoContacto =
-  | { resultado: "lead" }
+  /** `idLeadNuevo`: solo cuando esta llamada creó el Lead (no al actualizarlo ni si otra pestaña lo creó antes). HU-031. */
+  | { resultado: "lead"; idLeadNuevo?: string }
   | { resultado: "verificar"; envio: EnvioDeVerificacion }
   | { resultado: "error"; error: string };
 
@@ -108,7 +109,7 @@ export async function registrarContacto(entrada: EntradaDeContacto): Promise<Res
     return { resultado: "lead" };
   }
 
-  const { error } = await admin.rpc("registrar_lead", {
+  const { data: idLeadNuevo, error } = await admin.rpc("registrar_lead", {
     p_id_sesion: idSesion,
     p_nombre: contacto.nombre,
     p_correo: contacto.correo,
@@ -118,7 +119,7 @@ export async function registrarContacto(entrada: EntradaDeContacto): Promise<Res
     p_origen: origen ?? "",
     p_version_autorizacion: consentimiento.version_autorizacion,
   });
-  if (!error) return { resultado: "lead" };
+  if (!error) return { resultado: "lead", idLeadNuevo };
   if (error.code !== "23505") throw error;
   // La sesión ya tiene un Lead: otra pestaña lo creó o confirmó uno un instante antes.
   if (!esPorElCorreo(error) || (await leadDeLaSesion(idSesion))) return { resultado: "lead" };

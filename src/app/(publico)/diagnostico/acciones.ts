@@ -7,6 +7,7 @@ import type { ResultadoParaMostrar } from "@/lib/diagnostico/mostrar";
 import { traducirEmpezar, traducirResponder, type ResultadoDeEmpezar, type ResultadoDeResponder } from "@/lib/diagnostico/pantalla";
 import { leerPedidoDeEmpezar, leerPedidoDeResponder } from "@/lib/diagnostico/pedido";
 import { TEXTOS } from "@/lib/diagnostico/presentacion";
+import { mandarEnlaceDeResultados, programarEnlace } from "@/lib/diagnostico/recuperacion";
 import { iniciarDiagnostico, responderDiagnostico } from "@/lib/diagnostico/servidor";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -73,6 +74,12 @@ export async function responderPregunta(pedido: unknown): Promise<ResultadoDeRes
   } catch (fallo) {
     console.error("[diagnostico] no se pudo guardar la respuesta:", fallo instanceof Error ? fallo.message : fallo);
     return error(TEXTOS.errorAlResponder);
+  }
+  // HU-031: si la sesión ya es de un Lead, el diagnóstico nació con su `id_lead` y le llega el enlace de sus resultados, sin
+  // esperar al proveedor. Sin Lead no sale nada. Repetir la respuesta no manda otro: la clave del correo es el diagnóstico.
+  if (respuesta.estado === "terminado") {
+    const { idDiagnostico } = respuesta;
+    programarEnlace(() => mandarEnlaceDeResultados(idDiagnostico));
   }
   return traducirResponder(respuesta, leido.idDiagnostico);
 }

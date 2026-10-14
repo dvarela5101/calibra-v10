@@ -228,7 +228,7 @@ const envioDe = async (idVerificacion: string) =>
 
 /** La sesión `duena` ya es Lead con ese correo. */
 async function crearLeadDeDuena(correo: string, campos: Partial<CamposDeContacto> = {}) {
-  expect(await registrarContacto(entradaDe(duena.id, { nombre: "Ana Pérez", ...campos, correo }))).toEqual({ resultado: "lead" });
+  expect(await registrarContacto(entradaDe(duena.id, { nombre: "Ana Pérez", ...campos, correo }))).toEqual({ resultado: "lead", idLeadNuevo: expect.any(String) });
   return leadDe(duena.id);
 }
 
@@ -289,9 +289,12 @@ describe("criterios 1, 6 y 7: la sesión que deja su contacto queda como Lead", 
       quiereNovedades: true,
     });
 
-    expect(await registrarContacto(entrada)).toEqual({ resultado: "lead" });
+    const resultado = await registrarContacto(entrada);
+    expect(resultado).toMatchObject({ resultado: "lead" });
 
     const lead = await leadDe(duena.id);
+    // HU-031: solo la creación devuelve el id del Lead nuevo, para mandarle el enlace de su último diagnóstico.
+    expect(resultado).toEqual({ resultado: "lead", idLeadNuevo: lead!.id });
     expect(lead).toMatchObject({
       id_sesion_anonima: duena.id,
       nombre: "Ana Pérez",
@@ -350,6 +353,7 @@ describe("criterio 4: una sesión que ya es Lead no crea otro", () => {
       quiereNovedades: true,
     });
 
+    // HU-031: al actualizar no hay Lead nuevo, así que no sale el enlace de resultados.
     expect(await registrarContacto(entrada)).toEqual({ resultado: "lead" });
 
     const { data: deLaSesion } = await fx.admin.from("lead").select("*").eq("id_sesion_anonima", duena.id);
@@ -391,7 +395,7 @@ describe("criterio 4: una sesión que ya es Lead no crea otro", () => {
     const correoDeAna = correoNuevo();
     const correoDeBeto = correoNuevo();
     const ana = await crearLeadDeDuena(correoDeAna, { nombre: "Ana" });
-    expect(await registrarContacto(entradaDe(otra.id, { nombre: "Beto", correo: correoDeBeto }))).toEqual({ resultado: "lead" });
+    expect(await registrarContacto(entradaDe(otra.id, { nombre: "Beto", correo: correoDeBeto }))).toEqual({ resultado: "lead", idLeadNuevo: expect.any(String) });
     const beto = await leadDe(otra.id);
 
     const resultado = await registrarContacto(entradaDe(duena.id, { nombre: "Ana Cambiada", correo: `  ${correoDeBeto.toUpperCase()}` }));
@@ -412,7 +416,9 @@ describe("criterio 4: una sesión que ya es Lead no crea otro", () => {
       registrarContacto(entradaDe(tercera.id, { correo: segundo })),
     ]);
 
-    expect(resultados).toEqual([{ resultado: "lead" }, { resultado: "lead" }]);
+    expect(resultados).toMatchObject([{ resultado: "lead" }, { resultado: "lead" }]);
+    // HU-031: solo una de las dos creó el Lead, así que solo una manda el enlace de resultados.
+    expect(resultados.filter((r) => "idLeadNuevo" in r && r.idLeadNuevo)).toHaveLength(1);
     const { data } = await fx.admin.from("lead").select("correo").eq("id_sesion_anonima", tercera.id);
     expect(data).toHaveLength(1);
   });
@@ -582,7 +588,7 @@ describe("confirmarCorreo (P-23): la sesión que abre el enlace queda ligada al 
     const correo = correoNuevo();
     const correoDeTercera = correoNuevo();
     const lead = await crearLeadDeDuena(correo);
-    expect(await registrarContacto(entradaDe(tercera.id, { nombre: "Tercera", correo: correoDeTercera }))).toEqual({ resultado: "lead" });
+    expect(await registrarContacto(entradaDe(tercera.id, { nombre: "Tercera", correo: correoDeTercera }))).toEqual({ resultado: "lead", idLeadNuevo: expect.any(String) });
     const { token } = await pedirEnlace(otra, correo);
 
     expect(await confirmarCorreo(token, tercera.id)).toEqual({ ok: false });
@@ -731,7 +737,7 @@ describe("tope de correos (HU-075, D-36): como máximo 5 correos distintos por s
     const antes = await leadDe(duena.id);
     expect(antes.correo).toBe(otros[3]);
     const correoDeBeto = correoNuevo();
-    expect(await registrarContacto(entradaDe(otra.id, { nombre: "Beto", correo: correoDeBeto }))).toEqual({ resultado: "lead" });
+    expect(await registrarContacto(entradaDe(otra.id, { nombre: "Beto", correo: correoDeBeto }))).toEqual({ resultado: "lead", idLeadNuevo: expect.any(String) });
     const libre = correoNuevo();
 
     // Un sexto correo libre no se guarda, y el de otro Lead no responde que es de otro.

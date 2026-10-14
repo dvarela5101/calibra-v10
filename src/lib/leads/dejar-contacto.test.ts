@@ -8,6 +8,9 @@ const falsos = vi.hoisted(() => ({
   sesion: null as { idUsuario: string; rol: string | null } | null,
   origen: undefined as string | undefined,
   registrar: vi.fn(),
+  // HU-031: lo que se programa para después de responder, sin correrlo.
+  programadas: [] as (() => Promise<unknown>)[],
+  mandar: vi.fn(),
 }));
 
 vi.mock("@/lib/auth/sesion", () => ({ obtenerSesion: async () => falsos.sesion }));
@@ -15,6 +18,10 @@ vi.mock("next/headers", () => ({
   cookies: async () => ({ get: () => (falsos.origen === undefined ? undefined : { value: falsos.origen }) }),
 }));
 vi.mock("@/lib/leads/servidor", () => ({ registrarContacto: (...args: unknown[]) => falsos.registrar(...args) }));
+vi.mock("@/lib/diagnostico/recuperacion", () => ({
+  programarEnlace: (tarea: () => Promise<unknown>) => falsos.programadas.push(tarea),
+  mandarEnlaceDelUltimoDiagnostico: (...args: unknown[]) => falsos.mandar(...args),
+}));
 
 import { procesarContacto } from "./dejar-contacto";
 
@@ -32,7 +39,36 @@ beforeEach(() => {
   falsos.sesion = SESION;
   falsos.origen = undefined;
   falsos.registrar.mockReset().mockResolvedValue({ resultado: "lead" });
+  falsos.programadas = [];
+  falsos.mandar.mockReset();
   vi.spyOn(console, "error").mockImplementation(() => undefined);
+});
+
+describe("procesarContacto: el enlace de resultados al crear el Lead (HU-031)", () => {
+  const ID_LEAD = "1e000000-0000-4000-8000-000000000031";
+
+  it("con un Lead recién creado programa el enlace de su último diagnóstico y no lo espera", async () => {
+    falsos.registrar.mockResolvedValue({ resultado: "lead", idLeadNuevo: ID_LEAD });
+    // El proveedor nunca contesta: igual sigue, porque el envío no se espera.
+    falsos.mandar.mockReturnValue(new Promise(() => {}));
+    await expect(procesarContacto(formulario(), DESTINO)).resolves.toEqual({ listo: true });
+    expect(falsos.mandar).not.toHaveBeenCalled();
+    expect(falsos.programadas).toHaveLength(1);
+    void falsos.programadas[0]();
+    expect(falsos.mandar).toHaveBeenCalledExactlyOnceWith(ID_LEAD);
+  });
+
+  it("al actualizar un Lead, al pedir verificación (P-23) o con un error no programa nada", async () => {
+    for (const resultado of [
+      { resultado: "lead" },
+      { resultado: "verificar", envio: "enviado" },
+      { resultado: "error", error: "Ese correo ya es de otro contacto de Calibra. Escribe el tuyo." },
+    ]) {
+      falsos.registrar.mockResolvedValue(resultado);
+      await procesarContacto(formulario(), DESTINO);
+    }
+    expect(falsos.programadas).toHaveLength(0);
+  });
 });
 
 describe("procesarContacto", () => {
