@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-14 13:20. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-14 13:33. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -31,10 +31,7 @@ _Generado automaticamente: 2026-10-14 13:20. No editar a mano; usa `scripts/back
 | [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | En progreso | P0 | M | HU-009, HU-081 |
 | [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | En progreso | P0 | L | HU-021, HU-009, HU-081, HU-087 |
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | En progreso | P1 | M | HU-004, HU-019, HU-068 |
-| [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | En revision | P0 | M | HU-009, HU-008, HU-068 |
 | [HU-083](backlog/HU-083.md) | [Técnica] Dibujar fórmulas y código del banco de preguntas | En revision | P0 | S | HU-005 |
-| [HU-093](backlog/HU-093.md) | [Técnica] Acelerar el CI: jobs en paralelo y E2E repartidas con --shard | En revision | P1 | S |  |
-| [HU-049](backlog/HU-049.md) | [Monitor] Administrar mi perfil | En revision | P2 | M | HU-013, HU-016, HU-069 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
@@ -44,6 +41,7 @@ _Generado automaticamente: 2026-10-14 13:20. No editar a mano; usa `scripts/back
 | [HU-007](backlog/HU-007.md) | [Técnica] Almacenamiento privado de comprobantes de pago | Hecha | P0 | S | HU-002, HU-004 |
 | [HU-008](backlog/HU-008.md) | [Visitante] Leer el aviso de privacidad y autorizar el tratamiento de mis datos | Hecha | P0 | S | HU-001 |
 | [HU-009](backlog/HU-009.md) | [Visitante] Tomar el diagnóstico sin iniciar sesión | Hecha | P0 | M | HU-004, HU-005, HU-060, HU-081, HU-083 |
+| [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | Hecha | P0 | M | HU-009, HU-008, HU-068 |
 | [HU-012](backlog/HU-012.md) | [Admin] Iniciar sesión y ver mi bandeja de trabajo | Hecha | P0 | M | HU-004 |
 | [HU-013](backlog/HU-013.md) | [Monitor] Crear mi cuenta de monitor e iniciar sesión | Hecha | P0 | M | HU-004 |
 | [HU-014](backlog/HU-014.md) | [Admin] Emitir certificados de monitor por materia | Hecha | P0 | S | HU-012, HU-013 |
@@ -86,6 +84,8 @@ _Generado automaticamente: 2026-10-14 13:20. No editar a mano; usa `scripts/back
 | [HU-077](backlog/HU-077.md) | [Admin] Revisar un pago que el admin asignado no revisó a tiempo | Hecha | P1 | S | HU-020 |
 | [HU-078](backlog/HU-078.md) | [Admin] Ver y cerrar los pagos rechazados de sesiones que ya ocurrieron (P-24) | Hecha | P1 | M | HU-020, HU-028 |
 | [HU-080](backlog/HU-080.md) | [Lead] No invitar a reseñar a quien reportó que el monitor no llegó | Hecha | P1 | S | HU-029, HU-035 |
+| [HU-093](backlog/HU-093.md) | [Técnica] Acelerar el CI: jobs en paralelo y E2E repartidas con --shard | Hecha | P1 | S |  |
+| [HU-049](backlog/HU-049.md) | [Monitor] Administrar mi perfil | Hecha | P2 | M | HU-013, HU-016, HU-069 |
 | [HU-052](backlog/HU-052.md) | [Admin] Autorizar una cancelación fuera de plazo en casos extremos | Hecha | P2 | M | HU-024, HU-026 |
 | [HU-053](backlog/HU-053.md) | [Admin] Gestionar leads | Hecha | P2 | M | HU-012, HU-068 |
 | [HU-054](backlog/HU-054.md) | [Admin] Gestionar el equipo de admins y el turno de revisión | Hecha | P2 | S | HU-012 |
