@@ -8,7 +8,7 @@
 - **Qué le toca, y por qué.** Lo que no está en el camino crítico del corte ni en el código que hoy tienen abierto las otras dos, empezando por lo pequeño:
   1. Preparar el entorno: `npm ci`, Docker, `npm run db:iniciar`, `db:env`, y leer `CLAUDE.md`, `README.md` y `GUIA_CLAUDE.md`.
   2. Construir [HU-094](../backlog/HU-094.md) (S, nueva): estabilizar la e2e del recorrido de cancelar con reembolso, que falla a veces por la asignación rotativa de admins. Solo toca pruebas y le hace recorrer las e2e y el CI.
-  3. Construir [HU-092](../backlog/HU-092.md) (M), los temas fuertes del perfil del monitor; pasa de dvarela5101 a Lorenzo. Antes de empezar, dvarela5101 responde sus cuatro dudas: tope de temas, aviso al perder un tema, si «Fuerte en» lista todos o solo la materia vista, y si los temas vuelven al reactivar la cuenta.
+  3. Construir [HU-092](../backlog/HU-092.md) (M), los temas fuertes del perfil del monitor; pasa de dvarela5101 a Lorenzo. Sus dudas ya están respondidas (D-69, 14-oct-2026): los temas son subtemas del banco de sus materias certificadas, hasta 5 en total; no se avisa al perder uno; «Fuerte en» los lista todos; y vuelven al reactivar la cuenta.
   4. Volver a refinar [HU-088](../backlog/HU-088.md) (reseñas en la tarjeta del monitor) y construirla. Comparte la tarjeta de `/monitores` con HU-092, así que van con la misma persona y en ese orden.
   5. Después del corte: [HU-085](../backlog/HU-085.md) (L, borrar o anonimizar Leads) y luego [HU-090](../backlog/HU-090.md) (S, que depende de ella).
 - **Hechas o en revisión desde el ajuste anterior:** HU-049 y HU-010 de dvarela5101 (En revision), y HU-093 (CI en jobs en paralelo: un PR pasa de ~17 a ~6 min).
@@ -16,7 +16,7 @@
 | Persona | Siguiente, en orden |
 |---|---|
 | Juzou04 | Sigue su lista: [HU-011](../backlog/HU-011.md), [HU-022](../backlog/HU-022.md) y [HU-032](../backlog/HU-032.md) (en progreso), [HU-084](../backlog/HU-084.md) (S) y volver a refinar [HU-034](../backlog/HU-034.md) con D-56 |
-| dvarela5101 | 1) [HU-031](../backlog/HU-031.md) (M). 2) Responder las dudas de HU-092 y revisar o aprobar lo que esté `En revision` |
+| dvarela5101 | [HU-031](../backlog/HU-031.md) (M) fusionada y en revisión; dudas de HU-092 respondidas (D-69). Revisar o aprobar lo que esté `En revision` |
 | Lorenzo | 1) Entorno. 2) [HU-094](../backlog/HU-094.md) (S). 3) [HU-092](../backlog/HU-092.md) (M). 4) Refinar y construir [HU-088](../backlog/HU-088.md) (M). 5) Después del corte: [HU-085](../backlog/HU-085.md) (L) y [HU-090](../backlog/HU-090.md) (S) |
 
 **Choques a tener en cuenta**
