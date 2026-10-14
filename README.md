@@ -527,8 +527,11 @@ Cada día a las 08:23 UTC (03:23 en Bogotá) pg_cron corre `privado.limpiar_sesi
 
 `.github/workflows/ci.yml` corre en cada push a `main` y en cada PR hacia `main`:
 
-1. **Verificar:** `npm ci`, lint, typecheck, pruebas unitarias y el `--dry-run` del banco de preguntas; luego levanta Supabase local, reaplica las migraciones y corre pgTAP, las pruebas de integración, el build y las e2e. Si fallan las e2e, sube el reporte de Playwright como artefacto.
-2. **Desplegar** (solo si Verificar pasó): con la CLI de Vercel publica en producción desde `main`, o un preview en cada PR, y comenta la URL del preview en el PR.
+1. **Verificar**, en jobs que corren a la vez, cada uno con su propio Supabase local:
+   - **Lint, tipos y unitarias:** `npm ci`, lint, typecheck, pruebas unitarias y el `--dry-run` del banco de preguntas.
+   - **Base de datos e integración:** reaplica las migraciones, corre pgTAP y las pruebas de integración.
+   - **E2E (1/3, 2/3, 3/3 y recorridos):** el build y las e2e. Las de los proyectos `movil` y `escritorio` se reparten en tres partes con `--shard`; los recorridos de HU-048 corren aparte, solos contra su base (`--no-deps`). Si una parte falla, sube su reporte de Playwright como artefacto.
+2. **Desplegar** (solo si todos los jobs de Verificar pasaron): con la CLI de Vercel publica en producción desde `main`, o un preview en cada PR, y comenta la URL del preview en el PR.
 
 `vercel.json` apaga los despliegues automáticos de la integración Git de Vercel, para que solo despliegue el pipeline y nunca salga a producción un commit con pruebas rotas.
 

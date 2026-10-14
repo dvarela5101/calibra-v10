@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-14 01:17. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-14 01:38. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -35,6 +35,7 @@ _Generado automaticamente: 2026-10-14 01:17. No editar a mano; usa `scripts/back
 | [HU-083](backlog/HU-083.md) | [Técnica] Dibujar fórmulas y código del banco de preguntas | En revision | P0 | S | HU-005 |
 | [HU-050](backlog/HU-050.md) | [Monitor] Ver mis desembolsos | En revision | P1 | M | HU-028, HU-030, HU-078 |
 | [HU-055](backlog/HU-055.md) | [Admin] Gestionar materias y evaluaciones | En revision | P1 | L | HU-005, HU-012, HU-014, HU-016, HU-062 |
+| [HU-093](backlog/HU-093.md) | [Técnica] Acelerar el CI: jobs en paralelo y E2E repartidas con --shard | En revision | P1 | S |  |
 | [HU-049](backlog/HU-049.md) | [Monitor] Administrar mi perfil | En revision | P2 | M | HU-013, HU-016, HU-069 |
 | [HU-052](backlog/HU-052.md) | [Admin] Autorizar una cancelación fuera de plazo en casos extremos | En revision | P2 | M | HU-024, HU-026 |
 | [HU-072](backlog/HU-072.md) | [Admin] Agregar un admin al equipo por invitación | En revision | P2 | M | HU-054, HU-013, HU-058, HU-065, HU-070 |

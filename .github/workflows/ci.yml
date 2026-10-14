@@ -23,15 +23,14 @@ env:
   NEXT_TELEMETRY_DISABLED: "1"
 
 jobs:
-  verificar:
-    name: Verificar (lint, tipos, base de datos, pruebas, e2e)
+  # Lo que no necesita base: segundos.
+  estatico:
+    name: Lint, tipos y unitarias
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     env:
       # Zona horaria del negocio; evita depender de la del runner.
       TZ: America/Bogota
-      # GitHub ya lo define; Playwright lo usa para levantar `npm run start`.
-      CI: "true"
     steps:
       - name: Descargar el codigo
         uses: actions/checkout@v4
@@ -60,11 +59,31 @@ jobs:
       - name: Banco de preguntas (convertidor --dry-run)
         run: npm run contenido:validar
 
+  # Migraciones, pgTAP e integración, contra su propio Supabase local.
+  base:
+    name: Base de datos e integracion
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TZ: America/Bogota
+    steps:
+      - name: Descargar el codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
       # Supabase local (Postgres, Auth, REST, Storage y Mailpit) con las migraciones aplicadas.
       - name: Levantar Supabase local
         run: npm run db:iniciar
 
-      # .env.local con las llaves del Supabase local, para build, integracion y e2e.
+      # .env.local con las llaves del Supabase local.
       - name: Variables del Supabase local
         run: npm run db:env
 
@@ -75,6 +94,41 @@ jobs:
       - name: Pruebas de integracion (Vitest contra Supabase local)
         run: npm run test:integracion
 
+  # Las e2e por HU (proyectos movil y escritorio), repartidas en partes que corren a la vez. Cada parte levanta
+  # su propio Supabase local y su build. Los recorridos (HU-048) van aparte: llaman a los procesos programados,
+  # que toman las filas pendientes de cualquier prueba, y así corren solos contra su base.
+  e2e:
+    name: E2E (${{ matrix.parte }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        parte: ["1/3", "2/3", "3/3", recorridos]
+    env:
+      TZ: America/Bogota
+      # GitHub ya lo define; Playwright lo usa para levantar `npm run start`.
+      CI: "true"
+    steps:
+      - name: Descargar el codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Levantar Supabase local
+        run: npm run db:iniciar
+
+      # .env.local con las llaves del Supabase local, para el build y las e2e.
+      - name: Variables del Supabase local
+        run: npm run db:env
+
       - name: Instalar Chromium para Playwright
         # --no-shell: las pruebas usan el headless nuevo (channel "chromium"), no el headless shell.
         run: npx playwright install --with-deps --no-shell chromium
@@ -84,20 +138,34 @@ jobs:
         run: npm run build
 
       - name: Pruebas e2e (Playwright)
-        run: npm run test:e2e
+        env:
+          PARTE: ${{ matrix.parte }}
+        run: |
+          if [ "$PARTE" = "recorridos" ]; then
+            npx playwright test --project=recorrido-movil --project=recorrido-escritorio --no-deps
+          else
+            npx playwright test --project=movil --project=escritorio --shard="$PARTE"
+          fi
+
+      - name: Nombre del reporte
+        if: failure()
+        id: reporte
+        env:
+          PARTE: ${{ matrix.parte }}
+        run: echo "nombre=playwright-report-${PARTE//\//-de-}" >> "$GITHUB_OUTPUT"
 
       - name: Subir reporte de Playwright
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: ${{ steps.reporte.outputs.nombre }}
           path: playwright-report/
           if-no-files-found: ignore
           retention-days: 7
 
   desplegar:
     name: Desplegar en Vercel
-    needs: verificar
+    needs: [estatico, base, e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # Este job reemplaza los permisos del workflow, por eso repite contents.
