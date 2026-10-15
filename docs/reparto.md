@@ -49,7 +49,7 @@ Posibles choques:
 - **HU-034 y HU-052, HU-050:** todas de Juzou04; tocan la bandeja del admin.
 
 Material que dvarela5101 le pide a Juzou04 de su carpeta de materias:
-- El código oficial de Física II (¿FISI-1019 o FISI-1028?) y la semana 5 de su Parcial 1, y confirmar FISI-1018, MATE-1203 e ISIS-1221 contra el programa (`REVISION_REGLAS.md` §3). HU-055 carga por código: hace falta antes del corte.
+- La semana 5 del Parcial 1 de Física II, y confirmar MATE-1203 e ISIS-1221 contra el programa (`REVISION_REGLAS.md` §3). El código de Física I (FISI-1518) y el de Física II (FISI-1528) quedaron resueltos por HU-097 con los catálogos de la universidad (`docs/codigos-de-materias.md`).
 - Material para más Evaluaciones activas: hoy solo 2 de 8 materias tienen una, y HU-009 solo ofrece esas (D-53 a). Se procesa como en HU-061.
 
 ## Ajuste del 4-oct-2026
