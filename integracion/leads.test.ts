@@ -259,6 +259,25 @@ async function correoDeOtroLead(): Promise<string> {
   return correo;
 }
 
+/**
+ * Los ids de diagnóstico que la sesión alcanza por la Data API de las tres maneras en que alguien buscaría el de otra persona:
+ * por su `id`, por el `id_lead` y por el correo del Lead (`lead!inner(correo)`, como en recuperar-resultados.test.ts).
+ * Si la política deja pasar una fila, aparece; si no, queda vacío y sin error.
+ */
+async function leidosPor(cliente: Sesion["cliente"], idLead: string, correo: string, idDiagnostico: string) {
+  const porId = await cliente.from("diagnostico").select("id").eq("id", idDiagnostico);
+  const porLead = await cliente.from("diagnostico").select("id").eq("id_lead", idLead);
+  const porCorreo = await cliente.from("diagnostico").select("id, lead!inner(correo)").eq("lead.correo", correo);
+  expect(porId.error, "por id").toBeNull();
+  expect(porLead.error, "por id_lead").toBeNull();
+  expect(porCorreo.error, "por correo").toBeNull();
+  return {
+    porId: (porId.data ?? []).map((fila) => fila.id),
+    porLead: (porLead.data ?? []).map((fila) => fila.id),
+    porCorreo: (porCorreo.data ?? []).map((fila) => fila.id),
+  };
+}
+
 /** Los correos que el tope tiene anotados para la sesión (su SHA-256), ordenados. */
 async function anotadosDe(idSesion: string): Promise<string[]> {
   const { rows } = await bd.query<{ correo_hash: string }>("select correo_hash from privado.correo_de_contacto where id_sesion = $1", [idSesion]);
@@ -521,7 +540,7 @@ describe("criterio 3 (P-23): un correo que ya es de otro Lead no se liga de inme
 });
 
 describe("confirmarCorreo (P-23): la sesión que abre el enlace queda ligada al Lead", () => {
-  it("la sesión que confirma ve el Lead y sus diagnósticos, y una tercera sesión no", async () => {
+  it("la sesión que confirma ve el Lead y sus propios diagnósticos, no los de la otra sesión, y una tercera sesión no ve nada", async () => {
     const { materia, evaluacion } = await fx.crearEvaluacion();
     const datos = { idEvaluacion: evaluacion.id, idMateria: materia.id };
     const correo = correoNuevo();
@@ -543,13 +562,40 @@ describe("confirmarCorreo (P-23): la sesión que abre el enlace queda ligada al 
     expect(await leadDeLaSesion(otra.id)).toMatchObject({ id: lead.id, nombre: "Ana Pérez", correo });
     const { data: diagnostico } = await fx.admin.from("diagnostico").select("id_lead").eq("id", deOtra.id).single();
     expect(diagnostico?.id_lead).toBe(lead.id);
-    // Ahora ve el Lead y los diagnósticos del Lead, también los que hizo la otra sesión (RLS con `es_mi_lead`).
+    // Ahora ve el Lead (RLS con `es_mi_lead`), pero no los diagnósticos que hizo la otra sesión (D-53 e, HU-095): esos se
+    // sirven con el enlace del correo o con la cuenta de Estudiante. El suyo, que acaba de pasar a ser del Lead, sí.
     expect(await idsVisibles(otra.cliente, "lead", "id", lead.id)).toEqual([lead.id]);
-    expect(await idsVisibles(otra.cliente, "diagnostico", "id", dePrimera.id)).toEqual([dePrimera.id]);
+    expect(await idsVisibles(otra.cliente, "diagnostico", "id", dePrimera.id)).toEqual([]);
+    expect(await idsVisibles(otra.cliente, "diagnostico", "id", deOtra.id)).toEqual([deOtra.id]);
     // Una tercera sesión, que no confirmó, sigue sin ver nada.
     expect(await idsVisibles(tercera.cliente, "lead", "id", lead.id)).toEqual([]);
     expect(await idsVisibles(tercera.cliente, "diagnostico", "id", dePrimera.id)).toEqual([]);
     expect(await leadDeLaSesion(tercera.id)).toBeNull();
+  });
+
+  it("el diagnóstico de la dueña sigue siendo suyo al crear el Lead y al confirmar el correo; la sesión que confirma no lo lee por id, por id_lead ni por correo", async () => {
+    const { materia, evaluacion } = await fx.crearEvaluacion();
+    const correo = correoNuevo();
+    const dePrimera = await fx.crearDiagnostico({ idSesionAnonima: duena.id, idEvaluacion: evaluacion.id, idMateria: materia.id });
+    // Antes de que exista el Lead: la sesión que lo hizo lo lee.
+    expect(await idsVisibles(duena.cliente, "diagnostico", "id", dePrimera.id)).toEqual([dePrimera.id]);
+
+    const lead = await crearLeadDeDuena(correo);
+
+    // Al crear el Lead el diagnóstico pasa a ser del Lead y la dueña lo sigue leyendo, también filtrando por el Lead y por su correo.
+    const { data: ligado } = await fx.admin.from("diagnostico").select("id_lead").eq("id", dePrimera.id).single();
+    expect(ligado?.id_lead).toBe(lead.id);
+    expect(await leidosPor(duena.cliente, lead.id, correo, dePrimera.id)).toEqual({ porId: [dePrimera.id], porLead: [dePrimera.id], porCorreo: [dePrimera.id] });
+
+    // Otro navegador abre el enlace del correo (P-23): queda ligado al Lead, lo ve, y no ve el diagnóstico de la dueña.
+    const { token } = await pedirEnlace(otra, correo);
+    expect(await confirmarCorreo(token, otra.id)).toMatchObject({ ok: true });
+    expect(await sesionesLigadasA(lead.id)).toEqual([{ id_sesion: otra.id, id_lead: lead.id }]);
+    expect(await idsVisibles(otra.cliente, "lead", "id", lead.id)).toEqual([lead.id]);
+
+    expect(await leidosPor(duena.cliente, lead.id, correo, dePrimera.id), "la dueña").toEqual({ porId: [dePrimera.id], porLead: [dePrimera.id], porCorreo: [dePrimera.id] });
+    expect(await leidosPor(otra.cliente, lead.id, correo, dePrimera.id), "la sesión ligada").toEqual({ porId: [], porLead: [], porCorreo: [] });
+    expect(await leidosPor(tercera.cliente, lead.id, correo, dePrimera.id), "una sesión ajena").toEqual({ porId: [], porLead: [], porCorreo: [] });
   });
 
   it("el enlace es de un solo uso: ni otra sesión ni la misma lo vuelven a usar", async () => {

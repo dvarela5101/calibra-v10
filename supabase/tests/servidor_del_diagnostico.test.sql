@@ -1195,7 +1195,7 @@ create temporary table columnas (c text);
 insert into columnas values ('respuestas'), ('semilla'), ('repetido'), ('respondidas'), ('aciertos'), ('falta_material'), ('token_recuperacion');
 grant select on columnas to authenticated;
 
--- La sesión que terminó el diagnóstico y la otra sesión del mismo Lead (nació con id_lead: la ve aunque lo hizo otra).
+-- La sesión que terminó el diagnóstico y la otra sesión del mismo Lead (nació con id_lead, pero no la ve: HU-095, D-53 e).
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000008104","role":"authenticated","is_anonymous":true}';
 select is((select count(*)::int from public.diagnostico d join dx on dx.id = d.id), 1, 'La sesión dueña lee su diagnóstico (id, puntaje y resultado por habilidad)');
@@ -1206,8 +1206,8 @@ select throws_ok(format('select %I from public.diagnostico limit 1', c), '42501'
 from columnas order by c;
 select throws_ok($$select * from public.diagnostico_en_curso$$, '42501', null, 'Ni el en curso de nadie (permiso denegado)');
 set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000008105","role":"authenticated","is_anonymous":true}';
-select is((select count(*)::int from public.diagnostico d join dx on dx.id = d.id), 1,
-  'Otra sesión del mismo Lead (confirmó el correo) lee el diagnóstico: nació con id_lead del Lead');
+select is((select count(*)::int from public.diagnostico d join dx on dx.id = d.id), 0,
+  'Otra sesión del mismo Lead (confirmó el correo) no lee el diagnóstico aunque nació con id_lead del Lead (HU-095)');
 select throws_ok(format('select %I from public.diagnostico limit 1', c), '42501', null, 'La otra sesión del Lead no lee ' || c)
 from columnas order by c;
 set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000008106","role":"authenticated","is_anonymous":false}';

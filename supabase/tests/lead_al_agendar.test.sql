@@ -221,8 +221,10 @@ set local role authenticated;
 set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-0000000068a2","role":"authenticated","is_anonymous":true}';
 select is((select count(*)::int from public.lead where correo = 'ana@example.com'), 1,
   'La sesión que confirmó el correo ve el Lead');
-select is((select count(*)::int from public.diagnostico where id_lead = (select id from creado)), 2,
-  'Y los diagnósticos del Lead, también los que hizo en el otro navegador');
+-- HU-095 (D-53 e): del Lead lee solo el diagnóstico que hizo esta sesión, no el del otro navegador.
+select is((select array_agg(id::text) from public.diagnostico where id_lead = (select id from creado)),
+  array['60000000-0000-0000-0000-000000006802'],
+  'De los diagnósticos del Lead lee solo el suyo, no el que hizo en el otro navegador (HU-095)');
 
 set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-0000000068a3","role":"authenticated","is_anonymous":true}';
 select is((select count(*)::int from public.lead where correo = 'ana@example.com'), 0,
