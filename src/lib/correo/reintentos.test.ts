@@ -31,7 +31,7 @@ describe("entidadDeClave", () => {
   });
 
   it("la entidad puede traer dos puntos: solo se quita el prefijo de la plantilla", () => {
-    expect(entidadDeClave("escalamiento_pago:pago-1:admin-2:3", "escalamiento_pago")).toBe("pago-1:admin-2:3");
+    expect(entidadDeClave("aviso_admin_pago_nuevo:pago-1:admin-2", "aviso_admin_pago_nuevo")).toBe("pago-1:admin-2");
   });
 
   it("es null si la clave es de otra plantilla", () => {
@@ -202,7 +202,7 @@ function reconstructoresCon(cambios: Partial<Reconstructores> = {}): Reconstruct
     recordatorio_llave_reembolso: null,
     pago_rechazado_individual: null,
     pago_rechazado_grupal: null,
-    escalamiento_pago: null,
+    aviso_admin_pago_nuevo: null,
     aviso_monitor_confirmada: null,
     aviso_monitor_cancelada: null,
     invitacion_monitor: null,
@@ -563,8 +563,8 @@ describe("reintentarCorreosFallidos: lo que se descarta", () => {
     expect(reconstructor).not.toHaveBeenCalled();
   });
 
-  it("una plantilla que ninguna HU dispara todavía (reconstructor null): se descarta", async () => {
-    const { resumen, descartes, tomas, llamadas } = await descartar(fila(1, { clave: "escalamiento_pago:pago-1:2", plantilla: "escalamiento_pago" }));
+  it("una plantilla sin reconstructor (null): se descarta", async () => {
+    const { resumen, descartes, tomas, llamadas } = await descartar(fila(1, { clave: "aviso_admin_pago_nuevo:pago-1:admin-2", plantilla: "aviso_admin_pago_nuevo" }));
 
     expect(resumen).toEqual(resumenCon({ revisados: 1, descartados: 1 }));
     expect(tomas).toEqual([]);

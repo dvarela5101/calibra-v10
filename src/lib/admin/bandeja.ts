@@ -1,30 +1,27 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { VENTANA_DE_REINTENTO_MS } from "@/lib/correo/reintentos";
 import { esPlantilla, NOMBRE_DE_PLANTILLA } from "@/lib/correo/plantillas";
-import { revisionHasta } from "@/lib/plazos/motor";
-import { cargarParametros } from "@/lib/plazos/parametros";
-import { describirTiempoRestante, type TiempoRestante } from "@/lib/plazos/restante";
+import { describirEspera } from "@/lib/plazos/restante";
 import type { Database } from "@/lib/supabase/tipos";
 
 /** Cuántas filas trae cada lista. Los contadores son exactos aunque la lista se corte aquí. */
 export const MAX_FILAS_POR_SECCION = 100;
 
-const MS_POR_MINUTO = 60_000;
-
 export type PagoPorRevisar = {
   id: string;
   nombrePagador: string;
   monto: number;
-  /** Cuándo vence la hora que tiene el admin asignado para revisarlo (RN-42). */
-  revisionHasta: Date;
-  restante: TiempoRestante;
+  /** Cuándo llegó el pago (`fecha_pago`, que pone la base): el que lleva más tiempo esperando va arriba (D-56, HU-034). */
+  llegoEn: Date;
+  /** Cuánto lleva esperando, listo para mostrar: `hace 25 min`. No es un plazo: no hay «vencido» (D-70). */
+  espera: string;
 };
 
 /**
- * Un pago en revisión de otro admin al que ya se le pasó la hora (HU-077, supuesto 2): cualquier admin activo puede
- * aprobarlo o rechazarlo (D-38). `nombreAdmin` es el asignado, que sigue siéndolo (supuesto 4).
+ * Un pago en revisión de otro admin (HU-034, D-56): cualquier admin activo puede aprobarlo o rechazarlo desde que llega.
+ * `nombreAdmin` es el responsable según el orden de revisión.
  */
-export type PagoVencidoDeOtro = PagoPorRevisar & { nombreAdmin: string };
+export type PagoDeOtro = PagoPorRevisar & { nombreAdmin: string };
 
 /**
  * Un caso P-24 abierto (HU-078): un pago rechazado cuando la sesión ya había empezado, que alguien tiene que cerrar como
@@ -90,10 +87,10 @@ export type CorreoSinEnviar = {
 };
 
 export type Bandeja = {
-  /** Los pagos en revisión asignados a este admin. */
+  /** Los pagos en revisión de los que este admin es el responsable, el que lleva más tiempo esperando arriba. */
   pagos: PagoPorRevisar[];
-  /** HU-077: los de otros admins con la hora vencida, en su propia lista y con su propio corte. */
-  pagosVencidosDeOtros: PagoVencidoDeOtro[];
+  /** HU-034: los de otros admins, también por antigüedad, en su propia lista y con su propio corte. */
+  pagosDeOtros: PagoDeOtro[];
   /** HU-078: los casos P-24 abiertos. Los ven todos los admins. */
   pagosPorCobrarOAsumir: PagoPorCobrarOAsumir[];
   /** Cada estado activo tiene su propia lista y su propio corte: una larga no tapa a la otra. */
@@ -106,8 +103,9 @@ export type Bandeja = {
   correosSinEnviar: CorreoSinEnviar[];
   /** Cuántos hay en cada sección, contando los que no caben en la lista. */
   contadores: {
+    /** Solo los propios: el título y la tarjeta de la bandeja suman `pagosDeOtros`. */
     pagos: number;
-    pagosVencidosDeOtros: number;
+    pagosDeOtros: number;
     pagosPorCobrarOAsumir: number;
     reembolsos: number;
     reembolsosEsperandoLlave: number;
@@ -186,17 +184,17 @@ async function cargarPagosPorCobrarOAsumir(cliente: Cliente, maxFilas: number) {
 }
 
 /**
- * Lo que tiene asignado un admin (RN-07): pagos en revisión por vencimiento, reembolsos activos por
- * estado, reportes en revisión y desembolsos ejecutables. Los desembolsos no tienen admin hasta que
- * se ejecutan (RN-80), así que todos ven los mismos ejecutables; lo mismo pasa con los pagos por cobrar o asumir
- * (HU-078, supuesto 2), que cierra cualquier admin activo, y con los reembolsos cerrados sin llave (HU-025, supuesto 4),
- * que reabre cualquier admin activo. Lo que tienen asignado otros admins
- * no entra, salvo los reembolsos listos para transferir (HU-082, pregunta 1), que van aparte, y los pagos en revisión a los que ya se les pasó la hora (HU-077, supuesto 2): van
- * aparte, después de los propios. Las políticas de la base ya dejan leer estas tablas solo a los
- * admins: con la sesión de cualquier otro rol las listas salen vacías.
+ * Lo que tiene asignado un admin (RN-07): pagos en revisión por antigüedad, reembolsos activos por estado, reportes en
+ * revisión y desembolsos ejecutables. Los desembolsos no tienen admin hasta que se ejecutan (RN-80), así que todos ven los
+ * mismos ejecutables; lo mismo pasa con los pagos por cobrar o asumir (HU-078, supuesto 2), que cierra cualquier admin
+ * activo, y con los reembolsos cerrados sin llave (HU-025, supuesto 4), que reabre cualquier admin activo. Lo que tienen
+ * asignado otros admins no entra, salvo los reembolsos listos para transferir (HU-082, pregunta 1) y los pagos en
+ * revisión (HU-034, D-56: bandeja común, cualquier admin activo los revisa desde que llegan), que van aparte, después de
+ * los propios. Las políticas de la base ya dejan leer estas tablas solo a los admins: con la sesión de cualquier otro rol
+ * las listas salen vacías.
  *
- * `ahora` se pasa para poder probar el tiempo restante con una hora fija, y `maxFilas` para probar el
- * corte de las listas sin crear cientos de filas.
+ * `ahora` se pasa para poder probar cuánto llevan esperando los pagos con una hora fija, y `maxFilas` para probar el corte
+ * de las listas sin crear cientos de filas.
  */
 export async function cargarBandeja(
   cliente: Cliente,
@@ -218,35 +216,23 @@ export async function cargarBandeja(
   // El proceso de reintentos deja de intentar a las 24 horas: desde ahí, o si la falla fue definitiva, le toca al admin.
   const finDeReintentos = new Date(ahora.getTime() - VENTANA_DE_REINTENTO_MS).toISOString();
 
-  // HU-077: para saber qué asignaciones ya vencieron hace falta el plazo de revisión, así que esa consulta espera a
-  // los parámetros; las demás no.
-  const parametrosLeidos = cargarParametros(cliente);
-
-  const [parametros, pagos, vencidosDeOtros, porCobrar, esperandoLlave, pendientes, pendientesDeOtros, cerrados, reportes, desembolsos, correos] = await Promise.all([
-    parametrosLeidos,
+  const [pagos, pagosDeOtros, porCobrar, esperandoLlave, pendientes, pendientesDeOtros, cerrados, reportes, desembolsos, correos] = await Promise.all([
     cliente
       .from("pago")
-      .select("id, nombre_pagador, monto, fecha_asignacion", { count: "exact" })
+      .select("id, nombre_pagador, monto, fecha_pago", { count: "exact" })
       .eq("id_admin", idAdmin)
       .eq("estado", "en_revision")
-      // El vencimiento es la fecha de asignación más un plazo fijo: ordenar por una es ordenar por la otra.
-      .order("fecha_asignacion", { ascending: true })
+      // D-56: sin plazo ni vencimiento. El que llegó primero y sigue sin revisar va arriba.
+      .order("fecha_pago", { ascending: true })
       .limit(maxFilas),
-    parametrosLeidos.then((p) =>
-      cliente
-        .from("pago")
-        // pago tiene dos llaves a admin desde HU-077: se nombra la del asignado.
-        .select("id, nombre_pagador, monto, fecha_asignacion, admin!pago_id_admin_fkey(nombre)", { count: "exact" })
-        .neq("id_admin", idAdmin)
-        .eq("estado", "en_revision")
-        // Vencido es que `ahora` ya pasó revisionHasta(fecha_asignacion), sin contar el borde (P-40, como
-        // privado.revisar_pago): fecha_asignacion < ahora - revisionMin. La base compara en microsegundos contra un
-        // instante exacto, así que el borde no se corre.
-        .lt("fecha_asignacion", new Date(ahora.getTime() - p.revisionMin * MS_POR_MINUTO).toISOString())
-        // El que lleva más tiempo vencido, arriba.
-        .order("fecha_asignacion", { ascending: true })
-        .limit(maxFilas),
-    ),
+    cliente
+      .from("pago")
+      // pago tiene tres llaves a admin (HU-077, HU-078): se nombra la del responsable.
+      .select("id, nombre_pagador, monto, fecha_pago, admin!pago_id_admin_fkey(nombre)", { count: "exact" })
+      .neq("id_admin", idAdmin)
+      .eq("estado", "en_revision")
+      .order("fecha_pago", { ascending: true })
+      .limit(maxFilas),
     cargarPagosPorCobrarOAsumir(cliente, maxFilas),
     reembolsosDe("esperando_llave"),
     reembolsosDe("pendiente"),
@@ -295,7 +281,7 @@ export async function cargarBandeja(
   ]);
 
   const p = exigir("los pagos por revisar", pagos);
-  const v = exigir("los pagos vencidos de otros admins", vencidosDeOtros);
+  const v = exigir("los pagos en revisión de otros admins", pagosDeOtros);
   const e = exigir("los reembolsos que esperan la llave", esperandoLlave);
   const r = exigir("los reembolsos listos para transferir", pendientes);
   const o = exigir("los reembolsos listos para transferir de otros admins", pendientesDeOtros);
@@ -310,20 +296,14 @@ export async function cargarBandeja(
     motivo: fila.motivo,
   });
 
-  const pagoPorRevisar = (fila: { id: string; nombre_pagador: string; monto: number; fecha_asignacion: string }): PagoPorRevisar => {
-    const limite = revisionHasta(new Date(fila.fecha_asignacion), parametros);
-    return {
-      id: fila.id,
-      nombrePagador: fila.nombre_pagador,
-      monto: fila.monto,
-      revisionHasta: limite,
-      restante: describirTiempoRestante(limite, ahora),
-    };
+  const pagoPorRevisar = (fila: { id: string; nombre_pagador: string; monto: number; fecha_pago: string }): PagoPorRevisar => {
+    const llegoEn = new Date(fila.fecha_pago);
+    return { id: fila.id, nombrePagador: fila.nombre_pagador, monto: fila.monto, llegoEn, espera: describirEspera(llegoEn, ahora) };
   };
 
   return {
     pagos: p.filas.map(pagoPorRevisar),
-    pagosVencidosDeOtros: v.filas.map((fila) => ({ ...pagoPorRevisar(fila), nombreAdmin: fila.admin.nombre })),
+    pagosDeOtros: v.filas.map((fila): PagoDeOtro => ({ ...pagoPorRevisar(fila), nombreAdmin: fila.admin.nombre })),
     pagosPorCobrarOAsumir: porCobrar.filas,
     reembolsos: {
       esperandoLlave: e.filas.map(reembolso),
@@ -369,7 +349,7 @@ export async function cargarBandeja(
     })),
     contadores: {
       pagos: p.total,
-      pagosVencidosDeOtros: v.total,
+      pagosDeOtros: v.total,
       pagosPorCobrarOAsumir: porCobrar.total,
       reembolsos: e.total + r.total,
       reembolsosEsperandoLlave: e.total,

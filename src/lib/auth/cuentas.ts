@@ -10,10 +10,10 @@ const PARA_SIEMPRE = "876000h";
  * sus certificados y sus revisiones se conservan. La pantalla es la de HU-054 (`/admin/equipo`).
  *
  * P-44 (HU-054) y HU-074: si es un admin, antes sus casos abiertos (reembolsos activos, reportes
- * en revisión y pagos en revisión) pasan al siguiente admin activo; los pagos, con una hora nueva
- * para revisarlos (RN-42). Va primero y aquí, para que ningún camino desactive sin reasignar: si la
- * reasignación falla (por ejemplo, no hay otro admin activo), la cuenta no se desactiva. Para quien
- * no es admin no mueve nada.
+ * en revisión y pagos en revisión) pasan al siguiente admin activo: el responsable de un pago sigue
+ * existiendo aunque cualquier admin activo lo pueda revisar (D-56, HU-034). Va primero y aquí, para
+ * que ningún camino desactive sin reasignar: si la reasignación falla (por ejemplo, no hay otro
+ * admin activo), la cuenta no se desactiva. Para quien no es admin no mueve nada.
  *
  * Reasigna dos veces (HU-074, criterio 3): el baneo va por la API de Auth, en otra transacción, y
  * entre la primera reasignación y el baneo el admin sigue activo, así que un pago nuevo lo puede

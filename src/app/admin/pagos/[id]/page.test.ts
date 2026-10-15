@@ -5,8 +5,8 @@ import { MENSAJES_DE_REVISION } from "@/lib/admin/pagos-reglas";
 import RevisarPago from "./page";
 
 // Sin navegador ni base: la revisión de un pago con la sesión y el pago inventados, y se lee el HTML. Aquí se fija
-// qué ve cada admin (criterio 1, supuestos 1, 7 y 8; HU-077: otro admin antes y después de la hora del asignado, y
-// quién revisó), qué consecuencias se leen antes de rechazar según la monitoría (criterio 3, P-24) y que al pintar no
+// qué ve cada admin (criterio 1, supuestos 1, 7 y 8; HU-034: el responsable, cuándo llegó el pago y que cualquier
+// admin lo revisa desde el primer minuto; HU-077: quién revisó), qué consecuencias se leen antes de rechazar según la monitoría (criterio 3, P-24) y que al pintar no
 // se firma ningún enlace (criterio 6). El recorrido con la base lo cubre e2e/revisar-pagos.spec.ts.
 
 const ID = "6a6a6a6a-0000-4000-8000-000000000020";
@@ -45,6 +45,8 @@ vi.mock("next/navigation", () => ({
 const AHORA = new Date("2030-01-07T14:00:00.000Z");
 /** 10:00 en Bogotá: una hora después de AHORA. */
 const INICIO = new Date("2030-01-07T15:00:00.000Z");
+/** El pago llegó 25 minutos antes de AHORA. */
+const LLEGO = new Date("2030-01-07T13:35:00.000Z");
 
 function pago(cambios: Partial<Omit<PagoParaRevisar, "monitoria">> = {}, monitoria: Partial<PagoParaRevisar["monitoria"]> = {}): PagoParaRevisar {
   return {
@@ -56,8 +58,7 @@ function pago(cambios: Partial<Omit<PagoParaRevisar, "monitoria">> = {}, monitor
     estado: "en_revision",
     idAdmin: YO,
     nombreAdmin: "Admin Uno",
-    revisionHasta: new Date("2030-01-07T14:30:00.000Z"),
-    restante: { texto: "Quedan 30 min", vencido: false },
+    llegoEn: LLEGO,
     fechaRevision: null,
     idAdminRevisor: null,
     nombreAdminRevisor: null,
@@ -105,7 +106,7 @@ afterEach(() => {
 });
 
 describe("Revisión de un pago (HU-020): lo que ve el admin (criterio 1)", () => {
-  it("pagador, contacto, monto, referencia, monitoría y tiempo restante", async () => {
+  it("pagador, contacto, monto, referencia, monitoría, responsable y cuándo llegó", async () => {
     const html = await pintar(pago());
     const t = texto(html);
     for (const dato of [
@@ -115,7 +116,8 @@ describe("Revisión de un pago (HU-020): lo que ve el admin (criterio 1)", () =>
       "Monto $ 32.000",
       "Referencia Sin referencia",
       "Estado En revisión",
-      "Tiempo para revisarlo Quedan 30 min",
+      "Responsable Admin Uno",
+      "Llegó hace 25 min",
       "Materia Cálculo Diferencial",
       "Monitor Andrés Gómez",
       "Fecha 7 de enero de 2030",
@@ -124,7 +126,8 @@ describe("Revisión de un pago (HU-020): lo que ve el admin (criterio 1)", () =>
     ]) {
       expect(t, dato).toContain(dato);
     }
-    expect(html).toContain('<time dateTime="2030-01-07T14:30:00.000Z">Quedan 30 min</time>');
+    expect(html).toContain('<time dateTime="2030-01-07T13:35:00.000Z">hace 25 min</time>');
+    expect(t).not.toContain("Tiempo para revisarlo");
     expect(rutas.pedidas).toEqual([`/admin/pagos/${ID}`]);
   });
 
@@ -141,10 +144,16 @@ describe("Revisión de un pago (HU-020): lo que ve el admin (criterio 1)", () =>
     expect(texto(await pintar(pago({ referencia: "M12345678" })))).toContain("Referencia M12345678");
   });
 
-  it("un plazo vencido lo dice con palabras, y el asignado todavía puede revisarlo (supuesto 1, sin escalamiento hasta HU-034)", async () => {
-    const html = await pintar(pago({ restante: { texto: "Vencido hace 5 min", vencido: true } }));
-    expect(texto(html)).toContain("Tiempo para revisarlo Vencido hace 5 min");
-    expect(texto(html)).toContain("Aprobar pago");
+  it("HU-034: cuánto lleva esperando no es un plazo: un día después sigue diciendo «Llegó» y se puede revisar", async () => {
+    const t = texto(await pintar(pago({ llegoEn: new Date(AHORA.getTime() - (26 * 60 + 5) * 60_000) })));
+    expect(t).toContain("Llegó hace 1 d 2 h");
+    expect(t).not.toMatch(/Venc|Quedan|Tiempo para revisarlo/);
+    expect(t).toContain("Aprobar pago");
+  });
+
+  it("HU-034: un pago que llegó hace menos de un minuto (o con el reloj del servidor atrasado) dice «hace menos de 1 min»", async () => {
+    expect(texto(await pintar(pago({ llegoEn: new Date(AHORA.getTime() - 10_000) })))).toContain("Llegó hace menos de 1 min");
+    expect(texto(await pintar(pago({ llegoEn: new Date(AHORA.getTime() + 10_000) })))).toContain("Llegó hace menos de 1 min");
   });
 
   it("escapa lo que viene de la base", async () => {
@@ -240,58 +249,44 @@ describe("Revisión de un pago: aprobar y rechazar (criterios 2, 3 y 7, supuesto
   });
 });
 
-describe("Revisión de un pago: quién revisa (supuestos 1 y 8; HU-077)", () => {
-  const ASIGNADO_EN_HORA =
-    "Este pago está asignado a Admin Dos hasta el lunes, 7 de enero de 2030, 9:30 a. m. Si para entonces no lo ha revisado, podrás aprobarlo o rechazarlo tú.";
-  const ASIGNADO_VENCIDO = "Este pago está asignado a Admin Dos, pero se le pasó la hora el lunes, 7 de enero de 2030, 8:59 a. m. Puedes aprobarlo o rechazarlo tú.";
-  /** La hora del asignado venció un milisegundo antes de AHORA. */
-  const VENCIDO = { revisionHasta: new Date(AHORA.getTime() - 1), restante: { texto: "Venció hace menos de 1 min", vencido: true } };
+describe("Revisión de un pago: quién revisa (supuesto 8; HU-034, D-56)", () => {
+  const LE_TOCA = "Este pago le toca a Admin Dos según el orden de revisión. Puedes aprobarlo o rechazarlo tú.";
 
-  it("HU-077 criterio 2: otro admin dentro de la hora ve el pago, a quién está asignado y hasta cuándo, sin acciones", async () => {
-    const html = await pintar(pago({ idAdmin: OTRO, nombreAdmin: "Admin Dos" }));
+  it("criterio 9: otro admin ve el pago desde el primer minuto, con el responsable, cuándo llegó y la línea de a quién le toca, y puede revisarlo", async () => {
+    const html = await pintar(pago({ idAdmin: OTRO, nombreAdmin: "Admin Dos", llegoEn: new Date(AHORA.getTime() - 5_000) }));
     const t = texto(html);
-    expect(t).toContain(ASIGNADO_EN_HORA);
-    expect(t).toContain("Pagador Camila Rojas");
-    expect(t).toContain("Ver comprobante");
-    expect(html).not.toContain("<form");
-    expect(t).not.toContain("Aprobar pago");
-    expect(t).not.toContain("Rechazar el pago");
-    expect(t).not.toContain("Compara el comprobante");
-  });
-
-  it("supuesto 1 (P-40): justo en el límite el pago todavía es solo del asignado", async () => {
-    const html = await pintar(pago({ idAdmin: OTRO, nombreAdmin: "Admin Dos", revisionHasta: AHORA, restante: { texto: "Queda menos de 1 min", vencido: false } }));
-    expect(texto(html)).toContain("Este pago está asignado a Admin Dos hasta el lunes, 7 de enero de 2030, 9:00 a. m.");
-    expect(html).not.toContain("<form");
-  });
-
-  it("HU-077 criterio 1: con la hora vencida, otro admin ve de quién era la hora y puede aprobarlo o rechazarlo con las mismas reglas", async () => {
-    const vencido = await pintar(pago({ idAdmin: OTRO, nombreAdmin: "Admin Dos", ...VENCIDO }));
-    const t = texto(vencido);
-    // AHORA son las 9:00 en Bogotá: la hora venció un milisegundo antes, a las 8:59:59.
-    expect(t).toContain(ASIGNADO_VENCIDO);
+    expect(t).toContain("Responsable Admin Dos Llegó hace menos de 1 min");
+    expect(t).toContain(LE_TOCA);
     expect(t).toContain("Compara el comprobante con estos datos antes de aprobarlo o rechazarlo.");
     expect(t).toContain("Aprobar pago");
-    expect(vencido).toMatch(/<details[^>]*><summary[^>]*>Rechazar el pago<\/summary>/);
-    // Las mismas consecuencias que ve el asignado (criterio 3 de HU-020), y el aviso antes de las acciones.
+    expect(html).toMatch(/<details[^>]*><summary[^>]*>Rechazar el pago<\/summary>/);
+    // Las mismas consecuencias que ve el responsable (criterio 3 de HU-020), y la línea antes de las acciones.
     expect(t).toContain("Se cancela la monitoría del 7 de enero de 2030 y esa fecha queda libre para otra persona.");
-    expect(t.indexOf("se le pasó la hora")).toBeLessThan(t.indexOf("Aprobar pago"));
+    expect(t.indexOf("Este pago le toca a")).toBeLessThan(t.indexOf("Aprobar pago"));
     // Quién revisa lo pone la sesión, no el formulario.
-    expect(vencido).not.toContain(YO);
+    expect(html).not.toContain(YO);
   });
 
-  it("HU-077: con la hora vencida y P-24, otro admin también tiene que escribir las observaciones", async () => {
-    const html = await pintar(pago({ idAdmin: OTRO, nombreAdmin: "Admin Dos", ...VENCIDO }, { inicio: AHORA }));
+  it("sea cual sea la antigüedad del pago, otro admin lo revisa con las mismas reglas (sin hora ni escalamiento)", async () => {
+    for (const minutos of [0, 59, 61, 3 * 24 * 60]) {
+      const t = texto(await pintar(pago({ idAdmin: OTRO, nombreAdmin: "Admin Dos", llegoEn: new Date(AHORA.getTime() - minutos * 60_000) })));
+      expect(t, `${minutos} min`).toContain(LE_TOCA);
+      expect(t, `${minutos} min`).toContain("Aprobar pago");
+      expect(t, `${minutos} min`).not.toMatch(/asignado a|se le pasó la hora|Tiempo para revisarlo/);
+    }
+  });
+
+  it("HU-034: con P-24, otro admin también tiene que escribir las observaciones", async () => {
+    const html = await pintar(pago({ idAdmin: OTRO, nombreAdmin: "Admin Dos" }, { inicio: AHORA }));
     expect(texto(html)).toContain("La sesión ya empezó, así que la monitoría no se cancela");
     expect(html).toMatch(/<textarea[^>]*required/);
   });
 
-  it("el asignado no lee ningún aviso de quién revisa, ni antes ni después de su hora", async () => {
-    for (const p of [pago(), pago(VENCIDO)]) {
-      const t = texto(await pintar(p));
-      expect(t).not.toContain("Este pago está asignado a");
-      expect(t).toContain("Aprobar pago");
-    }
+  it("el responsable no lee la línea de a quién le toca, y revisa", async () => {
+    const t = texto(await pintar(pago()));
+    expect(t).not.toContain("Este pago le toca a");
+    expect(t).toContain("Responsable Admin Uno");
+    expect(t).toContain("Aprobar pago");
   });
 
   it("el pago de una grupal no se revisa aquí todavía (HU-038)", async () => {
@@ -300,8 +295,8 @@ describe("Revisión de un pago: quién revisa (supuestos 1 y 8; HU-077)", () => 
     expect(html).not.toContain("<form");
   });
 
-  it("la grupal de otro admin con la hora vencida tampoco: no promete que puede revisarla", async () => {
-    const html = await pintar(pago({ idAdmin: OTRO, nombreAdmin: "Admin Dos", ...VENCIDO }, { grupal: true }));
+  it("la grupal de otro admin tampoco: no promete que puede revisarla", async () => {
+    const html = await pintar(pago({ idAdmin: OTRO, nombreAdmin: "Admin Dos" }, { grupal: true }));
     const t = texto(html);
     expect(t).toContain(MENSAJES_DE_REVISION.no_individual);
     expect(t).not.toContain("Puedes aprobarlo o rechazarlo tú");
@@ -323,7 +318,7 @@ describe("Revisión de un pago: después de revisar", () => {
     expect(t).toContain("Revisado lunes, 7 de enero de 2030, 9:10 a. m.");
     expect(t).toContain("Observaciones Se cobra por fuera. Llamar el lunes.");
     expect(t).toContain("Estado Cancelada: el pago fue rechazado");
-    expect(t).not.toContain("Tiempo para revisarlo");
+    expect(t).not.toMatch(/Tiempo para revisarlo|Llegó/);
     expect(html).not.toContain("<form");
     expect(t).toContain("Volver a mi bandeja");
   });
@@ -331,21 +326,22 @@ describe("Revisión de un pago: después de revisar", () => {
   it("HU-077 criterio 3: dice quién lo revisó; si fue el asignado, no repite a quién estaba asignado", async () => {
     const t = texto(await pintar({ ...RECHAZADO, idAdminRevisor: YO, nombreAdminRevisor: "Admin Uno" }));
     expect(t).toContain("Revisado lunes, 7 de enero de 2030, 9:10 a. m. Revisado por Admin Uno Observaciones");
-    expect(t).not.toContain("Asignado a");
+    expect(t).not.toMatch(/Asignado a|Responsable/);
   });
 
-  it("HU-077 criterio 3: si lo revisó otro admin, dice quién lo revisó y a quién estaba asignado", async () => {
+  it("HU-077 criterio 3 y HU-034: si lo revisó otro admin, dice quién lo revisó y quién era el responsable", async () => {
     const html = await pintar({ ...RECHAZADO, idAdmin: OTRO, nombreAdmin: "Admin Dos", idAdminRevisor: YO, nombreAdminRevisor: "Admin Uno" });
     const t = texto(html);
-    expect(t).toContain("Revisado por Admin Uno Asignado a Admin Dos");
+    expect(t).toContain("Revisado por Admin Uno Responsable Admin Dos");
+    expect(t).not.toContain("Asignado a");
     expect(html).not.toContain("<form");
-    expect(t).not.toContain("Este pago está asignado a");
+    expect(t).not.toContain("Este pago le toca a");
   });
 
   it("un pago revisado sin revisor registrado (insertado ya revisado) no inventa uno", async () => {
     const t = texto(await pintar(RECHAZADO));
     expect(t).not.toContain("Revisado por");
-    expect(t).not.toContain("Asignado a");
+    expect(t).not.toMatch(/Asignado a|Responsable/);
   });
 
   it("HU-076: tras rechazar, el mensaje de éxito es un role=status y dice que el correo saldrá en unos minutos", async () => {

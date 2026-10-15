@@ -19,13 +19,13 @@
 --     03 realizada (P-24)                          04 confirmada, rechazada justo en su inicio (P-24, P-40)
 --     05 confirmada, rechazada 1 µs antes de su inicio      06 cancelada por el estudiante (rechazar)
 --     07 cancelada por el estudiante (aprobar)     08 grupal confirmada
---     09 confirmada, pago de B                     10 confirmada, pago de C (desactivado)
+--     09 confirmada, pago de B (A lo aprueba)      10 confirmada, pago de C, desactivado (A lo rechaza)
 --     11 por pagar con un pago (no debería existir; el rechazo la cancela)
 
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(66);
+select plan(67);
 
 -- ---------------------------------------------------------------------------
 -- Estructura y permisos
@@ -245,12 +245,14 @@ select is(
     (select resultado from public.revisar_pago(null, 'aprobar', null))],
   array['no_encontrado', 'no_encontrado'],
   'Un pago que no existe, o ninguno: no_encontrado');
-select is(
-  array[
-    (select resultado from public.revisar_pago('60000000-0000-0000-0000-000000002009', 'aprobar', null)),
-    (select resultado from public.revisar_pago('60000000-0000-0000-0000-000000002009', 'rechazar', 'Nota'))],
-  array['no_asignado', 'no_asignado'],
-  'Supuesto 1, dentro de la hora de B (D-38, HU-077): el pago asignado a B no lo revisa A, aunque A sea un admin activo: no_asignado');
+select results_eq(
+  $$select resultado, cancelo_monitoria from public.revisar_pago('60000000-0000-0000-0000-000000002009', 'aprobar', null)$$,
+  $$values ('aprobado'::text, false)$$,
+  'HU-034 (D-56): cualquier admin activo revisa desde el primer minuto: A aprueba el pago cuyo responsable es B, sin no_asignado');
+select results_eq(
+  $$select resultado, cancelo_monitoria from public.revisar_pago('60000000-0000-0000-0000-000000002010', 'rechazar', 'Nota')$$,
+  $$values ('rechazado'::text, true)$$,
+  'HU-034 (D-56): y A rechaza el pago cuyo responsable es C, un admin desactivado: rechazado y cancela la cita futura');
 select is(
   array[
     (select resultado from public.revisar_pago('60000000-0000-0000-0000-000000002008', 'rechazar', null)),
@@ -463,7 +465,7 @@ select is(
 -- ---------------------------------------------------------------------------
 set local role authenticated;
 select throws_ok(
-  $$update public.pago set estado = 'aprobado', fecha_revision = now() where id = '60000000-0000-0000-0000-000000002009'$$,
+  $$update public.pago set estado = 'aprobado', fecha_revision = now() where id = '60000000-0000-0000-0000-000000002008'$$,
   '42501', null,
   'Ni el admin con sesión actualiza pago directo en la Data API: permiso denegado');
 reset role;
@@ -475,9 +477,9 @@ select results_eq(
                    '60000000-0000-0000-0000-000000002010')
     order by p.id$$,
   $$values ('60000000-0000-0000-0000-000000002008'::uuid, 'en_revision'::text, 'confirmada'::text),
-           ('60000000-0000-0000-0000-000000002009'::uuid, 'en_revision', 'confirmada'),
-           ('60000000-0000-0000-0000-000000002010'::uuid, 'en_revision', 'confirmada')$$,
-  'Al final, el de la grupal, el de B y el de C siguen en revisión y sus monitorías, confirmadas');
+           ('60000000-0000-0000-0000-000000002009'::uuid, 'aprobado', 'confirmada'),
+           ('60000000-0000-0000-0000-000000002010'::uuid, 'rechazado', 'cancelada')$$,
+  'Al final, el de la grupal sigue en revisión y con su monitoría confirmada; el de B quedó aprobado por A y el de C, rechazado por A (la cita cancelada)');
 
 select * from finish();
 rollback;

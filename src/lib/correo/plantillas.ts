@@ -20,7 +20,7 @@ export const PLANTILLAS = [
   "recordatorio_llave_reembolso",
   "pago_rechazado_individual",
   "pago_rechazado_grupal",
-  "escalamiento_pago",
+  "aviso_admin_pago_nuevo",
   "invitacion_monitor",
   "invitacion_admin",
   "verificacion_lead",
@@ -43,7 +43,7 @@ export const NOMBRE_DE_PLANTILLA: Record<Plantilla, string> = {
   recordatorio_llave_reembolso: "Recordatorio de llave para reembolso",
   pago_rechazado_individual: "Pago rechazado (individual)",
   pago_rechazado_grupal: "Pago rechazado (grupal)",
-  escalamiento_pago: "Pago escalado a otro admin",
+  aviso_admin_pago_nuevo: "Aviso al admin: pago nuevo por revisar",
   invitacion_monitor: "Invitación de monitor",
   invitacion_admin: "Invitación de admin",
   verificacion_lead: "Confirmación de correo para agendar",
@@ -87,8 +87,13 @@ export type DatosPorPlantilla = {
   pago_rechazado_individual: { nombre: string; monto: number; fechaSesion: string; contactoSoporte?: string };
   /** Pago rechazado en una grupal: se anula solo ese cupo y puede volver a intentar (RN-43). Al pagador. */
   pago_rechazado_grupal: { nombre: string; monto: number; fechaSesion: string; enlace: string };
-  /** Pago sin revisar tras el plazo: pasa al siguiente admin (RN-42). Al admin. */
-  escalamiento_pago: { nombreAdmin: string; nombrePagador: string; monto: number; enlace: string };
+  /**
+   * Llegó un pago por revisar y cualquier admin activo lo puede aprobar o rechazar (RN-42 con D-56, HU-034). Al admin,
+   * uno por cada admin activo al llegar el pago. `nombreResponsable` es a quien le tocaba según el orden de revisión al
+   * llegar el pago (una foto, no `pago.id_admin`: un reintento dice lo mismo aunque HU-074 lo reasigne); `null` quiere
+   * decir que el destinatario es el responsable. Sin el contacto del pagador, ni el comprobante, ni cifras de comisión.
+   */
+  aviso_admin_pago_nuevo: { nombreAdmin: string; nombrePagador: string; monto: number; nombreResponsable: string | null; enlace: string };
   /** Invitación a crear la cuenta de monitor tras la evaluación presencial (P-20, HU-013). Al aspirante. */
   invitacion_monitor: { enlace: string; venceEn: string };
   /**
@@ -320,19 +325,22 @@ function contenidoDe<P extends Plantilla>(plantilla: P, datos: DatosPorPlantilla
         },
       };
     }
-    case "escalamiento_pago": {
-      const d = datos as DatosPorPlantilla["escalamiento_pago"];
+    case "aviso_admin_pago_nuevo": {
+      const d = datos as DatosPorPlantilla["aviso_admin_pago_nuevo"];
       const pagador = linea(d.nombrePagador, "nombrePagador");
       return {
-        asunto: `Pago pendiente de revisión: ${pagador}`,
+        asunto: `Pago nuevo por revisar: ${pagador}`,
         contenido: {
-          titulo: "Un pago te espera",
+          titulo: "Llegó un pago por revisar",
           parrafos: [
             `Hola, ${cerrar(linea(d.nombreAdmin, "nombreAdmin"))}`,
-            `El pago de ${formatearPesos(d.monto)} de ${pagador} no se revisó a tiempo y ahora te toca a ti. Si tampoco se revisa a tiempo, pasa al siguiente admin.`,
+            `${pagador} pagó ${formatearPesos(d.monto)} y su comprobante espera revisión. Cualquier admin lo puede aprobar o rechazar.`,
+            d.nombreResponsable === null
+              ? "Te toca a ti según el orden de revisión."
+              : `Le toca a ${linea(d.nombreResponsable, "nombreResponsable")} según el orden de revisión.`,
           ],
-          boton: { texto: "Abrir mi bandeja", enlace: d.enlace },
-          pie: "Lo encuentras en la sección de pagos por revisar.",
+          boton: { texto: "Revisar el pago", enlace: d.enlace },
+          pie: "También lo encuentras en la sección de pagos por revisar de tu bandeja.",
         },
       };
     }

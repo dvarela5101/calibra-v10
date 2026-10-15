@@ -527,7 +527,7 @@ select is(privado.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540c
 select is(pg_temp.duenos(), array['a', 'a', 'b', 'a', 'a', 'b', 'b', 'a', 'a'], 'Todos al único activo, A');
 
 -- ---------------------------------------------------------------------------
--- 6b. Los pagos en revisión también pasan, con una hora nueva (HU-074, RN-42)
+-- 6b. Los pagos en revisión también pasan (HU-074; con HU-034 ya no hay hora que empezar de nuevo)
 --     Los ya revisados (aprobado, rechazado) se quedan con el desactivado (RN-23).
 -- ---------------------------------------------------------------------------
 call pg_temp.aislar();
@@ -564,13 +564,13 @@ select results_eq(
   'casos_abiertos cuenta los pagos en revisión: C tiene uno (sus pagos revisados no cuentan) y A seis, con su pago 4');
 reset role;
 
--- Criterio 1: el pago en revisión pasa al siguiente activo con una hora nueva.
+-- Criterio 1: el pago en revisión pasa al siguiente activo. La función le pone fecha_asignacion = now(), que desde HU-034 nadie lee.
 select is(privado.reasignar_casos_de_admin('a0000000-0000-0000-0000-00000000540c'), 1,
   'Reasignar a C mueve su pago en revisión y devuelve 1');
 select is((select right(id_admin::text, 1) from public.pago where id = '60000000-0000-0000-0000-000000005406'), 'e',
   'El pago en revisión pasa a E, el siguiente activo después de C (se salta a D, desactivado)');
 select is((select fecha_asignacion from public.pago where id = '60000000-0000-0000-0000-000000005406'), now(),
-  'Con fecha_asignacion nueva: E tiene su hora completa para revisarlo (RN-42)');
+  'Con fecha_asignacion = now(), como la deja la función (desde HU-034 es solo desde cuándo lo tiene su responsable: ya no hay hora de revisión)');
 select is((select fecha_pago from public.pago where id = '60000000-0000-0000-0000-000000005406'), '2020-01-10 15:00:00+00'::timestamptz,
   'fecha_pago no cambia: sigue diciendo cuándo llegó el comprobante');
 select results_eq(

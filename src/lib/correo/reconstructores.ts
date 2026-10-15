@@ -1,4 +1,5 @@
 import "server-only";
+import { reconstruirAvisoPagoNuevo } from "@/lib/admin/avisos-pago-nuevo";
 import { reconstruirInvitacionDeAdmin } from "@/lib/admin/invitaciones";
 import { reconstruirPagoRechazado, reconstruirPagoRechazadoSinReembolso } from "@/lib/admin/pagos";
 import {
@@ -37,7 +38,7 @@ export const RECONSTRUCTORES: Reconstructores = {
   pago_rechazado_sin_reembolso: (entidad) => reconstruirPagoRechazadoSinReembolso(entidad),
   aviso_monitor_inasistencia_aceptada: (entidad) => reconstruirAvisoInasistenciaAceptada(entidad),
   recuperacion_diagnostico: (entidad) => reconstruirRecuperacion(entidad),
-  // Todavía ninguna HU dispara estas plantillas.
+  aviso_admin_pago_nuevo: (entidad) => reconstruirAvisoPagoNuevo(entidad),
+  // Todavía ninguna HU dispara esta plantilla.
   pago_rechazado_grupal: null,
-  escalamiento_pago: null,
 };

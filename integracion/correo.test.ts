@@ -44,7 +44,8 @@ function destinatarioNuevo(): string {
 
 /** Una entidad nueva: la clave es la plantilla más esto, y se anota para borrar la fila al final. */
 function entidadNueva(plantilla: Plantilla): string {
-  const entidad = randomUUID();
+  // El aviso de pago nuevo (HU-034) tiene como entidad `<id_pago>:<id_admin>`; las demás, un solo id.
+  const entidad = plantilla === "aviso_admin_pago_nuevo" ? `${randomUUID()}:${randomUUID()}` : randomUUID();
   claves.push(claveDeCorreo(plantilla, entidad));
   return entidad;
 }
@@ -68,7 +69,13 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
   recordatorio_llave_reembolso: { nombre: "Ana", monto: 25_000, motivo: "Cancelaste a tiempo", enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
   pago_rechazado_individual: { nombre: "Ana", monto: 25_000, fechaSesion: "2020-01-06" },
   pago_rechazado_grupal: { nombre: "Ana", monto: 20_000, fechaSesion: "2020-01-13", enlace: ENLACE },
-  escalamiento_pago: { nombreAdmin: "Admin Uno", nombrePagador: "Ana Pérez", monto: 25_000, enlace: "https://calibra.example/admin" },
+  aviso_admin_pago_nuevo: {
+    nombreAdmin: "Admin Uno",
+    nombrePagador: "Ana Pérez",
+    monto: 25_000,
+    nombreResponsable: "Admin Dos",
+    enlace: "https://calibra.example/admin/pagos/0d6c7a0e-2f0b-4b53-9a53-0f4ad1f3b001",
+  },
   invitacion_monitor: { enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
   invitacion_admin: { enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z", invitadoPor: "Admin Uno" },
   verificacion_lead: { nombre: "Ana", enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },

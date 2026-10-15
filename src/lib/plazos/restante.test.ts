@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { describirTiempoRestante } from "./restante";
+import { describirEspera, describirTiempoRestante } from "./restante";
 
 const MINUTO = 60_000;
 const HORA = 60 * MINUTO;
@@ -58,5 +58,43 @@ describe("describirTiempoRestante: entradas inválidas", () => {
   it("rechaza fechas inválidas en vez de mostrar NaN", () => {
     expect(() => describirTiempoRestante(new Date(Number.NaN), LIMITE)).toThrow(/limite/);
     expect(() => describirTiempoRestante(LIMITE, new Date(Number.NaN))).toThrow(/ahora/);
+  });
+});
+
+describe("describirEspera: cuánto lleva esperando algo (HU-034)", () => {
+  const DESDE = new Date("2026-10-05T15:00:00.000Z");
+  const pasado = (ms: number) => describirEspera(DESDE, new Date(DESDE.getTime() + ms));
+
+  it.each([
+    [0, "hace menos de 1 min"],
+    [59_000, "hace menos de 1 min"],
+    [MINUTO - 1, "hace menos de 1 min"],
+    [MINUTO, "hace 1 min"],
+    [25 * MINUTO, "hace 25 min"],
+    [59 * MINUTO, "hace 59 min"],
+    [59 * MINUTO + 59_999, "hace 59 min"],
+    [HORA, "hace 1 h"],
+    [HORA + 5 * MINUTO, "hace 1 h 5 min"],
+    [25 * HORA, "hace 1 d 1 h"],
+    [DIA, "hace 1 d"],
+    [2 * DIA + 3 * HORA, "hace 2 d 3 h"],
+    [2 * DIA + 3 * HORA + 40 * MINUTO, "hace 2 d 3 h"],
+  ])("pasaron %i ms: %s", (ms, texto) => {
+    expect(pasado(ms)).toBe(texto);
+  });
+
+  it("un `desde` posterior a `ahora` (el reloj del servidor atrasado frente al de la base) dice «hace menos de 1 min»", () => {
+    expect(pasado(-1)).toBe("hace menos de 1 min");
+    expect(pasado(-5 * MINUTO)).toBe("hace menos de 1 min");
+    expect(pasado(-3 * DIA)).toBe("hace menos de 1 min");
+  });
+
+  it("no es un plazo: nunca dice quedan ni vencido", () => {
+    for (const ms of [0, 25 * MINUTO, 3 * DIA]) expect(pasado(ms)).not.toMatch(/queda|venc/i);
+  });
+
+  it("rechaza fechas inválidas en vez de mostrar NaN", () => {
+    expect(() => describirEspera(new Date(Number.NaN), DESDE)).toThrow(/desde/);
+    expect(() => describirEspera(DESDE, new Date(Number.NaN))).toThrow(/ahora/);
   });
 });

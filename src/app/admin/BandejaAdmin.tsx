@@ -47,55 +47,47 @@ function Seccion({
 }
 
 /**
- * HU-020: cada pago abre su revisión. Un <a>, como los contadores: la bandeja no necesita JavaScript. Con
- * `asignadoA` (HU-077) dice de quién es el pago antes del tiempo.
+ * HU-020: cada pago abre su revisión. Un <a>, como los contadores: la bandeja no necesita JavaScript. Dice cuánto lleva
+ * esperando el pago (HU-034): no es un plazo, así que no hay «Quedan …» ni «Vencido …». Con `responsable` dice de quién
+ * es el pago antes de eso.
  */
-function EnlaceAlPago({ pago, asignadoA }: { pago: PagoPorRevisar; asignadoA?: string }) {
-  const tiempo = (
-    <span className={pago.restante.vencido ? estilos.vencido : estilos.meta}>
-      <time dateTime={pago.revisionHasta.toISOString()}>{pago.restante.texto}</time>
-    </span>
+function EnlaceAlPago({ pago, responsable }: { pago: PagoPorRevisar; responsable?: string }) {
+  const espera = (
+    <>
+      Llegó <time dateTime={pago.llegoEn.toISOString()}>{pago.espera}</time>
+    </>
   );
   return (
     <a href={`/admin/pagos/${pago.id}`} className={estilos.filaEnlace}>
       <span className={estilos.nombre}>
         {pago.nombrePagador} · {formatearPesos(pago.monto)}
       </span>
-      {asignadoA ? (
-        <span className={estilos.meta}>
-          De {asignadoA} · {tiempo}
-        </span>
-      ) : (
-        tiempo
-      )}
+      <span className={estilos.meta}>{responsable ? <>De {responsable} · {espera}</> : espera}</span>
     </a>
   );
 }
 
 /**
- * HU-077 (supuesto 2): los pagos de otros admins a los que ya se les pasó la hora, después de los propios, con de
- * quién son y desde cuándo están vencidos. Si no hay ninguno, no se muestra nada.
+ * HU-034 (D-56): los pagos en revisión de otros admins, después de los propios, con de quién son y cuánto llevan
+ * esperando. Cualquier admin activo los puede aprobar o rechazar desde que llegan. Si no hay ninguno, no se muestra nada.
  */
-function PagosVencidosDeOtros({ bandeja }: { bandeja: Bandeja }) {
-  const total = bandeja.contadores.pagosVencidosDeOtros;
+function PagosDeOtros({ bandeja }: { bandeja: Bandeja }) {
+  const total = bandeja.contadores.pagosDeOtros;
   if (total === 0) return null;
   return (
     <>
       <h3 id="pagos-de-otros-titulo" className={estilos.subtitulo}>
-        Vencidos de otros admins <span className={estilos.cuenta}>({total})</span>
+        De otros admins <span className={estilos.cuenta}>({total})</span>
       </h3>
-      <p className={estilos.ayuda}>
-        Al admin asignado se le pasó la hora para revisarlos: ya puedes aprobarlos o rechazarlos tú. El que lleva más tiempo
-        vencido va arriba.
-      </p>
+      <p className={estilos.ayuda}>Le tocan a otro admin, pero puedes aprobarlos o rechazarlos tú.</p>
       <ul aria-labelledby="pagos-de-otros-titulo" className={estilos.lista}>
-        {bandeja.pagosVencidosDeOtros.map((pago) => (
+        {bandeja.pagosDeOtros.map((pago) => (
           <li key={pago.id}>
-            <EnlaceAlPago pago={pago} asignadoA={pago.nombreAdmin} />
+            <EnlaceAlPago pago={pago} responsable={pago.nombreAdmin} />
           </li>
         ))}
       </ul>
-      <AvisoDeCorte mostrados={bandeja.pagosVencidosDeOtros.length} total={total} />
+      <AvisoDeCorte mostrados={bandeja.pagosDeOtros.length} total={total} />
     </>
   );
 }
@@ -243,7 +235,8 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
   const { contadores } = bandeja;
 
   const resumen = [
-    { id: "pagos", rotulo: "Pagos por revisar", cifra: contadores.pagos },
+    // HU-034: con una bandeja común el total pendiente es el que importa, también los pagos que le tocan a otro admin.
+    { id: "pagos", rotulo: "Pagos por revisar", cifra: contadores.pagos + contadores.pagosDeOtros },
     { id: "por-cobrar", rotulo: "Pagos por cobrar o asumir", cifra: contadores.pagosPorCobrarOAsumir },
     { id: "reembolsos", rotulo: "Reembolsos", cifra: contadores.reembolsos },
     { id: "reportes", rotulo: "Reportes en revisión", cifra: contadores.reportes },
@@ -269,20 +262,27 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
       <Seccion
         id="pagos"
         titulo="Pagos por revisar"
-        total={contadores.pagos}
-        ayuda="Cada pago tiene un plazo para revisarse: el que vence primero va arriba y en cada fila ves cuánto le queda."
-        vacio="No tienes pagos por revisar."
-        despues={<PagosVencidosDeOtros bandeja={bandeja} />}
+        total={contadores.pagos + contadores.pagosDeOtros}
+        ayuda="Cualquier admin activo puede aprobar o rechazar estos pagos desde que llegan, también los de otros. El que lleva más tiempo esperando va arriba. Los asignados a ti son los que te tocan según el orden de revisión."
+        vacio="No hay pagos por revisar."
+        despues={<PagosDeOtros bandeja={bandeja} />}
       >
-        {/* Con nombre: la lista de otros admins (HU-077) puede ir debajo, en la misma sección. */}
-        <ul aria-label="Asignados a ti" className={estilos.lista}>
-          {bandeja.pagos.map((pago) => (
-            <li key={pago.id}>
-              <EnlaceAlPago pago={pago} />
-            </li>
-          ))}
-        </ul>
-        <AvisoDeCorte mostrados={bandeja.pagos.length} total={contadores.pagos} />
+        {/* Con título y nombre: la lista de otros admins (HU-034) va debajo, en la misma sección. Sin pagos propios no sale. */}
+        {contadores.pagos > 0 && (
+          <>
+            <h3 className={estilos.subtitulo}>
+              Asignados a ti <span className={estilos.cuenta}>({contadores.pagos})</span>
+            </h3>
+            <ul aria-label="Asignados a ti" className={estilos.lista}>
+              {bandeja.pagos.map((pago) => (
+                <li key={pago.id}>
+                  <EnlaceAlPago pago={pago} />
+                </li>
+              ))}
+            </ul>
+            <AvisoDeCorte mostrados={bandeja.pagos.length} total={contadores.pagos} />
+          </>
+        )}
       </Seccion>
 
       <Seccion

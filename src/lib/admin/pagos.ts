@@ -2,9 +2,6 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { esUuid } from "@/lib/agendar/reglas";
 import type { Reconstruccion } from "@/lib/correo/plantillas";
-import { revisionHasta } from "@/lib/plazos/motor";
-import { cargarParametros } from "@/lib/plazos/parametros";
-import { describirTiempoRestante, type TiempoRestante } from "@/lib/plazos/restante";
 import { correoConsultasDatos } from "@/lib/privacidad/consentimiento";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/tipos";
@@ -22,8 +19,7 @@ import {
 /**
  * Revisar un pago (HU-020) con la sesión del admin. Nada de la llave secreta para leer ni para revisar: las políticas
  * dejan leer los pagos a cualquier admin activo, y `public.revisar_pago` toma la identidad de la sesión
- * (`auth.uid()`, que tiene que ser la del admin asignado o, pasada su hora, la de cualquier admin activo: HU-077) y
- * la hora de la base. Solo la reconstrucción del correo al pagador usa la llave secreta, porque corre sin sesión
+ * (`auth.uid()`, que tiene que ser la de un admin activo, el responsable o no: D-56, HU-034) y la hora de la base. Solo la reconstrucción del correo al pagador usa la llave secreta, porque corre sin sesión
  * (el procesador de `avisos-rechazo.ts` y el reintento de HU-065).
  */
 
@@ -38,16 +34,15 @@ export type PagoParaRevisar = {
   /** Hoy siempre es `null`: nadie la escribe todavía (supuesto 6). */
   referencia: string | null;
   estado: EstadoDePago;
-  /** El admin asignado. Revisa él o, pasada su hora, cualquier admin activo (HU-077: `quienRevisa`). */
+  /** El responsable según el orden de revisión (RN-42, D-56). Cualquier admin activo lo revisa desde que llega. */
   idAdmin: string;
   nombreAdmin: string;
-  /** Cuándo vence la hora que tiene el admin asignado para revisarlo (RN-42). */
-  revisionHasta: Date;
-  restante: TiempoRestante;
+  /** Cuándo llegó el pago (`fecha_pago`, que pone la base): con el reloj del servidor da «hace 25 min». */
+  llegoEn: Date;
   fechaRevision: Date | null;
   /**
-   * Quién lo aprobó o lo rechazó (HU-077, criterio 3). `null` mientras está en revisión, y en un pago revisado que
-   * no lo registró (los que se insertan ya revisados, como las fixtures de las pruebas).
+   * Quién lo aprobó o lo rechazó (HU-077, criterio 3), que puede ser otro admin y no el responsable. `null` mientras
+   * está en revisión, y en un pago revisado que no lo registró (los que se insertan ya revisados, como las fixtures de las pruebas).
    */
   idAdminRevisor: string | null;
   nombreAdminRevisor: string | null;
@@ -73,23 +68,20 @@ export type PagoParaRevisar = {
 };
 
 /**
- * Un pago con su monitoría y el tiempo que le queda al admin asignado (criterio 1), o `null` si no existe. Cualquier
- * admin activo lo lee; a otro rol las políticas se lo esconden y también da `null`. El comprobante no se lee aquí: su
- * enlace firmado se pide al abrirlo (criterio 6). `ahora` se pasa para poder probar el tiempo restante con una hora fija.
+ * Un pago con su monitoría, su responsable y cuándo llegó (criterio 1), o `null` si no existe. Cualquier admin activo lo
+ * lee; a otro rol las políticas se lo esconden y también da `null`. El comprobante no se lee aquí: su enlace firmado se
+ * pide al abrirlo (criterio 6).
  */
-export async function cargarPagoParaRevisar(cliente: Cliente, idPago: string, ahora: Date = new Date()): Promise<PagoParaRevisar | null> {
-  const [parametros, leido] = await Promise.all([
-    cargarParametros(cliente),
-    cliente
-      .from("pago")
-      // pago tiene tres llaves a admin (id_admin, id_admin_revisor desde HU-077 e id_admin_cierre desde HU-078): cada
-      // embebido nombra la suya.
-      .select(
-        "id, monto, nombre_pagador, contacto, referencia_transferencia, estado, id_admin, fecha_asignacion, fecha_revision, observaciones, id_admin_revisor, cierre_rechazo, nota_cierre, id_admin_cierre, fecha_cierre, admin!pago_id_admin_fkey(nombre), revisor:admin!pago_id_admin_revisor_fkey(nombre), cerrador:admin!pago_id_admin_cierre_fkey(nombre), monitoria(estado, motivo_cancelacion, fecha, id_franja, id_monitor, id_materia), monitoria_plazos(inicio, es_grupal)",
-      )
-      .eq("id", idPago)
-      .maybeSingle(),
-  ]);
+export async function cargarPagoParaRevisar(cliente: Cliente, idPago: string): Promise<PagoParaRevisar | null> {
+  const leido = await cliente
+    .from("pago")
+    // pago tiene tres llaves a admin (id_admin, id_admin_revisor desde HU-077 e id_admin_cierre desde HU-078): cada
+    // embebido nombra la suya.
+    .select(
+      "id, monto, nombre_pagador, contacto, referencia_transferencia, estado, id_admin, fecha_pago, fecha_revision, observaciones, id_admin_revisor, cierre_rechazo, nota_cierre, id_admin_cierre, fecha_cierre, admin!pago_id_admin_fkey(nombre), revisor:admin!pago_id_admin_revisor_fkey(nombre), cerrador:admin!pago_id_admin_cierre_fkey(nombre), monitoria(estado, motivo_cancelacion, fecha, id_franja, id_monitor, id_materia), monitoria_plazos(inicio, es_grupal)",
+    )
+    .eq("id", idPago)
+    .maybeSingle();
   if (leido.error) throw new Error(`No se pudo leer el pago: ${leido.error.message}`);
   const pago = leido.data;
   if (!pago) return null;
@@ -119,8 +111,6 @@ export async function cargarPagoParaRevisar(cliente: Cliente, idPago: string, ah
     };
   }
 
-  // Es la hora del admin asignado: escalar o reasignar (HU-034, HU-074) le ponen otra fecha de asignación.
-  const limite = revisionHasta(new Date(pago.fecha_asignacion), parametros);
   return {
     id: pago.id,
     monto: pago.monto,
@@ -130,8 +120,7 @@ export async function cargarPagoParaRevisar(cliente: Cliente, idPago: string, ah
     estado: pago.estado,
     idAdmin: pago.id_admin,
     nombreAdmin: pago.admin.nombre,
-    revisionHasta: limite,
-    restante: describirTiempoRestante(limite, ahora),
+    llegoEn: new Date(pago.fecha_pago),
     fechaRevision: pago.fecha_revision ? new Date(pago.fecha_revision) : null,
     idAdminRevisor: pago.id_admin_revisor,
     nombreAdminRevisor: pago.revisor?.nombre ?? null,
@@ -151,29 +140,12 @@ export async function cargarPagoParaRevisar(cliente: Cliente, idPago: string, ah
   };
 }
 
-/** A quién está asignado un pago y hasta cuándo es solo suyo: lo que hace falta para `puedeRevisar` (HU-077). */
-export type Asignacion = { idAdmin: string; revisionHasta: Date };
-
-/**
- * La asignación de un pago, sin su monitoría: la acción de revisar la mira antes de validar las observaciones (nota
- * de D-39). `null` si el pago no existe o la sesión no lo puede leer.
- */
-export async function cargarAsignacion(cliente: Cliente, idPago: string): Promise<Asignacion | null> {
-  const [parametros, leido] = await Promise.all([
-    cargarParametros(cliente),
-    cliente.from("pago").select("id_admin, fecha_asignacion").eq("id", idPago).maybeSingle(),
-  ]);
-  if (leido.error) throw new Error(`No se pudo leer el pago: ${leido.error.message}`);
-  if (!leido.data) return null;
-  return { idAdmin: leido.data.id_admin, revisionHasta: revisionHasta(new Date(leido.data.fecha_asignacion), parametros) };
-}
-
 export type Revision = { resultado: ResultadoDeRevision; canceloMonitoria: boolean };
 
 /**
  * Aprueba o rechaza el pago con la sesión de `cliente` (§5.2, sin vuelta atrás). La base comprueba que la sesión sea
- * el admin asignado o, pasada su hora, un admin activo (HU-077), que el pago siga en revisión y, al rechazar, si la
- * cita se cancela o es P-24. Guarda quién lo revisó.
+ * un admin activo (el responsable o no: D-56, HU-034), que el pago siga en revisión y, al rechazar, si la cita se
+ * cancela o es P-24. Guarda quién lo revisó.
  */
 export async function revisarPago(cliente: Cliente, pedido: PedidoDeRevision): Promise<Revision> {
   const { data, error } = await cliente.rpc("revisar_pago", {

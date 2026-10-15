@@ -1,17 +1,17 @@
 import { esUuid } from "@/lib/agendar/reglas";
 import { esCorreo } from "@/lib/correo/contacto";
 import type { Reconstruccion } from "@/lib/correo/plantillas";
-import { formatearDia, formatearFechaHora } from "@/lib/fechas";
-import { dentroDePlazo, plazoAlcanzado } from "@/lib/plazos/motor";
+import { formatearDia } from "@/lib/fechas";
+import { plazoAlcanzado } from "@/lib/plazos/motor";
 import type { Database } from "@/lib/supabase/tipos";
 import type { EstadoDelCaso } from "./casos-p24-reglas";
 
 /**
- * Revisar un pago (HU-020): el admin asignado lo aprueba o lo rechaza contra su comprobante y, pasada su hora,
- * cualquier admin activo (HU-077, D-38). Aquí va lo puro: quién puede revisar, qué responde la base, qué se le dice
- * al admin con cada resultado, qué pasa con la monitoría si lo rechaza, a quién se le avisa y los datos del correo al
- * pagador. Quién puede revisar, el borde de P-24 y los cambios los decide `public.revisar_pago` con su propia hora; lo
- * de aquí solo lo anticipa en la pantalla.
+ * Revisar un pago (HU-020): cualquier admin activo lo aprueba o lo rechaza contra su comprobante desde que llega
+ * (bandeja común, D-56, HU-034), sea cual sea su responsable según el orden de revisión. Aquí va lo puro: qué
+ * responde la base, qué se le dice al admin con cada resultado, qué pasa con la monitoría si lo rechaza, a quién se le
+ * avisa y los datos del correo al pagador. Quién puede revisar (un admin activo), el borde de P-24 y los cambios los
+ * decide `public.revisar_pago` con su propia hora; lo de aquí solo lo anticipa en la pantalla.
  */
 
 type EstadoMonitoria = Database["public"]["Enums"]["estado_monitoria"];
@@ -25,7 +25,6 @@ export const RESULTADOS_DE_REVISION = [
   "observaciones_requeridas",
   "observaciones_invalidas",
   "ya_revisado",
-  "no_asignado",
   "no_individual",
   "no_encontrado",
   "decision_invalida",
@@ -50,9 +49,6 @@ export const MENSAJES_DE_REVISION: Record<Exclude<ResultadoDeRevision, "aprobado
     "La sesión de esta monitoría ya empezó, así que no se cancela. Para rechazar el pago escribe en observaciones qué se hará con ese cobro: cobrarlo por fuera o asumirlo.",
   observaciones_invalidas: "Las observaciones pueden tener hasta 500 caracteres.",
   ya_revisado: "Este pago ya se revisó, y una revisión no se puede cambiar.",
-  // HU-077: la base responde no_asignado cuando el pago es de otro admin y su hora no ha pasado, también si se lo
-  // reasignaron con una hora nueva mientras se revisaba.
-  no_asignado: "Este pago está asignado a otro admin y su hora para revisarlo no ha pasado, así que todavía no puedes revisarlo.",
   no_individual: "Los pagos de las monitorías grupales todavía no se revisan aquí.",
   no_encontrado: "No encontramos este pago.",
   decision_invalida: "Elige si apruebas o rechazas el pago.",
@@ -73,8 +69,7 @@ export type LecturaDeRevision = { ok: true; datos: PedidoDeRevision } | { ok: fa
 
 /**
  * El formulario de la revisión. Las observaciones se recortan y, vacías, cuentan como ninguna. Su largo no se mira
- * aquí sino con `observacionesValidas`, después de saber que la sesión puede revisar (nota de D-39, HU-077). Si hacen
- * falta (P-24) lo dice la base.
+ * aquí sino con `observacionesValidas`. Si hacen falta (P-24) lo dice la base.
  */
 export function leerRevision(datos: FormData): LecturaDeRevision {
   const texto = (campo: string) => {
@@ -97,43 +92,13 @@ export function observacionesValidas(observaciones: string | null): boolean {
 }
 
 /**
- * Quién es la sesión frente a un pago en revisión (D-38, HU-077):
- * - `asignado`: el admin asignado. Revisa aunque se le haya pasado la hora (supuesto 5).
- * - `hora_vencida`: otro admin, y la hora del asignado ya pasó. Puede aprobarlo o rechazarlo.
- * - `en_hora`: otro admin, y la hora del asignado no ha pasado. No puede revisarlo.
- * P-40 (supuesto 1): en `revisionHasta` exacto el pago todavía es solo del asignado. Que la sesión sea un admin
- * activo lo exige quien llama (`exigirRol`); la base lo vuelve a decidir todo con su propia hora.
+ * HU-034 (D-56): lo que lee un admin que no es el responsable del pago en revisión. Cualquier admin activo lo puede
+ * aprobar o rechazar; el responsable es el que le toca según el orden de revisión. `null` para el responsable, que no
+ * necesita aviso.
  */
-export type QuienRevisa = "asignado" | "hora_vencida" | "en_hora";
-
-export function quienRevisa(pago: { idAdmin: string; revisionHasta: Date }, idSesion: string, ahora: Date): QuienRevisa {
-  if (pago.idAdmin === idSesion) return "asignado";
-  return dentroDePlazo(pago.revisionHasta, ahora) ? "en_hora" : "hora_vencida";
-}
-
-export function puedeRevisar(pago: { idAdmin: string; revisionHasta: Date }, idSesion: string, ahora: Date): boolean {
-  return quienRevisa(pago, idSesion, ahora) !== "en_hora";
-}
-
-/**
- * Lo que lee otro admin sobre el pago en revisión (criterios 1 y 2): hasta cuándo es del asignado, o que su hora ya
- * pasó y lo puede revisar él. `null` para el asignado, que no necesita aviso.
- */
-export function avisoDeQuienRevisa(quien: QuienRevisa, pago: { nombreAdmin: string; revisionHasta: Date }): string | null {
-  const limite = formatearFechaHora(pago.revisionHasta);
-  switch (quien) {
-    case "asignado":
-      return null;
-    case "en_hora":
-      return `${conPunto(`Este pago está asignado a ${pago.nombreAdmin} hasta el ${limite}`)} Si para entonces no lo ha revisado, podrás aprobarlo o rechazarlo tú.`;
-    case "hora_vencida":
-      return `${conPunto(`Este pago está asignado a ${pago.nombreAdmin}, pero se le pasó la hora el ${limite}`)} Puedes aprobarlo o rechazarlo tú.`;
-  }
-}
-
-/** La frase con su punto final. Si ya termina en la abreviatura de la hora (`a. m.`), ese punto sirve de cierre. */
-function conPunto(frase: string): string {
-  return frase.endsWith(".") ? frase : `${frase}.`;
+export function avisoDelResponsable(pago: { idAdmin: string; nombreAdmin: string }, idSesion: string): string | null {
+  if (pago.idAdmin === idSesion) return null;
+  return `Este pago le toca a ${pago.nombreAdmin} según el orden de revisión. Puedes aprobarlo o rechazarlo tú.`;
 }
 
 /**
@@ -271,7 +236,7 @@ export function correoDeRechazo(pago: PagoParaElCorreo, contactoSoporte: string 
 
 export type AvisoDeLaPagina = { exito: boolean; texto: string };
 
-const ERRORES_DE_LA_PAGINA = ["ya_revisado", "no_asignado", "no_individual"] as const;
+const ERRORES_DE_LA_PAGINA = ["ya_revisado", "no_individual"] as const;
 
 /**
  * Lo que se dice arriba de la revisión después de una acción: la acción vuelve a la página con `?revisado=` o
