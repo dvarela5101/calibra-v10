@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-15 14:02. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-15 14:03. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -9,6 +9,7 @@ _Generado automaticamente: 2026-10-15 14:02. No editar a mano; usa `scripts/back
 | [HU-091](backlog/HU-091.md) | [Técnica] Borradores para activar las Evaluaciones de Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | Backlog | P1 | S | HU-061 |
 | [HU-088](backlog/HU-088.md) | [Estudiante] Ver la calificación y las reseñas del monitor en su tarjeta | Backlog | P2 | M | HU-049, HU-035 |
 | [HU-090](backlog/HU-090.md) | [Admin] Registrar desde la gestión de leads el retiro de la autorización de datos | Backlog | P2 | S | HU-053, HU-085 |
+| [HU-098](backlog/HU-098.md) | [Técnica] Acelerar las pruebas de Vitest que recorren todo el repo | Backlog | P3 | XS | HU-050 |
 | [HU-033](backlog/HU-033.md) | [Estudiante] Gestionar mis citas y diagnósticos desde mi cuenta | Lista | P1 | M | HU-032, HU-019, HU-024, HU-029, HU-009, HU-081 |
 | [HU-036](backlog/HU-036.md) | [Estudiante] Agendar una sesión grupal como organizador | Lista | P1 | L | HU-032, HU-017, HU-018 |
 | [HU-037](backlog/HU-037.md) | [Estudiante] Compartir el enlace del grupo y ver quién ha pagado | Lista | P1 | M | HU-036 |
