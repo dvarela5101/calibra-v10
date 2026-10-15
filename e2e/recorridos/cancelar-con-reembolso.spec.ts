@@ -44,6 +44,20 @@ test("el Lead cancela a tiempo, entrega su llave y otro admin le devuelve el din
     const { id: idPago } = await r.una<{ id: string }>("pago", "id", { id_monitoria: idMonitoria });
     reembolso = await r.una("reembolso", "id, id_admin, monto, estado", { id_pago: idPago });
     expect(reembolso).toMatchObject({ monto: PRECIO, estado: "esperando_llave" });
+    // D-26 asigna el reembolso por turno al primer admin activo (`siguiente_admin_activo`). El admin del recorrido se
+    // crea con un `orden_revision` al azar (`e2e/utilidades.ts`), así que a veces el turno cae en él mismo: la prueba
+    // no puede suponer que quedó en otro. Para probar D-48 (lo registra un admin que no es el asignado) de forma
+    // determinista, si el turno se lo dio a nuestro admin lo pasamos a otro, con la llave secreta y como ya hace la
+    // limpieza del escenario. No cambia la regla del turno (HU-094): el asignado original salió de ella.
+    if (reembolso.id_admin === r.admin.id) {
+      const { data: otros, error } = await r.cliente.from("admin").select("id").neq("id", r.admin.id).order("orden_revision").limit(1);
+      const otro = (otros as { id: string }[] | null)?.[0]?.id;
+      expect(error, "buscar otro admin para reasignar el reembolso").toBeNull();
+      expect(otro, "debe existir al menos otro admin para registrar el reembolso (D-48)").toBeTruthy();
+      const { error: errorReasignar } = await r.cliente.from("reembolso").update({ id_admin: otro }).eq("id", reembolso.id);
+      expect(errorReasignar, "reasignar el reembolso a otro admin").toBeNull();
+      reembolso = { ...reembolso, id_admin: otro! };
+    }
     expect(reembolso.id_admin).not.toBe(r.admin.id);
 
     const correo = await correrHastaQueLlegue(["avisar-cancelaciones"], r.correoDelLead, new RegExp(`^Cancelaste tu monitoría de ${r.materia.nombre}$`));
