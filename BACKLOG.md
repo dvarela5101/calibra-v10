@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-14 23:49. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-15 00:43. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -29,8 +29,6 @@ _Generado automaticamente: 2026-10-14 23:49. No editar a mano; usa `scripts/back
 | [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | En progreso | P0 | L | HU-021, HU-009, HU-081, HU-087 |
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | En progreso | P1 | M | HU-004, HU-019, HU-068 |
 | [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
-| [HU-031](backlog/HU-031.md) | [Lead] Recuperar mis resultados desde otro dispositivo con un enlace | En revision | P1 | M | HU-006, HU-009, HU-010, HU-081 |
-| [HU-034](backlog/HU-034.md) | [Admin] Revisar pagos desde una bandeja común y avisar a todos los admins cuando llega uno | En revision | P1 | M | HU-020, HU-006, HU-054, HU-065, HU-074, HU-077 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
@@ -69,6 +67,8 @@ _Generado automaticamente: 2026-10-14 23:49. No editar a mano; usa `scripts/back
 | [HU-082](backlog/HU-082.md) | [Admin] Cualquier admin activo registra la transferencia de un reembolso | Hecha | P0 | S | HU-026 |
 | [HU-083](backlog/HU-083.md) | [Técnica] Dibujar fórmulas y código del banco de preguntas | Hecha | P0 | S | HU-005 |
 | [HU-087](backlog/HU-087.md) | [Técnica] Ampliar la autorización y el aviso de privacidad a las respuestas del diagnóstico | Hecha | P0 | S | HU-008, HU-068 |
+| [HU-031](backlog/HU-031.md) | [Lead] Recuperar mis resultados desde otro dispositivo con un enlace | Hecha | P1 | M | HU-006, HU-009, HU-010, HU-081 |
+| [HU-034](backlog/HU-034.md) | [Admin] Revisar pagos desde una bandeja común y avisar a todos los admins cuando llega uno | Hecha | P1 | M | HU-020, HU-006, HU-054, HU-065, HU-074, HU-077 |
 | [HU-035](backlog/HU-035.md) | [Lead] Reseñar mi monitoría individual desde el correo | Hecha | P1 | M | HU-023, HU-006 |
 | [HU-048](backlog/HU-048.md) | [Técnica] Recorridos de punta a punta: agendar, pagar, cancelar, reportar y desembolsar | Hecha | P1 | M | HU-030, HU-076, HU-082 |
 | [HU-050](backlog/HU-050.md) | [Monitor] Ver mis desembolsos | Hecha | P1 | M | HU-028, HU-030, HU-078 |
