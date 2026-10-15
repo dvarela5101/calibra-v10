@@ -4,7 +4,7 @@ import { agruparPorMonitor, leerCodigoDeMateria, rutaDeMonitores, SEMANAS_DEL_HO
 describe("leerCodigoDeMateria (HU-016)", () => {
   it("toma el código del enlace, sin espacios alrededor", () => {
     expect(leerCodigoDeMateria(" MATE-1214 ")).toBe("MATE-1214");
-    expect(leerCodigoDeMateria(["FISI-1018", "MATE-1214"])).toBe("FISI-1018");
+    expect(leerCodigoDeMateria(["FISI-1518", "MATE-1214"])).toBe("FISI-1518");
     // Pasa tal cual: la base lo compara exacto y, si no existe, la página dice que no la encontró.
     expect(leerCodigoDeMateria("<script>")).toBe("<script>");
   });
