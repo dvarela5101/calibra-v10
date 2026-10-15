@@ -535,7 +535,7 @@ describe("criterio 2: lo definitivo, o lo que sigue fallando después de 24 hora
 
   it("la bandeja lista los fallidos definitivos, los vencidos y los pendientes de más de 24 horas; no los reintentables recientes, ni los enviados, ni los pendientes recientes", async () => {
     const definitivo = await insertarCorreo({ plantilla: "pago_rechazado_individual", estado: "fallido", reintentable: false, error: "Resend 401 invalid_api_key" });
-    const definitivoViejo = await insertarCorreo({ plantilla: "escalamiento_pago", estado: "fallido", reintentable: false, hace: 30 * HORA });
+    const definitivoViejo = await insertarCorreo({ plantilla: "aviso_admin_pago_nuevo", estado: "fallido", reintentable: false, hace: 30 * HORA });
     const vencido = await insertarCorreo({ plantilla: "resena_individual", estado: "fallido", reintentable: true, hace: 25 * HORA });
     const reciente = await insertarCorreo({ plantilla: "resena_individual", estado: "fallido", reintentable: true, hace: 1 * HORA });
     const casiVencido = await insertarCorreo({ plantilla: "resena_individual", estado: "fallido", reintentable: true, hace: 23 * HORA });
@@ -566,7 +566,7 @@ describe("criterio 2: lo definitivo, o lo que sigue fallando después de 24 hora
     expect(propio(vencido.id)?.tipo).toBe("Reseña de la monitoría");
     // Un pendiente de hace más de 24 horas es un envío que murió y ya no se reintenta: se muestra sin error.
     expect(propio(pendienteViejo.id)).toMatchObject({ tipo: "Reseña de la monitoría", destinatario: pendienteViejo.destinatario, error: null });
-    expect(propio(definitivoViejo.id)?.tipo).toBe("Pago escalado a otro admin");
+    expect(propio(definitivoViejo.id)?.tipo).toBe("Aviso al admin: pago nuevo por revisar");
     // Una plantilla que ya no existe se muestra tal cual, en vez de romper la bandeja.
     expect(propio(desconocido.id)?.tipo).toBe("plantilla_de_otra_epoca");
 

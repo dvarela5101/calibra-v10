@@ -4,7 +4,10 @@ import { enviarCredenciales, expect, test as base, type Cuenta } from "./utilida
 
 // HU-012: el admin entra y ve su bandeja. Corre contra el Supabase local (Auth y base) con datos
 // que crea y borra cada prueba. Los desembolsos ejecutables son de todos los admins, así que otras
-// pruebas en paralelo pueden agregar los suyos: de ellos solo se comprueba que aparezca el propio.
+// pruebas en paralelo pueden agregar los suyos: de ellos solo se comprueba que aparezca el propio. Con la bandeja común
+// de pagos (HU-034, D-56) pasa lo mismo con «Pagos por revisar»: el título y la tarjeta suman los pagos de todos los
+// admins, así que no se espera un total exacto. Se mira la lista «Asignados a ti», que sí es exacta, y los pagos de
+// otros se buscan por el nombre del pagador.
 
 const ESPERA = { timeout: 20_000 };
 
@@ -12,15 +15,17 @@ const ESPERA = { timeout: 20_000 };
 const CONTRASENA_SEMILLA = "calibra-admin-local";
 
 type Mundo = {
-  nombrePagadorVencido: string;
+  /** El que llegó hace más tiempo: va primero. */
+  nombrePagadorAntiguo: string;
   nombrePagadorIntermedio: string;
-  nombrePagadorVigente: string;
+  /** El que llegó hace menos: va al final. */
+  nombrePagadorReciente: string;
   /** El neto del desembolso de este mundo: distinto en cada prueba para reconocer el propio entre los de todos. */
   netoDesembolso: number;
 };
 
 /**
- * Datos de un admin: tres pagos en revisión (uno con la hora vencida y dos vigentes), dos reembolsos
+ * Datos de un admin: tres pagos en revisión (que llegaron hace 90, 20 y 10 minutos), dos reembolsos
  * (uno por estado), un reporte en revisión y un desembolso ejecutable con su pago aprobado. Se borran al terminar, antes
  * de que la fixture `cuentas` borre al admin y al monitor.
  */
@@ -81,9 +86,9 @@ const test = base.extend<{ mundo: (admin: Cuenta) => Promise<Mundo> }>({
       const hace = (min: number) => new Date(Date.now() - min * 60_000).toISOString();
       const netoDesembolso = 31_000 + Math.floor(Math.random() * 9_000);
       const nombres: Omit<Mundo, "netoDesembolso"> = {
-        nombrePagadorVencido: `Ana Vencida ${randomUUID().slice(0, 6)}`,
-        nombrePagadorIntermedio: `Carla Vigente ${randomUUID().slice(0, 6)}`,
-        nombrePagadorVigente: `Beto Vigente ${randomUUID().slice(0, 6)}`,
+        nombrePagadorAntiguo: `Ana Antigua ${randomUUID().slice(0, 6)}`,
+        nombrePagadorIntermedio: `Carla Intermedia ${randomUUID().slice(0, 6)}`,
+        nombrePagadorReciente: `Beto Reciente ${randomUUID().slice(0, 6)}`,
       };
       const pago = async (extra: Record<string, unknown>) => {
         const comprobante = `${randomUUID()}/${randomUUID()}.png`;
@@ -101,9 +106,10 @@ const test = base.extend<{ mundo: (admin: Cuenta) => Promise<Mundo> }>({
         });
       };
 
-      await pago({ nombre_pagador: nombres.nombrePagadorVencido, fecha_asignacion: hace(90) });
-      await pago({ nombre_pagador: nombres.nombrePagadorVigente, fecha_asignacion: hace(10) });
-      await pago({ nombre_pagador: nombres.nombrePagadorIntermedio, fecha_asignacion: hace(20) });
+      // La bandeja ordena por cuándo llegó el pago (`fecha_pago`, que la base pone en now()): se fija a mano (HU-034).
+      await pago({ nombre_pagador: nombres.nombrePagadorAntiguo, fecha_pago: hace(90) });
+      await pago({ nombre_pagador: nombres.nombrePagadorReciente, fecha_pago: hace(10) });
+      await pago({ nombre_pagador: nombres.nombrePagadorIntermedio, fecha_pago: hace(20) });
 
       const aprobado = () => pago({ estado: "aprobado", fecha_revision: hace(1) });
       const reembolsoBase = { id_admin: admin.id, monto: 25_000 };
@@ -158,10 +164,10 @@ async function entrarComoAdmin(page: Page, correo: string, contrasena: string) {
   await expect(page).toHaveURL("/admin", ESPERA);
 }
 
-test.describe("Criterios 1 y 2 · el admin ve lo que tiene asignado y cuánto le queda", () => {
-  test("contadores, listas por sección y tiempo restante de los pagos", async ({ page, cuentas, mundo }) => {
+test.describe("Criterios 1 y 2 · el admin ve lo que tiene asignado y cuánto lleva esperando cada pago", () => {
+  test("contadores, listas por sección y hace cuánto llegó cada pago", async ({ page, cuentas, mundo }) => {
     const admin = await cuentas.crearAdmin();
-    const { nombrePagadorVencido, nombrePagadorIntermedio, nombrePagadorVigente, netoDesembolso } = await mundo(admin);
+    const { nombrePagadorAntiguo, nombrePagadorIntermedio, nombrePagadorReciente, netoDesembolso } = await mundo(admin);
 
     await entrarComoAdmin(page, admin.correo, admin.contrasena);
     await expect(page).toHaveTitle("Administración · Calibra");
@@ -169,23 +175,30 @@ test.describe("Criterios 1 y 2 · el admin ve lo que tiene asignado y cuánto le
 
     // Contadores de arriba.
     const resumen = page.getByRole("navigation", { name: "Resumen de tu bandeja" });
-    await expect(resumen.getByRole("link", { name: "3 Pagos por revisar" })).toBeVisible();
+    // La tarjeta suma los pagos de todos los admins (HU-034): con los de otras pruebas no hay un total exacto, pero
+    // nunca son menos que los tres de este admin.
+    const tarjetaDePagos = resumen.getByRole("link", { name: /^\d+ Pagos por revisar$/ });
+    await expect(tarjetaDePagos).toBeVisible();
+    expect(Number((await tarjetaDePagos.textContent())!.match(/\d+/)![0])).toBeGreaterThanOrEqual(3);
     await expect(resumen.getByRole("link", { name: "2 Reembolsos" })).toBeVisible();
     await expect(resumen.getByRole("link", { name: "1 Reportes en revisión" })).toBeVisible();
     await expect(resumen.getByRole("link", { name: /^\d+ Desembolsos ejecutables$/ })).toBeVisible();
 
-    // Pagos por vencimiento: el que se asignó hace más va primero, ya vencido; los otros todavía tienen tiempo. Solo
-    // la lista de los suyos: debajo puede haber pagos vencidos de los admins de otras pruebas (HU-077).
+    // Pagos por antigüedad (D-56): el que llegó hace más va primero y cada fila dice hace cuánto llegó. Solo la lista de
+    // los suyos: debajo, en «De otros admins», puede haber pagos de los admins de otras pruebas.
     const pagos = page.getByRole("region", { name: /Pagos por revisar/ });
     const filas = pagos.getByRole("list", { name: "Asignados a ti" }).getByRole("listitem");
     await expect(filas).toHaveCount(3);
-    await expect(filas.nth(0)).toContainText(nombrePagadorVencido);
+    await expect(filas.nth(0)).toContainText(nombrePagadorAntiguo);
     await expect(filas.nth(0)).toContainText("$ 25.000");
-    await expect(filas.nth(0)).toContainText(/Vencido hace (29|30|31|32) min/);
+    await expect(filas.nth(0)).toContainText(/Llegó hace 1 h 3\d min/);
     await expect(filas.nth(1)).toContainText(nombrePagadorIntermedio);
-    await expect(filas.nth(1)).toContainText(/Quedan (37|38|39|40) min/);
-    await expect(filas.nth(2)).toContainText(nombrePagadorVigente);
-    await expect(filas.nth(2)).toContainText(/Quedan (47|48|49|50) min/);
+    await expect(filas.nth(1)).toContainText(/Llegó hace 2\d min/);
+    await expect(filas.nth(2)).toContainText(nombrePagadorReciente);
+    await expect(filas.nth(2)).toContainText(/Llegó hace 1\d min/);
+    // No es un plazo: ninguna fila promete tiempo ni dice que venció, y las propias no llevan «De …» (eso es de la otra lista).
+    await expect(filas.getByText(/Quedan|Vencido/)).toHaveCount(0);
+    await expect(filas.getByText(/^De /)).toHaveCount(0);
 
     // Reembolsos por estado.
     const reembolsos = page.getByRole("region", { name: /Reembolsos/ });
@@ -202,9 +215,12 @@ test.describe("Criterios 1 y 2 · el admin ve lo que tiene asignado y cuánto le
     await expect(desembolsos).toContainText(`Transferir $ ${netoDesembolso.toLocaleString("es-CO")}`);
     await expect(desembolsos).toContainText("Sesión del 6 de enero de 2020");
     await expect(desembolsos).toContainText("ejecutable después del");
-    // La bandeja no promete lo que aún no existe (HU-064): el orden por vencimiento se anuncia solo en los pagos
-    // y el paso al siguiente admin llega con HU-034.
-    await expect(pagos).toContainText("el que vence primero va arriba");
+    // La ayuda de los pagos dice que cualquier admin activo los revisa y por qué orden salen, sin plazo ni cifras de
+    // horas o de minutos (HU-034, HU-064): el orden por vencimiento y el paso al siguiente admin ya no existen.
+    await expect(pagos).toContainText(
+      "Cualquier admin activo puede aprobar o rechazar estos pagos desde que llegan, también los de otros. El que lleva más tiempo esperando va arriba. Los asignados a ti son los que te tocan según el orden de revisión.",
+    );
+    await expect(pagos).not.toContainText(/vence primero|Quedan|Vencido|hasta el/);
     await expect(page.locator("body")).not.toContainText("Lo que vence primero va arriba");
     await expect(page.locator("body")).not.toContainText(/siguiente admin/i);
     // Ni el bruto ni la comisión llegan a la pantalla (P-32).
@@ -213,15 +229,17 @@ test.describe("Criterios 1 y 2 · el admin ve lo que tiene asignado y cuánto le
     await expect(page.locator("body")).not.toContainText(/comisi[oó]n/i);
   });
 
-  test("con nada asignado, cada sección lo dice en vez de quedar en blanco", async ({ page, cuentas }) => {
+  test("con nada asignado, los pagos no traen la lista «Asignados a ti» y las demás secciones lo dicen en vez de quedar en blanco", async ({ page, cuentas }) => {
     const admin = await cuentas.crearAdmin();
     await entrarComoAdmin(page, admin.correo, admin.contrasena);
 
     const resumen = page.getByRole("navigation", { name: "Resumen de tu bandeja" });
-    await expect(resumen.getByRole("link", { name: "0 Pagos por revisar" })).toBeVisible();
+    // «Pagos por revisar» suma los pagos de todos los admins (HU-034): con los de otras pruebas no vale 0 ni dice
+    // «No hay pagos por revisar.». Lo exacto es que a este admin no le toca ninguno.
+    await expect(resumen.getByRole("link", { name: /^\d+ Pagos por revisar$/ })).toBeVisible();
+    await expect(page.getByRole("region", { name: /Pagos por revisar/ }).getByRole("list", { name: "Asignados a ti" })).toHaveCount(0);
     await expect(resumen.getByRole("link", { name: "0 Reembolsos" })).toBeVisible();
     await expect(resumen.getByRole("link", { name: "0 Reportes en revisión" })).toBeVisible();
-    await expect(page.getByText("No tienes pagos por revisar.")).toBeVisible();
     await expect(page.getByText("No tienes reembolsos por atender.")).toBeVisible();
     await expect(page.getByText("No tienes reportes en revisión.")).toBeVisible();
   });
@@ -302,35 +320,51 @@ test.describe("Criterios 1 y 2 · el admin ve lo que tiene asignado y cuánto le
   });
 });
 
-test.describe("HU-077 · los pagos vencidos de otros admins", () => {
-  test("otro admin los ve después de los suyos, con de quién son y desde cuándo están vencidos; los que siguen en hora no", async ({
+test.describe("HU-034 · los pagos de otros admins desde que llegan", () => {
+  test("otro admin los ve después de los suyos, todos desde el primer minuto, con de quién son y hace cuánto llegaron, el más antiguo arriba", async ({
     page,
     cuentas,
     mundo,
   }) => {
     const asignado = await cuentas.crearAdmin();
-    const { nombrePagadorVencido, nombrePagadorIntermedio, nombrePagadorVigente } = await mundo(asignado);
+    const { nombrePagadorAntiguo, nombrePagadorIntermedio, nombrePagadorReciente } = await mundo(asignado);
     const otro = await cuentas.crearAdmin();
     await entrarComoAdmin(page, otro.correo, otro.contrasena);
 
-    // Nada asignado a este admin: el contador de arriba y la lista propia lo dicen.
-    await expect(page.getByRole("navigation", { name: "Resumen de tu bandeja" }).getByRole("link", { name: "0 Pagos por revisar" })).toBeVisible();
+    // Nada asignado a este admin: no sale la lista propia. La tarjeta y el título suman los pagos de todos los admins
+    // (los tres de este mundo y los de otras pruebas), así que no se espera un total exacto.
+    const resumen = page.getByRole("navigation", { name: "Resumen de tu bandeja" });
+    const tarjetaDePagos = resumen.getByRole("link", { name: /^\d+ Pagos por revisar$/ });
+    await expect(tarjetaDePagos).toBeVisible();
+    expect(Number((await tarjetaDePagos.textContent())!.match(/\d+/)![0])).toBeGreaterThanOrEqual(3);
     const pagos = page.getByRole("region", { name: /Pagos por revisar/ });
-    await expect(pagos.getByText("No tienes pagos por revisar.")).toBeVisible();
+    await expect(pagos.getByRole("list", { name: "Asignados a ti" })).toHaveCount(0);
 
-    // Debajo, en la misma sección, el vencido del otro admin. Puede haber de otras pruebas: se busca el de este mundo.
-    await expect(pagos.getByRole("heading", { level: 3, name: /^Vencidos de otros admins \(\d+\)$/ })).toBeVisible();
-    const deOtros = pagos.getByRole("list", { name: /Vencidos de otros admins/ });
-    const fila = deOtros.getByRole("link", { name: new RegExp(nombrePagadorVencido) });
-    await expect(fila).toContainText("$ 25.000");
-    await expect(fila).toContainText(new RegExp(`De ${asignado.nombre} · Vencido hace (29|30|31|32) min`));
-    await expect(pagos).not.toContainText(nombrePagadorIntermedio);
-    await expect(pagos).not.toContainText(nombrePagadorVigente);
+    // Debajo, en la misma sección, los tres del otro admin. Puede haber de otras pruebas: se buscan los de este mundo.
+    await expect(pagos.getByRole("heading", { level: 3, name: /^De otros admins \(\d+\)$/ })).toBeVisible();
+    await expect(pagos.getByText("Le tocan a otro admin, pero puedes aprobarlos o rechazarlos tú.")).toBeVisible();
+    const deOtros = pagos.getByRole("list", { name: /^De otros admins/ });
+    const fila = (nombre: string) => deOtros.getByRole("link", { name: new RegExp(nombre) });
+    await expect(fila(nombrePagadorAntiguo)).toContainText("$ 25.000");
+    await expect(fila(nombrePagadorAntiguo)).toContainText(new RegExp(`De ${asignado.nombre} · Llegó hace 1 h 3\\d min`));
+    await expect(fila(nombrePagadorIntermedio)).toContainText(new RegExp(`De ${asignado.nombre} · Llegó hace 2\\d min`));
+    await expect(fila(nombrePagadorReciente)).toContainText(new RegExp(`De ${asignado.nombre} · Llegó hace 1\\d min`));
+    // Nada de plazos: ninguno de los tres sale como vencido ni con tiempo restante, aunque el primero lleve más de una hora.
+    await expect(deOtros.getByText(/Quedan|Vencido/)).toHaveCount(0);
 
-    // Lleva a la revisión del pago, que le dice que ya puede revisarlo él.
-    await fila.click();
+    // El más antiguo va arriba: entre los de este mundo, el orden de las filas es el de llegada.
+    const textos = await deOtros.getByRole("listitem").allTextContents();
+    const posicion = (nombre: string) => textos.findIndex((texto) => texto.includes(nombre));
+    expect(posicion(nombrePagadorAntiguo)).toBeGreaterThanOrEqual(0);
+    expect(posicion(nombrePagadorAntiguo)).toBeLessThan(posicion(nombrePagadorIntermedio));
+    expect(posicion(nombrePagadorIntermedio)).toBeLessThan(posicion(nombrePagadorReciente));
+
+    // Lleva a la revisión del pago, que le dice de quién es y que ya puede revisarlo él.
+    await fila(nombrePagadorReciente).click();
     await expect(page).toHaveURL(/\/admin\/pagos\/[0-9a-f-]{36}$/, ESPERA);
-    await expect(page.getByText(new RegExp(`^Este pago está asignado a ${asignado.nombre}, pero se le pasó la hora el .*Puedes aprobarlo o rechazarlo tú\\.$`))).toBeVisible(ESPERA);
+    await expect(
+      page.getByText(`Este pago le toca a ${asignado.nombre} según el orden de revisión. Puedes aprobarlo o rechazarlo tú.`, { exact: true }),
+    ).toBeVisible(ESPERA);
   });
 });
 

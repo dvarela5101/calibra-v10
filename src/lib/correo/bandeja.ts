@@ -35,6 +35,7 @@ export type TablaDeBandeja =
   | "cancelacion_cita"
   | "pedido_llave"
   | "aviso_rechazo_pago"
+  | "aviso_pago_nuevo"
   | "invitacion_resena";
 
 /** Lo que el procesador necesita de toda fila: cómo se marca y cuántas veces falló. */

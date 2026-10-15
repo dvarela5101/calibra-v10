@@ -22,7 +22,7 @@ export default async function PanelAdmin({ searchParams }: PageProps<"/admin">) 
   const { data: admin } = await supabase!.from("admin").select("nombre").eq("id", sesion.idUsuario).maybeSingle();
 
   // La bandeja siempre se pide con el id de la sesión: las políticas dejan leer a todo admin, y nunca
-  // debe llegar un id desde el navegador (HU-012: lo asignado a otros admins queda fuera de alcance).
+  // debe llegar un id desde el navegador. Los pagos y reembolsos de otros admins los trae la propia bandeja (HU-034, HU-082).
   let bandeja: Bandeja | null = null;
   try {
     bandeja = await cargarBandeja(supabase!, sesion.idUsuario, new Date());

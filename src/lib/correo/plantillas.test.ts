@@ -30,7 +30,13 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
   },
   pago_rechazado_individual: { nombre: "Ana", monto: 25_000, fechaSesion: "2020-01-06", contactoSoporte: "ayuda@calibra.example" },
   pago_rechazado_grupal: { nombre: "Ana", monto: 20_000, fechaSesion: "2020-01-13", enlace: ENLACE },
-  escalamiento_pago: { nombreAdmin: "Admin Uno", nombrePagador: "Ana Pérez", monto: 25_000, enlace: "https://calibra.example/admin" },
+  aviso_admin_pago_nuevo: {
+    nombreAdmin: "Admin Uno",
+    nombrePagador: "Ana Pérez",
+    monto: 25_000,
+    nombreResponsable: "Admin Dos",
+    enlace: "https://calibra.example/admin/pagos/pago-1",
+  },
   invitacion_monitor: { enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
   invitacion_admin: { enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z", invitadoPor: "Admin Uno" },
   verificacion_lead: { nombre: "Ana", enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
@@ -91,7 +97,7 @@ const render = <P extends Plantilla>(plantilla: P, cambios: Partial<DatosPorPlan
   renderizar(plantilla, { ...EJEMPLOS[plantilla], ...cambios });
 
 describe("las plantillas de correo", () => {
-  it("son las que salen por correo: diagnóstico, reseña, llave y su recordatorio, dos rechazos, escalamiento, invitación de monitor, invitación de admin, verificación del correo del Lead, cuatro avisos al monitor (confirmada, cancelada, pago rechazado y reporte de inasistencia aceptado), la confirmación y la cancelación de la cita y el pago rechazado con la cita ya cancelada", () => {
+  it("son las que salen por correo: diagnóstico, reseña, llave y su recordatorio, dos rechazos, el aviso al admin de un pago nuevo, invitación de monitor, invitación de admin, verificación del correo del Lead, cuatro avisos al monitor (confirmada, cancelada, pago rechazado y reporte de inasistencia aceptado), la confirmación y la cancelación de la cita y el pago rechazado con la cita ya cancelada", () => {
     expect([...PLANTILLAS].sort()).toEqual(Object.keys(EJEMPLOS).sort());
     expect(PLANTILLAS).toHaveLength(17);
   });
@@ -183,11 +189,38 @@ describe("el contenido de cada plantilla", () => {
     expect(texto).toContain(`Volver a pagar: ${ENLACE}`);
   });
 
-  it("escalamiento: al admin, con el pagador y el monto, y el enlace a su bandeja (RN-42)", () => {
-    const { asunto, texto } = render("escalamiento_pago");
-    expect(asunto).toBe("Pago pendiente de revisión: Ana Pérez");
-    expect(texto.replace(/ /g, " ")).toContain("El pago de $ 25.000 de Ana Pérez no se revisó a tiempo y ahora te toca a ti.");
-    expect(texto).toContain("Abrir mi bandeja: https://calibra.example/admin");
+  it("aviso al admin de un pago nuevo: con el pagador, el monto, a quién le toca y el enlace al pago (HU-034)", () => {
+    const { asunto, texto } = render("aviso_admin_pago_nuevo");
+    const plano = texto.replace(/ /g, " ");
+    expect(asunto).toBe("Pago nuevo por revisar: Ana Pérez");
+    expect(plano).toContain("Llegó un pago por revisar");
+    expect(plano).toContain("Hola, Admin Uno.");
+    expect(plano).toContain("Ana Pérez pagó $ 25.000 y su comprobante espera revisión. Cualquier admin lo puede aprobar o rechazar.");
+    expect(plano).toContain("Le toca a Admin Dos según el orden de revisión.");
+    expect(plano).not.toContain("Te toca a ti");
+    expect(plano).toContain("Revisar el pago: https://calibra.example/admin/pagos/pago-1");
+    expect(plano).toContain("También lo encuentras en la sección de pagos por revisar de tu bandeja.");
+  });
+
+  it("aviso al admin de un pago nuevo: si el destinatario es el responsable, le dice «Te toca a ti»", () => {
+    const { texto, html } = render("aviso_admin_pago_nuevo", { nombreResponsable: null });
+    expect(texto).toContain("Te toca a ti según el orden de revisión.");
+    expect(html).toContain("Te toca a ti según el orden de revisión.");
+    expect(texto).not.toContain("Le toca a");
+  });
+
+  it("aviso al admin de un pago nuevo: no lleva contacto del pagador, comprobante ni comisión", () => {
+    const { texto, html } = render("aviso_admin_pago_nuevo");
+    for (const cuerpo of [texto, html]) {
+      expect(cuerpo).not.toMatch(/comisi[oó]n|comprobante\s*:|contacto|@/i);
+    }
+  });
+
+  it("un nombre del responsable con salto de línea no parte el texto, y uno vacío es un error", () => {
+    const salto = String.fromCharCode(13, 10);
+    const { texto } = render("aviso_admin_pago_nuevo", { nombreResponsable: `Admin${salto}Dos` });
+    expect(texto).toContain("Le toca a Admin Dos según el orden de revisión.");
+    expect(() => render("aviso_admin_pago_nuevo", { nombreResponsable: "  " })).toThrow(/nombreResponsable/);
   });
 
   it("no lleva plazos escritos: viven en la base (HU-003)", () => {
@@ -742,7 +775,7 @@ describe("lo que viene de fuera no se interpreta como HTML", () => {
 
   it.each(["", "   ", "\n\t"])("un nombre vacío (%j) es un error de quien llama, no un correo con hueco", (nombre) => {
     expect(() => render("recuperacion_diagnostico", { nombre })).toThrow(RangeError);
-    expect(() => render("escalamiento_pago", { nombreAdmin: nombre })).toThrow(/nombreAdmin/);
+    expect(() => render("aviso_admin_pago_nuevo", { nombreAdmin: nombre })).toThrow(/nombreAdmin/);
   });
 
   it("una fecha de sesión inválida es un error", () => {
@@ -874,7 +907,7 @@ describe("todo texto libre que llega al asunto se limpia de saltos de línea, y 
   it.each([
     ["recuperacion_diagnostico", "materia"],
     ["resena_individual", "monitor"],
-    ["escalamiento_pago", "nombrePagador"],
+    ["aviso_admin_pago_nuevo", "nombrePagador"],
   ] as const)("%s: un salto de línea en %s no parte el asunto ni cuela una cabecera", (plantilla, campo) => {
     const { asunto } = render(plantilla, { [campo]: `X${salto}Bcc: a@b.co` } as Partial<DatosPorPlantilla[typeof plantilla]>);
     expect(asunto).not.toMatch(/[\r\n]/);
@@ -884,7 +917,7 @@ describe("todo texto libre que llega al asunto se limpia de saltos de línea, y 
   it.each([
     ["recuperacion_diagnostico", "materia"],
     ["resena_individual", "monitor"],
-    ["escalamiento_pago", "nombrePagador"],
+    ["aviso_admin_pago_nuevo", "nombrePagador"],
     ["solicitud_llave_reembolso", "motivo"],
     ["recordatorio_llave_reembolso", "motivo"],
     ["recordatorio_llave_reembolso", "nombre"],
@@ -912,7 +945,7 @@ describe("la puntuación no se duplica cuando el dato ya termina en punto", () =
   it("un nombre con punto final no deja dos puntos, y uno sin punto recibe el suyo", () => {
     expect(render("recuperacion_diagnostico", { nombre: "Ana M." }).texto).toContain("Hola, Ana M.\n");
     expect(render("recuperacion_diagnostico", { nombre: "Ana" }).texto).toContain("Hola, Ana.\n");
-    expect(render("escalamiento_pago", { nombreAdmin: "Admin S." }).texto).toContain("Hola, Admin S.\n");
+    expect(render("aviso_admin_pago_nuevo", { nombreAdmin: "Admin S." }).texto).toContain("Hola, Admin S.\n");
     expect(render("recuperacion_diagnostico", { nombre: "Ana M." }).texto).not.toContain("..");
   });
 

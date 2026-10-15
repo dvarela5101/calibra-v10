@@ -49,10 +49,11 @@ export type EntradaDeEnvio<P extends Plantilla> = {
   destinatario: string;
   /**
    * Lo que motiva el correo, distinto en cada correo que deba salir: el id del reembolso, del diagnóstico o de
-   * la monitoría. Un mismo evento que se repite necesita una entidad distinta cada vez: el escalamiento de un
-   * pago (RN-42) vuelve al primer admin al terminar la lista, así que `pago:admin` sola se repetiría en la
-   * segunda vuelta y ese aviso se descartaría como ya enviado. Ahí conviene sumar la fecha de asignación o
-   * el número de escalamiento (`pago:admin:n`). Solo ASCII imprimible: viaja como Idempotency-Key.
+   * la monitoría. Si el mismo evento puede avisar a varios destinatarios, la entidad lleva también al destinatario:
+   * el aviso de un pago nuevo (HU-034) sale a cada admin activo, así que es `<id_pago>:<id_admin>` y no solo el pago,
+   * que dejaría pasar solo al primer admin. Si el mismo evento puede volver a avisar al mismo destinatario, la
+   * entidad lleva algo que cambie cada vez (la fecha o un número de vuelta), porque la repetida se descarta como ya
+   * enviada. Solo ASCII imprimible: viaja como Idempotency-Key.
    */
   entidad: string;
 };

@@ -426,7 +426,10 @@ export class Fixtures {
     if (!this.revisados.includes(ruta)) this.revisados.push(ruta);
   }
 
-  /** Un pago de una monitoría. Si no es `en_revision`, se le pone la fecha de revisión que la base exige. */
+  /**
+   * Un pago de una monitoría. Si no es `en_revision`, se le pone la fecha de revisión que la base exige. `fechaPago` fija
+   * cuándo llegó (HU-034: la bandeja ordena por ahí y dice «Llegó hace …»); sin ella queda la de la base, la de ahora.
+   */
   async crearPagoDe(
     idMonitoria: string,
     datos: {
@@ -434,6 +437,7 @@ export class Fixtures {
       comprobante?: string;
       estado?: "en_revision" | "aprobado" | "rechazado";
       fechaAsignacion?: string;
+      fechaPago?: string;
       nombrePagador?: string;
       monto?: number;
     },
@@ -452,6 +456,7 @@ export class Fixtures {
           id_admin: datos.idAdmin,
           comprobante,
           estado,
+          ...(datos.fechaPago ? { fecha_pago: datos.fechaPago } : {}),
           fecha_asignacion: datos.fechaAsignacion ?? new Date().toISOString(),
           fecha_revision: estado === "en_revision" ? null : new Date().toISOString(),
         })

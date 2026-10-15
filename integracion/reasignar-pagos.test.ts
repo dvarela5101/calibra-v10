@@ -263,7 +263,7 @@ async function esperarBloqueo(pid: number | null, porPid: number, consulta: { te
 // ---------------------------------------------------------------------------------------------------------------
 
 describe("criterios 1 y 2: los pagos en revisión de un admin cuentan como casos abiertos y pasan cuando se desactiva", () => {
-  it("su único caso abierto es un pago en revisión: el equipo lo cuenta; al desactivarlo pasa al siguiente activo con una hora nueva y aparece en su bandeja; el aprobado y el rechazado se quedan", async () => {
+  it("su único caso abierto es un pago en revisión: el equipo lo cuenta; al desactivarlo pasa al siguiente activo, sin cambiar cuándo llegó, y aparece en su bandeja; el aprobado y el rechazado se quedan", async () => {
     // A: el que se desactiva. B: quien desactiva y certificó al monitor.
     const a = await fx.crearAdmin();
     const b = await fx.crearAdmin();
@@ -275,8 +275,8 @@ describe("criterios 1 y 2: los pagos en revisión de un admin cuentan como casos
       await fx.crearMonitoria(contexto, { fecha: "2030-01-14" }),
       await fx.crearMonitoria(contexto, { fecha: "2030-01-21" }),
     ];
-    // Asignado hace 3 horas: con A ya estaba vencido (RN-42).
-    const enRevision = await fx.crearPagoDe(m1.id, { idAdmin: a.id, fechaAsignacion: new Date(Date.now() - 3 * HORA).toISOString() });
+    // Llegó hace 3 horas (D-56: no hay plazo, pero la bandeja lo ordena y lo dice por cuándo llegó).
+    const enRevision = await fx.crearPagoDe(m1.id, { idAdmin: a.id, fechaPago: new Date(Date.now() - 3 * HORA).toISOString() });
     const aprobado = await fx.crearPagoDe(m2.id, { idAdmin: a.id, estado: "aprobado" });
     const rechazado = await fx.crearPagoDe(m3.id, { idAdmin: a.id, estado: "rechazado" });
 
@@ -292,7 +292,8 @@ describe("criterios 1 y 2: los pagos en revisión de un admin cuentan como casos
     // Como el pago cuenta, la pantalla dice a quién pasó.
     expect(resultado).toEqual({ ok: true, nombre: "Admin de prueba", recibe: recibe!.nombre });
 
-    // Criterio 1: pasa al siguiente activo, sigue en revisión y empieza una hora nueva; cuándo llegó no cambia.
+    // Criterio 1: pasa al siguiente activo y sigue en revisión; cuándo llegó no cambia. `fecha_asignacion` ya no es una
+    // hora nueva para nadie (HU-034, D-56): solo dice desde cuándo lo tiene su responsable, y nadie la lee.
     const pago = exito(await fx.admin.from("pago").select("*").eq("id", enRevision.id).single(), "leer el pago");
     expect(pago).toMatchObject({ id_admin: recibe!.id, estado: "en_revision" });
     expect(new Date(pago.fecha_pago).getTime()).toBe(new Date(enRevision.fecha_pago).getTime());
@@ -300,9 +301,11 @@ describe("criterios 1 y 2: los pagos en revisión de un admin cuentan como casos
     expect(asignacion).toBeGreaterThanOrEqual(antes);
     expect(asignacion).toBeLessThanOrEqual(despues);
 
-    // Quien lo recibe lo ve en su bandeja, ya no vencido.
-    const bandeja = await cargarBandeja(fx.admin, recibe!.id, new Date());
-    expect(bandeja.pagos.find((p) => p.id === enRevision.id)).toMatchObject({ restante: { vencido: false } });
+    // Quien lo recibe lo ve en su bandeja con el lugar y el «Llegó hace …» de cuando llegó, no de cuando se lo pasaron.
+    const bandeja = await cargarBandeja(fx.admin, recibe!.id, new Date(), { maxFilas: 1_000 });
+    const enBandeja = bandeja.pagos.find((p) => p.id === enRevision.id);
+    expect(enBandeja).toMatchObject({ llegoEn: new Date(enRevision.fecha_pago) });
+    expect(enBandeja?.espera).toMatch(/^hace 3 h( \d+ min)?$/);
 
     // RN-23: los revisados se quedan con A.
     const deA = exito(await fx.admin.from("pago").select("id").eq("id_admin", a.id), "leer los pagos de A");
@@ -350,7 +353,7 @@ describe("criterio 3: un pago que se crea mientras se desactiva su admin queda c
       expect(pagos).toHaveLength(1);
       expect(pagos[0]).toMatchObject({ id_admin: destino, estado: "en_revision" });
       expect(await activo(pagos[0].id_admin)).toBe(true);
-      // La hora nueva es la de D, que empezó después de que R eligiera.
+      // La reasignación es la de D, que empezó después de que R eligiera.
       expect(new Date(pagos[0].fecha_asignacion).getTime()).toBeGreaterThan(new Date(pagos[0].fecha_pago).getTime());
     },
     60_000,

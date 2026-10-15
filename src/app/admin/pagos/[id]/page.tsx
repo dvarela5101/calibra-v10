@@ -6,14 +6,13 @@ import { Pantalla } from "@/components/Pantalla";
 import { avisosDelCaso, estadoDelCaso, EXPLICACION_DEL_CASO, TEXTOS_DEL_CIERRE } from "@/lib/admin/casos-p24-reglas";
 import { cargarPagoParaRevisar, type PagoParaRevisar } from "@/lib/admin/pagos";
 import {
-  avisoDeQuienRevisa,
+  avisoDelResponsable,
   avisosDeLaPagina,
   ayudaDeObservaciones,
   casoDeRechazo,
   consecuenciasDelRechazo,
   MENSAJES_DE_REVISION,
   pideObservaciones,
-  quienRevisa,
 } from "@/lib/admin/pagos-reglas";
 import { textoDeEstado } from "@/lib/agenda/reglas";
 import { esUuid } from "@/lib/agendar/reglas";
@@ -22,6 +21,7 @@ import { VIGENCIA_ENLACE_COMPROBANTE_SEG } from "@/lib/comprobantes/reglas";
 import { formatearDia, formatearFechaHora } from "@/lib/fechas";
 import { horaCorta, horaDeFin } from "@/lib/franjas/reglas";
 import { formatearPesos } from "@/lib/moneda";
+import { describirEspera } from "@/lib/plazos/restante";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { CerrarCaso } from "./CerrarCaso";
 import { RevisionDelPago } from "./RevisionDelPago";
@@ -39,11 +39,11 @@ const TITULOS: Record<PagoParaRevisar["estado"], string> = {
 
 /**
  * HU-020: el pago con su comprobante, sus datos y su monitoría (criterio 1). Cualquier admin activo lo ve (las
- * políticas ya lo dejan). Lo aprueba o lo rechaza el asignado, aunque se le haya vencido la hora, y desde HU-077
- * (D-38) también cualquier admin activo cuando esa hora ya pasó; antes, el otro admin lo ve sin acciones y sabe hasta
- * cuándo es del asignado. Ya revisado, dice quién lo revisó. El comprobante se firma al abrirlo, no al pintar la
- * página (criterio 6). HU-078: si el pago es un caso P-24, cualquier admin activo lo cierra aquí como cobrado o
- * asumido (supuestos 2 y 3); ya cerrado, dice cómo, quién, cuándo y la nota.
+ * políticas ya lo dejan) y, mientras está en revisión, lo aprueba o lo rechaza desde que llega (bandeja común, D-56,
+ * HU-034): ve quién es el responsable según el orden de revisión y cuándo llegó el pago, y si el responsable es otro,
+ * se lo dice. Ya revisado, dice quién lo revisó y, si fue otro admin, quién era el responsable. El comprobante se
+ * firma al abrirlo, no al pintar la página (criterio 6). HU-078: si el pago es un caso P-24, cualquier admin activo
+ * lo cierra aquí como cobrado o asumido (supuestos 2 y 3); ya cerrado, dice cómo, quién, cuándo y la nota.
  */
 export default async function RevisarPago({ params, searchParams }: PageProps<"/admin/pagos/[id]">) {
   const { id } = await params;
@@ -55,7 +55,7 @@ export default async function RevisarPago({ params, searchParams }: PageProps<"/
   try {
     const supabase = await crearClienteServidor();
     if (!supabase) throw new Error("Faltan las variables de Supabase.");
-    pago = await cargarPagoParaRevisar(supabase, id, ahora);
+    pago = await cargarPagoParaRevisar(supabase, id);
   } catch (error) {
     console.error("[pagos] no se pudo cargar el pago:", error instanceof Error ? error.message : error);
     return (
@@ -76,18 +76,17 @@ export default async function RevisarPago({ params, searchParams }: PageProps<"/
   const consulta = await searchParams;
   const avisos = [...avisosDeLaPagina(consulta, { ...pago, caso: casoP24 }), ...avisosDelCaso(consulta, cierre, sesion.idUsuario)];
   const enRevision = pago.estado === "en_revision";
-  const quien = quienRevisa(pago, sesion.idUsuario, ahora);
-  const puede = quien !== "en_hora";
-  const aviso = avisoDeQuienRevisa(quien, pago);
+  // HU-034: la línea para el admin que no es el responsable; el responsable no la ve.
+  const aviso = avisoDelResponsable(pago, sesion.idUsuario);
   const caso = casoDeRechazo(m.estado, m.inicio, ahora);
-  // HU-077: si lo revisó otro admin, también se dice a quién estaba asignado.
+  // HU-077: si lo revisó otro admin, también se dice quién era el responsable.
   const revisoOtro = pago.idAdminRevisor !== null && pago.idAdminRevisor !== pago.idAdmin;
 
   return (
     <Pantalla
       eyebrow={EYEBROW}
       titulo={TITULOS[pago.estado]}
-      subtitulo={enRevision && puede ? "Compara el comprobante con estos datos antes de aprobarlo o rechazarlo." : undefined}
+      subtitulo={enRevision ? "Compara el comprobante con estos datos antes de aprobarlo o rechazarlo." : undefined}
     >
       {avisos.map((aviso) => (
         <p key={aviso.texto} role={aviso.exito ? "status" : "alert"} className={aviso.exito ? formulario.exito : formulario.error}>
@@ -112,9 +111,11 @@ export default async function RevisarPago({ params, searchParams }: PageProps<"/
           <dd className={estilos.valor}>{enRevision ? "En revisión" : pago.estado === "aprobado" ? "Aprobado" : "Rechazado"}</dd>
           {enRevision ? (
             <>
-              <dt className={estilos.dato}>Tiempo para revisarlo</dt>
-              <dd className={pago.restante.vencido ? estilos.vencido : estilos.valor}>
-                <time dateTime={pago.revisionHasta.toISOString()}>{pago.restante.texto}</time>
+              <dt className={estilos.dato}>Responsable</dt>
+              <dd className={estilos.valor}>{pago.nombreAdmin}</dd>
+              <dt className={estilos.dato}>Llegó</dt>
+              <dd className={estilos.valor}>
+                <time dateTime={pago.llegoEn.toISOString()}>{describirEspera(pago.llegoEn, ahora)}</time>
               </dd>
             </>
           ) : (
@@ -135,7 +136,7 @@ export default async function RevisarPago({ params, searchParams }: PageProps<"/
               )}
               {revisoOtro && (
                 <>
-                  <dt className={estilos.dato}>Asignado a</dt>
+                  <dt className={estilos.dato}>Responsable</dt>
                   <dd className={estilos.valor}>{pago.nombreAdmin}</dd>
                 </>
               )}
@@ -183,11 +184,9 @@ export default async function RevisarPago({ params, searchParams }: PageProps<"/
         </dl>
       </section>
 
-      {/* HU-077: a otro admin se le dice hasta cuándo es del asignado (sin acciones) o que esa hora ya pasó. */}
+      {/* HU-034: cualquier admin activo revisa desde el primer minuto; al que no es el responsable se le dice de quién es. */}
       {enRevision &&
-        (!puede ? (
-          <p className={formulario.ayuda}>{aviso}</p>
-        ) : m.grupal ? (
+        (m.grupal ? (
           // Supuesto 8: las grupales llegan con HU-038; la base también responde no_individual.
           <p className={formulario.ayuda}>{MENSAJES_DE_REVISION.no_individual}</p>
         ) : (

@@ -40,13 +40,6 @@
   white-space: pre-line;
 }
 
-/* El plazo vencido se distingue por la palabra "Vencido" y por el color: nunca solo por el color. */
-.vencido {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--alert-text);
-}
-
 .acciones {
   display: flex;
   flex-direction: column;

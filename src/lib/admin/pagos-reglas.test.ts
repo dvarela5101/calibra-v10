@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { renderizar } from "@/lib/correo/plantillas";
 import {
-  avisoDeQuienRevisa,
+  avisoDelResponsable,
   avisosDeLaPagina,
   ayudaDeObservaciones,
   casoDeRechazo,
@@ -14,8 +14,6 @@ import {
   MENSAJES_DE_REVISION,
   observacionesValidas,
   pideObservaciones,
-  puedeRevisar,
-  quienRevisa,
   quienSeEntera,
   RESULTADOS_DE_REVISION,
   type PagoParaElCorreo,
@@ -47,6 +45,12 @@ describe("resultados de la revisión (HU-020)", () => {
     expect(esResultadoDeRevision(null)).toBe(false);
   });
 
+  it("HU-034 (D-56): no_asignado ya no existe: la base no lo responde y la pantalla no lo conoce", () => {
+    expect(esResultadoDeRevision("no_asignado")).toBe(false);
+    expect(RESULTADOS_DE_REVISION).not.toContain("no_asignado");
+    expect(MENSAJES_DE_REVISION).not.toHaveProperty("no_asignado");
+  });
+
   it("P-24: el mensaje pide anotar qué se hará con el cobro", () => {
     expect(MENSAJES_DE_REVISION.observaciones_requeridas).toMatch(/cobrarlo por fuera o asumirlo/);
   });
@@ -68,7 +72,7 @@ describe("leerRevision", () => {
     });
   });
 
-  it("HU-077 (nota de D-39): no juzga el largo de las observaciones, que se mira después de saber quién revisa", () => {
+  it("no juzga el largo de las observaciones: eso lo mira `observacionesValidas`", () => {
     const largas = "a".repeat(LARGO_MAXIMO_OBSERVACIONES + 1);
     expect(leerRevision(formulario({ id_pago: ID, decision: "rechazar", observaciones: ` ${largas} ` }))).toEqual({
       ok: true,
@@ -108,52 +112,22 @@ describe("observacionesValidas", () => {
   });
 });
 
-describe("quién revisa (HU-077, D-38)", () => {
-  const YO = "a0a0a0a0-0000-4000-8000-000000000077";
-  const OTRO = "a0a0a0a0-0000-4000-8000-000000007701";
-  const LIMITE = new Date("2030-01-07T14:30:00.000Z");
-  const DE_OTRO = { idAdmin: OTRO, revisionHasta: LIMITE };
-  const antes = new Date(LIMITE.getTime() - 60_000);
-  const despues = new Date(LIMITE.getTime() + 1);
+describe("avisoDelResponsable (HU-034, D-56)", () => {
+  const YO = "a0a0a0a0-0000-4000-8000-000000000034";
+  const OTRO = "a0a0a0a0-0000-4000-8000-000000003401";
 
-  it("supuesto 5: el asignado revisa antes y después de su hora", () => {
-    const mio = { idAdmin: YO, revisionHasta: LIMITE };
-    for (const ahora of [antes, LIMITE, despues]) {
-      expect(quienRevisa(mio, YO, ahora)).toBe("asignado");
-      expect(puedeRevisar(mio, YO, ahora)).toBe(true);
-    }
-  });
-
-  it("criterio 2: otro admin dentro de la hora del asignado no puede", () => {
-    expect(quienRevisa(DE_OTRO, YO, antes)).toBe("en_hora");
-    expect(puedeRevisar(DE_OTRO, YO, antes)).toBe(false);
-  });
-
-  it("supuesto 1 (P-40): justo en el límite el pago todavía es solo del asignado; un milisegundo después, de cualquiera", () => {
-    expect(quienRevisa(DE_OTRO, YO, LIMITE)).toBe("en_hora");
-    expect(puedeRevisar(DE_OTRO, YO, LIMITE)).toBe(false);
-    expect(quienRevisa(DE_OTRO, YO, despues)).toBe("hora_vencida");
-    expect(puedeRevisar(DE_OTRO, YO, despues)).toBe(true);
-  });
-
-  it("criterio 2: a otro admin en la hora le dice de quién es y hasta cuándo; al asignado no le dice nada", () => {
-    const pago = { nombreAdmin: "Admin Dos", revisionHasta: LIMITE };
-    // 9:30 en Bogotá; la hora lleva espacios duros.
-    expect(avisoDeQuienRevisa("en_hora", pago)?.replace(/\xa0/g, " ")).toBe(
-      "Este pago está asignado a Admin Dos hasta el lunes, 7 de enero de 2030, 9:30 a. m. Si para entonces no lo ha revisado, podrás aprobarlo o rechazarlo tú.",
-    );
-    expect(avisoDeQuienRevisa("asignado", pago)).toBeNull();
-  });
-
-  it("criterio 1: con la hora vencida le dice a quién está asignado, desde cuándo venció y que puede revisarlo él", () => {
-    expect(avisoDeQuienRevisa("hora_vencida", { nombreAdmin: "Admin Dos", revisionHasta: LIMITE })?.replace(/\xa0/g, " ")).toBe(
-      "Este pago está asignado a Admin Dos, pero se le pasó la hora el lunes, 7 de enero de 2030, 9:30 a. m. Puedes aprobarlo o rechazarlo tú.",
+  it("a quien no es el responsable le dice de quién es el pago según el orden de revisión y que puede revisarlo él", () => {
+    expect(avisoDelResponsable({ idAdmin: OTRO, nombreAdmin: "Admin Dos" }, YO)).toBe(
+      "Este pago le toca a Admin Dos según el orden de revisión. Puedes aprobarlo o rechazarlo tú.",
     );
   });
 
-  it("no_asignado ya no le dice a quien lo intenta que el pago era suyo: es de otro admin y su hora no ha pasado", () => {
-    expect(MENSAJES_DE_REVISION.no_asignado).not.toMatch(/ya no está asignado a ti/);
-    expect(MENSAJES_DE_REVISION.no_asignado).toMatch(/otro admin/);
+  it("al responsable no le dice nada", () => {
+    expect(avisoDelResponsable({ idAdmin: YO, nombreAdmin: "Admin Uno" }, YO)).toBeNull();
+  });
+
+  it("no habla de horas, plazos ni de asignación", () => {
+    expect(avisoDelResponsable({ idAdmin: OTRO, nombreAdmin: "Admin Dos" }, YO)).not.toMatch(/hasta el|hora|plazo|asignado/i);
   });
 });
 
@@ -390,11 +364,13 @@ describe("avisosDeLaPagina", () => {
   });
 
   it("los errores que vuelven a la página se dicen como alerta; los desconocidos no", () => {
-    for (const error of ["ya_revisado", "no_asignado", "no_individual"] as const) {
+    for (const error of ["ya_revisado", "no_individual"] as const) {
       expect(avisosDeLaPagina({ error }, RECHAZADO)).toEqual([{ exito: false, texto: MENSAJES_DE_REVISION[error] }]);
     }
     expect(avisosDeLaPagina({ error: "comprobante" }, RECHAZADO)).toEqual([{ exito: false, texto: MENSAJE_DEL_COMPROBANTE }]);
     expect(avisosDeLaPagina({ error: "<script>" }, RECHAZADO)).toEqual([]);
-    expect(avisosDeLaPagina({ error: ["ya_revisado", "no_asignado"] }, RECHAZADO)).toEqual([]);
+    // HU-034: no_asignado ya no es un error de la página; un enlace viejo con ese error no dice nada.
+    expect(avisosDeLaPagina({ error: "no_asignado" }, RECHAZADO)).toEqual([]);
+    expect(avisosDeLaPagina({ error: ["ya_revisado", "no_individual"] }, RECHAZADO)).toEqual([]);
   });
 });
