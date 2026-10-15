@@ -43,7 +43,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 import { cargarEvaluacionesActivas } from "./selector";
 
-const FISICA = { codigo: "FISI-1018", nombre: "Física II", evaluacion: [{ id: "e2", nombre: "Parcial 2", semana: 8 }, { id: "e1", nombre: "Parcial 1", semana: 4 }] };
+const FISICA = { codigo: "FISI-1528", nombre: "Física II", evaluacion: [{ id: "e2", nombre: "Parcial 2", semana: 8 }, { id: "e1", nombre: "Parcial 1", semana: 4 }] };
 const ALGEBRA = { codigo: "ALGE-1001", nombre: "Álgebra Lineal", evaluacion: [{ id: "e3", nombre: "Parcial 1", semana: 4 }] };
 
 beforeEach(() => {

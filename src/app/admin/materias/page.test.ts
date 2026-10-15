@@ -103,8 +103,8 @@ describe("/admin/materias: la lista (criterio 1)", () => {
     h.materias = [
       materia(ID_A, "Álgebra Lineal", "MATE-1105", 0, 0),
       materia(ID_B, "Cálculo Diferencial", "MATE-1214", 3, 2),
-      materia(ID_C, "Física I", "FISI-1018", 1, 1),
-      materia(ID_D, "Física II", "FISI-1019", 1, 0),
+      materia(ID_C, "Física I", "FISI-1518", 1, 1),
+      materia(ID_D, "Física II", "FISI-1528", 1, 0),
     ];
     const html = await pintar();
     expect(html).toMatch(/<h2[^>]*>Materias \(4\)<\/h2>/);
@@ -112,8 +112,8 @@ describe("/admin/materias: la lista (criterio 1)", () => {
     for (const [id, nombre, linea] of [
       [ID_A, "Álgebra Lineal", "MATE-1105 · Sin evaluaciones"],
       [ID_B, "Cálculo Diferencial", "MATE-1214 · 3 evaluaciones, 2 activas"],
-      [ID_C, "Física I", "FISI-1018 · 1 evaluación, 1 activa"],
-      [ID_D, "Física II", "FISI-1019 · 1 evaluación, ninguna activa"],
+      [ID_C, "Física I", "FISI-1518 · 1 evaluación, 1 activa"],
+      [ID_D, "Física II", "FISI-1528 · 1 evaluación, ninguna activa"],
     ]) {
       expect(html, nombre).toMatch(new RegExp(`<a[^>]*href="/admin/materias/${id}"[^>]*>${nombre}</a>`));
       expect(html, nombre).toContain(`>${linea}</span>`);

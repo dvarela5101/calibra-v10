@@ -52,7 +52,7 @@ function enCurso(idDiagnostico = ID_DIAGNOSTICO, paso = 0): EnCurso {
   return proyectarEnCurso({
     idDiagnostico,
     evaluacion: { id: ID_EVALUACION, nombre: "Parcial 1" },
-    materia: { codigo: "FISI-1018", nombre: "Física II" },
+    materia: { codigo: "FISI-1528", nombre: "Física II" },
     paso,
     maximo: 8,
     pregunta: {
