@@ -22,8 +22,9 @@ export interface TokenCaptcha {
 
 /**
  * HU-058 (D-30): el CAPTCHA invisible de los formularios de cuentas (`/ingresar`, `/restablecer`,
- * `/monitores/registro`), donde Supabase Auth exige el token. El widget se dibuja al montar `CampoCaptcha`
- * (`accion` es la etiqueta de Cloudflare: `ingreso`, `restablecer` o `registro_monitor`) y deja el token, y sus
+ * `/monitores/registro` y `/admins/registro`), donde Supabase Auth exige el token. El widget se dibuja al montar
+ * `CampoCaptcha` (`accion` es la etiqueta de Cloudflare: `ingreso`, `restablecer`, `registro_monitor` o
+ * `registro_admin`) y deja el token, y sus
  * renovaciones cada ~300 s, en el campo oculto, por referencia y sin `setState`.
  *
  * Al enviar: con token, sigue; sin token, se frena el envío, se espera hasta 20 s y se reenvía (sin token si no

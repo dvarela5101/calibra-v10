@@ -1,6 +1,28 @@
 # Reparto de trabajo
 
-**Actualizado:** 10 de octubre de 2026 (ver "Ajuste del 10-oct-2026"; después vienen el ajuste del 4-oct, el ajuste del 3-oct, el ajuste del 2-oct en la noche, la revisión de HU-020, el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Trabajan en paralelo dos personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto, y `Juzou04`. El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+**Actualizado:** 14 de octubre de 2026 (ver "Ajuste del 14-oct-2026"; después vienen el ajuste del 10-oct, el del 4-oct, el del 3-oct, el del 2-oct en la noche, la revisión de HU-020, el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Desde el 14-oct-2026 trabajan en paralelo tres personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto (solo ella aprueba con `done`), `Juzou04` y Lorenzo (tercera persona; su usuario de GitHub se anota aquí cuando dvarela5101 lo agregue al repo). El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+
+## Ajuste del 14-oct-2026: llega Lorenzo
+
+- **Lorenzo se suma como tercera persona.** dvarela5101 lo está agregando al repo de GitHub. Hasta tener su usuario, sus reservas van con `backlog.py log HU-XXX "Tomada por Lorenzo"`.
+- **Qué le toca, y por qué.** Lo que no está en el camino crítico del corte ni en el código que hoy tienen abierto las otras dos, empezando por lo pequeño:
+  1. Preparar el entorno: `npm ci`, Docker, `npm run db:iniciar`, `db:env`, y leer `CLAUDE.md`, `README.md` y `GUIA_CLAUDE.md`.
+  2. Construir [HU-094](../backlog/HU-094.md) (S, nueva): estabilizar la e2e del recorrido de cancelar con reembolso, que falla a veces por la asignación rotativa de admins. Solo toca pruebas y le hace recorrer las e2e y el CI.
+  3. Construir [HU-092](../backlog/HU-092.md) (M), los temas fuertes del perfil del monitor; pasa de dvarela5101 a Lorenzo. Sus dudas ya están respondidas (D-69, 14-oct-2026): los temas son subtemas del banco de sus materias certificadas, hasta 5 en total; no se avisa al perder uno; «Fuerte en» los lista todos; y vuelven al reactivar la cuenta.
+  4. Volver a refinar [HU-088](../backlog/HU-088.md) (reseñas en la tarjeta del monitor) y construirla. Comparte la tarjeta de `/monitores` con HU-092, así que van con la misma persona y en ese orden.
+  5. Después del corte: [HU-085](../backlog/HU-085.md) (L, borrar o anonimizar Leads) y luego [HU-090](../backlog/HU-090.md) (S, que depende de ella).
+- **Hechas o en revisión desde el ajuste anterior:** HU-049 y HU-010 de dvarela5101 (En revision), y HU-093 (CI en jobs en paralelo: un PR pasa de ~17 a ~6 min).
+
+| Persona | Siguiente, en orden |
+|---|---|
+| Juzou04 | Sigue su lista: [HU-011](../backlog/HU-011.md), [HU-022](../backlog/HU-022.md) y [HU-032](../backlog/HU-032.md) (en progreso) y [HU-084](../backlog/HU-084.md) (S). [HU-034](../backlog/HU-034.md) pasó a dvarela5101 (14-oct) |
+| dvarela5101 | [HU-031](../backlog/HU-031.md) (M) fusionada y en revisión; dudas de HU-092 respondidas (D-69). Revisar o aprobar lo que esté `En revision`. Construir [HU-034](../backlog/HU-034.md) (M), que pasa de Juzou04 el 14-oct: es la única dependencia del corte que nadie había empezado |
+| Lorenzo | 1) Entorno. 2) [HU-094](../backlog/HU-094.md) (S). 3) [HU-092](../backlog/HU-092.md) (M). 4) Refinar y construir [HU-088](../backlog/HU-088.md) (M). 5) Después del corte: [HU-085](../backlog/HU-085.md) (L) y [HU-090](../backlog/HU-090.md) (S) |
+
+**Choques a tener en cuenta**
+- **HU-092 y HU-088:** las dos tocan `TarjetaDeMonitor` y `cargarPerfiles` (`src/lib/disponibilidad/servidor.ts`), y HU-092 también el aviso de privacidad. Van con Lorenzo, en ese orden.
+- **HU-092 y HU-032 (Juzou04):** las dos pueden cambiar `AVISO_ACTUALIZADO` y `src/app/privacidad/page.tsx`. Al integrar, se toma la fecha mayor y se conservan los dos párrafos.
+- **HU-094:** solo toca `e2e/recorridos/`. Si Juzou04 cambia el escenario de los recorridos (por HU-084), el PR que llegue segundo integra al otro.
 
 ## Ajuste del 10-oct-2026
 
@@ -14,7 +36,7 @@
 | Persona | Siguiente, en orden |
 |---|---|
 | Juzou04 | 1) Fusionar [HU-081](../backlog/HU-081.md) ([PR #51](https://github.com/dvarela5101/calibra-v10/pull/51)) y [HU-083](../backlog/HU-083.md) ([PR #52](https://github.com/dvarela5101/calibra-v10/pull/52)). 2) [HU-009](../backlog/HU-009.md) (M). 3) [HU-011](../backlog/HU-011.md) (M). 4) [HU-022](../backlog/HU-022.md) (L; su punto 8 espera HU-087). 5) [HU-084](../backlog/HU-084.md) (S). 6) [HU-055](../backlog/HU-055.md) (L). 7) Volver a refinar [HU-034](../backlog/HU-034.md) con D-56 y construirla. 8) [HU-052](../backlog/HU-052.md) (M) y [HU-050](../backlog/HU-050.md) (M) |
-| dvarela5101 | 1) [HU-056](../backlog/HU-056.md) (S). 2) [HU-087](../backlog/HU-087.md) (S). 3) [HU-053](../backlog/HU-053.md) (M) y después [HU-089](../backlog/HU-089.md) (S). 4) [HU-010](../backlog/HU-010.md) (M), cuando HU-009 esté `Hecha`. 5) [HU-031](../backlog/HU-031.md) (M). 6) [HU-048](../backlog/HU-048.md) (M). 7) [HU-049](../backlog/HU-049.md) (L) |
+| dvarela5101 | 1) [HU-056](../backlog/HU-056.md) (S). 2) [HU-087](../backlog/HU-087.md) (S). 3) [HU-053](../backlog/HU-053.md) (M) y después [HU-089](../backlog/HU-089.md) (S). 4) [HU-010](../backlog/HU-010.md) (M), cuando HU-009 esté `Hecha`. 5) [HU-031](../backlog/HU-031.md) (M). 6) [HU-048](../backlog/HU-048.md) (M). 7) [HU-049](../backlog/HU-049.md) (M) y después [HU-092](../backlog/HU-092.md) (M), partición de HU-049 (D-58, 13-oct) |
 
 Sin dueño, después del corte: HU-032, HU-033, HU-072, HU-079, HU-085, HU-086, HU-088, HU-090 y las grupales (D-47).
 
@@ -191,7 +213,7 @@ Se abre Claude Code en `calibra-v10` y se le dice, por ejemplo:
 
 La sesión:
 1. Trae `main`.
-2. Reserva **con `start HU-XXX`**, nunca con `take`, porque `take` podría elegir una HU de la otra persona.
+2. Reserva **con `start HU-XXX`**, nunca con `take`, porque `take` podría elegir una HU de otra persona.
 3. Anota `log HU-XXX "Tomada por <persona>"` y hace push de la reserva.
 4. Trabaja en su rama, abre el PR y lo fusiona con CI en verde.
 5. Deja la HU `En revision`.

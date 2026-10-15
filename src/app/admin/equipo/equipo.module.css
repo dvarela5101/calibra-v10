@@ -49,7 +49,21 @@
   margin-block-start: var(--e2);
 }
 
-/* list-item conserva el triángulo que dice si está abierto. */
+/* La confirmación de cancelar una invitación (HU-072) y la de reactivar a un admin: la misma forma que la de desactivar. */
+.confirmar {
+  composes: desactivar;
+}
+
+/*
+ * Los botones de confirmar repiten el nombre del admin, que escribe quien se registra por invitación (hasta 120 caracteres,
+ * y puede ser una sola palabra). .boton es un flex: el ancho mínimo de su texto es la palabra entera y el
+ * overflow-wrap: break-word heredado de body no lo parte. Con anywhere el texto se parte donde haga falta en vez de salirse.
+ */
+.botonConNombre {
+  overflow-wrap: anywhere;
+}
+
+/* list-item conserva el triángulo que dice si está abierto. El correo de una invitación, sin espacios, no puede desbordar. */
 .resumen {
   display: list-item;
   min-block-size: var(--toque-min);
@@ -57,4 +71,29 @@
   font-size: 15px;
   color: var(--primary);
   cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+/* Invitar a una persona al equipo (HU-072): dos secciones debajo de la lista del equipo. */
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-block-start: var(--e5);
+}
+
+/* La lista de invitaciones va dentro de su sección, que ya separa con el hueco de arriba. */
+.seccion .lista {
+  margin-block-start: 0;
+}
+
+.titulo {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
 }

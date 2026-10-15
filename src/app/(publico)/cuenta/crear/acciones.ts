@@ -14,6 +14,7 @@ import {
 } from "@/lib/cuentas/reglas";
 import {
   activarCuenta,
+  confirmacionDeCorreoActiva,
   leadTieneCuenta,
   pedirCuentaDeEstudiante,
   tokenDeAccesoDeLaSesion,
@@ -22,12 +23,11 @@ import {
 } from "@/lib/cuentas/servidor";
 import { avisoDeVerificacion } from "@/lib/leads/avisos";
 import { COOKIE_ORIGEN, leerOrigen } from "@/lib/leads/origen";
-import { leerContacto, resumenDeError, rutaSiguiente } from "@/lib/leads/reglas";
+import { leerContacto, resumenDeError, rutaSiguiente, type EstadoContacto } from "@/lib/leads/reglas";
 import { leadDeLaSesion, registrarContacto, type LeadDeSesion, type ResultadoContacto } from "@/lib/leads/servidor";
 import { identidadDelProveedor } from "@/lib/pagos/configuracion";
 import { leerConsentimiento } from "@/lib/privacidad/consentimiento";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
-import type { EstadoContacto } from "../../agendar/contacto/acciones";
 
 const CAMPOS = ["nombre", "correo", "numero_telefono"] as const;
 const valoresDe = (datos: FormData) => Object.fromEntries(CAMPOS.map((c) => [c, String(datos.get(c) ?? "")]));
@@ -37,7 +37,7 @@ const valoresDe = (datos: FormData) => Object.fromEntries(CAMPOS.map((c) => [c, 
  * sigue siendo el mismo, anónimo, hasta que lo confirme; no se crea Estudiante, ni se toca el Lead, antes de eso.
  *
  * En este orden, y cada paso solo si el anterior pasó:
- * 1. la guarda de rol (como `dejarContacto`): un monitor o un admin no pide cuenta; un Estudiante ya la tiene; solo la
+ * 1. la guarda de rol (como `procesarContacto`): un monitor o un admin no pide cuenta; un Estudiante ya la tiene; solo la
  *    sesión anónima pide, así `updateUser({ email })` nunca se llama sobre una cuenta ya convertida;
  * 2. si la sesión no tiene Lead, se crea con el formulario (autorización incluida) como en HU-068, con el tope de correos
  *    de HU-075; si el correo ya es de otro Lead, sale el enlace de P-23 y no se llama a Auth;
@@ -155,6 +155,11 @@ export type EstadoTerminar = { error: string | null };
  * HU-032, criterio 14: «Terminar de crear mi cuenta». Para quien confirmó su correo y quedó sin Estudiante (la base falló
  * un instante): repite `activarCuenta` con su sesión, sin otro enlace; repetirlo no falla. Si la base dice que el correo
  * ya no es el del Lead o que ese Lead ya tiene otro Estudiante, manda a soporte y no se reintenta.
+ *
+ * La guardia contra el panel olvidado (`confirmacionDeCorreoActiva`) va antes de pedir nada a Auth: este es el paso que da
+ * el rol, y el correo de esta sesión pudo ligarse desde el navegador con `updateUser({ email })`, sin pasar por
+ * `pedirCuenta`. Si Auth no exige confirmar el correo o no se pudo leer, no se activa nada y se dice lo mismo que cuando el
+ * correo no sale.
  */
 export async function terminarCuenta(): Promise<EstadoTerminar> {
   const sesion = await obtenerSesion();
@@ -163,6 +168,11 @@ export async function terminarCuenta(): Promise<EstadoTerminar> {
   if (sesion.rol === "estudiante") redirect(RUTA_DE_CITAS);
   // Solo quien confirmó su correo y no tiene rol (no anónima, sin Estudiante) termina su cuenta aquí.
   if (sesion.rol !== null) return { error: TEXTOS.sesionSinRol };
+
+  if (!(await confirmacionDeCorreoActiva())) {
+    console.error("[cuentas] Auth no exige confirmar el correo (o no se pudo leer su configuración): no se termina la cuenta.");
+    return { error: TEXTOS.noSalioElCorreo };
+  }
 
   const supabase = await crearClienteServidor();
   if (!supabase) return { error: TEXTOS.terminarFallo };
@@ -178,5 +188,7 @@ export async function terminarCuenta(): Promise<EstadoTerminar> {
   }
   if (activada.ok) redirect(RUTA_CONTRASENA);
   if (activada.motivo === "soporte") return { error: TEXTOS.soporte(identidadDelProveedor().correo) };
+  // `activarCuenta` repite la guardia: si Auth cambió entre la lectura de arriba y la suya, es el mismo caso.
+  if (activada.motivo === "sin_confirmacion") return { error: TEXTOS.noSalioElCorreo };
   return { error: TEXTOS.terminarFallo };
 }

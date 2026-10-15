@@ -49,6 +49,33 @@ export const MENSAJES_PARA_NO_DESACTIVAR: Record<MotivoParaNoDesactivar, string>
   ultimo_activo: "Es el único admin activo: el equipo no puede quedarse sin admins.",
 };
 
+export type MotivoParaNoReactivar = "no_encontrado" | "ya_activo";
+
+/**
+ * ¿Se puede reactivar a este admin (HU-072, D-64 a)? Solo a uno del equipo que esté desactivado. Antes de tocar Auth se
+ * comprueba con el equipo que ve el admin de la sesión: quien no es un admin activo lo ve vacío y no reactiva a nadie.
+ */
+export function motivoParaNoReactivar(equipo: MiembroDelEquipo[], idObjetivo: string): MotivoParaNoReactivar | null {
+  const objetivo = equipo.find((m) => m.id === idObjetivo);
+  if (!objetivo) return "no_encontrado";
+  return objetivo.activo ? "ya_activo" : null;
+}
+
+export const MENSAJES_PARA_NO_REACTIVAR: Record<MotivoParaNoReactivar, string> = {
+  no_encontrado: "No encontramos a ese admin en el equipo.",
+  ya_activo: "Ese admin ya estaba activo.",
+};
+
+/**
+ * ¿Reactivarlo lo deja primero entre los activos? Entonces vuelve a recibir los pagos nuevos (RN-42): conserva su
+ * lugar en el orden y los pagos caen en el primer admin activo.
+ */
+export function quedariaPrimero(equipo: MiembroDelEquipo[], idObjetivo: string): boolean {
+  const objetivo = equipo.find((m) => m.id === idObjetivo);
+  if (!objetivo) return false;
+  return equipo.every((m) => m.id === idObjetivo || !m.activo || m.ordenRevision > objetivo.ordenRevision);
+}
+
 export const RESULTADOS_DE_MOVER = ["movido", "en_el_borde", "no_encontrado", "sin_permiso"] as const;
 export type ResultadoDeMover = (typeof RESULTADOS_DE_MOVER)[number];
 

@@ -47,6 +47,10 @@ test.describe("aviso de privacidad (HU-008)", () => {
       "tu nombre, tal como lo escribiste al crear tu cuenta, se muestra a estudiantes y visitantes en la lista de monitores de esa materia, junto con tus fechas libres y sus precios",
     );
     await expect(monitores).toContainText("Tu teléfono, tu correo y tu llave no se muestran a estudiantes ni a visitantes.");
+    // HU-049 (D-58 a): el perfil del monitor certificado, opcional.
+    await expect(monitores).toContainText(
+      "Si estás certificado, tu carrera, tu semestre y tu presentación también se muestran a estudiantes y visitantes en tu tarjeta de esa lista. Son opcionales",
+    );
 
     // HU-073 (D-31): las reseñas, en lo que recogemos y en para qué se usan, sin prometer dónde se muestran.
     const datos = page.locator("section", { has: page.getByRole("heading", { name: "Qué datos recogemos" }) });
@@ -72,8 +76,8 @@ test.describe("aviso de privacidad (HU-008)", () => {
     await expect(retencion).toContainText("se borran, con sus diagnósticos, a los 90 días sin actividad");
     await expect(retencion).toContainText("cuenta como actividad cualquier visita al sitio desde ese navegador");
 
-    // Fecha del último cambio del texto (HU-073, HU-056, HU-032).
-    await expect(page.getByText("Última actualización: 12 de octubre de 2026.")).toBeVisible();
+    // Fecha del último cambio del texto (HU-073, HU-056, HU-032, HU-049).
+    await expect(page.getByText("Última actualización: 13 de octubre de 2026.")).toBeVisible();
 
     // La cuenta de Estudiante: su contraseña se guarda cifrada y el correo de la cuenta es el del contacto (HU-032, criterio 19).
     await expect(datos).toContainText("Si creas una cuenta: además, una contraseña, que se guarda cifrada.");

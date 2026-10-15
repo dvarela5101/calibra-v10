@@ -79,6 +79,11 @@ export default async function AvisoPrivacidad() {
             Cuando te certificas en una materia, tu nombre, tal como lo escribiste al crear tu cuenta, se muestra a
             estudiantes y visitantes en la lista de monitores de esa materia, junto con tus fechas libres y sus precios.
           </p>
+          {/* HU-049 (D-58 a). HU-092 le sumará los temas en los que eres fuerte. */}
+          <p>
+            Si estás certificado, tu carrera, tu semestre y tu presentación también se muestran a estudiantes y
+            visitantes en tu tarjeta de esa lista. Son opcionales: los llenas, los cambias o los borras en tu perfil.
+          </p>
           <p>Tu teléfono, tu correo y tu llave no se muestran a estudiantes ni a visitantes.</p>
         </section>
 

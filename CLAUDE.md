@@ -9,7 +9,7 @@ Reconstrucción de Calibra sobre el modelo v10 (`calibra_reglas_negocio.md`). St
 - Antes de escribir código de Next.js, lee la guía correspondiente en `node_modules/next/dist/docs/` (ver `AGENTS.md`).
 - Zona horaria de negocio `America/Bogota` y textos en español (`src/config/regional.ts`). Nunca calcules una fecha con la zona del servidor.
 - Colores solo desde `src/styles/tokens.css`. `--alert`, `--warn` y `--success` son relleno; para texto, `--alert-text`, `--success-text` y `--muted`.
-- Ningún texto por debajo de 14 px, áreas táctiles de 44 px o más, sin degradados, sin emojis decorativos, sin iconos de cerebro, robot o IA. Nunca mostrar cifras de comisión, salvo al monitor en sus desembolsos (`/monitor/desembolsos`, D-59).
+- Ningún texto por debajo de 14 px, áreas táctiles de 44 px o más, sin degradados, sin emojis decorativos, sin iconos de cerebro, robot o IA. Nunca mostrar cifras de comisión. Única excepción (D-59): `/monitor/desembolsos`, al monitor dueño de cada desembolso, y nada más: ni la agenda ni el panel del monitor, ni las pantallas del admin o de la cita, ni los correos, ni ninguna función o vista de la base distinta de `public.mis_desembolsos()` y su entrada de sesión `privado.mis_desembolsos_de_la_sesion()`. La guarda es `pruebas/comision-solo-en-desembolsos.test.ts` y `supabase/tests/mis_desembolsos.test.sql`.
 - Ninguna llave secreta en el repo. Las variables nuevas se documentan en `.env.example` sin valor, y toda configuración externa nueva (variable de Vercel, secreto de Vault, ajuste de Auth o de un panel) se anota también en `docs/pendientes-dvarela.md` §C: el corte (HU-057) debe ser solo configurar (D-18).
 - Antes de dejar una HU en revisión: `npm run verificar` (lint, typecheck, Vitest, build y Playwright) y, si tocó la base, `npm run db:verificar`.
 - Un commit por HU, con el id en el asunto (por ejemplo `HU-003: motor de plazos...`). El repo `dvarela5101/calibra-v10` es temporal: en el corte (HU-057) se sube al repo real de Calibra conservando el historial. Nunca hagas push al repo del prototipo antes de eso.
@@ -30,17 +30,17 @@ Reconstrucción de Calibra sobre el modelo v10 (`calibra_reglas_negocio.md`). St
 - La llave secreta solo en `src/lib/supabase/admin.ts` (con `server-only`).
 - Las pruebas que tocan Auth corren contra el Supabase local: `npm run test:integracion` y `npm run test:e2e`, con usuarios creados y borrados por la propia prueba.
 
-## Trabajo en paralelo (dos personas, cada una con su sesión de Claude)
+## Trabajo en paralelo (tres personas, cada una con su sesión de Claude)
 
 El estado de las HUs vive en `backlog/` en la rama `main`. Git es el candado.
 
-Las personas son `dvarela5101`, dueña del repo y del producto (solo ella aprueba con `done`), y `Juzou04`. **El reparto vigente, con qué HU hace cada una y en qué orden, está en [docs/reparto.md](docs/reparto.md).** Si tienes HUs asignadas, resérvalas con `start HU-XXX` y no con `take`, que podría elegir una de la otra persona. HU-005 se hace en persona, entre las dos: ninguna sesión la toma sola.
+Las personas son `dvarela5101`, dueña del repo y del producto (solo ella aprueba con `done`), `Juzou04` y Lorenzo, la tercera persona que ayuda desde el 14-oct-2026 (su usuario de GitHub se anota aquí y en `docs/reparto.md` cuando dvarela5101 lo agregue al repo). **El reparto vigente, con qué HU hace cada una y en qué orden, está en [docs/reparto.md](docs/reparto.md).** Si tienes HUs asignadas, resérvalas con `start HU-XXX` y no con `take`, que podría elegir una de otra persona. HU-005 se hace en persona, entre dvarela5101 y Juzou04: ninguna sesión la toma sola.
 
 **Tomar una HU**
 1. `git switch main` y `git pull`.
 2. `python scripts/backlog.py take` (o `start HU-XXX` si acordaron cuál) y `python scripts/backlog.py log HU-XXX "Tomada por <nombre>"`.
 3. Commit SOLO de `backlog/` y `BACKLOG.md` (`HU-XXX: en progreso (<nombre>)`) y `git push` a `main` de inmediato. Ese push reserva la HU.
-4. Si el push se rechaza: `git pull --rebase`. Si la otra persona ya tomó esa misma HU, descarta tu reserva (`git rebase --abort` o `git reset --hard origin/main`) y toma otra.
+4. Si el push se rechaza: `git pull --rebase`. Si otra persona ya tomó esa misma HU, descarta tu reserva (`git rebase --abort` o `git reset --hard origin/main`) y toma otra.
 5. Trabaja en una rama `hu-XXX-<tema>` creada desde `main`.
 
 **Reglas**
@@ -49,7 +49,7 @@ Las personas son `dvarela5101`, dueña del repo y del producto (solo ella aprueb
   - en tu rama: `git merge --autostash origin/main`.
 
   Si entraron cambios, vuelve a correr las verificaciones que apliquen antes del commit.
-- Nunca tomes, continúes ni edites una HU `En progreso` de la otra persona. Una HU solo se toma si sus dependencias están `Hecha` en `main`.
+- Nunca tomes, continúes ni edites una HU `En progreso` de otra persona. Una HU solo se toma si sus dependencias están `Hecha` en `main`.
 - Terminar: `review` en tu rama, verifica todo, `git merge origin/main`, vuelve a verificar y abre un PR hacia `main`. Con CI en verde, la misma sesión lo fusiona con squash (un commit por HU) y la HU queda `En revision`. La persona revisa después y aprueba con `done` en `main`; lo que no le guste se corrige en un PR nuevo.
 - Archivos generados que chocan: no los resuelvas a mano, regenéralos. `BACKLOG.md` con `python scripts/backlog.py index`, `src/lib/supabase/tipos.ts` con `npm run db:tipos` y `package-lock.json` con `npm install`.
 - Migraciones: nunca edites una que ya esté en `main`; crea una nueva. Si tu rama redefine una función SQL (`create or replace`), parte de la versión que está en `main` al momento del merge y corre `npm run db:reiniciar` y `npm run db:verificar` después de fusionar `main`.

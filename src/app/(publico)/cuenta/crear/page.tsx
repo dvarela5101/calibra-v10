@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { FormularioContacto } from "@/components/contacto/FormularioContacto";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { PANEL_POR_ROL, tienePanel } from "@/lib/auth/roles";
@@ -10,7 +11,6 @@ import { pantallaDeCuenta, PARAMETRO_ENVIADO, rutaParaCambiarDatos, rutaParaIngr
 import { leadTieneCuenta } from "@/lib/cuentas/servidor";
 import { rutaSiguiente } from "@/lib/leads/reglas";
 import { leadDeLaSesion } from "@/lib/leads/servidor";
-import { FormularioContacto } from "../../agendar/contacto/FormularioContacto";
 import { pedirCuenta } from "./acciones";
 import estilos from "./cuenta.module.css";
 import { FormularioCuenta, FormularioTerminar } from "./FormularioCuenta";
@@ -124,12 +124,12 @@ export default async function CrearCuenta({ searchParams }: PageProps<"/cuenta/c
       return (
         <Pantalla eyebrow={TEXTOS.eyebrow} titulo={TEXTOS.crearTitulo} subtitulo={TEXTOS.crearContacto}>
           <FormularioContacto
-            siguiente={siguiente}
-            iniciales={{ nombre: "", correo: "", numero_telefono: "" }}
             accion={pedirCuenta}
+            ocultos={{ siguiente }}
+            iniciales={{ nombre: "", correo: "", numero_telefono: "" }}
+            ayudaDelCorreo={TEXTOS.ayudaDelCorreo}
             textoDelBoton={TEXTOS.botonCrear}
             textoDelBotonEnviando={TEXTOS.botonCreando}
-            ayudaDelCorreo={TEXTOS.ayudaDelCorreo}
           />
           <EnlaceDeIngreso siguiente={siguiente} />
         </Pantalla>

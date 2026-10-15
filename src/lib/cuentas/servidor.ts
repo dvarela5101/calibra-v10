@@ -42,6 +42,12 @@ export function olvidarLaGuardia(): void {
  * (`docs/pendientes-dvarela.md` §C), así que no se confía en ella: se lee `GET /auth/v1/settings` con la llave pública,
  * con 3 s de plazo, y solo una lectura segura se recuerda 5 minutos. Si no se pudo leer o la respuesta es rara, es que no:
  * falla cerrado.
+ *
+ * Se consulta en los dos pasos que llevan al rol: al pedir la cuenta (`pedirCuentaDeEstudiante`) y al activarla
+ * (`activarCuenta`, que comparten «Sí, es mi correo» y «Terminar de crear mi cuenta»). Con solo la primera no alcanza: el
+ * navegador tiene la llave pública y su sesión anónima, así que puede llamar a `updateUser({ email })` directo, sin pasar
+ * por la app, y con `mailer_autoconfirm` activo queda convertido con un correo que nadie confirmó. Lo único que le falta
+ * para ser Estudiante es la fila de `estudiante`, y esa solo la crea `activarCuenta`.
  */
 export async function confirmacionDeCorreoActiva(opciones: { ahora?: number; leer?: typeof fetch } = {}): Promise<boolean> {
   const ahora = opciones.ahora ?? Date.now();
@@ -144,17 +150,28 @@ export async function confirmarCorreoDeCuenta(supabase: SupabaseClient, tokenHas
   return { ok: true, idUsuario: data.user.id, tokenDeAcceso: data.session.access_token };
 }
 
-export type ResultadoDeActivar = { ok: true } | { ok: false; motivo: "sesiones" | "soporte" | "no_confirmada" | "fallo" };
+export type ResultadoDeActivar =
+  | { ok: true }
+  | { ok: false; motivo: "sin_confirmacion" | "sesiones" | "soporte" | "no_confirmada" | "fallo" };
 
 /**
  * Lo que sigue a confirmar el correo, y también lo que hace «Terminar de crear mi cuenta»: cierra las demás sesiones del
  * usuario y crea el Estudiante.
- * - El cierre va antes: si falla no se crea, y la persona repite el paso. Quien escribió el correo de otra persona (P-23)
- *   y consigue que su dueña confirme no puede renovar su sesión en la cuenta (criterio 5). Con llaves de firma
+ * - La guardia de `confirmacionDeCorreoActiva` va primero, antes de tocar nada: si Auth no exige confirmar el correo (o no se
+ *   pudo leer), el correo de este usuario pudo quedar ligado desde el navegador con `updateUser({ email })` sin que nadie lo
+ *   confirmara, y `crear_estudiante` lo daría por bueno porque Auth lo marca confirmado. Sin la guardia aquí, la de
+ *   `pedirCuentaDeEstudiante` solo protege el camino de la app y no el real (RN-12). Responde `sin_confirmacion`.
+ * - El cierre va antes de crear: si falla no se crea, y la persona repite el paso. Quien escribió el correo de otra persona
+ *   (P-23) y consigue que su dueña confirme no puede renovar su sesión en la cuenta (criterio 5). Con llaves de firma
  *   asimétricas el token de acceso viejo sigue leyendo hasta que vence (`jwt_expiry`); lo que se cierra es su renovación.
  * - `soporte` agrupa lo que repetir el paso no arregla: `sin_lead`, `ya_tiene_cuenta` y `correo_distinto`.
  */
 export async function activarCuenta(idUsuario: string, tokenDeAcceso: string): Promise<ResultadoDeActivar> {
+  if (!(await confirmacionDeCorreoActiva())) {
+    console.error("[cuentas] Auth no exige confirmar el correo (o no se pudo leer su configuración): no se activa la cuenta.");
+    return { ok: false, motivo: "sin_confirmacion" };
+  }
+
   const admin = crearClienteAdmin();
 
   const { error: errorDeSesiones } = await admin.auth.admin.signOut(tokenDeAcceso, "others");

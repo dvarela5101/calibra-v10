@@ -21,9 +21,10 @@ export const RUTA_AVISO = "/privacidad";
  * HU-069 (1-oct-2026) agregó que el nombre del monitor se muestra a los estudiantes. HU-073 (2-oct-2026) sumó las
  * reseñas y Cloudflare Turnstile. HU-056 (11-oct-2026) dijo qué cuenta como actividad de una sesión (D-63 b). HU-087
  * (11-oct-2026) amplió lo que se comparte con el monitor a las respuestas del diagnóstico (D-54 c). HU-032
- * (12-oct-2026): la cuenta de Estudiante, con su contraseña.
+ * (12-oct-2026): la cuenta de Estudiante, con su contraseña. HU-049 (13-oct-2026) sumó el perfil del monitor
+ * certificado (D-58 a).
  */
-export const AVISO_ACTUALIZADO = "2026-10-12";
+export const AVISO_ACTUALIZADO = "2026-10-13";
 
 /**
  * Días sin actividad tras los que se borra una sesión sin contacto (P-13). Copia el valor de la base,

@@ -6,22 +6,23 @@ import { CasillasConsentimiento } from "@/components/CasillasConsentimiento";
 import formulario from "@/components/formulario.module.css";
 import { TEXTO_VERIFICANDO } from "@/lib/captcha/textos";
 import { CORREO_FIJO } from "@/lib/leads/avisos";
-import { dejarContacto, type EstadoContacto } from "./acciones";
-
-export type ValoresDeContacto = { nombre: string; correo: string; numero_telefono: string };
+import type { EstadoContacto } from "@/lib/leads/reglas";
 
 const estadoInicial: EstadoContacto = { error: null, aviso: null, valores: {} };
 
+export type ValoresDeContacto = { nombre: string; correo: string; numero_telefono: string };
+
 type Props = {
-  siguiente: string;
+  /** La acción del servidor que guarda el contacto: la de agendar (HU-068), la del resultado del diagnóstico (HU-010) o la de crear la cuenta (HU-032). */
+  accion: (anterior: EstadoContacto, datos: FormData) => Promise<EstadoContacto>;
+  /** Campos ocultos que la acción necesita (a dónde sigue al agendar, qué diagnóstico se está viendo). */
+  ocultos: Record<string, string>;
   iniciales: ValoresDeContacto;
-  /** La acción del formulario. Por defecto, la de agendar (`dejarContacto`); `/cuenta/crear` pasa la suya (HU-032). */
-  accion?: (anterior: EstadoContacto, datos: FormData) => Promise<EstadoContacto>;
+  /** Para qué se usa el correo, bajo su campo. */
+  ayudaDelCorreo: string;
   /** El texto del botón de envío, y el que lleva mientras espera. */
-  textoDelBoton?: string;
+  textoDelBoton: string;
   textoDelBotonEnviando?: string;
-  /** Lo que se dice bajo el correo. */
-  ayudaDelCorreo?: string;
   /**
    * El correo de la cuenta de un Estudiante no se cambia aquí (D-55 b, HU-032): se muestra sin poder editarlo y con
    * la ayuda que dice por qué. `readOnly` sí viaja en el envío, y la acción lo compara con el Lead por si se manda otro.
@@ -29,17 +30,17 @@ type Props = {
   correoFijo?: boolean;
 };
 
-/** HU-068: nombre, correo y teléfono opcional (P-21, P-22), con la autorización de datos (RN-13). */
+/** HU-068, HU-010 y HU-032: nombre, correo y teléfono opcional (P-21, P-22), con la autorización de datos (RN-13). */
 export function FormularioContacto({
-  siguiente,
+  accion,
+  ocultos,
   iniciales,
-  accion: accionDelFormulario = dejarContacto,
-  textoDelBoton = "Seguir",
+  ayudaDelCorreo,
+  textoDelBoton,
   textoDelBotonEnviando = "Guardando…",
-  ayudaDelCorreo = "Ahí te llega la confirmación de tu cita.",
   correoFijo = false,
 }: Props) {
-  const [estado, accion, enviando] = useActionState(accionDelFormulario, estadoInicial);
+  const [estado, enviar, enviando] = useActionState(accion, estadoInicial);
   // HU-058: sin sesión lista, el envío espera la verificación; el aviso solo sale si no se logra.
   const sesion = useExigirSesionAnonima();
   // Un correo fijo muestra siempre el de la cuenta, aunque lo devuelto por una acción traiga otro.
@@ -48,8 +49,10 @@ export function FormularioContacto({
   const llave = JSON.stringify(estado.valores);
 
   return (
-    <form key={llave} action={accion} onSubmit={sesion.alEnviar} className={formulario.formulario} noValidate>
-      <input type="hidden" name="siguiente" value={siguiente} />
+    <form key={llave} action={enviar} onSubmit={sesion.alEnviar} className={formulario.formulario} noValidate>
+      {Object.entries(ocultos).map(([nombre, valorOculto]) => (
+        <input key={nombre} type="hidden" name={nombre} value={valorOculto} />
+      ))}
 
       <div className={formulario.campo}>
         <label htmlFor="nombre" className={formulario.etiqueta}>

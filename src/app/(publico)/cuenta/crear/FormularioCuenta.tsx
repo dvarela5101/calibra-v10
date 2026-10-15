@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import formulario from "@/components/formulario.module.css";
 import { TEXTOS } from "@/lib/cuentas/reglas";
-import type { EstadoContacto } from "../../agendar/contacto/acciones";
+import type { EstadoContacto } from "@/lib/leads/reglas";
 import { pedirCuenta, terminarCuenta, type EstadoTerminar } from "./acciones";
 
 const estadoInicial: EstadoContacto = { error: null, aviso: null, valores: {} };

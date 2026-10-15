@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -84,5 +84,52 @@ describe("supabase/templates/confirmar-correo.html (HU-032)", () => {
     const variables = [...html.matchAll(/\{\{\s*([^}]+?)\s*\}\}/g)].map((m) => m[1]);
 
     expect(new Set(variables)).toEqual(new Set([".SiteURL", ".TokenHash"]));
+  });
+});
+
+// HU-032 (revisión, hallazgo 4): los topes de `public.parametros_cuenta()` (3 por sesión y 20 en total por hora) están en el
+// servidor de la app, y el navegador llama a Auth directo con la llave pública y su sesión anónima (`updateUser({ email })`)
+// sin pasar por ellos. El único límite que acota los correos de Auth es `email_sent`, y su valor por defecto en el CLI (2)
+// no deja ni pedir una cuenta cada media hora. Esta prueba fija que se haya puesto, que deje margen sobre el tope de la app
+// para «Olvidé mi contraseña» y que siga siendo bajo, y que el corte (§C de docs/pendientes-dvarela.md) pida lo mismo en el
+// panel de la nube.
+
+describe("supabase/config.toml: el límite de correos de Auth (HU-032, revisión)", () => {
+  const carpeta = join(RAIZ, "supabase", "migrations");
+  const archivo = readdirSync(carpeta).find((nombre) => nombre.endsWith("_cuenta_de_estudiante.sql"));
+  const migracion = readFileSync(join(carpeta, archivo ?? "no-existe.sql"), "utf8");
+  /** El tope de pedidos de cuenta de todas las sesiones en una hora, como lo devuelve `public.parametros_cuenta()`. */
+  const topeTotalDeLaApp = Number(/(\d+),\s*-- tope_envios_total/.exec(migracion)?.[1]);
+  const limiteDeAuth = Number(valor(seccion("auth.rate_limit"), "email_sent"));
+
+  it("la migración de la cuenta de Estudiante existe y su tope total de pedidos se puede leer", () => {
+    expect(archivo, "supabase/migrations debe tener la migración *_cuenta_de_estudiante.sql").toBeDefined();
+    expect(Number.isInteger(topeTotalDeLaApp)).toBe(true);
+  });
+
+  it("[auth.rate_limit] fija email_sent con un entero, no el 2 del CLI", () => {
+    expect(Number.isInteger(limiteDeAuth), "email_sent debe estar en [auth.rate_limit] y no comentado").toBe(true);
+    expect(limiteDeAuth).toBeGreaterThan(2);
+  });
+
+  it("email_sent deja al menos 10 correos por hora de margen sobre el tope de pedidos de cuenta, para «Olvidé mi contraseña»", () => {
+    expect(limiteDeAuth).toBeGreaterThanOrEqual(topeTotalDeLaApp + 10);
+  });
+
+  it("y es bajo (60 o menos): un tope grande deja a cualquiera con una sesión anónima gastar el correo del proveedor", () => {
+    expect(limiteDeAuth).toBeLessThanOrEqual(60);
+  });
+
+  it("§C de docs/pendientes-dvarela.md pide fijar el mismo límite en el panel de Supabase", () => {
+    const pendientes = readFileSync(join(RAIZ, "docs", "pendientes-dvarela.md"), "utf8");
+    const inicio = pendientes.indexOf("**Confirmar el correo al crear la cuenta de Estudiante (HU-032)");
+    expect(inicio, "§C debe tener el ítem de HU-032").toBeGreaterThanOrEqual(0);
+    // El ítem llega hasta el siguiente de la lista (`- [ ] **`).
+    const resto = pendientes.slice(inicio + 1);
+    const fin = resto.search(/^- \[[ x]\] /m);
+    const item = fin === -1 ? resto : resto.slice(0, fin);
+
+    expect(item).toContain("email_sent");
+    expect(item).toContain(String(limiteDeAuth));
   });
 });

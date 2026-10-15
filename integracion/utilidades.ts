@@ -513,22 +513,35 @@ export class Fixtures {
     return reporte;
   }
 
-  /** Un desembolso de una monitoría (bruto 25.000, comisión 2.500, neto 22.500). */
-  async crearDesembolso(datos: { idMonitoria: string; estado?: "pendiente" | "desembolsado" | "anulado"; idAdmin?: string }) {
+  /**
+   * Un desembolso de una monitoría. Sin más datos queda en bruto 25.000, comisión 2.500, neto 22.500, con la llave
+   * `llave-de-prueba` y, si ya está desembolsado, la referencia `REF-PRUEBA` y la fecha de ahora (HU-050: `montos`,
+   * `llave`, `referencia` y `fechaDesembolso` las cambian, por ejemplo para una foto distinta de los pagos de hoy).
+   */
+  async crearDesembolso(datos: {
+    idMonitoria: string;
+    estado?: "pendiente" | "desembolsado" | "anulado";
+    idAdmin?: string;
+    montos?: { bruto: number; comision: number; neto: number };
+    llave?: string;
+    referencia?: string;
+    fechaDesembolso?: string;
+  }) {
     const estado = datos.estado ?? "pendiente";
+    const montos = datos.montos ?? { bruto: 25_000, comision: 2_500, neto: 22_500 };
     const desembolso = exito(
       await this.admin
         .from("desembolso")
         .insert({
           id_monitoria: datos.idMonitoria,
-          monto_bruto: 25_000,
-          comision: 2_500,
-          monto_neto: 22_500,
-          llave_destino: "llave-de-prueba",
+          monto_bruto: montos.bruto,
+          comision: montos.comision,
+          monto_neto: montos.neto,
+          llave_destino: datos.llave ?? "llave-de-prueba",
           estado,
           id_admin: estado === "desembolsado" ? (datos.idAdmin ?? null) : null,
-          fecha_desembolso: estado === "desembolsado" ? new Date().toISOString() : null,
-          referencia_transferencia: estado === "desembolsado" ? "REF-PRUEBA" : null,
+          fecha_desembolso: estado === "desembolsado" ? (datos.fechaDesembolso ?? new Date().toISOString()) : null,
+          referencia_transferencia: estado === "desembolsado" ? (datos.referencia ?? "REF-PRUEBA") : null,
         })
         .select()
         .single(),
@@ -598,9 +611,17 @@ export class Fixtures {
     if (monitorias.length) await intentar("borrar monitoria", this.admin.from("monitoria").delete().in("id", monitorias));
     if (franjas.length) await intentar("borrar franja", this.admin.from("franja").delete().in("id", franjas));
 
-    // invitacion_monitor.id_admin no cae en cascada: las invitaciones van antes que los admins.
+    // invitacion_monitor.id_admin e invitacion_admin.id_admin no caen en cascada: las invitaciones van antes que los
+    // admins. Las de admin dejan además una fila en correo_envio (clave invitacion_admin:<id>), que tampoco cae.
     if (usuarios.length) {
       await intentar("borrar invitacion_monitor", this.admin.from("invitacion_monitor").delete().in("id_admin", usuarios));
+      const { data: invitacionesDeAdmin, error: errorDeInvitaciones } = await this.admin.from("invitacion_admin").select("id").in("id_admin", usuarios);
+      if (errorDeInvitaciones) errores.push(`leer invitacion_admin: ${errorDeInvitaciones.message}`);
+      const clavesDeInvitaciones = (invitacionesDeAdmin ?? []).map(({ id }) => `invitacion_admin:${id}`);
+      if (clavesDeInvitaciones.length) {
+        await intentar("borrar correo_envio de invitacion_admin", this.admin.from("correo_envio").delete().in("clave", clavesDeInvitaciones));
+      }
+      await intentar("borrar invitacion_admin", this.admin.from("invitacion_admin").delete().in("id_admin", usuarios));
     }
 
     if (usuarios.length || materias.length) {

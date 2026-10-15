@@ -1,16 +1,10 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { MOTIVOS_DE_CANCELACION } from "@/lib/citas/reglas";
-import {
-  instanteIso,
-  MAXIMO_DE_INTENTOS,
-  PRESUPUESTO_DE_CORRIDA_MS,
-  UUID,
-  type DependenciasDeConfirmaciones,
-  type ResumenDeConfirmaciones,
-} from "@/lib/citas/servidor";
+import { instanteIso, UUID, type DependenciasDeConfirmaciones, type ResumenDeConfirmaciones } from "@/lib/citas/servidor";
+import { LOTE_POR_DEFECTO, procesarBandeja, type DefinicionDeBandeja } from "@/lib/correo/bandeja";
 import type { DatosPorPlantilla, Reconstruccion } from "@/lib/correo/plantillas";
-import { enviarCorreoDesdeServidor, urlDelSitio, type ResultadoEnvio } from "@/lib/correo/servidor";
+import { urlDelSitio, type ResultadoEnvio } from "@/lib/correo/servidor";
 import { correoConsultasDatos } from "@/lib/privacidad/consentimiento";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/tipos";
@@ -28,8 +22,8 @@ import {
 /**
  * Los correos que piden la llave de un reembolso (HU-025, P-10, P-22). La base los anota en `public.pedido_llave`
  * (al crearse el reembolso, a los 3 días, al reabrirlo y al reenviarlo) y le pide a la app que los mande por
- * `/api/procesos/pedir-llaves`. El procesador copia el de la cancelación (HU-024), que copia el de la confirmación
- * (HU-019): HU-079 los unifica. La entidad de cada correo es el id de su fila en `pedido_llave`, así que el reintento
+ * `/api/procesos/pedir-llaves`. Los procesa `procesarBandeja`, el mismo bucle de la confirmación (HU-019) y la cancelación
+ * (HU-024): HU-079 los unificó. La entidad de cada correo es el id de su fila en `pedido_llave`, así que el reintento
  * (HU-065) reconstruye el mismo correo y un mismo reembolso puede recibir varios sin chocar.
  */
 
@@ -37,7 +31,7 @@ type Cliente = SupabaseClient<Database>;
 type FilaDeDatos = Database["public"]["Functions"]["datos_de_pedido_llave"]["Returns"][number];
 
 /** Cuántos pedidos toma cada corrida. Lo normal es uno o pocos: la base los pide al anotarlos. */
-export const LOTE_DE_PEDIDOS = 10;
+export const LOTE_DE_PEDIDOS = LOTE_POR_DEFECTO;
 
 function uno<T extends string>(valores: readonly T[], valor: string, campo: string): T {
   const encontrado = valores.find((v) => v === valor);
@@ -135,72 +129,20 @@ async function mandar(pedido: Pedido, cliente: Cliente, enviar: DependenciasDePe
   return correo && enviar({ plantilla: "solicitud_llave_reembolso", ...correo, entidad: pedido.id });
 }
 
+const BANDEJA = {
+  prefijo: "reembolsos",
+  tabla: "pedido_llave",
+  lote: LOTE_DE_PEDIDOS,
+  lectura: { columnas: "id, tipo, intentos", orden: "creada_en" },
+  textos: { leer: "No se pudieron leer los pedidos de llave", marcar: "No se pudo marcar el pedido de la llave" },
+  nombrar: (pedido) => `el pedido de la llave ${pedido.id}`,
+  mandar: (pedido, { cliente, enviar }) => mandar(pedido, cliente, enviar),
+} satisfies DefinicionDeBandeja<Pedido>;
+
 /**
- * Manda los pedidos de llave pendientes, del más antiguo al más reciente. Funciona como `procesarCancelacionesDeCita`:
- * cada uno queda procesado cuando su correo queda en `correo_envio` (enviado, o fallido para reintentar) o cuando ya no
- * vale; si no se pudo procesar, suma un intento y se abandona al llegar a `MAXIMO_DE_INTENTOS`. Dos corridas a la vez no
+ * Manda los pedidos de llave pendientes con `procesarBandeja`, del más antiguo al más reciente. Dos corridas a la vez no
  * lo mandan dos veces: la clave del correo (`<plantilla>:<id del pedido>`) es única.
  */
-export async function procesarPedidosDeLlave(dependencias?: Partial<DependenciasDePedidos>): Promise<ResumenDePedidos> {
-  const cliente = dependencias?.cliente ?? crearClienteAdmin();
-  const enviar = dependencias?.enviar ?? enviarCorreoDesdeServidor;
-  const reloj = dependencias?.reloj ?? Date.now;
-  const inicio = reloj();
-  const resumen: ResumenDePedidos = { revisadas: 0, enviadas: 0, descartadas: 0, fallidas: 0, tomadasPorOtro: 0, conError: 0, pospuestas: 0 };
-
-  const { data: pedidos, error } = await cliente
-    .from("pedido_llave")
-    .select("id, tipo, intentos")
-    .is("procesado_en", null)
-    .order("creada_en")
-    .limit(LOTE_DE_PEDIDOS);
-  if (error) throw new Error(`No se pudieron leer los pedidos de llave: ${error.message}`);
-
-  for (const pedido of pedidos ?? []) {
-    resumen.revisadas++;
-    if (reloj() - inicio >= PRESUPUESTO_DE_CORRIDA_MS) {
-      resumen.pospuestas++;
-      continue;
-    }
-    try {
-      const resultado = await mandar(pedido, cliente, enviar);
-      if (!resultado) {
-        resumen.descartadas++;
-      } else if (resultado.ok) {
-        resumen.enviadas++;
-      } else if (resultado.motivo === "en_curso") {
-        resumen.tomadasPorOtro++;
-      } else if (resultado.motivo === "fallo_del_registro") {
-        // Sin registro no hay reintento de HU-065: el pedido vuelve a intentarse en otra corrida.
-        throw new Error(resultado.error);
-      } else {
-        // Quedó `fallido` en el registro (o el contacto no es un correo): HU-065 y la bandeja del admin.
-        console.error(`[reembolsos] el pedido de la llave ${pedido.id} no salió: ${resultado.error}`);
-        resumen.fallidas++;
-      }
-      await marcar(cliente, pedido, { procesado_en: new Date().toISOString() });
-    } catch (falla) {
-      resumen.conError++;
-      await sumarIntento(cliente, pedido, falla);
-    }
-  }
-  return resumen;
-}
-
-async function marcar(cliente: Cliente, pedido: Pedido, cambios: { procesado_en?: string; intentos?: number }): Promise<void> {
-  const { error } = await cliente.from("pedido_llave").update(cambios).eq("id", pedido.id);
-  if (error) throw new Error(`No se pudo marcar el pedido de la llave: ${error.message}`);
-}
-
-/** Suma un intento fallido; al llegar al máximo, abandona el pedido (queda procesado y se avisa en el log). */
-async function sumarIntento(cliente: Cliente, pedido: Pedido, falla: unknown): Promise<void> {
-  const mensaje = falla instanceof Error ? falla.message : String(falla);
-  const intentos = pedido.intentos + 1;
-  const abandonar = intentos >= MAXIMO_DE_INTENTOS;
-  console.error(`[reembolsos] no se pudo procesar el pedido de la llave ${pedido.id} (intento ${intentos}${abandonar ? ", se abandona" : ""}): ${mensaje}`);
-  try {
-    await marcar(cliente, pedido, abandonar ? { intentos, procesado_en: new Date().toISOString() } : { intentos });
-  } catch (otra) {
-    console.error("[reembolsos] tampoco se pudo anotar el intento:", otra instanceof Error ? otra.message : otra);
-  }
+export function procesarPedidosDeLlave(dependencias?: Partial<DependenciasDePedidos>): Promise<ResumenDePedidos> {
+  return procesarBandeja(BANDEJA, dependencias);
 }

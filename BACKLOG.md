@@ -1,17 +1,14 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-12 08:49. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-14 22:54. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | Backlog | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056, HU-084, HU-089 |
-| [HU-034](backlog/HU-034.md) | [Admin] Revisar pagos desde una bandeja común y avisar a todos los admins cuando llega uno | Backlog | P1 | M | HU-020, HU-006, HU-054, HU-065, HU-074, HU-077 |
 | [HU-086](backlog/HU-086.md) | [Estudiante] Ligar a mi cita un diagnóstico hecho después de agendar | Backlog | P1 | M | HU-022, HU-019 |
 | [HU-091](backlog/HU-091.md) | [Técnica] Borradores para activar las Evaluaciones de Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | Backlog | P1 | S | HU-061 |
 | [HU-088](backlog/HU-088.md) | [Estudiante] Ver la calificación y las reseñas del monitor en su tarjeta | Backlog | P2 | M | HU-049, HU-035 |
 | [HU-090](backlog/HU-090.md) | [Admin] Registrar desde la gestión de leads el retiro de la autorización de datos | Backlog | P2 | S | HU-053, HU-085 |
-| [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | Lista | P0 | M | HU-009, HU-008, HU-068 |
-| [HU-031](backlog/HU-031.md) | [Lead] Recuperar mis resultados desde otro dispositivo con un enlace | Lista | P1 | M | HU-006, HU-009, HU-010, HU-081 |
 | [HU-033](backlog/HU-033.md) | [Estudiante] Gestionar mis citas y diagnósticos desde mi cuenta | Lista | P1 | M | HU-032, HU-019, HU-024, HU-029, HU-009, HU-081 |
 | [HU-036](backlog/HU-036.md) | [Estudiante] Agendar una sesión grupal como organizador | Lista | P1 | L | HU-032, HU-017, HU-018 |
 | [HU-037](backlog/HU-037.md) | [Estudiante] Compartir el enlace del grupo y ver quién ha pagado | Lista | P1 | M | HU-036 |
@@ -26,18 +23,14 @@ _Generado automaticamente: 2026-10-12 08:49. No editar a mano; usa `scripts/back
 | [HU-046](backlog/HU-046.md) | [Monitor] Finalizar una grupal y entregar el enlace de reseña | Lista | P1 | S | HU-023, HU-036 |
 | [HU-047](backlog/HU-047.md) | [Integrante] Reseñar la sesión grupal eligiendo mi nombre | Lista | P1 | M | HU-046, HU-038, HU-035 |
 | [HU-084](backlog/HU-084.md) | [Técnica] Recorrido de punta a punta del diagnóstico: de la prueba al monitor | Lista | P1 | S | HU-048, HU-010, HU-011, HU-022 |
-| [HU-049](backlog/HU-049.md) | [Monitor] Administrar mi perfil | Lista | P2 | L | HU-013, HU-016, HU-069 |
 | [HU-085](backlog/HU-085.md) | [Sistema] Borrar o anonimizar los datos de un Lead o aspirante que retiró su autorización o lleva 24 meses sin actividad | Lista | P2 | L | HU-056, HU-006, HU-062, HU-068 |
-| [HU-009](backlog/HU-009.md) | [Visitante] Tomar el diagnóstico sin iniciar sesión | En progreso | P0 | M | HU-004, HU-005, HU-060, HU-081, HU-083 |
+| [HU-092](backlog/HU-092.md) | [Monitor] Marcar en mi perfil los temas en los que soy fuerte | Lista | P2 | M | HU-049 |
+| [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | Lista | P2 | S |  |
 | [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | En progreso | P0 | M | HU-009, HU-081 |
 | [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | En progreso | P0 | L | HU-021, HU-009, HU-081, HU-087 |
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | En progreso | P1 | M | HU-004, HU-019, HU-068 |
-| [HU-050](backlog/HU-050.md) | [Monitor] Ver mis desembolsos | En progreso | P1 | M | HU-028, HU-030, HU-078 |
-| [HU-055](backlog/HU-055.md) | [Admin] Gestionar materias y evaluaciones | En progreso | P1 | L | HU-005, HU-012, HU-014, HU-016, HU-062 |
-| [HU-052](backlog/HU-052.md) | [Admin] Autorizar una cancelación fuera de plazo en casos extremos | En progreso | P2 | M | HU-024, HU-026 |
-| [HU-072](backlog/HU-072.md) | [Admin] Agregar un admin al equipo por invitación | En progreso | P2 | M | HU-054, HU-013, HU-058, HU-065, HU-070 |
-| [HU-079](backlog/HU-079.md) | [Técnica] Unificar los procesadores de la bandeja de salida de correos | En progreso | P2 | S | HU-019, HU-024, HU-025, HU-030, HU-035, HU-051, HU-076, HU-080 |
-| [HU-083](backlog/HU-083.md) | [Técnica] Dibujar fórmulas y código del banco de preguntas | En revision | P0 | S | HU-005 |
+| [HU-034](backlog/HU-034.md) | [Admin] Revisar pagos desde una bandeja común y avisar a todos los admins cuando llega uno | En progreso | P1 | M | HU-020, HU-006, HU-054, HU-065, HU-074, HU-077 |
+| [HU-031](backlog/HU-031.md) | [Lead] Recuperar mis resultados desde otro dispositivo con un enlace | En revision | P1 | M | HU-006, HU-009, HU-010, HU-081 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
@@ -46,6 +39,8 @@ _Generado automaticamente: 2026-10-12 08:49. No editar a mano; usa `scripts/back
 | [HU-006](backlog/HU-006.md) | [Técnica] Correo transaccional con plantillas | Hecha | P0 | M | HU-001 |
 | [HU-007](backlog/HU-007.md) | [Técnica] Almacenamiento privado de comprobantes de pago | Hecha | P0 | S | HU-002, HU-004 |
 | [HU-008](backlog/HU-008.md) | [Visitante] Leer el aviso de privacidad y autorizar el tratamiento de mis datos | Hecha | P0 | S | HU-001 |
+| [HU-009](backlog/HU-009.md) | [Visitante] Tomar el diagnóstico sin iniciar sesión | Hecha | P0 | M | HU-004, HU-005, HU-060, HU-081, HU-083 |
+| [HU-010](backlog/HU-010.md) | [Visitante] Dejar mi contacto al terminar el diagnóstico y quedar como Lead | Hecha | P0 | M | HU-009, HU-008, HU-068 |
 | [HU-012](backlog/HU-012.md) | [Admin] Iniciar sesión y ver mi bandeja de trabajo | Hecha | P0 | M | HU-004 |
 | [HU-013](backlog/HU-013.md) | [Monitor] Crear mi cuenta de monitor e iniciar sesión | Hecha | P0 | M | HU-004 |
 | [HU-014](backlog/HU-014.md) | [Admin] Emitir certificados de monitor por materia | Hecha | P0 | S | HU-012, HU-013 |
@@ -72,9 +67,12 @@ _Generado automaticamente: 2026-10-12 08:49. No editar a mano; usa `scripts/back
 | [HU-076](backlog/HU-076.md) | [Sistema] Correos del rechazo de un pago: al monitor y al pagador, sin que se pierdan | Hecha | P0 | M | HU-020, HU-051, HU-024 |
 | [HU-081](backlog/HU-081.md) | [Técnica] Servidor del diagnóstico: diagnóstico en curso, guardado y lo que recibe el navegador | Hecha | P0 | M | HU-060, HU-004, HU-005 |
 | [HU-082](backlog/HU-082.md) | [Admin] Cualquier admin activo registra la transferencia de un reembolso | Hecha | P0 | S | HU-026 |
+| [HU-083](backlog/HU-083.md) | [Técnica] Dibujar fórmulas y código del banco de preguntas | Hecha | P0 | S | HU-005 |
 | [HU-087](backlog/HU-087.md) | [Técnica] Ampliar la autorización y el aviso de privacidad a las respuestas del diagnóstico | Hecha | P0 | S | HU-008, HU-068 |
 | [HU-035](backlog/HU-035.md) | [Lead] Reseñar mi monitoría individual desde el correo | Hecha | P1 | M | HU-023, HU-006 |
 | [HU-048](backlog/HU-048.md) | [Técnica] Recorridos de punta a punta: agendar, pagar, cancelar, reportar y desembolsar | Hecha | P1 | M | HU-030, HU-076, HU-082 |
+| [HU-050](backlog/HU-050.md) | [Monitor] Ver mis desembolsos | Hecha | P1 | M | HU-028, HU-030, HU-078 |
+| [HU-055](backlog/HU-055.md) | [Admin] Gestionar materias y evaluaciones | Hecha | P1 | L | HU-005, HU-012, HU-014, HU-016, HU-062 |
 | [HU-062](backlog/HU-062.md) | [Aspirante a monitor] Pedir la certificación de una materia dejando mis datos | Hecha | P1 | M | HU-008, HU-012 |
 | [HU-063](backlog/HU-063.md) | [Técnica] Ajustes de la revisión de HU-003 y HU-007 | Hecha | P1 | S | HU-003, HU-007 |
 | [HU-064](backlog/HU-064.md) | [Técnica] Ajustes de la revisión de HU-006 y HU-012 | Hecha | P1 | S | HU-006, HU-012 |
@@ -86,6 +84,9 @@ _Generado automaticamente: 2026-10-12 08:49. No editar a mano; usa `scripts/back
 | [HU-077](backlog/HU-077.md) | [Admin] Revisar un pago que el admin asignado no revisó a tiempo | Hecha | P1 | S | HU-020 |
 | [HU-078](backlog/HU-078.md) | [Admin] Ver y cerrar los pagos rechazados de sesiones que ya ocurrieron (P-24) | Hecha | P1 | M | HU-020, HU-028 |
 | [HU-080](backlog/HU-080.md) | [Lead] No invitar a reseñar a quien reportó que el monitor no llegó | Hecha | P1 | S | HU-029, HU-035 |
+| [HU-093](backlog/HU-093.md) | [Técnica] Acelerar el CI: jobs en paralelo y E2E repartidas con --shard | Hecha | P1 | S |  |
+| [HU-049](backlog/HU-049.md) | [Monitor] Administrar mi perfil | Hecha | P2 | M | HU-013, HU-016, HU-069 |
+| [HU-052](backlog/HU-052.md) | [Admin] Autorizar una cancelación fuera de plazo en casos extremos | Hecha | P2 | M | HU-024, HU-026 |
 | [HU-053](backlog/HU-053.md) | [Admin] Gestionar leads | Hecha | P2 | M | HU-012, HU-068 |
 | [HU-054](backlog/HU-054.md) | [Admin] Gestionar el equipo de admins y el turno de revisión | Hecha | P2 | S | HU-012 |
 | [HU-056](backlog/HU-056.md) | [Sistema] Limpiar sesiones anónimas antiguas | Hecha | P2 | S | HU-004, HU-068 |
@@ -93,5 +94,7 @@ _Generado automaticamente: 2026-10-12 08:49. No editar a mano; usa `scripts/back
 | [HU-059](backlog/HU-059.md) | [Técnica] Endurecer los comprobantes: contenido real, huérfanos y cuota por sesión | Hecha | P2 | S | HU-007 |
 | [HU-070](backlog/HU-070.md) | [Técnica] Endurecer esCorreo: dominio solo con letras, dígitos, puntos y guiones | Hecha | P2 | S | HU-006 |
 | [HU-071](backlog/HU-071.md) | [Técnica] Página de no encontrado (404) en español | Hecha | P2 | XS |  |
+| [HU-072](backlog/HU-072.md) | [Admin] Agregar un admin al equipo por invitación | Hecha | P2 | M | HU-054, HU-013, HU-058, HU-065, HU-070 |
 | [HU-073](backlog/HU-073.md) | [Lead] Decir en el aviso de privacidad que guardamos la calificación y el comentario de cada monitoría | Hecha | P2 | XS | HU-035, HU-008 |
+| [HU-079](backlog/HU-079.md) | [Técnica] Unificar los procesadores de la bandeja de salida de correos | Hecha | P2 | S | HU-019, HU-024, HU-025, HU-030, HU-035, HU-051, HU-076, HU-080 |
 | [HU-089](backlog/HU-089.md) | [Admin] Registrar que un Lead pidió no recibir más mensajes | Hecha | P2 | S | HU-053 |

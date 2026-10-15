@@ -7,23 +7,37 @@
 -- y esta migración pone el rol. Hasta entonces mi_rol() sigue en «anonimo», aunque la sesión haya pedido la cuenta con el
 -- correo de otra persona.
 --
+-- Lo que la base no puede garantizar sola: «confirmado» es lo que Auth dice, y Auth lo dice de verdad solo si exige confirmar
+-- el correo. Con mailer_autoconfirm activo (enable_confirmations = false en local, «Confirm email» apagado en el panel de la
+-- nube), updateUser({ email }) deja al usuario no anónimo y con email_confirmed_at puesto sin que nadie haya confirmado nada,
+-- y el navegador puede llamarlo directo con su sesión anónima. La base no distingue ese caso: la guardia es del servidor
+-- (confirmacionDeCorreoActiva, que lee GET /auth/v1/settings antes de pedir la cuenta y antes de activarla), y la
+-- configuración de Auth está en config.toml y en docs/pendientes-dvarela.md §C.
+--
 -- Diseño (registro de HU-032):
 --   * crear_estudiante recibe solo el id del usuario y lee auth.users (correo, correo confirmado, is_anonymous). Con un
---     p_correo, «confirmado» sería una afirmación de quien llama; así el criterio 12 es una propiedad de la base. Es el
---     único camino de la app para insertar en estudiante. No hay un trigger sobre estudiante que lo exija a toda inserción
---     porque las pruebas pgTAP y Fixtures.crearEstudiante insertan Estudiantes directos sobre usuarios sin correo o con un
---     correo distinto del Lead.
+--     p_correo, «confirmado» sería una afirmación de quien llama; así el criterio 12 depende de lo que dice Auth y no de lo
+--     que dice quien llama (con la condición de arriba). Es el único camino de la app para insertar en estudiante. No hay
+--     un trigger sobre estudiante que lo exija a toda inserción porque las pruebas pgTAP y Fixtures.crearEstudiante insertan
+--     Estudiantes directos sobre usuarios sin correo o con un correo distinto del Lead.
 --   * Bloquea la fila del Lead con for update: un cambio de su correo que corra a la vez espera a esta transacción y el
 --     trigger lo rechaza; uno que ya terminó se ve aquí como correo_distinto. Sin el bloqueo pasarían los dos.
 --   * ya_tiene_cuenta se comprueba antes que correo_distinto: dos usuarios de Auth no comparten correo, así que el segundo
 --     usuario de un Lead siempre saldría con un correo distinto.
 --   * No escribe lead (RN-09: el estado del Lead no cambia).
---   * Un trigger deja fijo el correo de un Lead con cuenta. Pasar el correo a nulo queda libre (supresión de datos).
+--   * Un trigger deja fijo el correo de un Lead con cuenta, y también el de uno que otra sesión ya confirmó con el enlace de
+--     P-23 (alguna fila de lead_sesion): desde ahí el correo ya no es solo de quien lo escribió, y quien lo escribió primero
+--     (lead.id_sesion_anonima) podía cambiarlo por el suyo antes de que existiera la cuenta; la cuenta, o la sesión de quien
+--     confirmó, quedaba en manos de otro. Cada rechazo lleva su nombre en el mensaje. Pasar el correo a nulo queda libre
+--     (supresión de datos).
 --   * Los topes de envío (criterio 13) viven en la base como los de HU-075: 3 pedidos por sesión y 20 en total en una hora
 --     móvil. El total se cuenta con un candado por nombre, como el de solicitud_monitor:tope, para que dos sesiones a la vez
 --     no pasen el techo. Un intento frenado no se anota. El servidor cuenta todo lo posterior a ahora - ventana, sin techo:
 --     now() es el inicio de la transacción, y quien esperó un candado debe ver las filas de quien lo ganó aunque su
---     transacción haya empezado un instante después.
+--     transacción haya empezado un instante después. Son un freno de la app, no un límite de Auth: el navegador llama a
+--     Auth directo con su sesión anónima y no pasa por aquí. El límite que de verdad acota los correos de Auth es
+--     [auth.rate_limit] email_sent de config.toml (30: estos 20 más 10 de margen para «Olvidé mi contraseña»), y en la nube
+--     el mismo ajuste en el panel (docs/pendientes-dvarela.md §C).
 -- No redefine ninguna función existente.
 -- Idempotente.
 
@@ -127,11 +141,18 @@ revoke all on function public.crear_estudiante(uuid) from public, anon, authenti
 grant execute on function public.crear_estudiante(uuid) to service_role;
 
 -- ---------------------------------------------------------------------------
--- El correo de un Lead con cuenta queda fijo (D-55 b)
+-- El correo de un Lead con cuenta, o confirmado por otra sesión, queda fijo (D-55 b)
 -- ---------------------------------------------------------------------------
+-- Dos casos, cada uno con su mensaje:
+--   * El Lead ya tiene cuenta de Estudiante (D-55 b): lead_correo_fijo_con_cuenta.
+--   * Otra sesión ya confirmó el correo del Lead con el enlace de verificación de P-23 (hay una fila de lead_sesion de ese
+--     Lead): lead_correo_fijo_confirmado. La sesión que creó el Lead (lead.id_sesion_anonima) puede haber escrito el correo
+--     de otra persona sin que nadie lo verificara (P-23 lo admite); desde que su dueña lo confirma, el correo deja de ser
+--     solo de quien lo escribió y cambiarlo por otro dejaría a la sesión de la dueña ligada a un Lead con un correo ajeno, y
+--     el correo de una cuenta que pida esa sesión saldría a esa otra dirección. La cuenta gana si hay las dos cosas.
 -- Solo cuando el correo cambia a otro valor no nulo: nombre, teléfono y autorización se siguen actualizando, repetir el mismo
 -- correo no hace nada y pasarlo a nulo queda libre. Quien llama reconoce el rechazo por el código 23514 y el nombre
--- lead_correo_fijo_con_cuenta en el mensaje, como esPorElCorreo reconoce lead_correo_key.
+-- en el mensaje, como esPorElCorreo reconoce lead_correo_key. Ningún nombre contiene al otro.
 create or replace function privado.fijar_correo_con_cuenta()
 returns trigger
 language plpgsql
@@ -142,12 +163,15 @@ begin
   if exists (select 1 from public.estudiante e where e.id_lead = new.id) then
     raise exception 'lead_correo_fijo_con_cuenta: el correo de un contacto con cuenta no se cambia' using errcode = 'check_violation';
   end if;
+  if exists (select 1 from public.lead_sesion s where s.id_lead = new.id) then
+    raise exception 'lead_correo_fijo_confirmado: el correo de un contacto que otra sesión confirmó no se cambia' using errcode = 'check_violation';
+  end if;
   return new;
 end;
 $$;
 
 comment on function privado.fijar_correo_con_cuenta() is
-  'Trigger de lead: rechaza cambiar el correo de un Lead que ya tiene cuenta de Estudiante (D-55 b). Pasarlo a nulo se permite. HU-032.';
+  'Trigger de lead: rechaza cambiar el correo de un Lead que ya tiene cuenta de Estudiante (D-55 b) o que otra sesión ya confirmó con el enlace de P-23 (hay una fila de lead_sesion). Pasarlo a nulo se permite. HU-032.';
 -- Un trigger no necesita execute en tiempo de ejecución (como privado.borrar_sin_contacto).
 revoke all on function privado.fijar_correo_con_cuenta() from public, anon, authenticated, service_role;
 
@@ -174,12 +198,12 @@ set search_path = ''
 as $$
   select
     3,    -- tope_envios_sesion: pedidos de cuenta que una sesión puede hacer en la ventana
-    20,   -- tope_envios_total: pedidos de todas las sesiones en la ventana (el límite de correos de Auth se comparte)
+    20,   -- tope_envios_total: pedidos de todas las sesiones en la ventana; es un freno de la app, no el límite de Auth (config.toml, email_sent = 30)
     60    -- ventana_min: la ventana de los topes, una hora móvil
 $$;
 
 comment on function public.parametros_cuenta() is
-  'Topes de los pedidos de cuenta de Estudiante: 3 por sesión y 20 en total en una hora móvil. HU-032.';
+  'Topes de los pedidos de cuenta de Estudiante: 3 por sesión y 20 en total en una hora móvil. Frenan a la app; no limitan a Auth (su límite es email_sent en la configuración de Auth). HU-032.';
 revoke all on function public.parametros_cuenta() from public, anon, authenticated, service_role;
 grant execute on function public.parametros_cuenta() to authenticated, service_role;
 

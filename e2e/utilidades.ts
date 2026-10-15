@@ -298,7 +298,14 @@ export const test = base.extend<{ cuentas: Cuentas }>({
     // Limpieza: primero las filas de rol, luego el usuario. Se intenta todo y se avisa de lo que falle.
     const fallos: string[] = [];
     for (const id of usuarios) {
+      // HU-072: invitacion_admin.id_admin tampoco cae en cascada, y cada invitación dejó su fila en correo_envio (clave
+      // invitacion_admin:<id>). Se leen antes de borrar las invitaciones.
+      const { data: invitacionesDeAdmin, error: errorDeInvitaciones } = await cliente.from("invitacion_admin").select("id").eq("id_admin", id);
+      if (errorDeInvitaciones) fallos.push(`${id}: ${errorDeInvitaciones.message}`);
+      const clavesDeInvitaciones = ((invitacionesDeAdmin ?? []) as { id: string }[]).map((invitacion) => `invitacion_admin:${invitacion.id}`);
       const pasos = [
+        clavesDeInvitaciones.length > 0 ? await cliente.from("correo_envio").delete().in("clave", clavesDeInvitaciones) : { error: null },
+        await cliente.from("invitacion_admin").delete().eq("id_admin", id),
         // HU-013: id_admin no cae en cascada; las invitaciones del admin se borran antes que él.
         await cliente.from("invitacion_monitor").delete().eq("id_admin", id),
         await cliente.from("monitor").delete().eq("id", id),

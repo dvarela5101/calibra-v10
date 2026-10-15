@@ -17,7 +17,7 @@
 --   03 anónimo con el correo confirmado (solo le falta dejar de ser anónimo)
 --   04 con correo sin confirmar
 --   05 sin correo   15 con el correo en blanco
---   06 sin Lead
+--   06 sin Lead (más adelante, la sesión que confirmó por P-23 el correo del Lead 10, en la prueba del trigger)
 --   07 segundo usuario del Lead 01 (lead_sesion), con otro correo
 --   08 con un correo distinto del Lead   09 con un Lead sin correo
 --   10 y 11 para simular una violación de llave única   12 para la puerta del servidor
@@ -27,7 +27,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(124);
+select plan(133);
 
 -- ---------------------------------------------------------------------------
 -- Estructura y permisos
@@ -470,11 +470,50 @@ select is(
   (select correo from public.lead where id = '40000000-0000-0000-0000-000000320008'),
   'nuevo.ocho32@calibra.test', 'Y el cambio quedó');
 
--- Otro Lead con cuenta no se ve afectado por el trigger de este, y el de este sí se libera si se borra su cuenta.
+-- Revisión de HU-032, hallazgo 1: un Lead sin cuenta pero con una sesión ligada por el enlace de P-23 (lead_sesion) tampoco
+-- cambia de correo. La sesión 06 confirmó el correo del Lead 10, que creó su propia sesión (10): desde ahí el correo ya no es
+-- solo de quien lo escribió. El Lead 10 no tiene Estudiante.
+insert into public.lead_sesion (id_sesion, id_lead) values
+  ('c0000000-0000-0000-0000-000000320006', '40000000-0000-0000-0000-000000320010');
+select throws_ok(
+  $$update public.lead set correo = 'nuevo.diez32@calibra.test' where id = '40000000-0000-0000-0000-000000320010'$$,
+  '23514', 'lead_correo_fijo_confirmado: el correo de un contacto que otra sesión confirmó no se cambia',
+  'Hallazgo 1: con una sesión ligada por P-23, la que creó el Lead no cambia su correo (check_violation con lead_correo_fijo_confirmado)');
+select is(
+  (select correo from public.lead where id = '40000000-0000-0000-0000-000000320010'),
+  'cuenta32.diez@calibra.test', 'Y la fila no cambió');
+select lives_ok(
+  $$update public.lead set nombre = 'Lead diez cambiado', numero_telefono = '3222222222', acepta_contacto = true
+    where id = '40000000-0000-0000-0000-000000320010'$$,
+  'Con la sesión ligada, el nombre, el teléfono y la autorización de contacto se siguen actualizando (este trigger es solo del correo)');
+select lives_ok(
+  $$update public.lead set correo = 'cuenta32.diez@calibra.test' where id = '40000000-0000-0000-0000-000000320010'$$,
+  'Escribir el mismo correo no hace nada y se permite');
+select lives_ok(
+  $$update public.lead set correo = null where id = '40000000-0000-0000-0000-000000320010'$$,
+  'Pasar el correo a nulo sigue libre aunque haya una sesión ligada (supresión de datos)');
+select is(
+  (select correo from public.lead where id = '40000000-0000-0000-0000-000000320010'),
+  null::text, 'Y quedó en nulo');
+select throws_ok(
+  $$update public.lead set correo = 'cuenta32.diez@calibra.test' where id = '40000000-0000-0000-0000-000000320010'$$,
+  '23514', 'lead_correo_fijo_confirmado: el correo de un contacto que otra sesión confirmó no se cambia',
+  'Pasar de nulo a un correo también se rechaza con la sesión ligada');
+
+-- Otro Lead con cuenta no se ve afectado por el trigger de este, y el de este se libera si se borra su cuenta Y su sesión
+-- ligada. El Lead 01 conserva la sesión 07 (lead_sesion) después de perder la cuenta: sigue rechazando, ahora por el enlace.
 delete from public.estudiante where id = 'c0000000-0000-0000-0000-000000320001';
+select throws_ok(
+  $$update public.lead set correo = 'otro32@calibra.test' where id = '40000000-0000-0000-0000-000000320001'$$,
+  '23514', 'lead_correo_fijo_confirmado: el correo de un contacto que otra sesión confirmó no se cambia',
+  'Sin la cuenta pero con la sesión 07 ligada, el rechazo es el del enlace de P-23 y ya no el de la cuenta');
+select is(
+  (select correo from public.lead where id = '40000000-0000-0000-0000-000000320001'),
+  'cuenta32.uno@calibra.test', 'Y la fila no cambió');
+delete from public.lead_sesion where id_lead = '40000000-0000-0000-0000-000000320001';
 select lives_ok(
   $$update public.lead set correo = 'otro32@calibra.test' where id = '40000000-0000-0000-0000-000000320001'$$,
-  'Sin la fila de estudiante, el correo se cambia: el trigger mira la tabla en cada cambio');
+  'Sin la fila de estudiante ni sesiones ligadas, el correo se cambia: el trigger mira las dos tablas en cada cambio');
 
 -- Con el correo cambiado después de pedir la cuenta, la creación no pasa (correo_distinto): la mitad de «ya no coincide».
 select is(

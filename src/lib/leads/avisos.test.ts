@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { avisoDeVerificacion, CORREO_FIJO, type EnvioDeVerificacion } from "./avisos";
+import { avisoDeVerificacion, CORREO_FIJO, CORREO_YA_FIJO, INICIA_SESION_PARA_CAMBIAR, type EnvioDeVerificacion } from "./avisos";
 
 const ENVIOS: EnvioDeVerificacion[] = ["enviado", "frenado", "fallido"];
 
@@ -45,5 +45,21 @@ describe("CORREO_FIJO (D-55 b)", () => {
   it("dice que el correo es el de la cuenta, que no se cambia aquí y que escriba a soporte, sin rayas largas", () => {
     expect(CORREO_FIJO).toBe("Tu correo es el de tu cuenta y no se puede cambiar aquí. Si necesitas cambiarlo, escribe a soporte.");
     expect(CORREO_FIJO).not.toContain("—");
+  });
+});
+
+describe("CORREO_YA_FIJO e INICIA_SESION_PARA_CAMBIAR (HU-032, revisión)", () => {
+  it("el del correo confirmado por otra sesión dice que no se cambia aquí y que escriba a soporte, y no es el de la cuenta", () => {
+    expect(CORREO_YA_FIJO).toBe("El correo de este contacto ya no se puede cambiar aquí. Si necesitas cambiarlo, escribe a soporte.");
+    expect(CORREO_YA_FIJO).not.toBe(CORREO_FIJO);
+  });
+
+  it("el de iniciar sesión nombra la cuenta y pide iniciar sesión para cambiar los datos", () => {
+    expect(INICIA_SESION_PARA_CAMBIAR).toBe("Este contacto ya tiene una cuenta. Inicia sesión con tu cuenta para cambiar tus datos.");
+  });
+
+  it("ninguno lleva rayas largas, y el del correo fijo no dice si el contacto tiene cuenta (RN-12)", () => {
+    for (const texto of [CORREO_YA_FIJO, INICIA_SESION_PARA_CAMBIAR]) expect(texto).not.toContain("—");
+    expect(CORREO_YA_FIJO).not.toMatch(/cuenta/i);
   });
 });

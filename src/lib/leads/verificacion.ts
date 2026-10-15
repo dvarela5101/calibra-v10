@@ -1,3 +1,4 @@
+import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 
 /**
@@ -5,8 +6,11 @@ import { createHash, randomBytes } from "node:crypto";
  * el token son 256 bits aleatorios en hex que viajan solo en el correo, y la base guarda su SHA-256
  * (`verificacion_lead.token_hash`). Vence a las 24 horas: el vencimiento lo pone la base (`vence_en`),
  * aquí solo se muestra.
+ *
+ * Solo del servidor (`server-only`): usa `node:crypto`. Nada que importe un componente de cliente puede importar este
+ * módulo; la vigencia vive en `vigencia.ts` por eso y aquí se reexporta.
  */
-export const HORAS_DE_VIGENCIA = 24;
+export { HORAS_DE_VIGENCIA } from "./vigencia";
 
 export const RUTA_VERIFICACION = "/contacto/verificar";
 

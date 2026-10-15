@@ -18,6 +18,7 @@ const servidor = vi.hoisted(() => ({
   leadTieneCuenta: vi.fn(),
   pedirCuentaDeEstudiante: vi.fn(),
   activarCuenta: vi.fn(),
+  confirmacionDeCorreoActiva: vi.fn(),
   tokenDeAccesoDeLaSesion: vi.fn(),
   crearClienteServidor: vi.fn(),
 }));
@@ -32,6 +33,7 @@ vi.mock("@/lib/cuentas/servidor", () => ({
   leadTieneCuenta: servidor.leadTieneCuenta,
   pedirCuentaDeEstudiante: servidor.pedirCuentaDeEstudiante,
   activarCuenta: servidor.activarCuenta,
+  confirmacionDeCorreoActiva: servidor.confirmacionDeCorreoActiva,
   tokenDeAccesoDeLaSesion: servidor.tokenDeAccesoDeLaSesion,
 }));
 vi.mock("@/lib/supabase/servidor", () => ({ crearClienteServidor: servidor.crearClienteServidor }));
@@ -68,6 +70,7 @@ beforeEach(() => {
   servidor.crearClienteServidor.mockResolvedValue(CLIENTE);
   servidor.leadTieneCuenta.mockResolvedValue(false);
   servidor.pedirCuentaDeEstudiante.mockResolvedValue({ resultado: "enviado" });
+  servidor.confirmacionDeCorreoActiva.mockResolvedValue(true);
   almacen.get.mockReturnValue(undefined);
   errores = [];
   vi.spyOn(console, "error").mockImplementation((...argumentos: unknown[]) => {
@@ -345,6 +348,28 @@ describe("terminarCuenta (criterio 14)", () => {
     }
     expect(servidor.activarCuenta).not.toHaveBeenCalled();
     expect(servidor.crearClienteServidor).not.toHaveBeenCalled();
+    // La guardia de Auth viene después de la de rol: a quien no puede terminar la cuenta ni se le lee la configuración.
+    expect(servidor.confirmacionDeCorreoActiva).not.toHaveBeenCalled();
+  });
+
+  it("revisión: con Auth sin exigir confirmar el correo (o sin poder leerlo) no se termina la cuenta: ni cliente, ni token, ni activarCuenta", async () => {
+    como(null);
+    servidor.confirmacionDeCorreoActiva.mockResolvedValue(false);
+
+    expect(await llamar()).toEqual({ error: TEXTOS.noSalioElCorreo });
+    expect(servidor.confirmacionDeCorreoActiva).toHaveBeenCalledTimes(1);
+    expect(servidor.crearClienteServidor).not.toHaveBeenCalled();
+    expect(servidor.tokenDeAccesoDeLaSesion).not.toHaveBeenCalled();
+    expect(servidor.activarCuenta).not.toHaveBeenCalled();
+    expect(JSON.stringify(errores)).not.toContain(ID_SESION);
+  });
+
+  it("revisión: si activarCuenta repite la guardia y Auth ya no exige confirmar, dice lo mismo que cuando el correo no sale", async () => {
+    como(null);
+    servidor.tokenDeAccesoDeLaSesion.mockResolvedValue("token-de-acceso");
+    servidor.activarCuenta.mockResolvedValue({ ok: false, motivo: "sin_confirmacion" });
+
+    expect(await llamar()).toEqual({ error: TEXTOS.noSalioElCorreo });
   });
 
   it("un Estudiante ya terminó: va a «Mis citas»", async () => {

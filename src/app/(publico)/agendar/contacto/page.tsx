@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { FormularioContacto } from "@/components/contacto/FormularioContacto";
 import { Pantalla } from "@/components/Pantalla";
 import { obtenerSesion } from "@/lib/auth/sesion";
 import { rutaSiguiente } from "@/lib/leads/reglas";
 import { leadDeLaSesion } from "@/lib/leads/servidor";
-import { FormularioContacto } from "./FormularioContacto";
+import { dejarContacto } from "./acciones";
 
 export const metadata: Metadata = { title: "Tus datos para agendar · Calibra" };
 
@@ -27,7 +28,10 @@ export default async function ContactoParaAgendar({ searchParams }: PageProps<"/
       subtitulo="Con ellos te confirmamos la cita. No necesitas haber hecho el diagnóstico: si ya sabes qué necesitas, agenda directo."
     >
       <FormularioContacto
-        siguiente={siguiente}
+        accion={dejarContacto}
+        ocultos={{ siguiente }}
+        ayudaDelCorreo="Ahí te llega la confirmación de tu cita."
+        textoDelBoton="Seguir"
         iniciales={{ nombre: lead?.nombre ?? "", correo: lead?.correo ?? "", numero_telefono: lead?.numeroTelefono ?? "" }}
         // D-55 b (HU-032): el correo de la cuenta de un Estudiante queda fijo; puede cambiar su nombre y su teléfono.
         correoFijo={Boolean(lead) && sesion?.rol === "estudiante"}

@@ -318,9 +318,21 @@ describe("confirmarCorreoDeCuenta", () => {
   });
 });
 
-describe("activarCuenta: cierra las demás sesiones y después crea el Estudiante", () => {
-  it("cierra las demás sesiones con el token de la sesión nueva ANTES de crear, y responde ok con «creada»", async () => {
+describe("activarCuenta: la guardia de Auth, cierra las demás sesiones y después crea el Estudiante", () => {
+  // La guardia contra el panel olvidado va primero (revisión de HU-032): estos casos parten de un Auth que sí exige confirmar.
+  beforeEach(() => {
+    vi.stubGlobal("fetch", respuestaDeAjustes({ mailer_autoconfirm: false }));
+  });
+
+  it("comprueba que Auth exija confirmar el correo, cierra las demás sesiones con el token de la sesión nueva y después crea: ok con «creada»", async () => {
     const orden: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        orden.push("guardia");
+        return { ok: true, json: async () => ({ mailer_autoconfirm: false }) } as unknown as Response;
+      }),
+    );
     admin.auth.admin.signOut.mockImplementationOnce(async () => {
       orden.push("cerrar");
       return { error: null };
@@ -331,9 +343,42 @@ describe("activarCuenta: cierra las demás sesiones y después crea el Estudiant
     });
 
     expect(await activarCuenta(ID_SESION, TOKEN_DE_ACCESO)).toEqual({ ok: true });
-    expect(orden).toEqual(["cerrar", "crear"]);
+    expect(orden).toEqual(["guardia", "cerrar", "crear"]);
     expect(admin.auth.admin.signOut).toHaveBeenCalledWith(TOKEN_DE_ACCESO, "others");
     expect(admin.rpc).toHaveBeenCalledWith("crear_estudiante", { p_id_usuario: ID_SESION });
+  });
+
+  it("con mailer_autoconfirm activo (updateUser({ email }) pudo ligar un correo que nadie confirmó) no cierra sesiones ni crea: «sin_confirmacion»", async () => {
+    const leer = respuestaDeAjustes({ mailer_autoconfirm: true });
+    vi.stubGlobal("fetch", leer);
+
+    expect(await activarCuenta(ID_SESION, TOKEN_DE_ACCESO)).toEqual({ ok: false, motivo: "sin_confirmacion" });
+    expect(leer).toHaveBeenCalledTimes(1);
+    expect(admin.auth.admin.signOut).not.toHaveBeenCalled();
+    expect(admin.rpc).not.toHaveBeenCalled();
+  });
+
+  it("falla cerrado: sin poder leer la configuración de Auth (error de red, de HTTP o respuesta rara) tampoco activa nada", async () => {
+    const sinRed = vi.fn(async () => {
+      throw new Error("sin red");
+    });
+    for (const intento of [sinRed, respuestaDeAjustes({}, false), respuestaDeAjustes({ mailer_autoconfirm: "false" })]) {
+      olvidarLaGuardia();
+      vi.stubGlobal("fetch", intento);
+
+      expect(await activarCuenta(ID_SESION, TOKEN_DE_ACCESO)).toEqual({ ok: false, motivo: "sin_confirmacion" });
+    }
+    expect(admin.auth.admin.signOut).not.toHaveBeenCalled();
+    expect(admin.rpc).not.toHaveBeenCalled();
+  });
+
+  it("la guardia no deja rastro del token de acceso ni del id en el registro", async () => {
+    vi.stubGlobal("fetch", respuestaDeAjustes({ mailer_autoconfirm: true }));
+    await activarCuenta(ID_SESION, TOKEN_DE_ACCESO);
+
+    expect(errores.length).toBe(1);
+    expect(registrado()).not.toContain(TOKEN_DE_ACCESO);
+    expect(registrado()).not.toContain(ID_SESION);
   });
 
   it("si el cierre falla, no crea el Estudiante y dice «sesiones»", async () => {

@@ -15,7 +15,7 @@ import {
   pedirCuentaDeEstudiante,
 } from "@/lib/cuentas/servidor";
 import { diaDelNegocio } from "@/lib/fechas";
-import { CORREO_FIJO } from "@/lib/leads/avisos";
+import { CORREO_FIJO, CORREO_YA_FIJO, INICIA_SESION_PARA_CAMBIAR } from "@/lib/leads/avisos";
 import { leerContacto } from "@/lib/leads/reglas";
 import { leadDeLaSesion, registrarContacto } from "@/lib/leads/servidor";
 import { diaIsoDeFecha } from "@/lib/plazos/motor";
@@ -738,33 +738,51 @@ describe("J. el correo de otro Lead desde /cuenta/crear manda el enlace de P-23 
 // K. El correo de un Lead con cuenta queda fijo (D-55 b)
 // ---------------------------------------------------------------------------------------------------------------
 
+/**
+ * Lo que la acción de contacto le pasa a `registrarContacto` con un formulario válido: el contacto y la autorización se
+ * leen con las mismas funciones de la app, y el buzón del correo se vacía al final.
+ */
+function entradaDeContacto(idSesion: string, campos: { correo: string; nombre?: string; telefono?: string }) {
+  const formulario = new FormData();
+  formulario.set("nombre", campos.nombre ?? "Cambiado");
+  formulario.set("correo", campos.correo);
+  if (campos.telefono) formulario.set("numero_telefono", campos.telefono);
+  formulario.set(CASILLA_TRATAMIENTO, MARCADA);
+  const contacto = leerContacto(formulario);
+  const consentimiento = leerConsentimiento(formulario);
+  if (!contacto.ok || !consentimiento.ok) throw new Error("el formulario de la prueba no es válido");
+  correos.add(contacto.datos.correo);
+  return { idSesion, contacto: contacto.datos, consentimiento: consentimiento.consentimiento, origen: null, siguiente: "/" };
+}
+
 describe("K. D-55 b: el correo de un Lead con cuenta queda fijo", () => {
-  it("registrarContacto responde un mensaje y no cambia el Lead cuando la sesión ligada por P-23 manda otro correo", async () => {
+  it("la propia cuenta que manda otro correo por fuera de la pantalla recibe el mensaje del correo fijo (el trigger) y el Lead no cambia", async () => {
     const { id, lead, tokenHash } = await cuentaPedida();
     const { tokenDeAcceso } = await confirmarDesdeOtroDispositivo(tokenHash);
     expect(await activarCuenta(id, tokenDeAcceso)).toEqual({ ok: true });
-    // Otra sesión ligada al Lead por el enlace de P-23: no es `estudiante`, así que no pasa por la guarda de dejarContacto.
+    const antes = await leadFila(lead.id);
+
+    // La sesión es la cuenta: pasa la guarda de «solo la cuenta cambia un Lead con cuenta» y llega al trigger.
+    const resultado = await registrarContacto(entradaDeContacto(id, { correo: `nuevo-${randomUUID()}@calibra.test` }));
+
+    expect(resultado).toEqual({ resultado: "error", error: CORREO_FIJO });
+    expect(await leadFila(lead.id)).toEqual(antes);
+  });
+
+  it("revisión, hallazgo 2: la sesión ligada por P-23 a un Lead con cuenta no cambia sus datos: responde que inicie sesión y el Lead no cambia", async () => {
+    const { id, lead, tokenHash } = await cuentaPedida();
+    const { tokenDeAcceso } = await confirmarDesdeOtroDispositivo(tokenHash);
+    expect(await activarCuenta(id, tokenDeAcceso)).toEqual({ ok: true });
+    // Otra sesión ligada al Lead por el enlace de P-23: no es la cuenta, ni `estudiante`, ni pasa por la guarda de procesarContacto.
     const ligada = await fx.crearUsuario();
     exito(await fx.admin.from("lead_sesion").insert({ id_sesion: ligada.id, id_lead: lead.id }).select().single(), "ligar la segunda sesión");
     const antes = await leadFila(lead.id);
-    const formulario = new FormData();
-    formulario.set("nombre", "Cambiado");
-    formulario.set("correo", `nuevo-${randomUUID()}@calibra.test`);
-    formulario.set(CASILLA_TRATAMIENTO, MARCADA);
-    const contacto = leerContacto(formulario);
-    const consentimiento = leerConsentimiento(formulario);
-    if (!contacto.ok || !consentimiento.ok) throw new Error("el formulario de la prueba no es válido");
-    correos.add(contacto.datos.correo);
 
-    const resultado = await registrarContacto({
-      idSesion: ligada.id,
-      contacto: contacto.datos,
-      consentimiento: consentimiento.consentimiento,
-      origen: null,
-      siguiente: "/",
-    });
+    const conOtroCorreo = await registrarContacto(entradaDeContacto(ligada.id, { correo: `nuevo-${randomUUID()}@calibra.test` }));
+    const conElMismo = await registrarContacto(entradaDeContacto(ligada.id, { correo: lead.correo!, nombre: "Cambiado", telefono: "3001234567" }));
 
-    expect(resultado).toEqual({ resultado: "error", error: CORREO_FIJO });
+    expect(conOtroCorreo).toEqual({ resultado: "error", error: INICIA_SESION_PARA_CAMBIAR });
+    expect(conElMismo).toEqual({ resultado: "error", error: INICIA_SESION_PARA_CAMBIAR });
     expect(await leadFila(lead.id)).toEqual(antes);
   });
 
@@ -813,5 +831,97 @@ describe("L. un enlace usado, vencido o inventado", () => {
     });
     expect(await confirmarCorreoDeCuenta(crearCliente(), `pkce_${randomUUID().replaceAll("-", "")}`)).toEqual({ ok: false, motivo: "no_sirve" });
     expect(await estudianteDe(id)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------
+// M. Revisión de HU-032: lo que cambia el trigger del correo, la guarda de la cuenta y la guardia de Auth
+// ---------------------------------------------------------------------------------------------------------------
+
+describe("M. revisión de HU-032: quién cambia el correo y los datos de un Lead, y cuándo se activa la cuenta", () => {
+  it("hallazgo 1: con una sesión ligada por P-23, la que creó el Lead ya no cambia su correo (el nombre y el teléfono sí)", async () => {
+    const creadora = await sesionAnonima();
+    const lead = await leadDe(creadora.id);
+    // Antes del enlace el correo todavía es solo de quien lo escribió: lo cambia con normalidad.
+    const primero = `primero-${randomUUID()}@calibra.test`;
+    expect(await registrarContacto(entradaDeContacto(creadora.id, { correo: primero }))).toEqual({ resultado: "lead" });
+    expect((await leadFila(lead.id)).correo).toBe(primero);
+
+    // Su dueña lo confirma desde otro navegador: `confirmar_correo_de_lead` deja una fila de lead_sesion.
+    const duena = await sesionAnonima();
+    exito(await fx.admin.from("lead_sesion").insert({ id_sesion: duena.id, id_lead: lead.id }).select().single(), "ligar la sesión de la dueña");
+    const antes = await leadFila(lead.id);
+
+    // Quien lo escribió primero ya no lo cambia por el suyo, ni la sesión de la dueña tampoco.
+    const delOtro = `otro-${randomUUID()}@calibra.test`;
+    expect(await registrarContacto(entradaDeContacto(creadora.id, { correo: delOtro }))).toEqual({ resultado: "error", error: CORREO_YA_FIJO });
+    expect(await registrarContacto(entradaDeContacto(duena.id, { correo: delOtro }))).toEqual({ resultado: "error", error: CORREO_YA_FIJO });
+    expect(await leadFila(lead.id)).toEqual(antes);
+
+    // Con el mismo correo, el nombre y el teléfono se siguen actualizando.
+    expect(await registrarContacto(entradaDeContacto(creadora.id, { correo: primero, nombre: "Nombre nuevo", telefono: "3001234567" }))).toEqual({
+      resultado: "lead",
+    });
+    expect(await leadFila(lead.id)).toMatchObject({ nombre: "Nombre nuevo", numero_telefono: "+573001234567", correo: primero });
+  });
+
+  it("hallazgo 1: la base misma rechaza el cambio (23514, lead_correo_fijo_confirmado), también al pasar de nulo a un correo; el nulo y el resto de columnas quedan libres", async () => {
+    const creadora = await sesionAnonima();
+    const lead = await leadDe(creadora.id);
+    const duena = await sesionAnonima();
+    exito(await fx.admin.from("lead_sesion").insert({ id_sesion: duena.id, id_lead: lead.id }).select().single(), "ligar la sesión de la dueña");
+
+    const cambio = await fx.admin.from("lead").update({ correo: `otro-${randomUUID()}@calibra.test` }).eq("id", lead.id);
+    expect(cambio.error).toMatchObject({ code: "23514", message: expect.stringContaining("lead_correo_fijo_confirmado") });
+    expect((await leadFila(lead.id)).correo).toBe(lead.correo);
+
+    exito(await fx.admin.from("lead").update({ nombre: "Otro nombre" }).eq("id", lead.id).select().single(), "cambiar el nombre");
+    // Con el correo nulo el Lead necesita un teléfono (lead_tiene_contacto); `leadDe` no lo pone.
+    exito(await fx.admin.from("lead").update({ numero_telefono: "+573001234567", correo: null }).eq("id", lead.id).select().single(), "pasar el correo a nulo");
+    const deVuelta = await fx.admin.from("lead").update({ correo: lead.correo }).eq("id", lead.id);
+    expect(deVuelta.error).toMatchObject({ code: "23514", message: expect.stringContaining("lead_correo_fijo_confirmado") });
+  });
+
+  it("hallazgo 2: la sesión que creó el Lead de una cuenta ajena no cambia sus datos: responde que inicie sesión; la cuenta sí", async () => {
+    const creadora = await sesionAnonima();
+    const lead = await leadDe(creadora.id);
+    // La cuenta es otro usuario: confirmó el correo del Lead desde otro navegador y `crear_estudiante` lo ligó.
+    const cuenta = await fx.crearUsuario();
+    exito(await fx.admin.from("estudiante").insert({ id: cuenta.id, id_lead: lead.id }).select().single(), "crear la cuenta del Lead");
+    const antes = await leadFila(lead.id);
+
+    const intento = await registrarContacto(entradaDeContacto(creadora.id, { correo: lead.correo!, nombre: "Cambiado por la sesión", telefono: "3001234567" }));
+
+    expect(intento).toEqual({ resultado: "error", error: INICIA_SESION_PARA_CAMBIAR });
+    expect(await leadFila(lead.id)).toEqual(antes);
+
+    expect(await registrarContacto(entradaDeContacto(cuenta.id, { correo: lead.correo!, nombre: "Cambiado por la cuenta" }))).toEqual({ resultado: "lead" });
+    expect((await leadFila(lead.id)).nombre).toBe("Cambiado por la cuenta");
+  });
+
+  it("hallazgo 3: si Auth no exige confirmar el correo, activarCuenta no da el rol aunque el usuario ya figure confirmado y con el correo del Lead", async () => {
+    const { id, lead, tokenHash } = await cuentaPedida();
+    // Con las confirmaciones encendidas (el stack de la prueba) Auth convierte al usuario al confirmar el correo. Lo que dejaría
+    // `updateUser({ email })` con `mailer_autoconfirm` activo es el mismo usuario sin ninguna confirmación; solo cambia lo
+    // que dice `/auth/v1/settings`, que aquí se simula y se deja pasar el resto de las llamadas.
+    const { tokenDeAcceso } = await confirmarDesdeOtroDispositivo(tokenHash);
+    const real = globalThis.fetch;
+    vi.stubGlobal("fetch", async (entrada: Parameters<typeof fetch>[0], opciones?: RequestInit) =>
+      String(entrada instanceof Request ? entrada.url : entrada).endsWith("/auth/v1/settings")
+        ? new Response(JSON.stringify({ mailer_autoconfirm: true }), { status: 200 })
+        : real(entrada, opciones),
+    );
+    try {
+      olvidarLaGuardia();
+      expect(await activarCuenta(id, tokenDeAcceso)).toEqual({ ok: false, motivo: "sin_confirmacion" });
+      expect(await estudianteDe(id)).toEqual([]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+
+    // Con Auth como debe estar, el mismo paso crea la cuenta: la guardia no rompe el camino normal.
+    olvidarLaGuardia();
+    expect(await activarCuenta(id, tokenDeAcceso)).toEqual({ ok: true });
+    expect(await estudianteDe(id)).toEqual([{ id, id_lead: lead.id }]);
   });
 });

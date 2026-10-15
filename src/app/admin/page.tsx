@@ -48,11 +48,17 @@ export default async function PanelAdmin({ searchParams }: PageProps<"/admin">) 
           No pudimos cargar tu bandeja. Recarga la página; si sigue igual, avisa al equipo.
         </p>
       )}
+      <Link href="/admin/citas" className={formulario.enlace}>
+        Citas sin plazo para cancelar
+      </Link>
       <Link href="/admin/monitores" className={formulario.enlace}>
         Invitar a un monitor
       </Link>
       <Link href="/admin/certificados" className={formulario.enlace}>
         Certificar monitores
+      </Link>
+      <Link href="/admin/materias" className={formulario.enlace}>
+        Materias y evaluaciones
       </Link>
       <Link href="/admin/solicitudes" className={formulario.enlace}>
         Solicitudes para ser monitor

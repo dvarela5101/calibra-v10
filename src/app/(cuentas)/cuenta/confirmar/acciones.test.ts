@@ -151,8 +151,10 @@ describe("confirmar: activar la cuenta", () => {
     });
   });
 
-  it("si el correo quedó confirmado y no se pudo crear (sesiones, no confirmada, fallo o excepción), manda a «Terminar de crear mi cuenta»", async () => {
-    for (const motivo of ["sesiones", "no_confirmada", "fallo"] as const) {
+  it("si el correo quedó confirmado y no se pudo crear (sin confirmación en Auth, sesiones, no confirmada, fallo o excepción), manda a «Terminar de crear mi cuenta»", async () => {
+    // `sin_confirmacion` (revisión de HU-032): Auth no exige confirmar el correo, así que `activarCuenta` no da el rol; lo
+    // repite «Terminar de crear mi cuenta» cuando el panel esté corregido.
+    for (const motivo of ["sin_confirmacion", "sesiones", "no_confirmada", "fallo"] as const) {
       servidor.activarCuenta.mockResolvedValueOnce({ ok: false, motivo });
       expect(await confirmar(ESTADO, formulario()), motivo).toEqual({ error: TEXTOS.confirmadoSinTerminar, siguientePaso: "terminar" });
     }

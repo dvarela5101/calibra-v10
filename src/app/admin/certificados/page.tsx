@@ -77,7 +77,11 @@ export default async function CertificarMonitores() {
         </p>
       ) : opcionesDeMateria.length === 0 ? (
         <p role="status" className={formulario.ayuda}>
-          Todavía no hay materias cargadas en Calibra, así que no se puede certificar.
+          Todavía no hay materias cargadas en Calibra, así que no se puede certificar. Crea una en{" "}
+          <Link href="/admin/materias" className={formulario.enlaceEnTexto}>
+            Materias y evaluaciones
+          </Link>
+          .
         </p>
       ) : (
         <FormularioCertificar monitores={opcionesDeMonitor} materias={opcionesDeMateria} hoy={diaDelNegocio(new Date())} />

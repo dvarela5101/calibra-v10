@@ -36,7 +36,6 @@ vi.mock("./acciones", () => ({
   pedirCuenta: async () => ({ error: null, aviso: null, valores: {} }),
   terminarCuenta: async () => ({ error: null }),
 }));
-vi.mock("../../agendar/contacto/acciones", () => ({ dejarContacto: async () => ({ error: null, aviso: null, valores: {} }) }));
 vi.mock("next/navigation", () => ({
   redirect: (ruta: string) => {
     throw new Error(`redirect:${ruta}`);
