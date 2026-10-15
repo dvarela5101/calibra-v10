@@ -1,10 +1,10 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-15 00:43. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-15 07:58. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
-| [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | Backlog | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056, HU-084, HU-089 |
+| [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | Backlog | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056, HU-084, HU-089, HU-095, HU-096, HU-097 |
 | [HU-086](backlog/HU-086.md) | [Estudiante] Ligar a mi cita un diagnóstico hecho después de agendar | Backlog | P1 | M | HU-022, HU-019 |
 | [HU-091](backlog/HU-091.md) | [Técnica] Borradores para activar las Evaluaciones de Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | Backlog | P1 | S | HU-061 |
 | [HU-088](backlog/HU-088.md) | [Estudiante] Ver la calificación y las reseñas del monitor en su tarjeta | Backlog | P2 | M | HU-049, HU-035 |
@@ -28,6 +28,9 @@ _Generado automaticamente: 2026-10-15 00:43. No editar a mano; usa `scripts/back
 | [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | En progreso | P0 | M | HU-009, HU-081 |
 | [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | En progreso | P0 | L | HU-021, HU-009, HU-081, HU-087 |
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | En progreso | P1 | M | HU-004, HU-019, HU-068 |
+| [HU-095](backlog/HU-095.md) | [Técnica] Cerrar la lectura de diagnósticos a la sesión que los hizo y a la cuenta de Estudiante de su Lead (D-53 e) | En progreso | P1 | S | HU-009, HU-081 |
+| [HU-096](backlog/HU-096.md) | [Monitor] Saber la comisión de Calibra al registrarme | En progreso | P1 | XS | HU-050 |
+| [HU-097](backlog/HU-097.md) | [Técnica] Códigos vigentes de Física I y Física II (FISI-1518 y FISI-1528) | En progreso | P1 | XS | HU-055 |
 | [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |

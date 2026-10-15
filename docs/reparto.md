@@ -16,10 +16,11 @@
 | Persona | Siguiente, en orden |
 |---|---|
 | Juzou04 | Sigue su lista: [HU-011](../backlog/HU-011.md), [HU-022](../backlog/HU-022.md) y [HU-032](../backlog/HU-032.md) (en progreso) y [HU-084](../backlog/HU-084.md) (S). [HU-034](../backlog/HU-034.md) pasó a dvarela5101 (14-oct) |
-| dvarela5101 | [HU-031](../backlog/HU-031.md) (M) fusionada y en revisión; dudas de HU-092 respondidas (D-69). Revisar o aprobar lo que esté `En revision`. Construir [HU-034](../backlog/HU-034.md) (M), que pasa de Juzou04 el 14-oct: es la única dependencia del corte que nadie había empezado |
+| dvarela5101 | [HU-031](../backlog/HU-031.md) (M) fusionada y en revisión; dudas de HU-092 respondidas (D-69). Revisar o aprobar lo que esté `En revision`. [HU-034](../backlog/HU-034.md) hecha. Construir las tres HUs nuevas del corte (D-71, 15-oct): [HU-095](../backlog/HU-095.md) (S), [HU-096](../backlog/HU-096.md) (XS) y [HU-097](../backlog/HU-097.md) (XS) |
 | Lorenzo | 1) Entorno. 2) [HU-094](../backlog/HU-094.md) (S). 3) [HU-092](../backlog/HU-092.md) (M). 4) Refinar y construir [HU-088](../backlog/HU-088.md) (M). 5) Después del corte: [HU-085](../backlog/HU-085.md) (L) y [HU-090](../backlog/HU-090.md) (S) |
 
 **Choques a tener en cuenta**
+- **HU-095 (dvarela5101) y HU-022 (Juzou04):** las dos reescriben la política de lectura de `diagnostico`. Va primero HU-095 (D-71 a); HU-022 parte de la política ya cerrada, con una migración posterior, y suma HU-095 a su `depende_de`.
 - **HU-092 y HU-088:** las dos tocan `TarjetaDeMonitor` y `cargarPerfiles` (`src/lib/disponibilidad/servidor.ts`), y HU-092 también el aviso de privacidad. Van con Lorenzo, en ese orden.
 - **HU-092 y HU-032 (Juzou04):** las dos pueden cambiar `AVISO_ACTUALIZADO` y `src/app/privacidad/page.tsx`. Al integrar, se toma la fecha mayor y se conservan los dos párrafos.
 - **HU-094:** solo toca `e2e/recorridos/`. Si Juzou04 cambia el escenario de los recorridos (por HU-084), el PR que llegue segundo integra al otro.
