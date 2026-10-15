@@ -43,7 +43,14 @@ const CAMPOS: Campo[] = [
   { nombre: "confirmacion", etiqueta: "Repite la contraseña", tipo: "password", autocompletar: "new-password" },
 ];
 
-export function FormularioRegistro({ token, correo }: { token: string; correo: string }) {
+/** Los `id` de las ayudas que describen el campo, separados por espacio. */
+function descripcionDe(campo: Campo, textoDeLaRegla?: string): string | undefined {
+  const ids = [campo.ayuda ? `${campo.nombre}-ayuda` : null, campo.nombre === "llave" && textoDeLaRegla ? "llave-regla" : null];
+  return ids.filter(Boolean).join(" ") || undefined;
+}
+
+/** HU-096: `textoDeLaRegla` es la línea de la regla general (la arma el servidor); sin ella el formulario sale como antes. */
+export function FormularioRegistro({ token, correo, textoDeLaRegla }: { token: string; correo: string; textoDeLaRegla?: string }) {
   const [estado, accion, enviando] = useActionState(registrarse, estadoInicial);
   // HU-058 (D-30): al terminar el registro la acción inicia sesión con contraseña, y Auth exige el token.
   const captcha = useTokenCaptcha("registro_monitor", enviando);
@@ -77,12 +84,18 @@ export function FormularioRegistro({ token, correo }: { token: string; correo: s
               {campo.ayuda}
             </p>
           )}
+          {/* Segundo párrafo de la ayuda de «Tu llave»: es donde llega lo que se transfiere. */}
+          {campo.nombre === "llave" && textoDeLaRegla && (
+            <p id="llave-regla" className={formulario.ayuda}>
+              {textoDeLaRegla}
+            </p>
+          )}
           <input
             id={campo.nombre}
             name={campo.nombre}
             type={campo.tipo}
             autoComplete={campo.autocompletar}
-            aria-describedby={campo.ayuda ? `${campo.nombre}-ayuda` : undefined}
+            aria-describedby={descripcionDe(campo, textoDeLaRegla)}
             // React vacía el formulario al terminar la acción: tras un error se devuelve lo escrito (menos las contraseñas).
             defaultValue={campo.tipo === "password" ? undefined : estado.valores[campo.nombre]}
             required
