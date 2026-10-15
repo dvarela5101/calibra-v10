@@ -222,7 +222,7 @@ HU-034 (D-56, D-70): cuando llega un pago a revisión, cada admin activo recibe 
 
 - Solo un admin activo inserta, y a su nombre: la política "admin certifica" exige `privado.es_admin()` y que `id_admin` sea él. La fecha de emisión la pone la base. Nadie con sesión cambia ni borra un certificado: revocar está fuera de alcance.
 - Los certificados de un admin desactivado siguen vigentes (RN-23).
-- Las materias reales vienen del banco de preguntas (HU-005), y un admin también las crea y las corrige en `/admin/materias` (HU-055, sección «Materias y evaluaciones»). La semilla local trae tres de prueba: MATE-1214, MATE-1207 y FISI-1018 (D-2).
+- Las materias reales vienen del banco de preguntas (HU-005), y un admin también las crea y las corrige en `/admin/materias` (HU-055, sección «Materias y evaluaciones»). La semilla local trae tres de prueba: MATE-1214, MATE-1207 y FISI-1518 (D-2).
 
 ## Materias y evaluaciones
 

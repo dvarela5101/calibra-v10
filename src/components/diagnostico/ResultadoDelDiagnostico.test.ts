@@ -240,7 +240,7 @@ describe("después del resultado (criterio 14)", () => {
     const html = pintar();
     const enlaces = [...html.matchAll(/<a [^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>/g)].map(([, href, nombre]) => [nombre, href]);
     expect(enlaces).toEqual([
-      ["Ver monitores de Física II", "/monitores?materia=FISI-1018"],
+      ["Ver monitores de Física II", "/monitores?materia=FISI-1528"],
       ["Tomar otro diagnóstico", "/diagnostico"],
     ]);
   });

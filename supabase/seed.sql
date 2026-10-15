@@ -56,5 +56,5 @@ on conflict (id) do nothing;
 insert into public.materia (nombre, codigo) values
   ('Cálculo Integral con Ecuaciones Diferenciales', 'MATE-1214'),
   ('Cálculo Vectorial', 'MATE-1207'),
-  ('Física I', 'FISI-1018')
+  ('Física I', 'FISI-1518')
 on conflict (codigo) do nothing;

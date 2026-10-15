@@ -37,13 +37,13 @@ import { Recorrido } from "./Recorrido";
 
 const PERSONA = { idUsuario: "5e000000-0000-4000-8000-000000000001", rol: "anonimo" as const };
 const MATERIAS: MateriaConEvaluaciones[] = [
-  { codigo: "FISI-1018", nombre: "Física II", evaluaciones: [{ id: "e0000000-0000-4000-8000-00000000000a", nombre: "Parcial 1", semana: 4, temas: ["Cinemática"] }] },
+  { codigo: "FISI-1528", nombre: "Física II", evaluaciones: [{ id: "e0000000-0000-4000-8000-00000000000a", nombre: "Parcial 1", semana: 4, temas: ["Cinemática"] }] },
 ];
 
 const PENDIENTE: EnCurso = proyectarEnCurso({
   idDiagnostico: "d1000000-0000-4000-8000-000000000001",
   evaluacion: { id: "e0000000-0000-4000-8000-00000000000a", nombre: "Parcial 1" },
-  materia: { codigo: "FISI-1018", nombre: "Física II" },
+  materia: { codigo: "FISI-1528", nombre: "Física II" },
   paso: 2,
   maximo: 8,
   pregunta: {
