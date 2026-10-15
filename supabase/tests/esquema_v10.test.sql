@@ -447,10 +447,12 @@ select is(
 select is(
   (select count(*)::int from public.monitoria where id = '50000000-0000-0000-0000-000000000001'),
   1, 'RLS: el monitor 1 ve la monitoría que dicta');
+-- HU-022: la monitoría 1 es individual (no tiene fila en monitoria_grupal), así que el monitor ya no lee por la tabla el diagnóstico
+-- con su id_monitoria; lo lee por public.diagnostico_de_mi_monitoria. Las grupales sí siguen abiertas (diagnostico_del_monitor.test.sql).
 select is(
   (select id from public.diagnostico where id_monitoria = '50000000-0000-0000-0000-000000000001'),
-  '80000000-0000-0000-0000-00000000000a'::uuid,
-  'RLS: el monitor 1 ve el diagnóstico ligado a su monitoría');
+  null::uuid,
+  'RLS: el monitor 1 no ve por la tabla el diagnóstico ligado a su monitoría individual (HU-022)');
 select is((select count(*)::int from public.pago), 0, 'RLS: el monitor 1 no ve pagos');
 
 reset role;
