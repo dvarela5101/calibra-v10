@@ -230,7 +230,10 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+# HU-032: también hace que un correo ligado a una sesión anónima se confirme antes de darlo por válido (RN-12). Con
+# false, updateUser({ email }) convertiría al anónimo al instante con un correo que nadie confirmó. Auth lee esto al
+# arrancar: db:reiniciar no lo aplica, hace falta db:detener y db:iniciar.
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
@@ -254,6 +257,12 @@ otp_expiry = 3600
 [auth.email.template.recovery]
 subject = "Restablece tu contraseña de Calibra"
 content_path = "./supabase/templates/recuperar.html"
+
+# Crear la cuenta de Estudiante (HU-032): el correo que Auth manda al pedir un cambio de correo. El enlace va a una
+# página con botón (/cuenta/confirmar), no a /auth/confirmar, para que un revisor de enlaces no gaste el token.
+[auth.email.template.email_change]
+subject = "Confirma tu correo para crear tu cuenta de Calibra"
+content_path = "./supabase/templates/confirmar-correo.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

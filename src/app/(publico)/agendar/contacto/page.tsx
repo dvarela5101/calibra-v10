@@ -29,6 +29,8 @@ export default async function ContactoParaAgendar({ searchParams }: PageProps<"/
       <FormularioContacto
         siguiente={siguiente}
         iniciales={{ nombre: lead?.nombre ?? "", correo: lead?.correo ?? "", numero_telefono: lead?.numeroTelefono ?? "" }}
+        // D-55 b (HU-032): el correo de la cuenta de un Estudiante queda fijo; puede cambiar su nombre y su teléfono.
+        correoFijo={Boolean(lead) && sesion?.rol === "estudiante"}
       />
     </Pantalla>
   );

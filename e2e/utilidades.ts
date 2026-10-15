@@ -150,10 +150,13 @@ export async function esperarCorreo(destinatario: string): Promise<CorreoRecibid
   return { id: resumen!.ID, asunto: resumen!.Subject, html: detalle.HTML };
 }
 
-/** El enlace de /auth/confirmar del correo, con los `&amp;` del HTML ya desescapados. */
+/**
+ * El enlace de confirmación del correo (`/auth/confirmar` en recuperar la contraseña, `/cuenta/confirmar` al crear la cuenta
+ * de Estudiante, HU-032), con los `&amp;` del HTML ya desescapados.
+ */
 export function enlaceDeConfirmacion(html: string): string {
-  const coincidencia = /href="([^"]*\/auth\/confirmar\?[^"]*)"/.exec(html);
-  if (!coincidencia) throw new Error("El correo no trae el enlace a /auth/confirmar.");
+  const coincidencia = /href="([^"]*\/(?:auth|cuenta)\/confirmar\?[^"]*)"/.exec(html);
+  if (!coincidencia) throw new Error("El correo no trae el enlace a /auth/confirmar ni a /cuenta/confirmar.");
   return coincidencia[1].replaceAll("&amp;", "&");
 }
 

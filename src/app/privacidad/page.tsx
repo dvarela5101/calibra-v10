@@ -45,6 +45,10 @@ export default async function AvisoPrivacidad() {
               Si quieres ser monitor: tu nombre, tu teléfono, tu correo y las materias en las que quieres certificarte.
             </li>
             <li>Si tienes cuenta de monitor: además, tu llave, para pagarte tus monitorías.</li>
+            <li>
+              Si creas una cuenta: además, una contraseña, que se guarda cifrada. El correo de tu cuenta es el de tu
+              contacto.
+            </li>
             <li>La calificación y el comentario de cada monitoría que reseñes.</li>
           </ul>
         </section>
@@ -58,6 +62,7 @@ export default async function AvisoPrivacidad() {
               respondiste en cada pregunta.
             </li>
             <li>Agendar tus monitorías, revisar tus pagos y tramitar reembolsos.</li>
+            <li>Dejarte entrar a tu cuenta para ver tus citas desde cualquier dispositivo.</li>
             <li>Escribirte sobre tus citas, pagos y reembolsos.</li>
             <li>Si pediste ser monitor, contactarte para agendar y hacer tu evaluación presencial.</li>
             <li>

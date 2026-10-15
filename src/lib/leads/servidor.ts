@@ -3,6 +3,7 @@ import type { Reconstruccion } from "@/lib/correo/plantillas";
 import { enviarCorreoDesdeServidor, urlDelSitio } from "@/lib/correo/servidor";
 import type { Consentimiento } from "@/lib/privacidad/consentimiento";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
+import { CORREO_FIJO, type EnvioDeVerificacion } from "./avisos";
 import { enmascararCorreo, type DatosDeContacto } from "./reglas";
 import { MAXIMO_DE_ENLACES_POR_HORA, generarToken, hashDeToken, rutaDeVerificacion, tieneFormaDeToken } from "./verificacion";
 
@@ -42,8 +43,7 @@ export async function leadDeLaSesion(idSesion: string): Promise<LeadDeSesion | n
   return fila ? deFila(fila) : null;
 }
 
-/** Qué pasó con el enlace de verificación: salió, se frenó (ya van muchos en una hora) o no salió. */
-export type EnvioDeVerificacion = "enviado" | "frenado" | "fallido";
+export type { EnvioDeVerificacion };
 
 export type ResultadoContacto =
   | { resultado: "lead" }
@@ -67,6 +67,14 @@ export const TOPE_DE_CORREOS = "Probaste varios correos seguidos. Espera un rato
 /** ¿El 23505 fue por el correo (`lead_correo_key`) y no por la sesión? */
 const esPorElCorreo = (error: { message?: string; details?: string }) =>
   `${error.message ?? ""} ${error.details ?? ""}`.includes("lead_correo_key");
+
+/**
+ * ¿El rechazo fue del trigger que deja fijo el correo de un Lead con cuenta (HU-032, D-55 b)? Es un `check_violation`
+ * (23514) con el nombre del trigger en el mensaje. No se confunde con el CHECK `lead_correo_normalizado`, que también es
+ * 23514 y tiene otro mensaje.
+ */
+const esPorElCorreoFijo = (error: { code?: string; message?: string }) =>
+  error.code === "23514" && (error.message ?? "").includes("lead_correo_fijo_con_cuenta");
 
 /**
  * Deja a la sesión como Lead (HU-068):
@@ -104,6 +112,9 @@ export async function registrarContacto(entrada: EntradaDeContacto): Promise<Res
       })
       .eq("id", actual.id);
     if (error?.code === "23505") return { resultado: "error", error: CORREO_DE_OTRO };
+    // El Lead tiene cuenta y el correo es otro: la sesión ligada por P-23 a un Lead con cuenta no es `estudiante` y no
+    // pasa por la guarda de `dejarContacto`. Un mensaje, no un error del servidor.
+    if (error && esPorElCorreoFijo(error)) return { resultado: "error", error: CORREO_FIJO };
     if (error) throw error;
     return { resultado: "lead" };
   }

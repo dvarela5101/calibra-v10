@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Pantalla } from "@/components/Pantalla";
 import { obtenerSesion } from "@/lib/auth/sesion";
+import { guardarContrasena } from "./acciones";
 import { FormularioNuevaContrasena } from "./FormularioNuevaContrasena";
 
 export const metadata: Metadata = { title: "Nueva contraseña · Calibra" };
@@ -13,7 +14,7 @@ export default async function NuevaContrasena() {
 
   return (
     <Pantalla titulo="Elige una nueva contraseña" subtitulo="Debe tener al menos 8 caracteres.">
-      <FormularioNuevaContrasena />
+      <FormularioNuevaContrasena accion={guardarContrasena} />
     </Pantalla>
   );
 }
