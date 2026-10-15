@@ -34,7 +34,7 @@ Reconstrucción de Calibra sobre el modelo v10 (`calibra_reglas_negocio.md`). St
 
 El estado de las HUs vive en `backlog/` en la rama `main`. Git es el candado.
 
-Las personas son `dvarela5101`, dueña del repo y del producto (solo ella aprueba con `done`), `Juzou04` y Lorenzo, la tercera persona que ayuda desde el 14-oct-2026 (su usuario de GitHub se anota aquí y en `docs/reparto.md` cuando dvarela5101 lo agregue al repo). **El reparto vigente, con qué HU hace cada una y en qué orden, está en [docs/reparto.md](docs/reparto.md).** Si tienes HUs asignadas, resérvalas con `start HU-XXX` y no con `take`, que podría elegir una de otra persona. HU-005 se hace en persona, entre dvarela5101 y Juzou04: ninguna sesión la toma sola.
+Las personas son `dvarela5101`, dueña del repo y del producto (solo ella aprueba con `done`), `Juzou04` y `LorenzoBula` (Lorenzo), la tercera persona que ayuda desde el 14-oct-2026. **El reparto vigente, con qué HU hace cada una y en qué orden, está en [docs/reparto.md](docs/reparto.md).** Si tienes HUs asignadas, resérvalas con `start HU-XXX` y no con `take`, que podría elegir una de otra persona. HU-005 se hace en persona, entre dvarela5101 y Juzou04: ninguna sesión la toma sola.
 
 **Tomar una HU**
 1. `git switch main` y `git pull`.

@@ -1,10 +1,10 @@
 # Reparto de trabajo
 
-**Actualizado:** 14 de octubre de 2026 (ver "Ajuste del 14-oct-2026"; después vienen el ajuste del 10-oct, el del 4-oct, el del 3-oct, el del 2-oct en la noche, la revisión de HU-020, el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Desde el 14-oct-2026 trabajan en paralelo tres personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto (solo ella aprueba con `done`), `Juzou04` y Lorenzo (tercera persona; su usuario de GitHub se anota aquí cuando dvarela5101 lo agregue al repo). El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+**Actualizado:** 14 de octubre de 2026 (ver "Ajuste del 14-oct-2026"; después vienen el ajuste del 10-oct, el del 4-oct, el del 3-oct, el del 2-oct en la noche, la revisión de HU-020, el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Desde el 14-oct-2026 trabajan en paralelo tres personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto (solo ella aprueba con `done`), `Juzou04` y `LorenzoBula` (Lorenzo, tercera persona). El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
 
 ## Ajuste del 14-oct-2026: llega Lorenzo
 
-- **Lorenzo se suma como tercera persona.** dvarela5101 lo está agregando al repo de GitHub. Hasta tener su usuario, sus reservas van con `backlog.py log HU-XXX "Tomada por Lorenzo"`.
+- **Lorenzo (`LorenzoBula` en GitHub) se suma como tercera persona.** Ya está en el repo: reservó HU-094 y abrió su PR (#69) el 14-oct.
 - **Qué le toca, y por qué.** Lo que no está en el camino crítico del corte ni en el código que hoy tienen abierto las otras dos, empezando por lo pequeño:
   1. Preparar el entorno: `npm ci`, Docker, `npm run db:iniciar`, `db:env`, y leer `CLAUDE.md`, `README.md` y `GUIA_CLAUDE.md`.
   2. Construir [HU-094](../backlog/HU-094.md) (S, nueva): estabilizar la e2e del recorrido de cancelar con reembolso, que falla a veces por la asignación rotativa de admins. Solo toca pruebas y le hace recorrer las e2e y el CI.
