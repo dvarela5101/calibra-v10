@@ -177,7 +177,10 @@ function revisar(fuente: Fuente): Hallazgo[] {
   return hallazgos;
 }
 
-const hallazgosDe = (regla: Regla) => archivos.flatMap(revisar).filter((h) => h.regla === regla).map((h) => `${h.ruta}: ${h.detalle}`);
+// `src/` se analiza una sola vez, al cargar el archivo y no dentro de cada prueba: las reglas A a F filtran lo mismo, y
+// con el equipo cargado cada pasada de la API de TypeScript pasaba de los 5 s que tiene una prueba (HU-098).
+const HALLAZGOS: readonly Hallazgo[] = archivos.flatMap(revisar);
+const hallazgosDe = (regla: Regla) => HALLAZGOS.filter((h) => h.regla === regla).map((h) => `${h.ruta}: ${h.detalle}`);
 
 // ---------------------------------------------------------------------------
 // G2. El código fuente
