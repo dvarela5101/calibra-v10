@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-14 20:59. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-14 21:09. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -25,11 +25,11 @@ _Generado automaticamente: 2026-10-14 20:59. No editar a mano; usa `scripts/back
 | [HU-084](backlog/HU-084.md) | [Técnica] Recorrido de punta a punta del diagnóstico: de la prueba al monitor | Lista | P1 | S | HU-048, HU-010, HU-011, HU-022 |
 | [HU-085](backlog/HU-085.md) | [Sistema] Borrar o anonimizar los datos de un Lead o aspirante que retiró su autorización o lleva 24 meses sin actividad | Lista | P2 | L | HU-056, HU-006, HU-062, HU-068 |
 | [HU-092](backlog/HU-092.md) | [Monitor] Marcar en mi perfil los temas en los que soy fuerte | Lista | P2 | M | HU-049 |
-| [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | Lista | P2 | S |  |
 | [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | En progreso | P0 | M | HU-009, HU-081 |
 | [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | En progreso | P0 | L | HU-021, HU-009, HU-081, HU-087 |
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | En progreso | P1 | M | HU-004, HU-019, HU-068 |
 | [HU-034](backlog/HU-034.md) | [Admin] Revisar pagos desde una bandeja común y avisar a todos los admins cuando llega uno | En progreso | P1 | M | HU-020, HU-006, HU-054, HU-065, HU-074, HU-077 |
+| [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
 | [HU-031](backlog/HU-031.md) | [Lead] Recuperar mis resultados desde otro dispositivo con un enlace | En revision | P1 | M | HU-006, HU-009, HU-010, HU-081 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
