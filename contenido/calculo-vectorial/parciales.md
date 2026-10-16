@@ -41,3 +41,16 @@ La derivada direccional de f(x,y) = x² + y² en (1,1) en la dirección del vect
 - B) 10 · [parciales-e7]
 - C) (2, 2) · [parciales-e8]
 - D) 2√2 · [parciales-e9]
+
+### P13 · dificultad 3 · kc: parciales · borrador · origen: ia (sonnet-5.5)
+Sea f(x,y) = ln(x² + y²). La derivada direccional de f en el punto P(1, 2), en la dirección que va de P hacia el punto Q(4, −2), es:
+
+- A) −2 · [parciales-e7] no divides el vector (3, −4) entre su longitud 5 antes de hacer el producto punto con el gradiente
+- B) −2/5 · CORRECTA
+- C) 2√5/5 · [parciales-e9] normalizas la dirección, pero entregas la magnitud del gradiente en lugar de su producto punto con ella
+- D) (2/5, 4/5) · [parciales-e8] entregas el gradiente en P en lugar de su producto punto con la dirección unitaria
+
+solución: el gradiente de f es $\nabla f = \left(\frac{2x}{x^2+y^2}, \frac{2y}{x^2+y^2}\right)$, que en P(1, 2) vale (2/5, 4/5).
+La dirección de P hacia Q es v = Q − P = (3, −4), con longitud |v| = 5, así que el vector unitario es u = (3/5, −4/5).
+La derivada direccional es ∇f(P)·u = (2/5)(3/5) + (4/5)(−4/5) = 6/25 − 16/25 = −10/25 = −2/5.
+Las otras opciones salen de errores concretos: sin normalizar, (2/5)(3) + (4/5)(−4) = −2; la magnitud del gradiente es |∇f(P)| = 2√5/5; y (2/5, 4/5) es el gradiente mismo, no una derivada direccional.

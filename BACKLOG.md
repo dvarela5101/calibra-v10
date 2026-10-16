@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-16 10:08. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-16 10:13. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -32,9 +32,9 @@ _Generado automaticamente: 2026-10-16 10:08. No editar a mano; usa `scripts/back
 | [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | En progreso | P0 | M | HU-009, HU-081 |
 | [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | En progreso | P0 | L | HU-021, HU-009, HU-081, HU-087 |
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | En progreso | P1 | M | HU-004, HU-019, HU-068 |
-| [HU-091](backlog/HU-091.md) | [Técnica] Borradores para activar las Evaluaciones de Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | En progreso | P1 | S | HU-061 |
 | [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
 | [HU-103](backlog/HU-103.md) | [Técnica] Cargar el banco de preguntas en la base de la nube | En revision | P0 | S | HU-055 |
+| [HU-091](backlog/HU-091.md) | [Técnica] Borradores para activar las Evaluaciones de Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | En revision | P1 | S | HU-061 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |

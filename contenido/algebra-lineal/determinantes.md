@@ -41,3 +41,13 @@ La matriz C = [[1, 2], [2, 4]] tiene determinante cero. ¿Qué puedes concluir?
 - B) C tiene inversa igual a [[4, -2], [-2, 1]] · [determinantes-e7]
 - C) C es la matriz identidad · [determinantes-e8]
 - D) Las filas de C son perpendiculares · [determinantes-e9]
+
+### P15 · dificultad 3 · kc: determinantes · borrador · origen: ia (sonnet-5.5)
+Sea A = [[1, 2, 1], [2, k, 3], [1, 1, 2]], donde k es un número real. ¿Para qué valores de k la matriz A tiene inversa?
+
+- A) Para todo k excepto k = −8 · [determinantes-e9] igualas a cero el producto punto de las filas 2 y 3, como si A perdiera la inversa cuando dos filas son perpendiculares y no cuando son linealmente dependientes
+- B) Para todo k, porque un determinante igual a cero no impide que la matriz tenga inversa · [determinantes-e7] crees que una matriz con determinante cero puede tener inversa
+- C) Para todo k excepto k = −1 · [determinantes-e1] no alternas los signos de los cofactores de la primera fila y obtienes det(A) = k + 1 en vez de k − 3
+- D) Para todo k excepto k = 3 · CORRECTA
+
+solución: A tiene inversa exactamente cuando det(A) ≠ 0. Expandiendo por la primera fila, con los signos + − +: det(A) = 1·(2k − 3) − 2·(4 − 3) + 1·(2 − k) = 2k − 3 − 2 + 2 − k = k − 3. Entonces det(A) = 0 solo cuando k = 3, y A es invertible para todo k ≠ 3. En k = 3 la fila 3 es la fila 2 menos la fila 1, así que las filas son linealmente dependientes y A no tiene inversa. Para k = −8 las filas 2 y 3 son perpendiculares, pero det(A) = −11 ≠ 0 y A sí tiene inversa. Para k = −1, det(A) = −4 ≠ 0.

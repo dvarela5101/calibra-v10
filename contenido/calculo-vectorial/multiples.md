@@ -41,3 +41,15 @@ Al calcular $\iint_R e^{x^2+y^2}\,dA$ sobre el círculo unitario usando coordena
 - B) dr dθ · [multiples-e7]
 - C) r² dr dθ · [multiples-e8]
 - D) dθ dr · [multiples-e9]
+
+### P14 · dificultad 3 · kc: multiples · borrador · origen: ia (sonnet-5.5)
+Calcula $\iint_D \sqrt{x^2+y^2}\,dA$, donde D es la región del plano que cumple 1 ≤ x² + y² ≤ 4:
+
+- A) 7π/3 · [multiples-e5] recorres θ solo de 0 a π, así que integras sobre la mitad de la región
+- B) 3π · [multiples-e7] olvidas el factor r del elemento de área y dejas como integrando solo r
+- C) 14π/3 · CORRECTA
+- D) 42π · [multiples-e4] tomas r entre 1 y 4, usando el 4 de x² + y² ≤ 4 como si fuera el radio exterior
+
+solución: en coordenadas polares x = r cos θ, y = r sen θ, se tiene √(x² + y²) = r y dA = r dr dθ. La condición 1 ≤ x² + y² ≤ 4 pide 1 ≤ r ≤ 2, y como la región es un anillo completo, 0 ≤ θ ≤ 2π.
+Entonces $\iint_D \sqrt{x^2+y^2}\,dA = \int_0^{2\pi}\int_1^2 r\cdot r\,dr\,d\theta = 2\pi\left[\frac{r^3}{3}\right]_1^2 = 2\pi\cdot\frac{7}{3} = \frac{14\pi}{3}$.
+Las otras opciones salen de errores concretos: sin el factor r del jacobiano, $2\pi\int_1^2 r\,dr = 3\pi$; con r entre 1 y 4, $2\pi\int_1^4 r^2\,dr = 42\pi$; con θ entre 0 y π, $\pi\int_1^2 r^2\,dr = \frac{7\pi}{3}$.
