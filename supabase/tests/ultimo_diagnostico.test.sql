@@ -68,7 +68,7 @@ insert into public.lead_sesion (id_sesion, id_lead) values
 insert into public.estudiante (id, id_lead) values
   ('c0000000-0000-0000-0000-000000001108', '40000000-0000-0000-0000-000000001101');
 
--- Lead 3: lo creó la sesión 13, que después se convirtió en cuenta de Estudiante CONSERVANDO su id (HU-032, convertirAnonimoEnCuenta:
+-- Lead 3: lo creó la sesión 13, que después se convirtió en cuenta de Estudiante CONSERVANDO su id (HU-032, el flujo de cuenta de vincularCorreo y ponerContrasena:
 -- el usuario de Auth es el mismo y ya no es anónimo); la 14 confirmó su correo por el enlace de P-23 (lead_sesion).
 insert into public.lead (id, id_sesion_anonima, nombre, correo, acepta_tratamiento_datos, fecha_consentimiento) values
   ('40000000-0000-0000-0000-000000001103', 'c0000000-0000-0000-0000-000000001113', 'Lead Tres HU-011', 'lead11-3@example.com', true, now());

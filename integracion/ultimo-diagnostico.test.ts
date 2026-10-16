@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { convertirAnonimoEnCuenta } from "@/lib/auth/convertir";
+import { ponerContrasena, vincularCorreo } from "@/lib/auth/convertir";
 import { leerMiDiagnostico, leerMiUltimoDiagnostico } from "@/lib/diagnostico/lectura";
 import { CLAVES_DEL_RESULTADO, type ResultadoParaMostrar } from "@/lib/diagnostico/mostrar";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
@@ -19,7 +19,7 @@ import { crearCliente, exigirSupabaseLocal, exito, Fixtures, iniciarSesionConCla
  *   fila es del Lead; desde HU-095 la política de `diagnostico` tampoco se la deja leer.
  * - D.3-3: la cuenta de Estudiante del Lead que es otro usuario recibe `null` en la portada y sí el resultado con
  *   `leerMiDiagnostico(cliente, id)`. En cambio la cuenta que nació de convertir la sesión que hizo el diagnóstico
- *   (`convertirAnonimoEnCuenta`, HU-032: el id no cambia) recibe el suyo, en el mismo navegador y en otro, y no el más reciente de su Lead.
+ *   (el flujo de HU-032, `vincularCorreo` y `ponerContrasena`: el id no cambia) recibe el suyo, en el mismo navegador y en otro, y no el más reciente de su Lead.
  * - D.3-4: un monitor y un admin con una fila a su nombre reciben `null` (el rol real dentro de dos `security definer`).
  * - D.3-5: sin sesión se lanza con 42501, y la llave secreta tampoco la ejecuta (no tiene grant): la portada no podría usarla.
  *
@@ -190,6 +190,27 @@ function clavesDe(valor: unknown): string[] {
   return Object.entries(valor).flatMap(([clave, interior]) => [clave, ...clavesDe(interior)]);
 }
 
+/** El `token_hash` del correo con el que Auth pide confirmar la cuenta de Estudiante (HU-032), leído de Mailpit. Borra el correo. */
+async function tokenDelCorreoDeCuenta(correo: string): Promise<string> {
+  const mailpit = process.env.MAILPIT_URL;
+  if (!mailpit) throw new Error("Falta MAILPIT_URL: corre npm run db:env.");
+  const limite = Date.now() + 15_000;
+  for (;;) {
+    const busqueda = await fetch(`${mailpit}/api/v1/search?query=${encodeURIComponent(`to:"${correo}"`)}`);
+    const { messages } = (await busqueda.json()) as { messages?: { ID: string; Subject: string }[] };
+    const mensaje = messages?.find((m) => m.Subject === "Confirma tu correo para crear tu cuenta de Calibra");
+    if (mensaje) {
+      const { HTML } = (await (await fetch(`${mailpit}/api/v1/message/${mensaje.ID}`)).json()) as { HTML: string };
+      await fetch(`${mailpit}/api/v1/messages`, { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ IDs: [mensaje.ID] }) });
+      const token = /token_hash=([^&"' ]+)/.exec(HTML.replaceAll("&amp;", "&"))?.[1];
+      if (!token) throw new Error(`El correo para confirmar la cuenta no trae token_hash: ${correo}`);
+      return token;
+    }
+    if (Date.now() > limite) throw new Error(`No llegó a ${correo} el correo para confirmar la cuenta.`);
+    await new Promise((listo) => setTimeout(listo, 250));
+  }
+}
+
 /** Cuántas filas de `diagnostico` ve esa sesión con un `select` por id: lo que deja la política de la tabla. */
 async function filasVisibles(cliente: Cliente, id: string): Promise<number> {
   return exito(await cliente.from("diagnostico").select("id").eq("id", id), "leer diagnostico con la sesión").length;
@@ -343,10 +364,17 @@ describe("la cuenta de Estudiante que nació de convertir la sesión que hizo el
     exito(await fx!.admin.from("estudiante").insert({ id: sesion.id, id_lead: leadDeLaSesion.id }).select().single(), "insertar la cuenta de Estudiante");
     const correo = `prueba-${randomUUID()}@calibra.test`;
     const contrasena = `Clave-${randomUUID()}`;
-    expect(await convertirAnonimoEnCuenta(sesion.cliente, { correo, contrasena })).toEqual({ ok: true, pendiente: null });
+    // Como al crear la cuenta (HU-032): la sesión pide el correo, lo confirma con el enlace y elige su contraseña. El navegador que
+    // confirma es el que queda dentro de la cuenta, con el mismo id.
+    expect(await vincularCorreo(sesion.cliente, correo)).toEqual({ ok: true });
+    const navegador = crearCliente();
+    const confirmado = await navegador.auth.verifyOtp({ type: "email_change", token_hash: await tokenDelCorreoDeCuenta(correo) });
+    expect(confirmado.error, "confirmar el correo con el enlace").toBeNull();
+    expect(confirmado.data.user?.id, "el mismo usuario, ya no anónimo").toBe(sesion.id);
+    expect(await ponerContrasena(navegador, contrasena)).toEqual({ ok: true });
 
-    expect(await rolDe(sesion.cliente), "ya es Estudiante: es el rol que la portada deja pasar a la base").toBe("estudiante");
-    const enElMismoNavegador = await leerMiUltimoDiagnostico(sesion.cliente);
+    expect(await rolDe(navegador), "ya es Estudiante: es el rol que la portada deja pasar a la base").toBe("estudiante");
+    const enElMismoNavegador = await leerMiUltimoDiagnostico(navegador);
     expect(enElMismoNavegador?.idDiagnostico, "el mismo navegador, ya convertida").toBe(propio);
 
     // Otro navegador: inicia sesión con el correo y la contraseña y es el mismo usuario.
