@@ -1260,6 +1260,9 @@ isOneToOne: false
 "anotar_correo_de_contacto":
 { Args: { "p_correo": string,"p_id_sesion": string }; Returns: boolean
                            },
+"anotar_envio_de_cuenta":
+{ Args: { "p_id_sesion": string }; Returns: string
+                           },
 "autorizar_cancelacion_fuera_de_plazo":
 { Args: { "p_categoria": string,"p_id_monitoria": string,"p_nota": string }; Returns: string
                            },
@@ -1302,6 +1305,9 @@ isOneToOne: false
 { Args: { "p_id_sesion": string,"p_token_hash": string }; Returns: {
               "id_lead": string,"siguiente": string
             }[]
+                           },
+"crear_estudiante":
+{ Args: { "p_id_usuario": string }; Returns: string
                            },
 "crear_invitacion_admin":
 { Args: { "p_correo": string,"p_id_admin": string,"p_token_hash": string }; Returns: {
@@ -1357,6 +1363,11 @@ isOneToOne: false
                            },
 "desembolso_ejecutable":
 { Args: { "p_ahora": string,"p_fin_programado": string }; Returns: boolean
+                           },
+"diagnostico_de_mi_monitoria":
+{ Args: { "p_id_monitoria": string }; Returns: {
+              "aciertos": number,"duracion_min": number,"errores": Json,"fecha": string,"fecha_realizacion": string,"habilidades": Json,"hay_diagnostico": boolean,"hora": string,"nombre_estudiante": string,"nombre_evaluacion": string,"nombre_materia": string,"preguntas": Json,"prerrequisitos": Json,"repetido": boolean,"respondidas": number,"respuestas_autorizadas": boolean
+            }[]
                            },
 "diagnostico_en_curso_de":
 { Args: { "p_id_sesion": string }; Returns: {
@@ -1482,6 +1493,11 @@ isOneToOne: false
 "mi_rol":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"mi_ultimo_diagnostico":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "aciertos": number,"codigo_materia": string,"fecha_realizacion": string,"id_diagnostico": string,"nombre_evaluacion": string,"nombre_materia": string,"respondidas": number,"resultado": Json
+            }[]
+                           },
 "mis_citas":
 { Args: Record<PropertyKey, never>; Returns: {
               "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"observaciones_reporte": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
@@ -1514,6 +1530,11 @@ isOneToOne: false
 "parametros_contacto":
 { Args: Record<PropertyKey, never>; Returns: {
               "tope_correos": number,"tope_ventana_min": number
+            }[]
+                           },
+"parametros_cuenta":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "tope_envios_sesion": number,"tope_envios_total": number,"ventana_min": number
             }[]
                            },
 "parametros_negocio":

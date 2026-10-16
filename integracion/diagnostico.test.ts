@@ -2537,7 +2537,7 @@ describe("criterios 4, 7 y 11 con sesiones de verdad", () => {
     return lead;
   }
 
-  /** El monitor de una cita que apunta a ese diagnóstico (RN-13: lo ve para dictarla). */
+  /** El monitor de una cita que apunta a ese diagnóstico. Desde HU-022 no lo lee por la tabla (lo lee por diagnostico_de_mi_monitoria). */
   async function citaDelMonitor(idDiagnostico: string) {
     // La cita es de la materia del diagnóstico (la llave compuesta de monitoria lo exige).
     const { id_materia: idMateria } = exito(await fx.admin.from("diagnostico").select("id_materia").eq("id", idDiagnostico).single(), "leer la materia del diagnóstico");
@@ -2565,7 +2565,7 @@ describe("criterios 4, 7 y 11 con sesiones de verdad", () => {
       // HU-095 (D-53 e): la sesión ligada por lead_sesion no lee el diagnóstico que hizo otra sesión del Lead.
       ["otra sesión del Lead", delLead.cliente, false],
       ["la cuenta de Estudiante del Lead", estudiante.cliente, true],
-      ["el monitor de la cita", monitor.cliente, true],
+      ["el monitor de la cita", monitor.cliente, false],
       ["el admin", admin.cliente, true],
       ["una sesión ajena", ajena.cliente, false],
     ];
@@ -2647,7 +2647,7 @@ describe("criterios 4, 7 y 11 con sesiones de verdad", () => {
     expect(rows).toEqual([]);
   });
 
-  it("criterio 7: lo que leen la dueña, el Lead, el monitor y el admin no trae la marca de falta de material ni su motivo", async () => {
+  it("criterio 7: lo que leen la dueña, el Estudiante y el admin no trae la marca de falta de material ni su motivo; la otra sesión del Lead (HU-095) y el monitor de la cita (HU-022) no leen la fila", async () => {
     await armarLead();
     const sesion = comoSesion(duena);
     await correr(sesion, parcial1, acierta, { semilla: 1 });
@@ -2660,13 +2660,17 @@ describe("criterios 4, 7 y 11 con sesiones de verdad", () => {
       { habilidad: "cadena", motivos: ["sin_preguntas_sin_ver"] },
       { habilidad: "potencia", motivos: ["sin_preguntas_sin_ver"] },
     ]);
-    // Quienes leen la fila: la sesión que la hizo, la cuenta de Estudiante del Lead, el monitor de la cita y el admin. La otra
-    // sesión del Lead (lead_sesion) ya no la lee desde HU-095, así que no hay nada que revisar en lo que le llega: llega cero filas.
+    // Quienes leen la fila: la sesión que la hizo, la cuenta de Estudiante del Lead y el admin. La otra sesión del Lead
+    // (lead_sesion) ya no la lee desde HU-095, así que no hay nada que revisar en lo que le llega: llega cero filas.
     expect((await delLead.cliente.from("diagnostico").select("id").eq("id", dos.fin.idDiagnostico)).data, "otra sesión del Lead").toEqual([]);
+    // HU-022: el monitor de la cita ya no lee la tabla; ni la marca ni su motivo le llegan por la función (lo comprueba
+    // integracion/diagnostico-del-monitor.test.ts sobre la respuesta de diagnostico_de_mi_monitoria). Aquí solo se comprueba que la tabla no le da nada.
+    const delMonitor = await monitor.cliente.from("diagnostico").select("id, puntaje, resultado_por_habilidad, fecha_realizacion").eq("id", dos.fin.idDiagnostico);
+    expect(delMonitor.error, "el monitor de la cita").toBeNull();
+    expect(delMonitor.data, "el monitor de la cita").toEqual([]);
     for (const [actor, cliente] of [
       ["la dueña", duena.cliente],
       ["el Estudiante", estudiante.cliente],
-      ["el monitor de la cita", monitor.cliente],
       ["el admin", admin.cliente],
     ] as const) {
       const lectura = await cliente.from("diagnostico").select("id, puntaje, resultado_por_habilidad, fecha_realizacion").eq("id", dos.fin.idDiagnostico);
@@ -2694,7 +2698,7 @@ describe("criterios 4, 7 y 11 con sesiones de verdad", () => {
     expect((await ajena.cliente.from("diagnostico").select("id").eq("id", terminado.fin.idDiagnostico)).data).toEqual([]);
   });
 
-  it("HU-095: la sesión que creó el Lead, la ligada y una ajena reciben cero filas por id, por id_lead y por correo; la dueña, el Estudiante, el monitor y el admin, la fila", async () => {
+  it("HU-095: la sesión que creó el Lead, la ligada y una ajena reciben cero filas por id, por id_lead y por correo; la dueña, el Estudiante y el admin, la fila; el monitor de la cita, nada desde HU-022", async () => {
     // El Lead lo creó otra sesión (quien escribió primero el correo), no la dueña del diagnóstico: el caso que D-53 e quiere cerrar.
     const creadora = await fx.crearAnonimo();
     const lead = await fx.crearLeadDeSesion(creadora.id);
@@ -2735,7 +2739,8 @@ describe("criterios 4, 7 y 11 con sesiones de verdad", () => {
     for (const [actor, cliente] of [["la cuenta de Estudiante del Lead", estudiante.cliente], ["el admin", admin.cliente]] as const) {
       expect(await alcance(cliente), actor).toEqual({ ...fila, porCorreo: [diagnostico.id], porTelefono: [diagnostico.id] });
     }
-    expect(await alcance(monitor.cliente), "el monitor de la cita").toMatchObject(fila);
+    // HU-022: el monitor de una cita individual ya no lee la tabla (lo lee por diagnostico_de_mi_monitoria).
+    expect(await alcance(monitor.cliente), "el monitor de la cita").toEqual(nada);
     // Y el token de recuperación sigue sin leerlo nadie.
     for (const cliente of [creadora.cliente, duena.cliente, estudiante.cliente]) {
       expect((await cliente.from("diagnostico").select("token_recuperacion").eq("id", diagnostico.id)).error?.code).toBe("42501");

@@ -67,8 +67,7 @@ select ok(
     from pg_proc p, aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
     where p.oid in ('privado.agendar_monitoria(uuid, date, text, boolean)'::regprocedure,
                     'public.agendar_monitoria(uuid, date, text, boolean)'::regprocedure,
-                    'privado.semanas_para_agendar()'::regprocedure,
-                    'privado.dicta_cita_con_diagnostico(uuid)'::regprocedure)
+                    'privado.semanas_para_agendar()'::regprocedure)
       and a.grantee = 0),
   'Nadie las hereda de PUBLIC');
 select is(privado.semanas_para_agendar(), 4,
@@ -79,9 +78,8 @@ select ok(
   and not has_function_privilege('service_role', 'privado.semanas_para_agendar()', 'execute'),
   'semanas_para_agendar solo se llama desde otras funciones de la base');
 select ok(
-  not has_function_privilege('anon', 'privado.dicta_cita_con_diagnostico(uuid)', 'execute')
-  and has_function_privilege('authenticated', 'privado.dicta_cita_con_diagnostico(uuid)', 'execute'),
-  'dicta_cita_con_diagnostico (la usa la política de diagnostico) la ejecuta quien tiene sesión y no el visitante sin ella');
+  to_regprocedure('privado.dicta_cita_con_diagnostico(uuid)') is null,
+  'HU-022 cerró la lectura del monitor por la tabla: dicta_cita_con_diagnostico ya no existe (el monitor lee por public.diagnostico_de_mi_monitoria)');
 select ok(
   not has_any_column_privilege('anon', 'public.monitoria', 'insert')
   and not has_any_column_privilege('authenticated', 'public.monitoria', 'insert')
@@ -647,13 +645,15 @@ select is(
 -- La cuenta de Estudiante del Lead 07 (HU-095): lee los diagnósticos de su Lead, los haya hecho la sesión que sea.
 insert into auth.users (id, is_anonymous) values ('d0000000-0000-0000-0000-000000001707', false);
 insert into public.estudiante (id, id_lead) values ('d0000000-0000-0000-0000-000000001707', '40000000-0000-0000-0000-000000001707');
+-- HU-022 cerró la lectura del monitor por la tabla: ya no lee el diagnóstico al que apunta su cita (lo lee por
+-- public.diagnostico_de_mi_monitoria, que prueba diagnostico_del_monitor.test.sql).
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"b0000000-0000-0000-0000-0000000017a0","role":"authenticated"}';
 select is(
   (select coalesce(array_agg(right(id::text, 2) order by id), '{}') from public.diagnostico
    where id::text like '60000000-0000-0000-0000-0000000017%'),
-  array['02', '07'],
-  'D-7: el monitor de una cita lee el diagnóstico al que ella apunta, y solo esos (no los demás, aunque sean de la misma materia)');
+  '{}'::text[],
+  'D-7 cerrado por HU-022: el monitor de una cita ya no lee por la tabla el diagnóstico al que ella apunta (02 y 07), aunque la cita lo liga');
 set local request.jwt.claims to '{"sub":"b0000000-0000-0000-0000-0000000017b0","role":"authenticated"}';
 select is(
   (select coalesce(array_agg(right(id::text, 2) order by id), '{}') from public.diagnostico

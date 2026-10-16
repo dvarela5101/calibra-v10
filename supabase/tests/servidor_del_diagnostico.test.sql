@@ -1180,7 +1180,7 @@ select is(privado.purgar_diagnosticos_en_curso((select a from ref)), 0, 'Correrl
 -- ---------------------------------------------------------------------------
 -- Quién lee qué (las políticas de lectura no cambian; las columnas sí)
 -- ---------------------------------------------------------------------------
--- Un monitor con una cita ligada al diagnóstico de la sesión 04 (D-7: lo lee el monitor de la cita, hasta que HU-022 lo cierre).
+-- Un monitor con una cita ligada al diagnóstico de la sesión 04 (D-7). HU-022 cerró su lectura por la tabla: el monitor de la cita ya no lo lee por aquí.
 insert into public.certificado (id, id_monitor, id_materia, id_admin) values
   ('90000000-0000-0000-0000-000000008101', 'b0000000-0000-0000-0000-000000008101', '10000000-0000-0000-0000-000000008101', 'a0000000-0000-0000-0000-000000008101');
 insert into public.franja (id, id_monitor, dia, hora, presencial, precio, duracion_min) values
@@ -1216,10 +1216,10 @@ set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000008107","
 select is((select count(*)::int from public.diagnostico d join dx on dx.id = d.id), 0, 'Una sesión de otro Lead no lo ve');
 set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000008103","role":"authenticated","is_anonymous":true}';
 select is((select count(*)::int from public.diagnostico d join dx on dx.id = d.id), 0, 'Ni una sesión sin Lead');
--- El monitor de la cita ve ese diagnóstico, solo por esas columnas.
+-- El monitor de la cita ya no lee ese diagnóstico por la tabla (HU-022: lo lee por public.diagnostico_de_mi_monitoria).
 set local request.jwt.claims to '{"sub":"b0000000-0000-0000-0000-000000008101","role":"authenticated","is_anonymous":false}';
-select is((select count(*)::int from public.diagnostico d join dx on dx.id = d.id), 1, 'El monitor de la cita lo lee (D-7)');
-select is((select count(*)::int from public.diagnostico), 1, 'Y solo ese: no los demás diagnósticos de la materia');
+select is((select count(*)::int from public.diagnostico d join dx on dx.id = d.id), 0, 'El monitor de la cita no lo lee por la tabla (HU-022 cerró D-7)');
+select is((select count(*)::int from public.diagnostico), 0, 'Y por la tabla no lee ningún diagnóstico: ni los de la materia ni el de su cita');
 select throws_ok(format('select %I from public.diagnostico limit 1', c), '42501', null, 'El monitor de la cita no lee ' || c)
 from columnas order by c;
 select throws_ok($$select * from public.diagnostico_en_curso$$, '42501', null, 'Ni el monitor lee el en curso');

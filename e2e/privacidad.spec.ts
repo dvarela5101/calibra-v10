@@ -76,8 +76,13 @@ test.describe("aviso de privacidad (HU-008)", () => {
     await expect(retencion).toContainText("se borran, con sus diagnósticos, a los 90 días sin actividad");
     await expect(retencion).toContainText("cuenta como actividad cualquier visita al sitio desde ese navegador");
 
-    // Fecha del último cambio del texto (HU-073, HU-056, HU-049).
+    // Fecha del último cambio del texto (HU-073, HU-056, HU-032, HU-049).
     await expect(page.getByText("Última actualización: 13 de octubre de 2026.")).toBeVisible();
+
+    // La cuenta de Estudiante: su contraseña se guarda cifrada y el correo de la cuenta es el del contacto (HU-032, criterio 19).
+    await expect(datos).toContainText("Si creas una cuenta: además, una contraseña, que se guarda cifrada.");
+    await expect(datos).toContainText("El correo de tu cuenta es el de tu contacto.");
+    await expect(finalidades).toContainText("Dejarte entrar a tu cuenta para ver tus citas desde cualquier dispositivo.");
 
     // El correo depende de CORREO_DATOS_PERSONALES: basta con el enlace o con el aviso de que llegará pronto.
     const canal = page.locator("section", { has: page.getByRole("heading", { name: "Canal de consultas" }) });

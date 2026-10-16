@@ -2,12 +2,22 @@
 
 import { useActionState } from "react";
 import formulario from "@/components/formulario.module.css";
-import { guardarContrasena, type EstadoNuevaContrasena } from "./acciones";
+import type { EstadoNuevaContrasena } from "./acciones";
 
 const estadoInicial: EstadoNuevaContrasena = { error: null };
 
-export function FormularioNuevaContrasena() {
-  const [estado, accion, enviando] = useActionState(guardarContrasena, estadoInicial);
+/**
+ * Pide la contraseña y su repetición. La acción que la guarda la pone quien lo usa: `/restablecer/nueva` guarda y cierra
+ * la sesión del enlace; `/cuenta/contrasena` (HU-032) guarda y deja la sesión abierta.
+ */
+export function FormularioNuevaContrasena({
+  accion: accionDelFormulario,
+  textoDelBoton = "Guardar contraseña",
+}: {
+  accion: (anterior: EstadoNuevaContrasena, datos: FormData) => Promise<EstadoNuevaContrasena>;
+  textoDelBoton?: string;
+}) {
+  const [estado, accion, enviando] = useActionState(accionDelFormulario, estadoInicial);
 
   return (
     <form action={accion} className={formulario.formulario} noValidate>
@@ -48,7 +58,7 @@ export function FormularioNuevaContrasena() {
       )}
 
       <button type="submit" className={formulario.boton} disabled={enviando}>
-        {enviando ? "Guardando…" : "Guardar contraseña"}
+        {enviando ? "Guardando…" : textoDelBoton}
       </button>
     </form>
   );

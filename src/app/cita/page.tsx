@@ -75,5 +75,9 @@ async function MisCitas() {
     }
   }
 
-  return <ListaDeCitas citas={citas} ahora={new Date()} />;
+  // HU-032, criterio 17: quien tiene citas y no tiene cuenta (anónimo, o ya confirmado y sin rol) ve la invitación a crearla.
+  // Un Estudiante, o un navegador sin citas, no.
+  const invitarACrearCuenta = citas.length > 0 && sesion !== null && (sesion.rol === "anonimo" || sesion.rol === null);
+
+  return <ListaDeCitas citas={citas} ahora={new Date()} invitarACrearCuenta={invitarACrearCuenta} />;
 }

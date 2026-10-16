@@ -3,6 +3,7 @@ import type { Reconstruccion } from "@/lib/correo/plantillas";
 import { enviarCorreoDesdeServidor, urlDelSitio } from "@/lib/correo/servidor";
 import type { Consentimiento } from "@/lib/privacidad/consentimiento";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
+import { CORREO_FIJO, CORREO_YA_FIJO, INICIA_SESION_PARA_CAMBIAR, type EnvioDeVerificacion } from "./avisos";
 import { enmascararCorreo, type DatosDeContacto } from "./reglas";
 import { MAXIMO_DE_ENLACES_POR_HORA, generarToken, hashDeToken, rutaDeVerificacion, tieneFormaDeToken } from "./verificacion";
 
@@ -42,8 +43,18 @@ export async function leadDeLaSesion(idSesion: string): Promise<LeadDeSesion | n
   return fila ? deFila(fila) : null;
 }
 
-/** Qué pasó con el enlace de verificación: salió, se frenó (ya van muchos en una hora) o no salió. */
-export type EnvioDeVerificacion = "enviado" | "frenado" | "fallido";
+/**
+ * El usuario que es el Estudiante de un Lead (su cuenta), o `null` si el Lead no tiene cuenta. Un Lead tiene a lo sumo uno
+ * (`estudiante_id_lead_key`). Distinto de la sesión que lo creó o que confirmó su correo: la cuenta es el usuario que
+ * confirmó el correo de la cuenta, y puede no ser el que creó el Lead (HU-032, P-23).
+ */
+export async function cuentaDelLead(idLead: string): Promise<string | null> {
+  const { data, error } = await crearClienteAdmin().from("estudiante").select("id").eq("id_lead", idLead).maybeSingle();
+  if (error) throw error;
+  return data?.id ?? null;
+}
+
+export type { EnvioDeVerificacion };
 
 export type ResultadoContacto =
   /** `idLeadNuevo`: solo cuando esta llamada creó el Lead (no al actualizarlo ni si otra pestaña lo creó antes). HU-031. */
@@ -70,7 +81,25 @@ const esPorElCorreo = (error: { message?: string; details?: string }) =>
   `${error.message ?? ""} ${error.details ?? ""}`.includes("lead_correo_key");
 
 /**
+ * ¿El rechazo fue del trigger que deja fijo el correo de un Lead con cuenta (HU-032, D-55 b)? Es un `check_violation`
+ * (23514) con el nombre del trigger en el mensaje. No se confunde con el CHECK `lead_correo_normalizado`, que también es
+ * 23514 y tiene otro mensaje.
+ */
+const esPorElCorreoFijo = (error: { code?: string; message?: string }) =>
+  error.code === "23514" && (error.message ?? "").includes("lead_correo_fijo_con_cuenta");
+
+/**
+ * ¿El rechazo fue del mismo trigger por otra razón: otra sesión ya confirmó el correo de este Lead con el enlace de P-23
+ * (`lead_correo_fijo_confirmado`)? También es un 23514, con otro nombre en el mensaje; ninguno de los dos nombres contiene
+ * al otro.
+ */
+const esPorElCorreoConfirmado = (error: { code?: string; message?: string }) =>
+  error.code === "23514" && (error.message ?? "").includes("lead_correo_fijo_confirmado");
+
+/**
  * Deja a la sesión como Lead (HU-068):
+ * - si ya es Lead y su Lead tiene una cuenta de Estudiante que no es esta sesión, no escribe nada y le pide iniciar sesión
+ *   con su cuenta (HU-032, revisión): solo la cuenta cambia los datos de un contacto con cuenta;
  * - si ya escribió el tope de correos distintos en la última hora y este es otro, no guarda nada, no manda enlace
  *   y le pide esperar (HU-075, D-36; el tope y la ventana viven en la base, `parametros_contacto()`);
  * - si ya es Lead, actualiza sus datos y no crea otro (criterio 4);
@@ -82,6 +111,14 @@ export async function registrarContacto(entrada: EntradaDeContacto): Promise<Res
   const admin = crearClienteAdmin();
 
   const actual = await leadDeLaSesion(idSesion);
+  // Un Lead con cuenta lo cambia solo su cuenta. La sesión que lo creó (`lead.id_sesion_anonima`) o la que confirmó su correo
+  // con el enlace de P-23 (`lead_sesion`) puede ser otra distinta de la cuenta, y seguía pudiendo cambiarle el nombre, el
+  // teléfono y la autorización de contacto. Va antes del tope: no se gasta ni se escribe nada.
+  if (actual) {
+    const cuenta = await cuentaDelLead(actual.id);
+    if (cuenta !== null && cuenta !== idSesion) return { resultado: "error", error: INICIA_SESION_PARA_CAMBIAR };
+  }
+
   // El tope va antes de las dos ramas: las dos dicen si un correo ya es de otro Lead. Lo cuenta la base
   // (`anotar_correo_de_contacto`), por sesión y sin carreras, exista o no el correo. Volver a enviar el correo que
   // la sesión ya tiene guardado, para cambiar solo el nombre o el teléfono, no cuenta: no revela nada.
@@ -105,6 +142,11 @@ export async function registrarContacto(entrada: EntradaDeContacto): Promise<Res
       })
       .eq("id", actual.id);
     if (error?.code === "23505") return { resultado: "error", error: CORREO_DE_OTRO };
+    // La sesión es la cuenta del Lead (las demás ya salieron arriba) y manda otro correo: `procesarContacto` lo frena antes
+    // para un Estudiante; esto cubre a quien llame a `registrarContacto` sin pasar por ella. Un mensaje, no un error del servidor.
+    if (error && esPorElCorreoFijo(error)) return { resultado: "error", error: CORREO_FIJO };
+    // Otra sesión ya confirmó el correo de este Lead (P-23): ya no es solo de quien lo escribió y no se cambia desde la app.
+    if (error && esPorElCorreoConfirmado(error)) return { resultado: "error", error: CORREO_YA_FIJO };
     if (error) throw error;
     return { resultado: "lead" };
   }

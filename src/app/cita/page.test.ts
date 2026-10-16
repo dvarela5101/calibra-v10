@@ -1,5 +1,7 @@
+import type { ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Rol } from "@/lib/auth/roles";
 import type { Cita } from "@/lib/citas/reglas";
 import PaginaDeCita from "./page";
 
@@ -8,11 +10,16 @@ import PaginaDeCita from "./page";
 // el inicio y dentro de la ventana, sin reporte previo, HU-029) y qué se dice cuando no hay ninguno. La base decide de
 // verdad si cabe; el recorrido completo lo cubren e2e/cancelar.spec.ts y e2e/reportar.spec.ts.
 
-const datos = vi.hoisted(() => ({ cita: null as Cita | null }));
+const datos = vi.hoisted(() => ({
+  cita: null as Cita | null,
+  // «Mis citas» (HU-032, criterio 17): la sesión del navegador y las citas que lee la base.
+  sesion: null as { idUsuario: string; rol: Rol | null } | null,
+  citas: [] as Cita[],
+}));
 
-vi.mock("@/lib/citas/servidor", () => ({ leerCitaPorToken: async () => datos.cita, leerMisCitas: async () => [] }));
-vi.mock("@/lib/auth/sesion", () => ({ obtenerSesion: async () => null }));
-vi.mock("@/lib/supabase/servidor", () => ({ crearClienteServidor: async () => null }));
+vi.mock("@/lib/citas/servidor", () => ({ leerCitaPorToken: async () => datos.cita, leerMisCitas: async () => datos.citas }));
+vi.mock("@/lib/auth/sesion", () => ({ obtenerSesion: async () => datos.sesion }));
+vi.mock("@/lib/supabase/servidor", () => ({ crearClienteServidor: async () => (datos.sesion ? {} : null) }));
 // La acción vive en el servidor y el botón es del navegador: aquí solo se pintan.
 vi.mock("./acciones", () => ({ cancelarCita: async () => ({ error: null }) }));
 vi.mock("./acciones-de-reporte", () => ({ reportarInasistencia: async () => ({ error: null }) }));
@@ -65,6 +72,8 @@ const texto = (html: string) =>
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.stubEnv("CORREO_DATOS_PERSONALES", "soporte@calibra.example");
+  datos.sesion = null;
+  datos.citas = [];
 });
 
 afterEach(() => {
@@ -200,5 +209,54 @@ describe("Página de la cita con el enlace del correo (HU-029): reportar que el 
     expect(texto(html)).toContain("El monitor no asistió y se aceptó tu reporte.");
     expect(texto(html)).not.toContain("Un admin aceptó tu reporte.");
     expect(html).not.toContain("<button");
+  });
+});
+
+describe("«Mis citas» (HU-032, criterio 17): cuándo se invita a crear la cuenta", () => {
+  const INVITACION = "Crea tu cuenta para ver tus citas desde cualquier dispositivo.";
+
+  /** «Mis citas» sin `?token=`: las citas de la sesión del navegador. */
+  async function misCitas(rol: Rol | null | "sin_sesion", citas: Cita[]): Promise<string> {
+    vi.setSystemTime(new Date(INICIO.getTime() - 4 * HORA));
+    datos.sesion = rol === "sin_sesion" ? null : { idUsuario: "c0c0c0c0-0000-4000-8000-000000000032", rol };
+    datos.citas = citas;
+    // `MisCitas` es un componente asíncrono de la página: se espera su resultado antes de pintar.
+    const raiz = (await PaginaDeCita({ params: Promise.resolve({}), searchParams: Promise.resolve({}) })) as ReactElement;
+    const interior = await (raiz.type as () => Promise<ReactElement>)();
+    return renderToStaticMarkup(interior);
+  }
+
+  it("un navegador anónimo con citas ve la invitación con el enlace a /cuenta/crear", async () => {
+    const html = await misCitas("anonimo", [CITA]);
+
+    expect(texto(html)).toContain(INVITACION);
+    expect(html).toMatch(/<a[^>]*href="\/cuenta\/crear"[^>]*>Crear mi cuenta<\/a>/);
+  });
+
+  it("quien confirmó su correo y no tiene rol todavía (le falta «Terminar de crear mi cuenta») también", async () => {
+    expect(texto(await misCitas(null, [CITA]))).toContain(INVITACION);
+  });
+
+  it("un Estudiante, un monitor o un admin con citas no ve la invitación", async () => {
+    for (const rol of ["estudiante", "monitor", "admin"] as const) {
+      const html = await misCitas(rol, [CITA]);
+      expect(texto(html), rol).not.toContain(INVITACION);
+      expect(html, rol).not.toContain("/cuenta/crear");
+    }
+  });
+
+  it("un navegador sin citas no la ve, tenga la sesión que tenga, ni sin sesión", async () => {
+    for (const rol of ["anonimo", null, "estudiante", "sin_sesion"] as const) {
+      const html = await misCitas(rol, []);
+      expect(texto(html), String(rol)).not.toContain(INVITACION);
+      expect(html, String(rol)).not.toContain("/cuenta/crear");
+    }
+  });
+
+  it("con el enlace del correo (?token=) la página es la de siempre: ahí no se invita", async () => {
+    datos.sesion = { idUsuario: "c0c0c0c0-0000-4000-8000-000000000032", rol: "anonimo" };
+    const html = await pintar(CITA, new Date(CANCELABLE_HASTA.getTime() - 4 * HORA));
+
+    expect(html).not.toContain("/cuenta/crear");
   });
 });

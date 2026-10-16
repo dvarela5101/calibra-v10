@@ -41,6 +41,33 @@ export function sePuedeFinalizar(m: Pick<MonitoriaDeAgenda, "estado" | "inicio">
 }
 
 /**
+ * Los días, contados desde el fin programado de la sesión, que una cita realizada sigue mostrando su diagnóstico al monitor
+ * (D-54 b, HU-022). Es la misma cifra de `privado.dias_de_vista_tras_realizada()`: integracion/diagnostico-del-monitor.test.ts
+ * las compara.
+ */
+export const DIAS_DE_VISTA_TRAS_REALIZADA = 30;
+
+const MS_POR_DIA = 24 * 60 * 60 * 1000;
+
+/** La dirección del diagnóstico de una cita en el hub del monitor (HU-022). */
+export const rutaDelDiagnosticoDeLaCita = (id: string): string => `/monitor/agenda/${id}`;
+
+/**
+ * Si el monitor ve el diagnóstico de la cita (HU-022, punto 2): `confirmada`, también la que ya empezó y espera finalizarse y sin
+ * plazo, o `realizada` mientras `ahora < fin de la sesión + 30 días`, en tiempo absoluto y con `<` (en el instante exacto ya no).
+ * El fin es el programado, no `fecha_finalizacion`. No se ve con la reserva por pagar, vigente o vencida, ni cancelada. Espejo de
+ * `privado.diagnostico_de_mi_monitoria`, que decide lo mismo con la hora de la base; el pago no cuenta (P-24).
+ */
+export function sePuedeVerDiagnostico(estado: EstadoMonitoria, finDeSesion: Date, ahora: Date): boolean {
+  if (estado === "confirmada") return true;
+  if (estado === "realizada") return ahora.getTime() < finDeSesion.getTime() + DIAS_DE_VISTA_TRAS_REALIZADA * MS_POR_DIA;
+  return false;
+}
+
+/** El fin programado de la sesión de una cita de la agenda. */
+export const finDeSesionDe = (m: Pick<MonitoriaDeAgenda, "inicio" | "duracionMin">): Date => finProgramado(m.inicio, m.duracionMin);
+
+/**
  * Por finalizar: confirmadas que ya empezaron (HU-023, D-13), de la más antigua a la más reciente. Próximas:
  * confirmadas que no han empezado y pendientes de pago vigentes, de la más cercana a la más lejana. Pasadas:
  * realizadas, canceladas y reservas vencidas (D-12), de la más reciente a la más antigua.
