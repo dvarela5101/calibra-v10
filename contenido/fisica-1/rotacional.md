@@ -41,3 +41,13 @@ Un disco de radio 0.5 m tiene momento de inercia I = 2 kg·m². Si se le aplica 
 - B) 20 rad/s² · [rotacional-e7]
 - C) 4 rad/s² · [rotacional-e8]
 - D) 2.5 rad/s² · [rotacional-e9]
+
+### P16 · dificultad 3 · kc: rotacional · borrador · origen: ia (sonnet-5.5)
+Una varilla delgada y uniforme de 5 kg y 1.5 m de largo gira en un plano horizontal alrededor de un eje vertical fijo que la atraviesa a 0.25 m de su centro. Sobre ese eje actúa un torque neto constante de 15 N·m. Si se desprecia la fricción en el eje, ¿cuál es la aceleración angular inicial de la varilla?
+
+- A) 12 rad/s² · CORRECTA
+- B) 4 rad/s² · [rotacional-e1] usas el momento de inercia de un eje en el extremo, $\frac{ML^2}{3} = 3.75$ kg·m², aunque el eje no está en el extremo
+- C) 16 rad/s² · [rotacional-e4] olvidas aplicar el teorema de ejes paralelos y usas solo el momento de inercia respecto al centro, $\frac{ML^2}{12} = 0.9375$ kg·m²
+- D) 48 rad/s² · [rotacional-e6] usas solo uno de los dos términos del teorema de ejes paralelos: tomas $Md^2 = 0.3125$ kg·m² y dejas por fuera $I_{\text{cm}}$
+
+solución: la segunda ley de la rotación es τ = I·α, así que primero hace falta el momento de inercia respecto al eje dado. Respecto al centro, $I_{\text{cm}} = \frac{1}{12}ML^2 = \frac{1}{12}(5)(1.5)^2 = 0.9375$ kg·m². El eje está a d = 0.25 m del centro, y por el teorema de ejes paralelos $I = I_{\text{cm}} + Md^2 = 0.9375 + 5(0.25)^2 = 1.25$ kg·m². Entonces α = τ/I = 15/1.25 = 12 rad/s². Los 4 rad/s² salen de usar $ML^2/3 = 3.75$ kg·m² (eje en el extremo), los 16 rad/s² de usar solo 0.9375 kg·m², y los 48 rad/s² de usar solo $Md^2 = 0.3125$ kg·m².

@@ -41,3 +41,13 @@ Dos bloques de 3 kg y 5 kg están conectados por una cuerda. Si se aplica una fu
 - B) 10 N · [newton-e7]
 - C) 16 N · [newton-e8]
 - D) 8 N · [newton-e9]
+
+### P14 · dificultad 3 · kc: newton · borrador · origen: ia (sonnet-5.5)
+Un bloque de 4 kg está sobre un plano inclinado 37° con la horizontal, y el coeficiente de fricción cinética entre el bloque y el plano es $\mu_k = 0.25$. Una cuerda ligera, paralela al plano, pasa por una polea ligera y sin fricción en la parte alta del plano y sostiene del otro lado un bloque de 20 kg que cuelga libremente. El sistema se suelta desde el reposo: el bloque que cuelga desciende y el del plano sube. ¿Cuál es la tensión de la cuerda mientras se mueven? (g = 10 m/s², sen 37° = 0.6, cos 37° = 0.8)
+
+- A) 200 N · [newton-e8] tomas la tensión igual al peso del bloque que cuelga, 20 kg × 10 m/s², como si ese peso pasara completo por la cuerda
+- B) 65 N · [newton-e2] confundes la componente paralela con la perpendicular al plano: usas mg·cos 37° como la parte del peso que baja por el plano y mg·sen 37° como la normal
+- C) 60 N · CORRECTA
+- D) 100 N · [newton-e9] repartes el peso del bloque que cuelga entre los dos bloques, 200 N ÷ 2, sin considerar sus masas
+
+solución: se toma como positivo el sentido del movimiento. En el plano, la normal es N = 4×10×cos 37° = 32 N, la fricción cinética es 0.25×32 = 8 N y la componente del peso a lo largo del plano es 4×10×sen 37° = 24 N; las dos van hacia abajo del plano, contra el movimiento. Segunda ley para el bloque del plano: T − 24 − 8 = 4a. Segunda ley para el bloque que cuelga: 200 − T = 20a. Al sumar queda 200 − 32 = 24a, así que a = 7 m/s², y T = 200 − 20×7 = 60 N. Se comprueba con el otro bloque: 60 − 32 = 4×7 = 28. Los 200 N suponen que la cuerda transmite todo el peso, los 100 N lo reparten entre dos bloques sin mirar las masas, y los 65 N salen de intercambiar seno y coseno (a = 6.75 m/s²).

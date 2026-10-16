@@ -44,3 +44,13 @@ Encuentra un vector perpendicular a u = (1, 2, 3) y v = (4, 5, 6).
 - B) 32 · [vectores-e7]
 - C) (5, 7, 9) · [vectores-e8]
 - D) (4, 10, 18) · [vectores-e9]
+
+### P13 · dificultad 3 · kc: vectores · borrador · origen: ia (sonnet-5.5)
+Sean A(1, 2, −1) y B(3, 4, 0) dos puntos del espacio. ¿Cuál es el vector de magnitud 15 que tiene la misma dirección y el mismo sentido que el vector que va de A a B?
+
+- A) (30, 30, 15) · [vectores-e1] multiplicas el vector de A a B por 15 sin dividirlo antes por su magnitud 3, y el resultado mide 45 en vez de 15
+- B) (9, 12, 0) · [vectores-e2] usas las coordenadas del punto B como si fueran las componentes del vector de A a B, en vez de restar las de A, y después lo llevas a magnitud 15
+- C) (10, 10, 5) · CORRECTA
+- D) (5√3, 5√3, 5√3) · [vectores-e3] crees que un vector de la magnitud pedida debe tener las tres componentes iguales, sin usar la dirección de A a B
+
+solución: el vector de A a B es B − A = (3 − 1, 4 − 2, 0 − (−1)) = (2, 2, 1). Su magnitud es √(4 + 4 + 1) = 3, así que el vector unitario en esa dirección es (2/3, 2/3, 1/3). Para que la magnitud sea 15 se multiplica por 15: (10, 10, 5). Comprobación: √(100 + 100 + 25) = √225 = 15.
