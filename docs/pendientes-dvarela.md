@@ -447,7 +447,7 @@ Todavía no. Se hace una sola vez, cuando el flujo principal esté listo, y lo g
 
 **Deuda técnica antes de salir (decisión del 1-oct, D-18).** La idea es que, con toda la base lista, el corte sea solo poner variables de entorno y configurar los paneles de Vercel y Supabase. Por eso toda HU que agregue configuración externa (una llave, un secreto de Vault, un ajuste de Auth) la anota en esta sección y en `.env.example`, sin valores. Si aquí falta algo, es un error de esa HU.
 
-- [ ] **Base en la nube.** v10 usará el mismo proyecto Supabase del prototipo (`uotlhaitdkfroavqkvee`). En el corte: respaldo, mover las tablas del prototipo a un esquema aparte, aplicar las migraciones de v10 y desactivar el webhook y la función `enviar-correo` del prototipo.
+- [ ] **Base en la nube** (D-72 a): un proyecto Supabase **nuevo** para v10. El del prototipo (`uotlhaitdkfroavqkvee`) no se toca: respaldo descargado antes de empezar y, un día después del corte, se pausa. En el nuevo: `supabase link` y `supabase db push` (nunca `--include-seed`), y la carga del banco con `npm run contenido:cargar -- --nube` ([HU-103](../backlog/HU-103.md); necesita la cadena de conexión y el certificado del proyecto nuevo, ver `contenido/README.md`, «Cargar en la nube»). El paso a paso está en [HU-057](../backlog/HU-057.md).
 - [ ] **Variables de Supabase en Vercel:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y `SUPABASE_SECRET_KEY` (esta última **Sensitive**). Salen de Supabase, **Project Settings**, **API Keys**.
 - [ ] **Supabase Auth en la nube:** activar el inicio anónimo, contraseña mínima de 8, `Site URL` y URLs de redirección de producción, la plantilla de "recuperar contraseña" y un SMTP propio para los correos de Auth (se puede usar el mismo Gmail).
 - [ ] **Reintento automático de correos (HU-065).** Genera un secreto largo (por ejemplo, en una terminal: `openssl rand -hex 32`) y:
@@ -468,7 +468,7 @@ Todavía no. Se hace una sola vez, cuando el flujo principal esté listo, y lo g
   - En Supabase, **Authentication**, **Attack Protection**: activa CAPTCHA, proveedor Turnstile y pega la llave secreta. **La secreta solo va aquí**: la app no la usa (la validación del token la hace Supabase) y no va en Vercel.
   - Las dos llaves tienen que ser del mismo widget y cargarse a la vez: la del sitio real con la secreta de prueba (o al revés) deja a todos sin sesión.
   - Con el CAPTCHA activo, el ingreso de monitores y admins, el registro de monitores, el registro de admins (`/admins/registro`, HU-072) y "olvidé mi contraseña" también usan el widget (invisible); no es una pantalla nueva.
-  - Revisa el límite de inicios anónimos por hora por IP en Supabase (30 por defecto; local usa 150): en un campus muchas personas comparten IP (HU-057).
+  - Sube el límite de inicios anónimos por hora por IP en Supabase a **150** (D-72 g; 30 por defecto): en un campus muchas personas comparten IP.
   - Prueba, ya con las llaves cargadas: abre el sitio en una ventana privada y confirma que se crea la sesión; entra a `/ingresar` con un monitor de prueba.
   - El aviso de privacidad ya menciona a Cloudflare (HU-073); no hay nada que hacer ahí.
 - [ ] **Pago por Llave (HU-018), deuda técnica (D-18):** en local y en CI la reserva muestra una llave, un titular y un QR de prueba (los escribe `npm run db:env`). Antes de salir, carga estas variables en Vercel (**Production** y **Preview**). Sin las tres primeras, la página dice que el pago por Llave no está disponible y nadie puede adjuntar el comprobante.
@@ -476,8 +476,10 @@ Todavía no. Se hace una sola vez, cuando el flujo principal esté listo, y lo g
   - `LLAVE_PLATAFORMA_TITULAR`: el nombre del titular, tal como lo muestra el banco al transferir.
   - `LLAVE_PLATAFORMA_QR_URL`: sube a un lugar público la imagen del QR que te da el banco para esa llave (por ejemplo, un bucket público de Supabase) y pon aquí su dirección `https://`.
   - `PROVEEDOR_NOMBRE` y `PROVEEDOR_DOCUMENTO`: el nombre o razón social y el documento (cédula o NIT) de quien recibe el pago. La página los muestra antes de pagar (Ley 1480 de 2011, art. 50). Son datos legales: valídalos con asesoría, como P-13. Mientras falten, sale solo "Calibra". El correo que los acompaña es `CORREO_DATOS_PERSONALES` (sección B).
-- [ ] **Datos del prototipo:** decidir si los diagnósticos viejos se importan como históricos. Los leads del prototipo no se migran como contactables (no tenían autorización de datos).
-- [ ] **Publicar** en el repo real de Calibra y archivar el repo temporal.
+- [ ] **Datos del prototipo** (D-72 a y d): no se migra nada; leads, diagnósticos, franjas y citas quedan en el respaldo. Los 5 monitores del prototipo se invitan como nuevos desde `/admin`.
+- [ ] **Dirección** (D-72 f): el dominio del prototipo en Vercel pasa al proyecto de v10 cuando todo esté probado en la dirección `*.vercel.app` de v10. Los previews usan la misma base de producción (D-72 e).
+- [ ] **Asesoría** (D-72 c): el corte espera los textos validados de P-13, D-54 c, D-71 b y los datos del proveedor.
+- [ ] **Publicar** en el repo real de Calibra y archivar el repo temporal. Juzou04 tiene que dar acceso de escritura a `Juzou04/Calibra`.
 
 ---
 

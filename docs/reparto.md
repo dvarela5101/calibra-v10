@@ -15,8 +15,8 @@
 
 | Persona | Siguiente, en orden |
 |---|---|
-| Juzou04 | Sigue su lista: [HU-011](../backlog/HU-011.md), [HU-022](../backlog/HU-022.md) y [HU-032](../backlog/HU-032.md) (en progreso) y [HU-084](../backlog/HU-084.md) (S). [HU-034](../backlog/HU-034.md) pasó a dvarela5101 (14-oct) |
-| dvarela5101 | [HU-031](../backlog/HU-031.md) (M) fusionada y en revisión; dudas de HU-092 respondidas (D-69). Revisar o aprobar lo que esté `En revision`. [HU-034](../backlog/HU-034.md) hecha. Construir las tres HUs nuevas del corte (D-71, 15-oct): [HU-095](../backlog/HU-095.md) (S), [HU-096](../backlog/HU-096.md) (XS) y [HU-097](../backlog/HU-097.md) (XS) |
+| Juzou04 | Sigue su lista: [HU-011](../backlog/HU-011.md), [HU-022](../backlog/HU-022.md) y [HU-032](../backlog/HU-032.md) (en progreso) y [HU-084](../backlog/HU-084.md) (S). **Contenido del banco (D-72 b y h, todo suyo):** [HU-091](../backlog/HU-091.md) y [HU-099](../backlog/HU-099.md) (Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad), [HU-100](../backlog/HU-100.md) (Parcial 1 de Cálculo Diferencial; si aprueba menos del 70 %, para), y después [HU-101](../backlog/HU-101.md) y [HU-102](../backlog/HU-102.md). Son dependencias del corte. [HU-034](../backlog/HU-034.md) pasó a dvarela5101 (14-oct) |
+| dvarela5101 | [HU-031](../backlog/HU-031.md) (M) fusionada y en revisión; dudas de HU-092 respondidas (D-69). Revisar o aprobar lo que esté `En revision`. [HU-034](../backlog/HU-034.md) hecha. [HU-103](../backlog/HU-103.md) (S, cargar el banco en la nube). Construir las tres HUs nuevas del corte (D-71, 15-oct): [HU-095](../backlog/HU-095.md) (S), [HU-096](../backlog/HU-096.md) (XS) y [HU-097](../backlog/HU-097.md) (XS) |
 | Lorenzo | 1) Entorno. 2) [HU-094](../backlog/HU-094.md) (S). 3) [HU-092](../backlog/HU-092.md) (M). 4) Refinar y construir [HU-088](../backlog/HU-088.md) (M). 5) Después del corte: [HU-085](../backlog/HU-085.md) (L) y [HU-090](../backlog/HU-090.md) (S) |
 
 **Choques a tener en cuenta**
