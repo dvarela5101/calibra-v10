@@ -64,6 +64,25 @@ test.describe("Criterios 1 a 3 y 7 · invitar y registrarse", () => {
       await expect(aviso).toHaveAttribute("href", "/privacidad");
       await expect(aviso).toHaveAttribute("target", "_blank");
 
+      // HU-096 (D-71 b): junto a «Tu llave» y antes del botón, la regla general de la comisión que leyó de la base.
+      const campoLlave = aspirante.getByLabel("Tu llave");
+      await expect(campoLlave).toHaveAccessibleDescription(/Es donde te pagamos/);
+      await expect(campoLlave).toHaveAccessibleDescription(
+        /Por cada monitoría, Calibra descuenta una comisión del 10 % del total pagado, con un máximo de \$\s15\.000\. Se descuenta de lo que te transferimos\./,
+      );
+      // Es la única cifra de comisión de la página: sin ningún monto de una monitoría.
+      await expect(aspirante.locator("#llave-regla")).toHaveCount(1);
+      for (const ancho of [390, 1280]) {
+        await aspirante.setViewportSize({ width: ancho, height: 844 });
+        const medidas = await aspirante.locator("#llave-regla").evaluate((linea) => ({
+          sinScrollHorizontal: document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+          tamano: parseFloat(getComputedStyle(linea).fontSize),
+          degradado: getComputedStyle(linea).backgroundImage.includes("gradient"),
+        }));
+        expect(medidas, `la línea de la comisión a ${ancho} px`).toEqual({ sinScrollHorizontal: true, tamano: expect.any(Number), degradado: false });
+        expect(medidas.tamano, `la línea de la comisión a ${ancho} px: 14 px o más`).toBeGreaterThanOrEqual(14);
+      }
+
       await campoNombre.fill(nombre);
       await aspirante.getByLabel("Teléfono").fill("3109876543");
       await aspirante.getByLabel("Tu llave").fill("llave-e2e@calibra.test");
@@ -97,6 +116,8 @@ test.describe("Criterio 4 · no hay autorregistro", () => {
       await expect(page.getByRole("heading", { name: TITULO_SIN_INVITACION })).toBeVisible(ESPERA);
       await expect(page.locator('input[type="password"]')).toHaveCount(0);
       await expect(page.getByRole("button", { name: "Crear mi cuenta" })).toHaveCount(0);
+      // HU-096: sin invitación vigente tampoco se dice nada de la comisión.
+      await expect(page.locator("body")).not.toContainText(/comisi[oó]n/i);
     }
   });
 
