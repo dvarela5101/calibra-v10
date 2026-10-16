@@ -5,11 +5,12 @@ import { crearClienteAdmin, exigirSupabaseLocal, TOKEN_CAPTCHA_DE_PRUEBA, variab
  * Se corre una vez antes de todas las pruebas (globalSetup en playwright.config.ts):
  *  1. Falla pronto y en claro si falta el Supabase local o si apunta a uno remoto.
  *  2. Comprueba que el Auth local corra con el CAPTCHA de Turnstile y llegue a Cloudflare (HU-058).
- *  3. Compila de antemano las rutas de Auth. `next dev` compila cada página en su primera
+ *  3. Comprueba que el Auth local exija confirmar el correo (HU-032).
+ *  4. Compila de antemano las rutas de Auth. `next dev` compila cada página en su primera
  *     visita y, en paralelo (móvil y escritorio), esa espera agotaría los tiempos de las pruebas.
  */
 
-const RUTAS = ["/", "/ingresar", "/restablecer", "/restablecer/nueva", "/monitor", "/monitor/agenda", "/monitor/agenda/00000000-0000-4000-8000-000000000000", "/admin", "/admin/equipo", "/admin/leads", "/admin/leads/exportar", "/auth/confirmar", "/monitores", "/agendar", "/agendar/contacto", "/agendar/reserva/00000000-0000-4000-8000-000000000000", "/cita", "/admin/pagos/00000000-0000-4000-8000-000000000000", "/admin/pagos/00000000-0000-4000-8000-000000000000/comprobante", "/admin/desembolsos/00000000-0000-4000-8000-000000000000", "/admin/reembolsos/00000000-0000-4000-8000-000000000000", "/admin/reportes/00000000-0000-4000-8000-000000000000", "/reembolso", "/diagnostico", "/diagnostico/resultado/00000000-0000-4000-8000-000000000000", "/monitor/perfil", "/resultados", "/admin/citas", "/admin/citas/00000000-0000-4000-8000-000000000000", "/monitor/desembolsos"];
+const RUTAS = ["/", "/ingresar", "/restablecer", "/restablecer/nueva", "/monitor", "/monitor/agenda", "/monitor/agenda/00000000-0000-4000-8000-000000000000", "/admin", "/admin/equipo", "/admin/leads", "/admin/leads/exportar", "/auth/confirmar", "/monitores", "/agendar", "/agendar/contacto", "/agendar/reserva/00000000-0000-4000-8000-000000000000", "/cita", "/admin/pagos/00000000-0000-4000-8000-000000000000", "/admin/pagos/00000000-0000-4000-8000-000000000000/comprobante", "/admin/desembolsos/00000000-0000-4000-8000-000000000000", "/admin/reembolsos/00000000-0000-4000-8000-000000000000", "/admin/reportes/00000000-0000-4000-8000-000000000000", "/reembolso", "/diagnostico", "/diagnostico/resultado/00000000-0000-4000-8000-000000000000", "/monitor/perfil", "/resultados", "/admin/citas", "/admin/citas/00000000-0000-4000-8000-000000000000", "/monitor/desembolsos", "/cuenta/crear", "/cuenta/confirmar", "/cuenta/contrasena"];
 
 async function comprobar(nombre: string, url: string, cabeceras: Record<string, string> = {}): Promise<void> {
   const respuesta = await fetch(url, { headers: cabeceras, signal: AbortSignal.timeout(10_000) }).catch((error: unknown) => {
@@ -49,6 +50,27 @@ async function comprobarCaptcha(): Promise<void> {
   if (user) await crearClienteAdmin().auth.admin.deleteUser(user.id);
 }
 
+/**
+ * HU-032: la cuenta de Estudiante depende de que Auth exija confirmar el correo (`enable_confirmations = true` en
+ * supabase/config.toml). Con `mailer_autoconfirm` activo, `updateUser({ email })` convertiría a un anónimo al instante con un
+ * correo que nadie confirmó. Auth lee esa configuración al arrancar: un stack levantado antes de esta HU, o con otra rama,
+ * falla aquí en claro y no en cada prueba.
+ */
+async function comprobarConfirmaciones(): Promise<void> {
+  const respuesta = await fetch(`${variable("NEXT_PUBLIC_SUPABASE_URL")}/auth/v1/settings`, {
+    headers: { apikey: variable("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY") },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!respuesta.ok) throw new Error(`Auth respondió ${respuesta.status} en /auth/v1/settings.`);
+  const { mailer_autoconfirm: autoconfirmar } = (await respuesta.json()) as { mailer_autoconfirm?: boolean };
+  if (autoconfirmar !== false) {
+    throw new Error(
+      "El Auth local no exige confirmar el correo (enable_confirmations = true de supabase/config.toml, HU-032): corre " +
+        "npm run db:detener y npm run db:iniciar desde un árbol con esta configuración.",
+    );
+  }
+}
+
 export default async function preparacion(config: FullConfig): Promise<void> {
   exigirSupabaseLocal();
   variable("SUPABASE_SECRET_KEY");
@@ -57,6 +79,7 @@ export default async function preparacion(config: FullConfig): Promise<void> {
   });
   await comprobar("Mailpit", `${variable("MAILPIT_URL")}/api/v1/info`);
   await comprobarCaptcha();
+  await comprobarConfirmaciones();
 
   const base = config.projects[0]?.use.baseURL ?? "http://localhost:3000";
   await Promise.all(

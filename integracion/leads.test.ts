@@ -4,6 +4,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { claveDeCorreo } from "@/lib/correo/enviar";
 import { RECONSTRUCTORES } from "@/lib/correo/reconstructores";
 import { enviarCorreoDesdeServidor } from "@/lib/correo/servidor";
+import { CORREO_FIJO } from "@/lib/leads/avisos";
 import { leerContacto } from "@/lib/leads/reglas";
 import {
   confirmarCorreo,
@@ -442,18 +443,33 @@ describe("criterio 4: una sesión que ya es Lead no crea otro", () => {
     expect(data).toHaveLength(1);
   });
 
-  it("una cuenta de Estudiante ya es Lead: sus datos se actualizan y no se le crea otro", async () => {
+  it("una cuenta de Estudiante ya es Lead: su nombre y su teléfono se actualizan con su mismo correo y no se le crea otro", async () => {
     const estudiante = await fx.crearEstudiante();
     const { id_lead: idLead } = exito(await fx.admin.from("estudiante").select("id_lead").eq("id", estudiante.id).single(), "leer el estudiante");
-    expect(await leadDeLaSesion(estudiante.id)).toMatchObject({ id: idLead, nombre: "Lead de prueba" });
-    // Este Lead lo borra Fixtures junto con el estudiante: el correo no se anota para la limpieza de esta prueba.
-    const correo = `estudiante-${randomUUID()}@calibra.test`;
+    const actual = await leadDeLaSesion(estudiante.id);
+    expect(actual).toMatchObject({ id: idLead, nombre: "Lead de prueba" });
+    // HU-032 (D-55 b): el correo de un Estudiante queda fijo; lo que cambia es el nombre y el teléfono, con su mismo correo.
+    const correo = actual!.correo!;
 
-    expect(await registrarContacto(entradaDe(estudiante.id, { nombre: "Estudiante Cambiada", correo }))).toEqual({ resultado: "lead" });
+    expect(await registrarContacto(entradaDe(estudiante.id, { nombre: "Estudiante Cambiada", telefono: "3001234567", correo }))).toEqual({
+      resultado: "lead",
+    });
 
-    expect(await leadDeLaSesion(estudiante.id)).toMatchObject({ id: idLead, nombre: "Estudiante Cambiada", correo });
+    expect(await leadDeLaSesion(estudiante.id)).toMatchObject({ id: idLead, nombre: "Estudiante Cambiada", correo, numeroTelefono: "+573001234567" });
     const { data } = await fx.admin.from("lead").select("id").eq("id_sesion_anonima", estudiante.id);
     expect(data).toEqual([]);
+  });
+
+  it("D-55 b: una cuenta de Estudiante que manda otro correo recibe el mensaje del correo fijo y su Lead no cambia", async () => {
+    const estudiante = await fx.crearEstudiante();
+    const antes = exito(await fx.admin.from("lead").select("*").eq("id", (await leadDeLaSesion(estudiante.id))!.id).single(), "leer el Lead");
+
+    const resultado = await registrarContacto(
+      entradaDe(estudiante.id, { nombre: "Estudiante Cambiada", correo: `estudiante-${randomUUID()}@calibra.test` }),
+    );
+
+    expect(resultado).toEqual({ resultado: "error", error: CORREO_FIJO });
+    expect(exito(await fx.admin.from("lead").select("*").eq("id", antes.id).single(), "releer el Lead")).toEqual(antes);
   });
 });
 

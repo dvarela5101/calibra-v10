@@ -1260,6 +1260,9 @@ isOneToOne: false
 "anotar_correo_de_contacto":
 { Args: { "p_correo": string,"p_id_sesion": string }; Returns: boolean
                            },
+"anotar_envio_de_cuenta":
+{ Args: { "p_id_sesion": string }; Returns: string
+                           },
 "autorizar_cancelacion_fuera_de_plazo":
 { Args: { "p_categoria": string,"p_id_monitoria": string,"p_nota": string }; Returns: string
                            },
@@ -1302,6 +1305,9 @@ isOneToOne: false
 { Args: { "p_id_sesion": string,"p_token_hash": string }; Returns: {
               "id_lead": string,"siguiente": string
             }[]
+                           },
+"crear_estudiante":
+{ Args: { "p_id_usuario": string }; Returns: string
                            },
 "crear_invitacion_admin":
 { Args: { "p_correo": string,"p_id_admin": string,"p_token_hash": string }; Returns: {
@@ -1524,6 +1530,11 @@ isOneToOne: false
 "parametros_contacto":
 { Args: Record<PropertyKey, never>; Returns: {
               "tope_correos": number,"tope_ventana_min": number
+            }[]
+                           },
+"parametros_cuenta":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "tope_envios_sesion": number,"tope_envios_total": number,"ventana_min": number
             }[]
                            },
 "parametros_negocio":

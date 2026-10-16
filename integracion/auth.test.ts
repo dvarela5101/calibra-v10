@@ -1,16 +1,45 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { convertirAnonimoEnCuenta } from "@/lib/auth/convertir";
+import { ponerContrasena, vincularCorreo } from "@/lib/auth/convertir";
 import { desactivarCuenta, reactivarCuenta } from "@/lib/auth/cuentas";
 import { crearCliente, exigirSupabaseLocal, Fixtures, idsVisibles, rolDe, TOKEN_CAPTCHA_DE_PRUEBA } from "./utilidades";
 
 // Pruebas de integración de HU-004 contra el Supabase LOCAL (Auth, REST y base reales).
 // Cada prueba crea sus propios usuarios y los borra al final.
+//
+// HU-032: el Auth local confirma el correo antes de dar por válido un cambio de correo (`enable_confirmations = true`),
+// así que convertir al anónimo en cuenta son dos pasos: ligar el correo (Auth manda un correo y el usuario sigue anónimo)
+// y confirmarlo con el `token_hash` del correo. El mismo id, las mismas filas visibles.
 
 let fx: Fixtures;
+let mailpit: string;
 
 beforeAll(async () => {
   await exigirSupabaseLocal();
+  mailpit = process.env.MAILPIT_URL ?? "";
+  if (!mailpit) throw new Error("Falta MAILPIT_URL: corre npm run db:env.");
 });
+
+/** El `token_hash` del correo de confirmación que Auth mandó a ese destinatario (espera hasta 15 s) y borra el buzón. */
+async function tokenHashDelCorreo(destinatario: string): Promise<string> {
+  const consulta = `${mailpit}/api/v1/search?query=${encodeURIComponent(`to:"${destinatario}"`)}`;
+  const limite = Date.now() + 15_000;
+  try {
+    for (;;) {
+      const { messages } = (await (await fetch(consulta)).json()) as { messages?: { ID: string }[] };
+      if (messages?.length) {
+        const { HTML } = (await (await fetch(`${mailpit}/api/v1/message/${messages[0].ID}`)).json()) as { HTML: string };
+        const enlace = /href="([^"]*\/cuenta\/confirmar\?[^"]*)"/.exec(HTML)?.[1];
+        const token = enlace ? new URL(enlace.replaceAll("&amp;", "&")).searchParams.get("token_hash") : null;
+        if (!token) throw new Error(`El correo no trae el enlace de confirmación: ${HTML}`);
+        return token;
+      }
+      if (Date.now() > limite) throw new Error(`No llegó el correo de confirmación a ${destinatario}.`);
+      await new Promise((listo) => setTimeout(listo, 250));
+    }
+  } finally {
+    await fetch(consulta, { method: "DELETE" }).catch(() => undefined);
+  }
+}
 
 beforeEach(() => {
   fx = new Fixtures();
@@ -32,22 +61,35 @@ describe("Criterio 2: el anónimo se vuelve cuenta sin cambiar de id", () => {
 
     const correo = `prueba-${crypto.randomUUID()}@calibra.test`;
     const contrasena = `Clave-${crypto.randomUUID()}`;
-    expect(await convertirAnonimoEnCuenta(anonimo, { correo, contrasena })).toEqual({ ok: true, pendiente: null });
+    // Paso 1: ligar el correo. Auth manda el enlace y el usuario sigue siendo el mismo anónimo hasta confirmarlo.
+    expect(await vincularCorreo(anonimo, correo)).toEqual({ ok: true });
+    const pendiente = await anonimo.auth.getUser();
+    expect(pendiente.data.user?.id).toBe(id);
+    expect(pendiente.data.user?.is_anonymous).toBe(true);
+    expect(await rolDe(anonimo)).toBe("anonimo");
+
+    // Paso 2: confirmar el correo con el token del correo (otro cliente: otro dispositivo). Después, la contraseña.
+    const cuenta = crearCliente();
+    const confirmacion = await cuenta.auth.verifyOtp({ type: "email_change", token_hash: await tokenHashDelCorreo(correo) });
+    expect(confirmacion.error).toBeNull();
+    expect(await ponerContrasena(cuenta, contrasena)).toEqual({ ok: true });
+    // El token vigente todavía puede decir lo anterior; con la sesión nueva ya no.
+    expect((await cuenta.auth.refreshSession()).error).toBeNull();
 
     // Mismo usuario de Auth, ya no anónimo, y el token refrescado lo dice.
-    const { data: usuario, error } = await anonimo.auth.getUser();
+    const { data: usuario, error } = await cuenta.auth.getUser();
     expect(error).toBeNull();
     expect(usuario.user?.id).toBe(id);
     expect(usuario.user?.is_anonymous).toBe(false);
     expect(usuario.user?.email).toBe(correo);
-    const despues = await anonimo.auth.getClaims();
+    const despues = await cuenta.auth.getClaims();
     expect(despues.data?.claims.sub).toBe(id);
     expect(despues.data?.claims.is_anonymous).toBe(false);
 
     // Sin migrar nada: el diagnóstico sigue siendo suyo por RLS.
-    expect(await idsVisibles(anonimo, "diagnostico", "id", diagnostico.id)).toEqual([diagnostico.id]);
+    expect(await idsVisibles(cuenta, "diagnostico", "id", diagnostico.id)).toEqual([diagnostico.id]);
     // Y ya no cuenta como anónimo para las políticas de rol.
-    expect(await rolDe(anonimo)).not.toBe("anonimo");
+    expect(await rolDe(cuenta)).not.toBe("anonimo");
 
     // Un cliente nuevo entra con ese correo y contraseña y ve lo mismo.
     const nuevo = crearCliente();
@@ -66,10 +108,7 @@ describe("Criterio 2: el anónimo se vuelve cuenta sin cambiar de id", () => {
     const existente = await fx.crearUsuario();
     const { cliente: anonimo, id } = await fx.crearAnonimo();
 
-    const resultado = await convertirAnonimoEnCuenta(anonimo, {
-      correo: existente.correo,
-      contrasena: `Clave-${crypto.randomUUID()}`,
-    });
+    const resultado = await vincularCorreo(anonimo, existente.correo);
     expect(resultado).toEqual({ ok: false, codigo: "email_exists" });
 
     const { data } = await anonimo.auth.getUser();

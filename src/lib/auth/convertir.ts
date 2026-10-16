@@ -3,38 +3,32 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 /** Igual a minimum_password_length de supabase/config.toml. */
 export const CONTRASENA_MINIMA = 8;
 
-export type ResultadoConversion =
-  | { ok: true; pendiente: null }
-  /** Con confirmación de correo activa: la contraseña se pone después de verificar el correo. */
-  | { ok: true; pendiente: "verificar_correo" }
-  | { ok: false; codigo: string };
+export type ResultadoDeVincular = { ok: true } | { ok: false; codigo: string };
 
 /**
- * Convierte la sesión anónima en una cuenta con correo y contraseña. El id del usuario
- * NO cambia, así que sus diagnósticos y su lead siguen siendo suyos sin migrar nada
- * (sección 14). Recibe el cliente con la sesión anónima activa. La pantalla es HU-032.
+ * Crear la cuenta de Estudiante (HU-032) es el mismo usuario de Auth de la sesión anónima, que se convierte en dos
+ * pasos: ligar el correo (`vincularCorreo`) y, ya confirmado, ponerle contraseña (`ponerContrasena`). El id del
+ * usuario NO cambia, así que sus diagnósticos y su Lead siguen siendo suyos sin migrar nada (sección 14).
  *
- * Supabase exige vincular el correo antes que la contraseña. Si el proyecto pide
- * confirmar correos, el usuario sigue anónimo hasta abrir el enlace.
+ * Pide a Auth que ligue el correo a la sesión anónima. Con las confirmaciones activas, Auth manda el enlace al
+ * correo y el usuario sigue anónimo hasta abrirlo (`verifyOtp` con el tipo `email_change`).
  */
-export async function convertirAnonimoEnCuenta(
-  supabase: SupabaseClient,
-  datos: { correo: string; contrasena: string },
-): Promise<ResultadoConversion> {
-  // Se valida antes de tocar nada: vincular el correo no se puede deshacer, y con una
-  // contraseña rechazada la cuenta quedaría con correo y sin contraseña.
-  if (datos.contrasena.length < CONTRASENA_MINIMA) return { ok: false, codigo: "weak_password" };
+export async function vincularCorreo(supabase: SupabaseClient, correo: string): Promise<ResultadoDeVincular> {
+  const { data, error } = await supabase.auth.updateUser({ email: correo });
+  if (error) return { ok: false, codigo: error.code ?? "desconocido" };
+  // Si ya dejó de ser anónimo, Auth cambió el correo sin confirmarlo: las confirmaciones están apagadas. La guardia del
+  // servidor lo evita antes de llamar; esto es la segunda red (RN-12).
+  if (data.user?.is_anonymous === false) return { ok: false, codigo: "correo_sin_confirmar" };
+  return { ok: true };
+}
 
-  const conCorreo = await supabase.auth.updateUser({ email: datos.correo });
-  if (conCorreo.error) return { ok: false, codigo: conCorreo.error.code ?? "desconocido" };
-  if (conCorreo.data.user?.is_anonymous) return { ok: true, pendiente: "verificar_correo" };
-
-  const conContrasena = await supabase.auth.updateUser({ password: datos.contrasena });
-  if (conContrasena.error) return { ok: false, codigo: conContrasena.error.code ?? "desconocido" };
-
-  // El token vigente todavía dice is_anonymous: true; el nuevo ya no.
-  const refresco = await supabase.auth.refreshSession();
-  if (refresco.error) return { ok: false, codigo: refresco.error.code ?? "desconocido" };
-
-  return { ok: true, pendiente: null };
+/**
+ * Pone la contraseña de quien ya confirmó su correo. No refresca la sesión: la que deja `verifyOtp` al confirmar ya
+ * trae el token nuevo, el de un usuario que dejó de ser anónimo.
+ */
+export async function ponerContrasena(supabase: SupabaseClient, contrasena: string): Promise<ResultadoDeVincular> {
+  // Se valida antes de llamar a Auth: la contraseña corta no cambia nada.
+  if (contrasena.length < CONTRASENA_MINIMA) return { ok: false, codigo: "weak_password" };
+  const { error } = await supabase.auth.updateUser({ password: contrasena });
+  return error ? { ok: false, codigo: error.code ?? "desconocido" } : { ok: true };
 }
