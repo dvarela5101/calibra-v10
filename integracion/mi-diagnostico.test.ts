@@ -291,11 +291,11 @@ describe("D-53 e: la dueña y la cuenta de Estudiante de su Lead, y nadie más d
     expect(await leerMiDiagnostico(duena.cliente, id), "la sesión que lo hizo").toMatchObject({ idDiagnostico: id });
     expect(await leerMiDiagnostico(estudianteDelLead, id), "la cuenta de Estudiante del Lead").toMatchObject({ idDiagnostico: id });
 
-    // La política de `diagnostico` sí deja leer la fila a la creadora y a la ligada (es_mi_lead): por eso existe la función.
+    // Desde HU-095 la política de `diagnostico` dice lo mismo que la función: la creadora y la ligada tampoco leen la fila de la tabla.
     const filaVisible = async (persona: Persona) =>
       exito(await persona.cliente.from("diagnostico").select("id").eq("id", id), "leer diagnostico con la sesión").length;
-    expect(await filaVisible(creadora), "la creadora ve la fila de la tabla").toBe(1);
-    expect(await filaVisible(ligada), "la ligada ve la fila de la tabla").toBe(1);
+    expect(await filaVisible(creadora), "la creadora no ve la fila de la tabla").toBe(0);
+    expect(await filaVisible(ligada), "la ligada no ve la fila de la tabla").toBe(0);
 
     expect(await leerMiDiagnostico(creadora.cliente, id), "la sesión que creó el Lead").toBeNull();
     expect(await leerMiDiagnostico(ligada.cliente, id), "la sesión ligada por lead_sesion").toBeNull();

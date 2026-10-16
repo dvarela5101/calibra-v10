@@ -6,6 +6,8 @@
 -- quién no (otra sesión, una sesión ligada por lead_sesion, la que creó el Lead sin hacer el diagnóstico, la cuenta de Estudiante de
 -- otro Lead, un monitor con cita, un admin, un monitor o un admin que además es la sesión dueña, el visitante sin sesión), qué
 -- columnas salen (ni repetido, ni semilla, ni token, ni las copias de las preguntas) y que la Evaluación apagada no cambia nada.
+-- Desde HU-095 también que la política de lectura de la tabla dice lo mismo que la función (D-53 e): cada actor lee de public.diagnostico
+-- los mismos diagnósticos que le devuelve mi_diagnostico, salvo el monitor y el admin que no son dueños.
 --
 -- Elenco (ids terminados en 0009NN):
 --   sesiones c0000000-...-0009NN: 01 dueña (hizo los diagnósticos 01 y 02), 02 otra sin relación, 03 ligada al Lead 1 por lead_sesion
@@ -21,12 +23,17 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(50);
+select plan(62);
 
 -- Lo que el diagnóstico 01 guarda como resultado por habilidad, para compararlo con lo que devuelve la función.
 create temporary table esperado as select
   '{"habilidades":[{"habilidad":"regla-cadena","descripcion":"Derivar una función compuesta","nivel":"en_proceso","respuestas":3,"aciertos":2},{"habilidad":"potencia","descripcion":"Derivar una potencia","nivel":"sin_medir","respuestas":0,"aciertos":0}],"errores":[{"misconcepcion":"olvida-cadena","habilidad":"regla-cadena","descripcionHabilidad":"Derivar una función compuesta","texto":"Olvidas multiplicar por la derivada de adentro","estado":"confirmada","veces":2,"detalles":["error propio de la opción"]}],"prerrequisitos":[{"materia":null,"habilidad":"potencia","descripcion":"Derivar una potencia"}]}'::jsonb as resultado;
 grant select on esperado to authenticated;
+
+-- Los diagnósticos del elenco, para comparar lo que cada actor lee de la tabla con lo que le devuelve mi_diagnostico (HU-095).
+create temporary table ids_diag as select ('60000000-0000-0000-0000-0000000009' || lpad(n::text, 2, '0'))::uuid as id
+from generate_series(1, 4) n;
+grant select on ids_diag to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Fixtures (como postgres)
@@ -135,6 +142,18 @@ select ok(
   and has_function_privilege('authenticated', 'privado.mi_diagnostico(uuid)', 'execute'),
   'Las sesiones (anónimas incluidas) sí ejecutan las dos');
 
+-- La función de la política de lectura de la tabla (HU-095): la cuenta de Estudiante de un Lead (D-55 c).
+select has_function('privado', 'es_cuenta_de_lead', array['uuid'], 'Existe privado.es_cuenta_de_lead, la rama del Estudiante de la política');
+select ok(
+  has_function_privilege('authenticated', 'privado.es_cuenta_de_lead(uuid)', 'execute'),
+  'Las sesiones la ejecutan: la política de diagnostico corre con su rol');
+select ok(
+  not has_function_privilege('anon', 'privado.es_cuenta_de_lead(uuid)', 'execute'),
+  'El visitante sin sesión no la ejecuta');
+select ok(
+  not has_function_privilege('service_role', 'privado.es_cuenta_de_lead(uuid)', 'execute'),
+  'Ni la llave secreta');
+
 -- ---------------------------------------------------------------------------
 -- La sesión dueña (01)
 -- ---------------------------------------------------------------------------
@@ -194,19 +213,20 @@ select is((select nombre_materia from public.mi_diagnostico('60000000-0000-0000-
 select is((select count(*)::int from public.mi_diagnostico('60000000-0000-0000-0000-000000000901')), 0,
   'Pero no un diagnóstico sin Lead, aunque sea de una sesión cualquiera');
 
--- La sesión ligada por el enlace de P-23 (lead_sesion): la tabla se lo deja leer por es_mi_lead, la función no.
+-- La sesión ligada por el enlace de P-23 (lead_sesion): ni la tabla ni la función se lo dejan leer. Desde HU-095 la política de la
+-- tabla sigue la misma regla que la función (D-53 e): el otro dispositivo se sirve con el enlace del correo o con la cuenta.
 set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000000903","role":"authenticated","is_anonymous":true}';
-select is((select count(*)::int from public.diagnostico where id = '60000000-0000-0000-0000-000000000902'), 1,
-  'La sesión ligada por lead_sesion sí lo lee con select (es el motivo de la función)');
+select is((select count(*)::int from public.diagnostico where id = '60000000-0000-0000-0000-000000000902'), 0,
+  'La sesión ligada por lead_sesion no lo lee con select (HU-095, D-53 e)');
 select is((select count(*)::int from public.mi_diagnostico('60000000-0000-0000-0000-000000000902')), 0,
-  'Pero con mi_diagnostico no: D-53 e la deja con los diagnósticos de su propia sesión');
+  'Ni con mi_diagnostico: ve los diagnósticos de su propia sesión y nada más');
 
 -- La sesión que creó el Lead sin haber hecho el diagnóstico: igual.
 set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000000908","role":"authenticated","is_anonymous":true}';
-select is((select count(*)::int from public.diagnostico where id = '60000000-0000-0000-0000-000000000902'), 1,
-  'La sesión que creó el Lead sí lo lee con select');
+select is((select count(*)::int from public.diagnostico where id = '60000000-0000-0000-0000-000000000902'), 0,
+  'La sesión que creó el Lead no lo lee con select (HU-095, D-53 e)');
 select is((select count(*)::int from public.mi_diagnostico('60000000-0000-0000-0000-000000000902')), 0,
-  'Pero con mi_diagnostico no: quien escribió primero el correo de otra persona no ve sus diagnósticos');
+  'Ni con mi_diagnostico: quien escribió primero el correo de otra persona no ve sus diagnósticos');
 
 -- La cuenta de Estudiante de otro Lead.
 set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000000909","role":"authenticated","is_anonymous":false}';
@@ -242,6 +262,59 @@ select is((select count(*)::int from public.diagnostico where id = '60000000-000
   'Un admin que es la sesión dueña de un diagnóstico lo lee con select');
 select is((select count(*)::int from public.mi_diagnostico('60000000-0000-0000-0000-000000000904')), 0,
   'Pero con mi_diagnostico no');
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- La tabla y la función dicen lo mismo (HU-095, criterio 4)
+-- ---------------------------------------------------------------------------
+-- Por cada actor, los diagnósticos 01 a 04 que lee de public.diagnostico son los mismos que devuelve mi_diagnostico(id). Así las
+-- dos reglas no se vuelven a separar: si la política de la tabla abre algo que la función cierra (o al revés), una de estas falla.
+-- La excepción declarada es el monitor y el admin que no son dueños: leen la tabla y la función los descarta (arriba).
+set local role authenticated;
+
+set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000000901","role":"authenticated","is_anonymous":true}';
+select is(
+  array(select id from public.diagnostico where id in (select id from ids_diag) order by id),
+  array(select f.id_diagnostico from ids_diag i cross join lateral public.mi_diagnostico(i.id) f order by f.id_diagnostico),
+  'La sesión dueña: la tabla y mi_diagnostico dan los mismos diagnósticos');
+select is(
+  array(select id from public.diagnostico where id in (select id from ids_diag) order by id),
+  array['60000000-0000-0000-0000-000000000901', '60000000-0000-0000-0000-000000000902']::uuid[],
+  'Y son los dos que hizo, el que no tenía Lead y el que ya lo tiene');
+
+set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000000902","role":"authenticated","is_anonymous":true}';
+select is(
+  array(select id from public.diagnostico where id in (select id from ids_diag) order by id),
+  array(select f.id_diagnostico from ids_diag i cross join lateral public.mi_diagnostico(i.id) f order by f.id_diagnostico),
+  'Una sesión ajena: la tabla y mi_diagnostico dan lo mismo (nada)');
+
+set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000000903","role":"authenticated","is_anonymous":true}';
+select is(
+  array(select id from public.diagnostico where id in (select id from ids_diag) order by id),
+  array(select f.id_diagnostico from ids_diag i cross join lateral public.mi_diagnostico(i.id) f order by f.id_diagnostico),
+  'La sesión ligada por lead_sesion: la tabla y mi_diagnostico dan lo mismo (nada)');
+
+set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000000908","role":"authenticated","is_anonymous":true}';
+select is(
+  array(select id from public.diagnostico where id in (select id from ids_diag) order by id),
+  array(select f.id_diagnostico from ids_diag i cross join lateral public.mi_diagnostico(i.id) f order by f.id_diagnostico),
+  'La sesión que creó el Lead: la tabla y mi_diagnostico dan lo mismo (nada)');
+
+set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000000907","role":"authenticated","is_anonymous":false}';
+select is(
+  array(select id from public.diagnostico where id in (select id from ids_diag) order by id),
+  array(select f.id_diagnostico from ids_diag i cross join lateral public.mi_diagnostico(i.id) f order by f.id_diagnostico),
+  'La cuenta de Estudiante del Lead: la tabla y mi_diagnostico dan los mismos diagnósticos');
+select is(
+  array(select id from public.diagnostico where id in (select id from ids_diag) order by id),
+  array['60000000-0000-0000-0000-000000000902']::uuid[],
+  'Y es el que otra sesión de su Lead dejó ligado (D-55 c), no el que no tiene Lead');
+
+set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000000909","role":"authenticated","is_anonymous":false}';
+select is(
+  array(select id from public.diagnostico where id in (select id from ids_diag) order by id),
+  array(select f.id_diagnostico from ids_diag i cross join lateral public.mi_diagnostico(i.id) f order by f.id_diagnostico),
+  'La cuenta de Estudiante de otro Lead: la tabla y mi_diagnostico dan lo mismo (nada, aunque su Lead tenga la cita)');
 reset role;
 
 -- ---------------------------------------------------------------------------

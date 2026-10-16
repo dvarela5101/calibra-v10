@@ -38,7 +38,7 @@ import {
 } from "./banco-de-prueba";
 import { diaDelNegocio } from "@/lib/fechas";
 import { diaIsoDeFecha } from "@/lib/plazos/motor";
-import { crearCliente, exigirSupabaseLocal, exito, Fixtures, type Cliente, type UsuarioPrueba } from "./utilidades";
+import { crearCliente, exigirSupabaseLocal, exito, Fixtures, idsVisibles, type Cliente, type UsuarioPrueba } from "./utilidades";
 
 /**
  * HU-081 contra el Supabase LOCAL: el servidor del diagnóstico por su puerta real, las tres operaciones de
@@ -2562,7 +2562,8 @@ describe("criterios 4, 7 y 11 con sesiones de verdad", () => {
 
     const actores: [string, Cliente, boolean][] = [
       ["la dueña", duena.cliente, true],
-      ["otra sesión del Lead", delLead.cliente, true],
+      // HU-095 (D-53 e): la sesión ligada por lead_sesion no lee el diagnóstico que hizo otra sesión del Lead.
+      ["otra sesión del Lead", delLead.cliente, false],
       ["la cuenta de Estudiante del Lead", estudiante.cliente, true],
       ["el monitor de la cita", monitor.cliente, true],
       ["el admin", admin.cliente, true],
@@ -2659,9 +2660,11 @@ describe("criterios 4, 7 y 11 con sesiones de verdad", () => {
       { habilidad: "cadena", motivos: ["sin_preguntas_sin_ver"] },
       { habilidad: "potencia", motivos: ["sin_preguntas_sin_ver"] },
     ]);
+    // Quienes leen la fila: la sesión que la hizo, la cuenta de Estudiante del Lead, el monitor de la cita y el admin. La otra
+    // sesión del Lead (lead_sesion) ya no la lee desde HU-095, así que no hay nada que revisar en lo que le llega: llega cero filas.
+    expect((await delLead.cliente.from("diagnostico").select("id").eq("id", dos.fin.idDiagnostico)).data, "otra sesión del Lead").toEqual([]);
     for (const [actor, cliente] of [
       ["la dueña", duena.cliente],
-      ["otra sesión del Lead", delLead.cliente],
       ["el Estudiante", estudiante.cliente],
       ["el monitor de la cita", monitor.cliente],
       ["el admin", admin.cliente],
@@ -2678,17 +2681,65 @@ describe("criterios 4, 7 y 11 con sesiones de verdad", () => {
     }
   });
 
-  it("el diagnóstico de una sesión del Lead nace con el Lead: la otra sesión del Lead y el Estudiante lo leen aunque lo haya terminado la dueña", async () => {
+  it("el diagnóstico de una sesión del Lead nace con el Lead: el Estudiante lo lee aunque lo haya terminado la dueña; la otra sesión del Lead y una ajena, no", async () => {
     const lead = await armarLead();
     const terminado = await correr(comoSesion(duena), examenFinal, acierta, { semilla: 1 });
 
     const [fila] = await diagnosticosDe(duena.id);
     expect(fila.id_lead).toBe(lead.id);
-    for (const cliente of [delLead.cliente, estudiante.cliente]) {
-      const lectura = await cliente.from("diagnostico").select("id").eq("id", terminado.fin.idDiagnostico);
-      expect(lectura.data).toEqual([{ id: terminado.fin.idDiagnostico }]);
-    }
+    const lectura = await estudiante.cliente.from("diagnostico").select("id").eq("id", terminado.fin.idDiagnostico);
+    expect(lectura.data).toEqual([{ id: terminado.fin.idDiagnostico }]);
+    // HU-095 (D-53 e): la sesión ligada por lead_sesion es del Lead pero no hizo este diagnóstico, y no lo lee.
+    expect((await delLead.cliente.from("diagnostico").select("id").eq("id", terminado.fin.idDiagnostico)).data).toEqual([]);
     expect((await ajena.cliente.from("diagnostico").select("id").eq("id", terminado.fin.idDiagnostico)).data).toEqual([]);
+  });
+
+  it("HU-095: la sesión que creó el Lead, la ligada y una ajena reciben cero filas por id, por id_lead y por correo; la dueña, el Estudiante, el monitor y el admin, la fila", async () => {
+    // El Lead lo creó otra sesión (quien escribió primero el correo), no la dueña del diagnóstico: el caso que D-53 e quiere cerrar.
+    const creadora = await fx.crearAnonimo();
+    const lead = await fx.crearLeadDeSesion(creadora.id);
+    // Con teléfono, para buscar también por él (criterio 3).
+    const telefono = `+57300${String(Date.now()).slice(-7)}`;
+    exito(await fx.admin.from("lead").update({ numero_telefono: telefono }).eq("id", lead.id).select().single(), "ponerle teléfono al Lead");
+    exito(await fx.admin.from("lead_sesion").insert({ id_sesion: delLead.id, id_lead: lead.id }).select().single(), "ligar la otra sesión al Lead");
+    exito(await fx.admin.from("estudiante").insert({ id: estudiante.id, id_lead: lead.id }).select().single(), "crear el Estudiante del Lead");
+    const { materia, evaluacion } = await fx.crearEvaluacion();
+    const diagnostico = await fx.crearDiagnostico({ idSesionAnonima: duena.id, idLead: lead.id, idEvaluacion: evaluacion.id, idMateria: materia.id });
+    await citaDelMonitor(diagnostico.id);
+
+    /** Lo que el cliente alcanza por la Data API: por id, por id_lead y (si lee el Lead) por el correo y el teléfono del Lead. */
+    const alcance = async (cliente: Cliente) => {
+      const porId = await cliente.from("diagnostico").select("id").eq("id", diagnostico.id);
+      const porLead = await cliente.from("diagnostico").select("id").eq("id_lead", lead.id);
+      const porCorreo = await cliente.from("diagnostico").select("id, lead!inner(correo)").eq("lead.correo", lead.correo!);
+      const porTelefono = await cliente.from("diagnostico").select("id, lead!inner(numero_telefono)").eq("lead.numero_telefono", telefono);
+      for (const lectura of [porId, porLead, porCorreo, porTelefono]) expect(lectura.error).toBeNull();
+      const ids = (filas: { id: string }[] | null) => (filas ?? []).map((fila) => fila.id);
+      return { porId: ids(porId.data), porLead: ids(porLead.data), porCorreo: ids(porCorreo.data), porTelefono: ids(porTelefono.data) };
+    };
+    const nada = { porId: [], porLead: [], porCorreo: [], porTelefono: [] };
+
+    for (const [actor, cliente] of [
+      ["la sesión que creó el Lead", creadora.cliente],
+      ["la sesión ligada por lead_sesion", delLead.cliente],
+      ["una sesión ajena", ajena.cliente],
+    ] as const) {
+      expect(await alcance(cliente), actor).toEqual(nada);
+    }
+    // La creadora y la ligada siguen leyendo el Lead (es_mi_lead): por eso las búsquedas por correo y teléfono no son vacías por falta de Lead.
+    for (const cliente of [creadora.cliente, delLead.cliente]) expect(await idsVisibles(cliente, "lead", "id", lead.id)).toEqual([lead.id]);
+
+    const fila = { porId: [diagnostico.id], porLead: [diagnostico.id] };
+    expect(await alcance(duena.cliente), "la sesión que lo hizo").toMatchObject(fila);
+    // El Estudiante y el admin leen también el Lead, así que las búsquedas por correo y por teléfono también les llegan.
+    for (const [actor, cliente] of [["la cuenta de Estudiante del Lead", estudiante.cliente], ["el admin", admin.cliente]] as const) {
+      expect(await alcance(cliente), actor).toEqual({ ...fila, porCorreo: [diagnostico.id], porTelefono: [diagnostico.id] });
+    }
+    expect(await alcance(monitor.cliente), "el monitor de la cita").toMatchObject(fila);
+    // Y el token de recuperación sigue sin leerlo nadie.
+    for (const cliente of [creadora.cliente, duena.cliente, estudiante.cliente]) {
+      expect((await cliente.from("diagnostico").select("token_recuperacion").eq("id", diagnostico.id)).error?.code).toBe("42501");
+    }
   });
 
   it("criterio 4: agendar no liga un diagnóstico en curso, y sí uno terminado aunque haya otro en curso", async () => {
