@@ -87,7 +87,8 @@ function codigoDe(carpeta: string): string[] {
 
 describe("nunca innerHTML con texto del banco", () => {
   const CARPETAS = ["src/lib/diagnostico", "src/components/diagnostico", "src/app/(publico)/diagnostico"];
-  const archivos = CARPETAS.flatMap(codigoDe);
+  // HU-011: la portada también pinta el resultado (su `page.tsx` está en la carpeta de al lado, no dentro de `diagnostico/`).
+  const archivos = [...CARPETAS.flatMap(codigoDe), "src/app/(publico)/page.tsx"];
 
   it("hay código que revisar", () => {
     const nombres = archivos.map((archivo) => relative(RAIZ, ruta(archivo)).replaceAll("\\", "/"));
@@ -95,9 +96,11 @@ describe("nunca innerHTML con texto del banco", () => {
       expect.arrayContaining([
         "src/lib/diagnostico/servidor.ts",
         "src/lib/diagnostico/mostrar.ts",
+        "src/lib/diagnostico/ultimo.ts",
         "src/components/diagnostico/ResultadoDelDiagnostico.tsx",
         "src/app/(publico)/diagnostico/Pregunta.tsx",
         "src/app/(publico)/diagnostico/resultado/[id]/page.tsx",
+        "src/app/(publico)/page.tsx",
       ]),
     );
   });

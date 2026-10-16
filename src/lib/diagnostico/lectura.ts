@@ -21,3 +21,23 @@ export async function leerMiDiagnostico(cliente: ClienteDeLectura, id: string): 
   const fila = data?.[0];
   return fila ? proyectarResultado(fila) : null;
 }
+
+/**
+ * El último diagnóstico terminado de la sesión de quien visita, para la portada (HU-011, D-53 d y e), o `null` si no tiene
+ * ninguno. Mismo cliente DE LA SESIÓN y mismo mapeo que `leerMiDiagnostico`: `public.mi_ultimo_diagnostico()` elige en la base el
+ * id más reciente de la propia sesión (`id_sesion_anonima = auth.uid()`: no las demás sesiones de su Lead ni una cuenta de
+ * Estudiante que sea otro usuario; la que nació de convertir esa misma sesión conserva el id y sí es la dueña) y devuelve lo de
+ * `mi_diagnostico`. No lleva argumentos: la aplicación no dice de quién.
+ *
+ * Con `senal` la llamada a la base se corta cuando la señal se aborta (el tope de la portada, `TOPE_DE_LECTURA_MS`).
+ *
+ * Lanza con un mensaje sin contenido (solo el código de la base, nunca `message`, `details` ni `hint`, que un check puede llenar
+ * con la fila) o `ErrorDeResultadoGuardado` si lo guardado no cuadra.
+ */
+export async function leerMiUltimoDiagnostico(cliente: ClienteDeLectura, senal?: AbortSignal): Promise<ResultadoParaMostrar | null> {
+  const consulta = cliente.rpc("mi_ultimo_diagnostico");
+  const { data, error } = await (senal ? consulta.abortSignal(senal) : consulta);
+  if (error) throw new Error(`Falló «mi_ultimo_diagnostico» (código ${error.code || "sin código"}).`);
+  const fila = data?.[0];
+  return fila ? proyectarResultado(fila) : null;
+}

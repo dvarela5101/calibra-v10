@@ -1364,6 +1364,11 @@ isOneToOne: false
 "desembolso_ejecutable":
 { Args: { "p_ahora": string,"p_fin_programado": string }; Returns: boolean
                            },
+"diagnostico_de_mi_monitoria":
+{ Args: { "p_id_monitoria": string }; Returns: {
+              "aciertos": number,"duracion_min": number,"errores": Json,"fecha": string,"fecha_realizacion": string,"habilidades": Json,"hay_diagnostico": boolean,"hora": string,"nombre_estudiante": string,"nombre_evaluacion": string,"nombre_materia": string,"preguntas": Json,"prerrequisitos": Json,"repetido": boolean,"respondidas": number,"respuestas_autorizadas": boolean
+            }[]
+                           },
 "diagnostico_en_curso_de":
 { Args: { "p_id_sesion": string }; Returns: {
               "actualizado_en": string,
@@ -1487,6 +1492,11 @@ isOneToOne: false
                            },
 "mi_rol":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"mi_ultimo_diagnostico":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "aciertos": number,"codigo_materia": string,"fecha_realizacion": string,"id_diagnostico": string,"nombre_evaluacion": string,"nombre_materia": string,"respondidas": number,"resultado": Json
+            }[]
                            },
 "mis_citas":
 { Args: Record<PropertyKey, never>; Returns: {
