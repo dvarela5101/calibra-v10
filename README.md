@@ -97,7 +97,7 @@ npm run db:iniciar
 npm run db:verificar
 ```
 
-- **Estrategia (decidida el 28 de septiembre de 2026):** v10 usará el mismo proyecto Supabase del prototipo (`uotlhaitdkfroavqkvee`), pero solo desde el corte final ([HU-057](backlog/HU-057.md)). Hasta entonces el prototipo sigue vivo sobre esa base, y **ninguna migración se aplica al proyecto real**. Nada de `supabase db push`, `--linked` ni el MCP contra ese proyecto para escribir.
+- **Estrategia (D-72, 15 de octubre de 2026, reemplaza la del 28 de septiembre):** v10 sale en un proyecto Supabase nuevo en el corte final ([HU-057](backlog/HU-057.md)). El del prototipo (`uotlhaitdkfroavqkvee`) sigue vivo hasta entonces, se respalda y se pausa, y **ninguna migración se le aplica nunca**. Nada de `supabase db push`, `--linked` ni el MCP contra ese proyecto para escribir.
 - Las migraciones son idempotentes: `npm run db:verificar` las vuelve a aplicar sobre la base que ya las tiene y luego corre `supabase/tests/*.sql` (pgTAP).
 - Nuevas migraciones: `npx supabase migration new <nombre>`. Nunca inventes el nombre del archivo.
 - Antes de cerrar un cambio de esquema: `npx supabase db advisors --local --level warn` sin hallazgos.

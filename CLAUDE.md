@@ -16,7 +16,7 @@ Reconstrucción de Calibra sobre el modelo v10 (`calibra_reglas_negocio.md`). St
 
 ## Base de datos
 
-- El proyecto Supabase real (`uotlhaitdkfroavqkvee`) sostiene el prototipo en vivo hasta el corte final (HU-057). **No le apliques migraciones ni escribas en él**: nada de `supabase db push`, `--linked`, ni `apply_migration`/`execute_sql` de escritura por MCP. Leerlo para consultar está bien.
+- El proyecto Supabase del prototipo (`uotlhaitdkfroavqkvee`) sostiene el prototipo en vivo y **nunca** se toca: v10 sale en un proyecto nuevo (D-72 a), que solo se configura en el corte (HU-057). **No le apliques migraciones ni escribas en el del prototipo**: nada de `supabase db push`, `--linked`, ni `apply_migration`/`execute_sql` de escritura por MCP. Leerlo para consultar está bien.
 - Todo cambio de esquema es una migración nueva en `supabase/migrations/` (créala con `npx supabase migration new <nombre>`), idempotente, y se prueba en la base local (`npm run db:reiniciar`, `npm run db:verificar`). Cada regla nueva lleva su prueba pgTAP en `supabase/tests/`.
 - RLS en toda tabla y permisos explícitos (`revoke`/`grant`). Las funciones `security definer` van en el esquema `privado`, que la Data API no expone. Una sola política permisiva por tabla y acción.
 - `npx supabase db advisors --local --level warn` debe quedar sin hallazgos.
