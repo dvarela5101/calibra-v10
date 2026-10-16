@@ -1,14 +1,15 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-14 22:54. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-15 20:41. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
-| [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | Backlog | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056, HU-084, HU-089 |
+| [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | Backlog | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056, HU-084, HU-089, HU-095, HU-096, HU-097 |
 | [HU-086](backlog/HU-086.md) | [Estudiante] Ligar a mi cita un diagnóstico hecho después de agendar | Backlog | P1 | M | HU-022, HU-019 |
 | [HU-091](backlog/HU-091.md) | [Técnica] Borradores para activar las Evaluaciones de Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | Backlog | P1 | S | HU-061 |
 | [HU-088](backlog/HU-088.md) | [Estudiante] Ver la calificación y las reseñas del monitor en su tarjeta | Backlog | P2 | M | HU-049, HU-035 |
 | [HU-090](backlog/HU-090.md) | [Admin] Registrar desde la gestión de leads el retiro de la autorización de datos | Backlog | P2 | S | HU-053, HU-085 |
+| [HU-098](backlog/HU-098.md) | [Técnica] Acelerar las pruebas de Vitest que recorren todo el repo | Backlog | P3 | XS | HU-050 |
 | [HU-033](backlog/HU-033.md) | [Estudiante] Gestionar mis citas y diagnósticos desde mi cuenta | Lista | P1 | M | HU-032, HU-019, HU-024, HU-029, HU-009, HU-081 |
 | [HU-036](backlog/HU-036.md) | [Estudiante] Agendar una sesión grupal como organizador | Lista | P1 | L | HU-032, HU-017, HU-018 |
 | [HU-037](backlog/HU-037.md) | [Estudiante] Compartir el enlace del grupo y ver quién ha pagado | Lista | P1 | M | HU-036 |
@@ -25,12 +26,13 @@ _Generado automaticamente: 2026-10-14 22:54. No editar a mano; usa `scripts/back
 | [HU-084](backlog/HU-084.md) | [Técnica] Recorrido de punta a punta del diagnóstico: de la prueba al monitor | Lista | P1 | S | HU-048, HU-010, HU-011, HU-022 |
 | [HU-085](backlog/HU-085.md) | [Sistema] Borrar o anonimizar los datos de un Lead o aspirante que retiró su autorización o lleva 24 meses sin actividad | Lista | P2 | L | HU-056, HU-006, HU-062, HU-068 |
 | [HU-092](backlog/HU-092.md) | [Monitor] Marcar en mi perfil los temas en los que soy fuerte | Lista | P2 | M | HU-049 |
-| [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | Lista | P2 | S |  |
 | [HU-011](backlog/HU-011.md) | [Visitante] Ver mi último diagnóstico al volver, con acceso directo a agendar | En progreso | P0 | M | HU-009, HU-081 |
 | [HU-022](backlog/HU-022.md) | [Monitor] Ver en mi hub el diagnóstico de cada monitoría | En progreso | P0 | L | HU-021, HU-009, HU-081, HU-087 |
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | En progreso | P1 | M | HU-004, HU-019, HU-068 |
-| [HU-034](backlog/HU-034.md) | [Admin] Revisar pagos desde una bandeja común y avisar a todos los admins cuando llega uno | En progreso | P1 | M | HU-020, HU-006, HU-054, HU-065, HU-074, HU-077 |
-| [HU-031](backlog/HU-031.md) | [Lead] Recuperar mis resultados desde otro dispositivo con un enlace | En revision | P1 | M | HU-006, HU-009, HU-010, HU-081 |
+| [HU-096](backlog/HU-096.md) | [Monitor] Saber la comisión de Calibra al registrarme | En progreso | P1 | XS | HU-050 |
+| [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
+| [HU-095](backlog/HU-095.md) | [Técnica] Cerrar la lectura de diagnósticos a la sesión que los hizo y a la cuenta de Estudiante de su Lead (D-53 e) | En revision | P1 | S | HU-009, HU-081 |
+| [HU-097](backlog/HU-097.md) | [Técnica] Códigos vigentes de Física I y Física II (FISI-1518 y FISI-1528) | En revision | P1 | XS | HU-055 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
@@ -69,6 +71,8 @@ _Generado automaticamente: 2026-10-14 22:54. No editar a mano; usa `scripts/back
 | [HU-082](backlog/HU-082.md) | [Admin] Cualquier admin activo registra la transferencia de un reembolso | Hecha | P0 | S | HU-026 |
 | [HU-083](backlog/HU-083.md) | [Técnica] Dibujar fórmulas y código del banco de preguntas | Hecha | P0 | S | HU-005 |
 | [HU-087](backlog/HU-087.md) | [Técnica] Ampliar la autorización y el aviso de privacidad a las respuestas del diagnóstico | Hecha | P0 | S | HU-008, HU-068 |
+| [HU-031](backlog/HU-031.md) | [Lead] Recuperar mis resultados desde otro dispositivo con un enlace | Hecha | P1 | M | HU-006, HU-009, HU-010, HU-081 |
+| [HU-034](backlog/HU-034.md) | [Admin] Revisar pagos desde una bandeja común y avisar a todos los admins cuando llega uno | Hecha | P1 | M | HU-020, HU-006, HU-054, HU-065, HU-074, HU-077 |
 | [HU-035](backlog/HU-035.md) | [Lead] Reseñar mi monitoría individual desde el correo | Hecha | P1 | M | HU-023, HU-006 |
 | [HU-048](backlog/HU-048.md) | [Técnica] Recorridos de punta a punta: agendar, pagar, cancelar, reportar y desembolsar | Hecha | P1 | M | HU-030, HU-076, HU-082 |
 | [HU-050](backlog/HU-050.md) | [Monitor] Ver mis desembolsos | Hecha | P1 | M | HU-028, HU-030, HU-078 |

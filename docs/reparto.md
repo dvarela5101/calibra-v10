@@ -1,10 +1,10 @@
 # Reparto de trabajo
 
-**Actualizado:** 14 de octubre de 2026 (ver "Ajuste del 14-oct-2026"; después vienen el ajuste del 10-oct, el del 4-oct, el del 3-oct, el del 2-oct en la noche, la revisión de HU-020, el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Desde el 14-oct-2026 trabajan en paralelo tres personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto (solo ella aprueba con `done`), `Juzou04` y Lorenzo (tercera persona; su usuario de GitHub se anota aquí cuando dvarela5101 lo agregue al repo). El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
+**Actualizado:** 14 de octubre de 2026 (ver "Ajuste del 14-oct-2026"; después vienen el ajuste del 10-oct, el del 4-oct, el del 3-oct, el del 2-oct en la noche, la revisión de HU-020, el ajuste de la tarde, la actualización del 2-oct, la del 1-oct y el reparto del 30-sep). Desde el 14-oct-2026 trabajan en paralelo tres personas, cada una con su propia sesión de Claude y su propio Supabase local: `dvarela5101`, dueña del repo y del producto (solo ella aprueba con `done`), `Juzou04` y `LorenzoBula` (Lorenzo, tercera persona). El protocolo para no pisarse está en [CLAUDE.md](../CLAUDE.md), sección "Trabajo en paralelo".
 
 ## Ajuste del 14-oct-2026: llega Lorenzo
 
-- **Lorenzo se suma como tercera persona.** dvarela5101 lo está agregando al repo de GitHub. Hasta tener su usuario, sus reservas van con `backlog.py log HU-XXX "Tomada por Lorenzo"`.
+- **Lorenzo (`LorenzoBula` en GitHub) se suma como tercera persona.** Ya está en el repo: reservó HU-094 y abrió su PR (#69) el 14-oct.
 - **Qué le toca, y por qué.** Lo que no está en el camino crítico del corte ni en el código que hoy tienen abierto las otras dos, empezando por lo pequeño:
   1. Preparar el entorno: `npm ci`, Docker, `npm run db:iniciar`, `db:env`, y leer `CLAUDE.md`, `README.md` y `GUIA_CLAUDE.md`.
   2. Construir [HU-094](../backlog/HU-094.md) (S, nueva): estabilizar la e2e del recorrido de cancelar con reembolso, que falla a veces por la asignación rotativa de admins. Solo toca pruebas y le hace recorrer las e2e y el CI.
@@ -16,10 +16,11 @@
 | Persona | Siguiente, en orden |
 |---|---|
 | Juzou04 | Sigue su lista: [HU-011](../backlog/HU-011.md), [HU-022](../backlog/HU-022.md) y [HU-032](../backlog/HU-032.md) (en progreso) y [HU-084](../backlog/HU-084.md) (S). [HU-034](../backlog/HU-034.md) pasó a dvarela5101 (14-oct) |
-| dvarela5101 | [HU-031](../backlog/HU-031.md) (M) fusionada y en revisión; dudas de HU-092 respondidas (D-69). Revisar o aprobar lo que esté `En revision`. Construir [HU-034](../backlog/HU-034.md) (M), que pasa de Juzou04 el 14-oct: es la única dependencia del corte que nadie había empezado |
+| dvarela5101 | [HU-031](../backlog/HU-031.md) (M) fusionada y en revisión; dudas de HU-092 respondidas (D-69). Revisar o aprobar lo que esté `En revision`. [HU-034](../backlog/HU-034.md) hecha. Construir las tres HUs nuevas del corte (D-71, 15-oct): [HU-095](../backlog/HU-095.md) (S), [HU-096](../backlog/HU-096.md) (XS) y [HU-097](../backlog/HU-097.md) (XS) |
 | Lorenzo | 1) Entorno. 2) [HU-094](../backlog/HU-094.md) (S). 3) [HU-092](../backlog/HU-092.md) (M). 4) Refinar y construir [HU-088](../backlog/HU-088.md) (M). 5) Después del corte: [HU-085](../backlog/HU-085.md) (L) y [HU-090](../backlog/HU-090.md) (S) |
 
 **Choques a tener en cuenta**
+- **HU-095 (dvarela5101) y HU-022 (Juzou04):** las dos reescriben la política de lectura de `diagnostico`. Va primero HU-095 (D-71 a); HU-022 parte de la política ya cerrada, con una migración posterior, y suma HU-095 a su `depende_de`.
 - **HU-092 y HU-088:** las dos tocan `TarjetaDeMonitor` y `cargarPerfiles` (`src/lib/disponibilidad/servidor.ts`), y HU-092 también el aviso de privacidad. Van con Lorenzo, en ese orden.
 - **HU-092 y HU-032 (Juzou04):** las dos pueden cambiar `AVISO_ACTUALIZADO` y `src/app/privacidad/page.tsx`. Al integrar, se toma la fecha mayor y se conservan los dos párrafos.
 - **HU-094:** solo toca `e2e/recorridos/`. Si Juzou04 cambia el escenario de los recorridos (por HU-084), el PR que llegue segundo integra al otro.
@@ -48,7 +49,7 @@ Posibles choques:
 - **HU-034 y HU-052, HU-050:** todas de Juzou04; tocan la bandeja del admin.
 
 Material que dvarela5101 le pide a Juzou04 de su carpeta de materias:
-- El código oficial de Física II (¿FISI-1019 o FISI-1028?) y la semana 5 de su Parcial 1, y confirmar FISI-1018, MATE-1203 e ISIS-1221 contra el programa (`REVISION_REGLAS.md` §3). HU-055 carga por código: hace falta antes del corte.
+- La semana 5 del Parcial 1 de Física II, y confirmar MATE-1203 e ISIS-1221 contra el programa (`REVISION_REGLAS.md` §3). El código de Física I (FISI-1518) y el de Física II (FISI-1528) quedaron resueltos por HU-097 con los catálogos de la universidad (`docs/codigos-de-materias.md`).
 - Material para más Evaluaciones activas: hoy solo 2 de 8 materias tienen una, y HU-009 solo ofrece esas (D-53 a). Se procesa como en HU-061.
 
 ## Ajuste del 4-oct-2026

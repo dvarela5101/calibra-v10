@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
-import type { Bandeja, PagoPorCobrarOAsumir, PagoPorRevisar, PagoVencidoDeOtro, ReembolsoCerrado, ReembolsoDeOtro } from "@/lib/admin/bandeja";
+import type { Bandeja, PagoPorCobrarOAsumir, PagoDeOtro, PagoPorRevisar, ReembolsoCerrado, ReembolsoDeOtro } from "@/lib/admin/bandeja";
 import { BandejaAdmin } from "./BandejaAdmin";
 
 // La acción de reabrir (HU-025) vive en el servidor: aquí solo se pinta el formulario que la usa.
@@ -13,7 +13,7 @@ vi.mock("./acciones", () => ({ reabrir: async () => {} }));
 
 const VACIA: Bandeja = {
   pagos: [],
-  pagosVencidosDeOtros: [],
+  pagosDeOtros: [],
   pagosPorCobrarOAsumir: [],
   reembolsos: { esperandoLlave: [], pendientes: [], pendientesDeOtros: [] },
   reembolsosCerrados: [],
@@ -22,7 +22,7 @@ const VACIA: Bandeja = {
   correosSinEnviar: [],
   contadores: {
     pagos: 0,
-    pagosVencidosDeOtros: 0,
+    pagosDeOtros: 0,
     pagosPorCobrarOAsumir: 0,
     reembolsos: 0,
     reembolsosEsperandoLlave: 0,
@@ -48,15 +48,15 @@ const pago = (n: number, extra: Partial<PagoPorRevisar> = {}): PagoPorRevisar =>
   id: `pago-${n}`,
   nombrePagador: `Pagador ${n}`,
   monto: 25_000,
-  revisionHasta: new Date("2026-10-05T15:00:00.000Z"),
-  restante: { texto: "Quedan 30 min", vencido: false },
+  llegoEn: new Date("2026-10-05T15:00:00.000Z"),
+  espera: "hace 25 min",
   ...extra,
 });
 
 describe("BandejaAdmin: secciones vacías", () => {
   it("cada sección dice que no hay nada en vez de quedar en blanco", () => {
     const t = texto(pintar(VACIA));
-    expect(t).toContain("No tienes pagos por revisar.");
+    expect(t).toContain("No hay pagos por revisar.");
     expect(t).toContain("No hay pagos por cobrar ni por asumir.");
     expect(t).toContain("No tienes reembolsos por atender.");
     expect(t).toContain("No tienes reportes en revisión.");
@@ -190,21 +190,23 @@ describe("BandejaAdmin: reembolsos por estado", () => {
 });
 
 describe("BandejaAdmin: lo que se ve en cada ítem", () => {
-  it("un pago vencido dice Vencido con palabras, no solo con color, y lleva su hora de vencimiento", () => {
+  it("un pago dice cuánto lleva esperando con palabras, y lleva su hora de llegada; nunca habla de plazo (HU-034, D-70)", () => {
     const html = pintar({
       ...VACIA,
-      pagos: [pago(1, { restante: { texto: "Vencido hace 30 min", vencido: true } })],
+      pagos: [pago(1, { espera: "hace 2 d 3 h" })],
       contadores: { ...VACIA.contadores, pagos: 1 },
     });
-    expect(texto(html)).toContain("Vencido hace 30 min");
-    expect(html).toContain('<time dateTime="2026-10-05T15:00:00.000Z">Vencido hace 30 min</time>');
+    expect(texto(html)).toContain("Llegó hace 2 d 3 h");
+    expect(html).toContain('<time dateTime="2026-10-05T15:00:00.000Z">hace 2 d 3 h</time>');
+    expect(texto(html)).not.toMatch(/Quedan|Queda |Vencido|Venció/);
   });
 
-  it("cada pago lleva a su revisión, con el pagador, el monto y el tiempo dentro del enlace (HU-020)", () => {
+  it("cada pago lleva a su revisión, con el pagador, el monto y cuánto lleva esperando dentro del enlace (HU-020)", () => {
     const html = pintar({ ...VACIA, pagos: [pago(1), pago(2)], contadores: { ...VACIA.contadores, pagos: 2 } });
     for (const n of [1, 2]) {
       const enlace = html.match(new RegExp(`<a href="/admin/pagos/pago-${n}"[^>]*>(.*?)</a>`))?.[1] ?? "";
       expect(texto(enlace)).toContain(`Pagador ${n} · $ 25.000`);
+      expect(texto(enlace)).toContain("Llegó hace 25 min");
       expect(enlace).toContain("<time");
     }
     // Un enlace por pago y ninguno más dentro de la lista de pagos.
@@ -286,99 +288,122 @@ describe("BandejaAdmin: lo que se ve en cada ítem", () => {
     expect(html.match(/href="\/admin\/desembolsos\//g)).toHaveLength(2);
   });
 
-  it("los textos de ayuda no llevan plazos escritos a mano: viven en la base (HU-003)", () => {
-    const t = texto(pintar(VACIA));
+  it("los textos de ayuda no llevan plazos escritos a mano: no hay plazo (HU-034, D-56)", () => {
+    const otros = [{ ...pago(2), nombreAdmin: "Admin Dos", espera: "hace poco" }];
+    // Con la lista de otros admins a la vista, su ayuda también cuenta (la fila no lleva cifras para poder mirar solo el texto).
+    const t = texto(pintar({ ...VACIA, pagosDeOtros: otros, contadores: { ...VACIA.contadores, pagosDeOtros: 1 } }));
     expect(t).not.toMatch(/\b\d+ horas?\b/);
     expect(t).not.toMatch(/\b\d+ min/);
+    expect(texto(pintar(VACIA))).not.toMatch(/\b\d+ (min|horas?)/);
   });
 
-  it("no promete lo que aún no existe: el orden por vencimiento es solo de los pagos y no hay escalamiento (HU-064)", () => {
+  it("el texto de ayuda de Pagos por revisar dice que cualquier admin activo puede revisarlos y no escribe ningún plazo", () => {
     const t = texto(pintar(VACIA));
-    expect(t).toContain("Cada pago tiene un plazo para revisarse: el que vence primero va arriba y en cada fila ves cuánto le queda.");
-    // El paso al siguiente admin llega con HU-034; hasta entonces la bandeja no lo anuncia.
+    expect(t).toContain(
+      "Cualquier admin activo puede aprobar o rechazar estos pagos desde que llegan, también los de otros. El que lleva más tiempo esperando va arriba. Los asignados a ti son los que te tocan según el orden de revisión.",
+    );
+    expect(t).not.toMatch(/plazo para revisarse|vence primero|cuánto le queda/);
     expect(t).not.toMatch(/siguiente admin/i);
-    expect(t.match(/vence primero/g)).toHaveLength(1);
   });
 });
 
-describe("BandejaAdmin: pagos vencidos de otros admins (HU-077, supuesto 2)", () => {
-  const deOtro = (n: number, nombreAdmin = "Admin Dos"): PagoVencidoDeOtro => ({
-    ...pago(n, { restante: { texto: "Vencido hace 30 min", vencido: true } }),
-    nombreAdmin,
-  });
+describe("BandejaAdmin: bandeja común de pagos (HU-034, D-56)", () => {
+  const deOtro = (n: number, nombreAdmin = "Admin Dos"): PagoDeOtro => ({ ...pago(n), nombreAdmin });
 
-  it("van en Pagos por revisar, después de los propios, con de quién son y desde cuándo están vencidos", () => {
+  it("van en Pagos por revisar, después de los propios, con de quién son y «Llegó hace …» desde el primer minuto", () => {
     const html = pintar({
       ...VACIA,
       pagos: [pago(1)],
-      pagosVencidosDeOtros: [deOtro(2), deOtro(3, "Admin Tres")],
-      contadores: { ...VACIA.contadores, pagos: 1, pagosVencidosDeOtros: 2 },
+      pagosDeOtros: [deOtro(2, "Admin Uno"), deOtro(3, "Admin Tres")],
+      contadores: { ...VACIA.contadores, pagos: 1, pagosDeOtros: 2 },
     });
     const t = texto(html);
     // Dentro de la sección de pagos, y antes de la siguiente.
-    const seccion = html.slice(html.indexOf('<section id="pagos"'), html.indexOf('<section id="reembolsos"'));
+    const seccion = html.slice(html.indexOf('<section id="pagos"'), html.indexOf('<section id="por-cobrar"'));
     expect(seccion).toContain('<ul aria-label="Asignados a ti"');
-    expect(texto(seccion)).toContain("Vencidos de otros admins (2)");
+    expect(texto(seccion)).toContain("De otros admins (2)");
     expect(seccion).toMatch(/<h3 id="pagos-de-otros-titulo"[^>]*>/);
     expect(seccion).toContain('<ul aria-labelledby="pagos-de-otros-titulo"');
-    expect(t.indexOf("Pagador 1")).toBeLessThan(t.indexOf("Vencidos de otros admins"));
-    expect(t.indexOf("Vencidos de otros admins")).toBeLessThan(t.indexOf("Pagador 2"));
-    // Cada uno lleva a su revisión, con el asignado y el vencimiento dentro del enlace.
+    expect(t.indexOf("Pagador 1")).toBeLessThan(t.indexOf("De otros admins"));
+    expect(t.indexOf("De otros admins")).toBeLessThan(t.indexOf("Pagador 2"));
+    // Cada uno lleva a su revisión, con el responsable y cuánto lleva esperando dentro del enlace.
     for (const [n, admin] of [
-      [2, "Admin Dos"],
+      [2, "Admin Uno"],
       [3, "Admin Tres"],
     ] as const) {
       const enlace = html.match(new RegExp(`<a href="/admin/pagos/pago-${n}"[^>]*>(.*?)</a>`))?.[1] ?? "";
       expect(texto(enlace)).toContain(`Pagador ${n} · $ 25.000`);
-      expect(texto(enlace)).toContain(`De ${admin} · Vencido hace 30 min`);
-      expect(enlace).toContain('<time dateTime="2026-10-05T15:00:00.000Z">Vencido hace 30 min</time>');
+      expect(texto(enlace)).toContain(`De ${admin} · Llegó hace 25 min`);
+      expect(enlace).toContain('<time dateTime="2026-10-05T15:00:00.000Z">hace 25 min</time>');
     }
-    expect(t).toContain("Al admin asignado se le pasó la hora para revisarlos: ya puedes aprobarlos o rechazarlos tú.");
+    expect(t).toContain("Le tocan a otro admin, pero puedes aprobarlos o rechazarlos tú.");
+    expect(t).not.toMatch(/Vencidos de otros|se le pasó la hora|Vencido|Quedan/);
   });
 
-  it("el contador de arriba y el de la sección cuentan solo los asignados al admin", () => {
+  it("el título, la tarjeta de resumen y la cifra de la sección cuentan los propios y los de otros", () => {
     const html = pintar({
       ...VACIA,
       pagos: [pago(1)],
-      pagosVencidosDeOtros: [deOtro(2)],
-      contadores: { ...VACIA.contadores, pagos: 1, pagosVencidosDeOtros: 1 },
+      pagosDeOtros: [deOtro(2), deOtro(3)],
+      contadores: { ...VACIA.contadores, pagos: 1, pagosDeOtros: 2 },
     });
+    expect(html).toMatch(/<a href="#pagos"[^>]*><span[^>]*>3<\/span><span[^>]*>Pagos por revisar<\/span><\/a>/);
+    expect(texto(html)).toContain("Pagos por revisar (3)");
+    expect(texto(html)).toContain("De otros admins (2)");
+  });
+
+  it("sin pagos propios no sale «Asignados a ti», y aun así muestra los de otros, sin decir que no hay pagos", () => {
+    const html = pintar({ ...VACIA, pagosDeOtros: [deOtro(2)], contadores: { ...VACIA.contadores, pagosDeOtros: 1 } });
+    const t = texto(html);
+    expect(html).not.toContain("Asignados a ti");
+    expect(t).not.toContain("No hay pagos por revisar.");
+    expect(t).toContain("Pagos por revisar (1)");
+    expect(t).toContain("De otros admins (1)");
+    expect(t).toContain("De Admin Dos · Llegó hace 25 min");
     expect(html).toMatch(/<a href="#pagos"[^>]*><span[^>]*>1<\/span><span[^>]*>Pagos por revisar<\/span><\/a>/);
-    expect(texto(html)).toContain("Pagos por revisar (1)");
-    expect(texto(html)).toContain("Vencidos de otros admins (1)");
   });
 
-  it("sin pagos propios dice que no tiene, y aun así muestra los vencidos de otros", () => {
-    const t = texto(pintar({ ...VACIA, pagosVencidosDeOtros: [deOtro(2)], contadores: { ...VACIA.contadores, pagosVencidosDeOtros: 1 } }));
-    expect(t).toContain("No tienes pagos por revisar.");
-    expect(t).toContain("Vencidos de otros admins (1)");
-    expect(t).toContain("De Admin Dos · Vencido hace 30 min");
-  });
-
-  it("sin vencidos de otros no aparece nada de ellos", () => {
+  it("sin pagos de otros no aparece nada de ellos, y los propios salen en «Asignados a ti»", () => {
     const html = pintar({ ...VACIA, pagos: [pago(1)], contadores: { ...VACIA.contadores, pagos: 1 } });
     expect(html).not.toContain("pagos-de-otros-titulo");
     expect(texto(html)).not.toContain("otros admins");
+    expect(html).toContain('<ul aria-label="Asignados a ti"');
+    expect(texto(html)).not.toContain("No hay pagos por revisar.");
   });
 
-  it("su lista se corta por su cuenta y lo avisa", () => {
+  it("«No hay pagos por revisar.» solo sale si las dos listas están vacías", () => {
+    expect(texto(pintar(VACIA))).toContain("No hay pagos por revisar.");
+    expect(pintar(VACIA)).not.toContain("Asignados a ti");
+    expect(texto(pintar(VACIA))).not.toContain("No tienes pagos por revisar.");
+    expect(texto(pintar({ ...VACIA, pagos: [pago(1)], contadores: { ...VACIA.contadores, pagos: 1 } }))).not.toContain("No hay pagos por revisar.");
+  });
+
+  it("el título cuenta propios y de otros: no queda en 0 con pagos esperando", () => {
+    const html = pintar({ ...VACIA, pagosDeOtros: [deOtro(2)], contadores: { ...VACIA.contadores, pagosDeOtros: 1 } });
+    expect(texto(html)).not.toContain("Pagos por revisar (0)");
+    expect(html).not.toMatch(/<a href="#pagos"[^>]*><span[^>]*>0<\/span>/);
+  });
+
+  it("la lista de los propios y la de otros se cortan por su cuenta y lo avisan", () => {
     const t = texto(
       pintar({
         ...VACIA,
         pagos: [pago(1)],
-        pagosVencidosDeOtros: [deOtro(2)],
-        contadores: { ...VACIA.contadores, pagos: 1, pagosVencidosDeOtros: 3 },
+        pagosDeOtros: [deOtro(2)],
+        contadores: { ...VACIA.contadores, pagos: 4, pagosDeOtros: 3 },
       }),
     );
-    expect(t).toContain("Vencidos de otros admins (3)");
+    expect(t).toContain("Pagos por revisar (7)");
+    expect(t).toContain("De otros admins (3)");
+    expect(t).toContain("Se muestran los primeros 1 de 4.");
     expect(t).toContain("Se muestran los primeros 1 de 3.");
   });
 
-  it("escapa el nombre del admin asignado", () => {
+  it("escapa el nombre del responsable", () => {
     const html = pintar({
       ...VACIA,
-      pagosVencidosDeOtros: [deOtro(2, '<img src=x onerror="alert(1)">')],
-      contadores: { ...VACIA.contadores, pagosVencidosDeOtros: 1 },
+      pagosDeOtros: [deOtro(2, '<img src=x onerror="alert(1)">')],
+      contadores: { ...VACIA.contadores, pagosDeOtros: 1 },
     });
     expect(html).not.toContain("<img");
     expect(html).toContain("De &lt;img");

@@ -19,7 +19,7 @@ vi.mock("@/lib/auth/acciones", () => ({ cerrarSesion: async () => {} }));
 
 const VACIA: Bandeja = {
   pagos: [],
-  pagosVencidosDeOtros: [],
+  pagosDeOtros: [],
   pagosPorCobrarOAsumir: [],
   reembolsos: { esperandoLlave: [], pendientes: [], pendientesDeOtros: [] },
   reembolsosCerrados: [],
@@ -28,7 +28,7 @@ const VACIA: Bandeja = {
   correosSinEnviar: [],
   contadores: {
     pagos: 0,
-    pagosVencidosDeOtros: 0,
+    pagosDeOtros: 0,
     pagosPorCobrarOAsumir: 0,
     reembolsos: 0,
     reembolsosEsperandoLlave: 0,

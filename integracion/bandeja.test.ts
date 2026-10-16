@@ -5,6 +5,10 @@ import { crearCliente, exigirSupabaseLocal, Fixtures, iniciarSesionConClave, rol
 
 // HU-012 contra el Supabase LOCAL: la bandeja del admin y la semilla de admins iniciales.
 // Cada prueba crea sus propios datos y los borra al final.
+// HU-034 (D-56): los pagos en revisión son una bandeja común. «Pagos por revisar» trae los del admin (`pagos`) y los de
+// otros admins (`pagosDeOtros`), cada lista del que lleva más tiempo esperando al más reciente (`fecha_pago`), con
+// «hace …» desde que llegó. No hay plazo, ni «Quedan …», ni vencidos. Cualquier admin ve los pagos de todos, así que de
+// `pagosDeOtros` solo se miran los pagos de cada prueba.
 
 let fx: Fixtures;
 
@@ -50,8 +54,8 @@ describe("criterio 3: la semilla deja los admins iniciales con su orden de revis
     const bandeja = await cargarBandeja(cliente, yo.user!.id, AHORA);
     expect(bandeja.contadores).toEqual({
       pagos: 0,
-      // HU-077: los pagos vencidos de otros admins los ve cualquiera: puede haber de otras pruebas.
-      pagosVencidosDeOtros: bandeja.pagosVencidosDeOtros.length,
+      // HU-034: los pagos en revisión de otros admins los ve cualquiera: puede haber de otras pruebas.
+      pagosDeOtros: bandeja.pagosDeOtros.length,
       // HU-078: los pagos por cobrar o asumir también son de todos: puede haber de otras pruebas.
       pagosPorCobrarOAsumir: bandeja.pagosPorCobrarOAsumir.length,
       reembolsos: 0,
@@ -91,13 +95,13 @@ async function armarMundo() {
   // tan lejos que la prueba no dependa del día en que corra.
   const futuraConDesembolso = await fx.crearMonitoria(contexto, { fecha: "2099-01-05" });
 
-  // Pagos en revisión de A, insertados a propósito fuera de orden.
-  const p3 = await fx.crearPagoDe(futura.id, { idAdmin: a.id, fechaAsignacion: hace(10), nombrePagador: "Tercera", monto: 30_000 });
-  const p1 = await fx.crearPagoDe(futura.id, { idAdmin: a.id, fechaAsignacion: hace(90), nombrePagador: "Primera", monto: 10_000 });
-  const p2 = await fx.crearPagoDe(futura.id, { idAdmin: a.id, fechaAsignacion: hace(30), nombrePagador: "Segunda", monto: 20_000 });
-  // Asignado hace 2 h respecto de AHORA (fijo): así lo único que lo saca de los vencidos es el estado, no el reloj real.
-  const pAprobadoDeA = await fx.crearPagoDe(futura.id, { idAdmin: a.id, estado: "aprobado", fechaAsignacion: hace(120) });
-  const pDeB = await fx.crearPagoDe(futura.id, { idAdmin: b.id, fechaAsignacion: hace(5), nombrePagador: "De B" });
+  // Pagos en revisión de A, insertados a propósito fuera de orden. `fechaPago` es cuándo llegaron respecto de AHORA (fijo).
+  const p3 = await fx.crearPagoDe(futura.id, { idAdmin: a.id, fechaPago: hace(10), nombrePagador: "Tercera", monto: 30_000 });
+  const p1 = await fx.crearPagoDe(futura.id, { idAdmin: a.id, fechaPago: hace(90), nombrePagador: "Primera", monto: 10_000 });
+  const p2 = await fx.crearPagoDe(futura.id, { idAdmin: a.id, fechaPago: hace(30), nombrePagador: "Segunda", monto: 20_000 });
+  // Llegó hace 2 h respecto de AHORA (fijo): lo único que lo saca de las listas es el estado, no el reloj real.
+  const pAprobadoDeA = await fx.crearPagoDe(futura.id, { idAdmin: a.id, estado: "aprobado", fechaPago: hace(120) });
+  const pDeB = await fx.crearPagoDe(futura.id, { idAdmin: b.id, fechaPago: hace(5), nombrePagador: "De B" });
 
   // Reembolsos: dos esperando llave y uno pendiente de A (más uno ya reembolsado y uno de B).
   const pagoParaReembolso = () => fx.crearPagoDe(futura.id, { idAdmin: a.id, estado: "aprobado" });
@@ -116,7 +120,7 @@ async function armarMundo() {
   // Desembolsos: ejecutable si la ventana venció, no hay reporte en revisión ni aceptado, ningún pago sigue en revisión,
   // no hay un caso P-24 abierto (HU-078) y hay al menos un pago aprobado o un caso cerrado (HU-028). Cada monitoría con
   // desembolso, salvo la que no tiene pagos, tiene su pago aprobado, para que solo la excluya lo que dice su caso. El
-  // pago en revisión es de un tercer admin: no cambia lo que A y B tienen por revisar.
+  // pago en revisión es de un tercer admin (C): no cambia lo que A y B tienen asignado, pero sí lo que ven de otros.
   const conPagoAprobado = [
     mEjecutable,
     mReporteEnRevision,
@@ -130,7 +134,7 @@ async function armarMundo() {
   ];
   for (const monitoria of conPagoAprobado) await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, estado: "aprobado" });
   const c = await fx.crearAdmin();
-  await fx.crearPagoDe(mPagoEnRevision.id, { idAdmin: c.id });
+  const pDeC = await fx.crearPagoDe(mPagoEnRevision.id, { idAdmin: c.id, fechaPago: hace(20), nombrePagador: "De C" });
   // HU-078: el pago rechazado de una monitoría realizada es un caso P-24 abierto.
   await fx.crearPagoDe(mCasoAbierto.id, { idAdmin: a.id, estado: "rechazado" });
   const dEjecutable = await fx.crearDesembolso({ idMonitoria: mEjecutable.id });
@@ -144,11 +148,11 @@ async function armarMundo() {
   const dSinPagosAprobados = await fx.crearDesembolso({ idMonitoria: mSinPagosAprobados.id }); // bloqueado: no tiene ningún pago
   const dCasoAbierto = await fx.crearDesembolso({ idMonitoria: mCasoAbierto.id }); // bloqueado: un caso P-24 abierto (HU-078)
 
-  return { a, b, p1, p2, p3, pAprobadoDeA, pDeB, r1, r2, r3, rDeB, futura, reporteEnRevision, dEjecutable, dRechazado, dPagoEnRevision, dSinPagosAprobados, dCasoAbierto };
+  return { a, b, c, p1, p2, p3, pAprobadoDeA, pDeB, pDeC, r1, r2, r3, rDeB, futura, reporteEnRevision, dEjecutable, dRechazado, dPagoEnRevision, dSinPagosAprobados, dCasoAbierto };
 }
 
 describe("criterio 1: el admin ve contadores y listas de lo que tiene asignado", () => {
-  it("pagos en revisión de A, ordenados por vencimiento (el que vence primero arriba)", async () => {
+  it("pagos en revisión de A, ordenados por antigüedad (el que lleva más tiempo esperando arriba)", async () => {
     const m = await armarMundo();
     const bandeja = await cargarBandeja(await fx.iniciarSesion(m.a), m.a.id, AHORA);
 
@@ -216,7 +220,7 @@ describe("criterio 1: el admin ve contadores y listas de lo que tiene asignado",
     expect(deB.desembolsos.map((d) => d.id)).toEqual(deA.desembolsos.map((d) => d.id));
   });
 
-  it("cada admin ve solo lo suyo: B no ve los pagos ni los reembolsos de A, ni A los de B", async () => {
+  it("cada admin tiene asignado solo lo suyo: B no tiene entre los suyos los pagos ni los reembolsos de A, ni A los de B", async () => {
     const m = await armarMundo();
     const deB = await cargarBandeja(await fx.iniciarSesion(m.b), m.b.id, AHORA);
 
@@ -225,99 +229,116 @@ describe("criterio 1: el admin ve contadores y listas de lo que tiene asignado",
   });
 });
 
-describe("HU-077 (supuesto 2): los pagos vencidos de otros admins", () => {
-  // Cualquier admin ve los vencidos de todos, así que puede haber de otras pruebas: se mira solo lo de cada una.
+describe("HU-034 (D-56): los pagos en revisión de otros admins, en la bandeja común", () => {
+  // Cualquier admin ve los pagos de todos, así que puede haber de otras pruebas: se mira solo lo de cada una.
   const soloDe = <T extends { id: string }>(lista: T[], ...pagos: { id: string }[]) => lista.filter((p) => pagos.some((q) => q.id === p.id));
 
-  it("B ve el pago vencido de A, aparte de los suyos, con quién lo tiene y cuánto lleva vencido; no los de A en hora ni el aprobado", async () => {
+  it("B ve los pagos en revisión de A y de C aparte de los suyos, del que lleva más tiempo esperando al más reciente, con el responsable y «hace …»; no el aprobado de A", async () => {
     const m = await armarMundo();
     const nombreDeA = `Admin A ${randomUUID().slice(0, 6)}`;
     expect((await fx.admin.from("admin").update({ nombre: nombreDeA }).eq("id", m.a.id)).error).toBeNull();
     const deB = await cargarBandeja(await fx.iniciarSesion(m.b), m.b.id, AHORA);
 
-    expect(soloDe(deB.pagosVencidosDeOtros, m.p1, m.p2, m.p3, m.pAprobadoDeA, m.pDeB)).toEqual([
-      {
-        id: m.p1.id,
-        nombrePagador: "Primera",
-        monto: 10_000,
-        // Asignado hace 90 min: la hora de A terminó hace 30.
-        revisionHasta: new Date(AHORA.getTime() - 30 * MINUTO),
-        restante: { texto: "Vencido hace 30 min", vencido: true },
-        nombreAdmin: nombreDeA,
-      },
-    ]);
-    // Los suyos no cambian: siguen solo los asignados a B.
+    const deLaPrueba = soloDe(deB.pagosDeOtros, m.p1, m.p2, m.p3, m.pDeC, m.pAprobadoDeA, m.pDeB);
+    expect(deLaPrueba.map((p) => p.id)).toEqual([m.p1.id, m.p2.id, m.pDeC.id, m.p3.id]);
+    expect(deLaPrueba[0]).toEqual({
+      id: m.p1.id,
+      nombrePagador: "Primera",
+      monto: 10_000,
+      // D-56: llegó hace 90 min. No hay plazo, ni «Quedan …», ni «Vencido hace …».
+      llegoEn: new Date(AHORA.getTime() - 90 * MINUTO),
+      espera: "hace 1 h 30 min",
+      nombreAdmin: nombreDeA,
+    });
+    expect(deLaPrueba.map((p) => p.espera)).toEqual(["hace 1 h 30 min", "hace 30 min", "hace 20 min", "hace 10 min"]);
+    expect(deLaPrueba[2]).toMatchObject({ nombrePagador: "De C", nombreAdmin: "Admin de prueba" });
+    expect(Object.keys(deLaPrueba[0]).sort()).toEqual(["espera", "id", "llegoEn", "monto", "nombreAdmin", "nombrePagador"]);
+    // Los suyos no cambian: siguen solo los asignados a B. El contador de los propios no suma los de otros.
     expect(deB.pagos.map((p) => p.id)).toEqual([m.pDeB.id]);
     expect(deB.contadores.pagos).toBe(1);
-    // El contador cuenta todos los vencidos de otros (al menos el de este mundo) y coincide con la lista, que no se corta.
-    expect(deB.contadores.pagosVencidosDeOtros).toBeGreaterThanOrEqual(1);
-    expect(deB.contadores.pagosVencidosDeOtros).toBe(deB.pagosVencidosDeOtros.length);
+    // El contador de los de otros cuenta lo que hay (al menos los de este mundo) y coincide con la lista, que no se corta.
+    expect(deB.contadores.pagosDeOtros).toBeGreaterThanOrEqual(4);
+    expect(deB.contadores.pagosDeOtros).toBe(deB.pagosDeOtros.length);
   });
 
-  it("A no ve sus propios vencidos entre los de otros (ya están en los suyos), ni el de B, que sigue en hora", async () => {
+  it("A no ve sus propios pagos entre los de otros (ya están en los suyos), pero sí los de B y los de C", async () => {
     const m = await armarMundo();
     const deA = await cargarBandeja(await fx.iniciarSesion(m.a), m.a.id, AHORA);
-    expect(deA.pagos.map((p) => p.id)).toContain(m.p1.id);
-    expect(soloDe(deA.pagosVencidosDeOtros, m.p1, m.p2, m.p3, m.pDeB)).toEqual([]);
+    expect(deA.pagos.map((p) => p.id)).toEqual([m.p1.id, m.p2.id, m.p3.id]);
+    expect(soloDe(deA.pagosDeOtros, m.p1, m.p2, m.p3, m.pAprobadoDeA).map((p) => p.id)).toEqual([]);
+    expect(soloDe(deA.pagosDeOtros, m.pDeB, m.pDeC).map((p) => p.id)).toEqual([m.pDeC.id, m.pDeB.id]);
   });
 
-  it("supuesto 1 (P-40): justo en el límite el pago todavía es solo del asignado; un microsegundo después, de todos", async () => {
+  it("el pago de otro admin sale desde que llega: recién llegado, al minuto, a la hora, al día, a los días, y con un reloj atrasado (llegada posterior a «ahora»)", async () => {
     const a = await fx.crearAdmin();
     const b = await fx.crearAdmin();
     const monitoria = await fx.crearMonitoria(await fx.crearContextoDeMonitoria(a.id), { fecha: "2030-01-14" });
-    // La hora de revisión es 1 h (RN-42): asignado hace 60 min exactos, su límite es AHORA. La base guarda microsegundos.
-    const enElLimite = await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaAsignacion: "2026-10-05T14:00:00.000000Z" });
-    const unMicroAntes = await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaAsignacion: "2026-10-05T13:59:59.999999Z" });
-    const unMicroDespues = await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaAsignacion: "2026-10-05T14:00:00.000001Z" });
+    // De más antiguo a más reciente; el último llegó 5 min «después» de AHORA, como si el reloj del servidor fuera atrás.
+    const llegadas: [number, string][] = [
+      [3 * 24 * 60 + 125, "hace 3 d 2 h"],
+      [25 * 60, "hace 1 d 1 h"],
+      [60, "hace 1 h"],
+      [1, "hace 1 min"],
+      [0.5, "hace menos de 1 min"],
+      [-5, "hace menos de 1 min"],
+    ];
+    const pagos = [];
+    for (const [min] of llegadas) pagos.push(await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaPago: hace(min) }));
 
-    const deB = await cargarBandeja(await fx.iniciarSesion(b), b.id, AHORA);
-    expect(soloDe(deB.pagosVencidosDeOtros, enElLimite, unMicroAntes, unMicroDespues).map((p) => p.id)).toEqual([unMicroAntes.id]);
-    expect(soloDe(deB.pagosVencidosDeOtros, unMicroAntes)[0].restante).toEqual({ texto: "Venció hace menos de 1 min", vencido: true });
+    const deB = await cargarBandeja(await fx.iniciarSesion(b), b.id, AHORA, { maxFilas: 1_000 });
+    expect(soloDe(deB.pagosDeOtros, ...pagos).map((p) => p.espera)).toEqual(llegadas.map(([, texto]) => texto));
+    expect(soloDe(deB.pagosDeOtros, ...pagos).map((p) => p.id)).toEqual(pagos.map((p) => p.id));
   });
 
-  it("el que lleva más tiempo vencido va arriba", async () => {
+  it("se ordena por cuándo llegó el pago (fecha_pago) y no por cuándo se lo asignaron: el pago reasignado (HU-074) conserva su lugar", async () => {
     const a = await fx.crearAdmin();
     const b = await fx.crearAdmin();
     const monitoria = await fx.crearMonitoria(await fx.crearContextoDeMonitoria(a.id), { fecha: "2030-01-14" });
-    const p70 = await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaAsignacion: hace(70) });
-    const p150 = await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaAsignacion: hace(150) });
-    const p120 = await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaAsignacion: hace(120) });
+    // El que llegó primero se lo acaban de asignar a A (reasignado); el que llegó después, A lo tiene desde hace horas.
+    const reasignado = await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaPago: hace(100), fechaAsignacion: hace(1) });
+    const propio = await fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaPago: hace(50), fechaAsignacion: hace(200) });
 
-    const deB = await cargarBandeja(await fx.iniciarSesion(b), b.id, AHORA);
-    expect(soloDe(deB.pagosVencidosDeOtros, p70, p150, p120).map((p) => p.restante.texto)).toEqual([
-      "Vencido hace 1 h 30 min",
-      "Vencido hace 1 h",
-      "Vencido hace 10 min",
-    ]);
+    const deA = await cargarBandeja(await fx.iniciarSesion(a), a.id, AHORA);
+    expect(deA.pagos.map((p) => p.id)).toEqual([reasignado.id, propio.id]);
+    const deB = await cargarBandeja(await fx.iniciarSesion(b), b.id, AHORA, { maxFilas: 1_000 });
+    expect(soloDe(deB.pagosDeOtros, reasignado, propio).map((p) => p.id)).toEqual([reasignado.id, propio.id]);
   });
 
   it("su lista se corta por su cuenta y su contador sigue exacto", async () => {
     const m = await armarMundo();
     const monitoria = await fx.crearMonitoria(await fx.crearContextoDeMonitoria(m.a.id), { fecha: "2030-01-21" });
-    await fx.crearPagoDe(monitoria.id, { idAdmin: m.a.id, fechaAsignacion: hace(100) });
-    await fx.crearPagoDe(monitoria.id, { idAdmin: m.a.id, fechaAsignacion: hace(110) });
+    await fx.crearPagoDe(monitoria.id, { idAdmin: m.a.id, fechaPago: hace(100) });
+    await fx.crearPagoDe(monitoria.id, { idAdmin: m.a.id, fechaPago: hace(110) });
 
     const deB = await cargarBandeja(await fx.iniciarSesion(m.b), m.b.id, AHORA, { maxFilas: 1 });
-    expect(deB.pagosVencidosDeOtros).toHaveLength(1);
-    // Los tres vencidos de A en este mundo, y los de otras pruebas si los hay.
-    expect(deB.contadores.pagosVencidosDeOtros).toBeGreaterThanOrEqual(3);
+    expect(deB.pagosDeOtros).toHaveLength(1);
+    // Los cinco en revisión de A y de C en este mundo, y los de otras pruebas si los hay.
+    expect(deB.contadores.pagosDeOtros).toBeGreaterThanOrEqual(5);
     // La lista propia no se come el lugar de la otra, ni al revés.
     expect(deB.pagos.map((p) => p.id)).toEqual([m.pDeB.id]);
   });
 });
 
-describe("criterio 2: un ítem con plazo muestra el tiempo restante", () => {
-  it("cada pago dice cuánto le queda para revisarlo o hace cuánto venció (RN-42: 1 hora)", async () => {
+describe("criterio 2: cada pago dice hace cuánto llegó, sin plazo", () => {
+  it("«hace …» desde la llegada (D-56): ni «Quedan …», ni «Vencido hace …», ni revisionHasta ni restante", async () => {
     const m = await armarMundo();
     const bandeja = await cargarBandeja(await fx.iniciarSesion(m.a), m.a.id, AHORA);
 
-    expect(bandeja.pagos.map((p) => p.restante)).toEqual([
-      { texto: "Vencido hace 30 min", vencido: true }, // asignado hace 90 min: la hora terminó hace 30
-      { texto: "Quedan 30 min", vencido: false }, // asignado hace 30 min
-      { texto: "Quedan 50 min", vencido: false }, // asignado hace 10 min
+    expect(bandeja.pagos.map((p) => p.espera)).toEqual([
+      "hace 1 h 30 min", // llegó hace 90 min
+      "hace 30 min",
+      "hace 10 min",
     ]);
-    // El vencimiento es la fecha de asignación más 1 h, calculado con el motor de HU-003.
-    expect(bandeja.pagos[0].revisionHasta.toISOString()).toBe(new Date(AHORA.getTime() - 30 * MINUTO).toISOString());
+    expect(bandeja.pagos.map((p) => p.llegoEn)).toEqual([
+      new Date(AHORA.getTime() - 90 * MINUTO),
+      new Date(AHORA.getTime() - 30 * MINUTO),
+      new Date(AHORA.getTime() - 10 * MINUTO),
+    ]);
+    expect(Object.keys(bandeja.pagos[0]).sort()).toEqual(["espera", "id", "llegoEn", "monto", "nombrePagador"]);
+    // La espera de nadie pasa de «hace …»: no hay borde ni vencimiento.
+    for (const texto of [...bandeja.pagos.map((p) => p.espera), ...bandeja.pagosDeOtros.map((p) => p.espera)]) {
+      expect(texto).toMatch(/^hace /);
+    }
   });
 });
 
@@ -385,7 +406,7 @@ describe("quién puede leer la bandeja", () => {
     const bandeja = await cargarBandeja(await fx.iniciarSesion(monitor), m.a.id, AHORA);
 
     expect(bandeja.pagos).toEqual([]);
-    expect(bandeja.pagosVencidosDeOtros).toEqual([]);
+    expect(bandeja.pagosDeOtros).toEqual([]);
     // HU-078: el mundo tiene un caso P-24 abierto (mCasoAbierto) y un monitor no lo ve.
     expect(bandeja.pagosPorCobrarOAsumir).toEqual([]);
     expect(bandeja.reembolsos).toEqual({ esperandoLlave: [], pendientes: [], pendientesDeOtros: [] });
@@ -395,7 +416,7 @@ describe("quién puede leer la bandeja", () => {
     expect(bandeja.correosSinEnviar).toEqual([]);
     expect(bandeja.contadores).toEqual({
       pagos: 0,
-      pagosVencidosDeOtros: 0,
+      pagosDeOtros: 0,
       pagosPorCobrarOAsumir: 0,
       reembolsos: 0,
       reembolsosEsperandoLlave: 0,
@@ -426,9 +447,12 @@ describe("el corte de las listas", () => {
     const m = await armarMundo();
     const bandeja = await cargarBandeja(await fx.iniciarSesion(m.a), m.a.id, AHORA, { maxFilas: 1 });
 
-    // Pagos: se queda con el que vence primero, pero el contador cuenta los tres.
+    // Pagos: se queda con el que lleva más tiempo esperando, pero el contador cuenta los tres. Los de otros (B y C) se
+    // cortan aparte: la lista de los propios no se come el lugar de la otra.
     expect(bandeja.pagos.map((p) => p.id)).toEqual([m.p1.id]);
     expect(bandeja.contadores.pagos).toBe(3);
+    expect(bandeja.pagosDeOtros).toHaveLength(1);
+    expect(bandeja.contadores.pagosDeOtros).toBeGreaterThanOrEqual(2);
     // Reembolsos: cada estado se corta solo. Con una lista mezclada, los dos que esperan la llave (más antiguos)
     // se comerían el único lugar y el pendiente, que es el accionable, quedaría fuera.
     expect(bandeja.reembolsos.esperandoLlave).toHaveLength(1);
@@ -448,13 +472,13 @@ describe("una lista muy larga", () => {
     const monitoria = await fx.crearMonitoria(contexto, { fecha: "2030-01-21" });
     const total = MAX_FILAS_POR_SECCION + 1;
     await Promise.all(
-      Array.from({ length: total }, (_, i) => fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaAsignacion: hace(i + 1), nombrePagador: `Pagador ${i}` })),
+      Array.from({ length: total }, (_, i) => fx.crearPagoDe(monitoria.id, { idAdmin: a.id, fechaPago: hace(i + 1), nombrePagador: `Pagador ${i}` })),
     );
 
     const bandeja = await cargarBandeja(await fx.iniciarSesion(a), a.id, AHORA);
     expect(bandeja.pagos).toHaveLength(MAX_FILAS_POR_SECCION);
     expect(bandeja.contadores.pagos).toBe(total);
-    // Los primeros son los que vencen antes: el asignado hace más tiempo.
+    // El primero es el que lleva más tiempo esperando: el que llegó hace más.
     expect(bandeja.pagos[0].nombrePagador).toBe(`Pagador ${total - 1}`);
   });
 });

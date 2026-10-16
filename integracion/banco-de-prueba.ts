@@ -83,7 +83,7 @@ export function bancoDeEjemplo(cambios: [string, string][] = []): Banco {
 
 /** Física II del contenido real, con el código `ZZDG-0003`. Su carpeta es `fisica-2`: es la referencia en memoria, no lo que se carga. */
 export function bancoDeFisicaII(): Banco {
-  return analizar(archivosDe(FISICA_II, "fisica-2/"), [["FISI-1019", CODIGO_FISICA_II]]);
+  return analizar(archivosDe(FISICA_II, "fisica-2/"), [["FISI-1528", CODIGO_FISICA_II]]);
 }
 
 /**
@@ -95,7 +95,7 @@ function bancoDeFisicaIIParaLaBase(): Banco {
     ...archivo,
     texto: archivo.texto.replaceAll("fisica-2/", `${CARPETA_FISICA_II_EN_LA_BASE}/`),
   }));
-  return analizar(archivos, [["FISI-1019", CODIGO_FISICA_II]]);
+  return analizar(archivos, [["FISI-1528", CODIGO_FISICA_II]]);
 }
 
 /**

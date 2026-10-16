@@ -49,6 +49,25 @@ isOneToOne: false
       referencedColumns: ["id_monitoria"]
     }
                   ]
+                },"aviso_pago_nuevo": {
+                  Row: {
+                    "creado_en": string,"id": string,"id_admin": string,"id_pago": string,"id_responsable": string,"intentos": number,"procesado_en": string | null
+                  }
+                  Insert: {
+                    "creado_en"?: string,"id"?: string,"id_admin": string,"id_pago": string,"id_responsable": string,"intentos"?: number,"procesado_en"?: string | null
+                  }
+                  Update: {
+                    "creado_en"?: string,"id"?: string,"id_admin"?: string,"id_pago"?: string,"id_responsable"?: string,"intentos"?: number,"procesado_en"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "aviso_pago_nuevo_id_pago_fkey"
+      columns: ["id_pago"]
+isOneToOne: false
+      referencedRelation: "pago"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"aviso_rechazo_pago": {
                   Row: {
                     "caso": string,"creado_en": string,"id": string,"id_pago": string,"intentos": number,"procesado_en": string | null

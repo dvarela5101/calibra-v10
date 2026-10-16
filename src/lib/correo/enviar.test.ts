@@ -20,7 +20,7 @@ const EJEMPLOS: { [P in Plantilla]: DatosPorPlantilla[P] } = {
   recordatorio_llave_reembolso: { nombre: "Ana", monto: 25_000, motivo: "Cancelaste a tiempo", enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
   pago_rechazado_individual: { nombre: "Ana", monto: 25_000, fechaSesion: "2020-01-06" },
   pago_rechazado_grupal: { nombre: "Ana", monto: 20_000, fechaSesion: "2020-01-13", enlace: ENLACE },
-  escalamiento_pago: { nombreAdmin: "Admin", nombrePagador: "Ana", monto: 25_000, enlace: ENLACE },
+  aviso_admin_pago_nuevo: { nombreAdmin: "Admin", nombrePagador: "Ana", monto: 25_000, nombreResponsable: null, enlace: ENLACE },
   invitacion_monitor: { enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
   invitacion_admin: { enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z", invitadoPor: "Admin Uno" },
   verificacion_lead: { nombre: "Ana", enlace: ENLACE, venceEn: "2020-01-13T15:00:00.000Z" },
@@ -417,7 +417,7 @@ describe("cuando algo del entorno falla", () => {
 describe("claveDeCorreo", () => {
   it("es la plantilla y la entidad", () => {
     expect(claveDeCorreo("resena_individual", "monitoria-7")).toBe("resena_individual:monitoria-7");
-    expect(claveDeCorreo("escalamiento_pago", " pago-1:admin-2:1 ")).toBe("escalamiento_pago:pago-1:admin-2:1");
+    expect(claveDeCorreo("aviso_admin_pago_nuevo", " pago-1:admin-2 ")).toBe("aviso_admin_pago_nuevo:pago-1:admin-2");
   });
 
   it("no acepta una entidad vacía", () => {
@@ -441,36 +441,37 @@ describe("claveDeCorreo", () => {
     expect(() => claveDeCorreo("resena_individual", `reembolso-${eñe}1`)).toThrow(/ASCII/);
     expect(() => claveDeCorreo("resena_individual", `a${salto}b`)).toThrow(/ASCII/);
     expect(() => claveDeCorreo("resena_individual", `a${String.fromCharCode(9)}b`)).toThrow(/ASCII/);
-    expect(claveDeCorreo("escalamiento_pago", "pago-1:admin-2:1 (vuelta 2)")).toBe("escalamiento_pago:pago-1:admin-2:1 (vuelta 2)");
+    expect(claveDeCorreo("aviso_admin_pago_nuevo", "pago-1:admin-2 (aviso 2)")).toBe("aviso_admin_pago_nuevo:pago-1:admin-2 (aviso 2)");
   });
 });
 
-describe("el escalamiento vuelve al primer admin (RN-42): la entidad debe cambiar en cada vuelta", () => {
-  const escalar = (t: ReturnType<typeof armar>, entidad: string) =>
+describe("el aviso de un pago nuevo sale a cada admin activo (HU-034): la entidad es <id_pago>:<id_admin>", () => {
+  const avisar = (t: ReturnType<typeof armar>, entidad: string, destinatario = "admin@calibra.test") =>
     enviarCorreo(t.dependencias, {
-      plantilla: "escalamiento_pago",
-      datos: EJEMPLOS.escalamiento_pago,
-      destinatario: "admin@calibra.test",
+      plantilla: "aviso_admin_pago_nuevo",
+      datos: EJEMPLOS.aviso_admin_pago_nuevo,
+      destinatario,
       entidad,
     });
 
-  it("con la misma entidad pago:admin, la segunda vuelta se descarta como ya enviada", async () => {
+  it("con la misma entidad pago:admin, el segundo intento (otra corrida) se descarta como ya enviado", async () => {
     const t = armar();
-    await escalar(t, "pago-1:admin-2");
-    const segundaVuelta = await escalar(t, "pago-1:admin-2");
-    expect(segundaVuelta).toMatchObject({ ok: true, yaEnviado: true });
+    await avisar(t, "pago-1:admin-2");
+    const segundo = await avisar(t, "pago-1:admin-2");
+    expect(segundo).toMatchObject({ ok: true, yaEnviado: true });
     expect(t.enviados).toHaveLength(1);
   });
 
-  it("con el número de escalamiento en la entidad, cada vuelta manda su aviso", async () => {
+  it("con otro admin o con otro pago en la entidad, cada uno recibe su aviso", async () => {
     const t = armar();
-    await escalar(t, "pago-1:admin-2:1");
-    await escalar(t, "pago-1:admin-1:2");
-    await escalar(t, "pago-1:admin-2:3");
+    await avisar(t, "pago-1:admin-1", "uno@calibra.test");
+    await avisar(t, "pago-1:admin-2", "dos@calibra.test");
+    await avisar(t, "pago-2:admin-1", "uno@calibra.test");
     expect(t.enviados.map((c) => c.claveIdempotencia)).toEqual([
-      "escalamiento_pago:pago-1:admin-2:1",
-      "escalamiento_pago:pago-1:admin-1:2",
-      "escalamiento_pago:pago-1:admin-2:3",
+      "aviso_admin_pago_nuevo:pago-1:admin-1",
+      "aviso_admin_pago_nuevo:pago-1:admin-2",
+      "aviso_admin_pago_nuevo:pago-2:admin-1",
     ]);
   });
 });
+

@@ -23,6 +23,18 @@ function describirDuracion(minutos: number): string {
 }
 
 /**
+ * Cuánto lleva esperando algo desde `desde` (HU-034): `hace menos de 1 min`, `hace 25 min`, `hace 1 h 5 min`, `hace 2 d 3 h`.
+ * No es un plazo: no hay borde ni «vencido». Un `desde` posterior a `ahora` (el reloj del servidor atrasado frente al de
+ * la base, que fecha lo que llega) también dice `hace menos de 1 min`.
+ */
+export function describirEspera(desde: Date, ahora: Date): string {
+  if (Number.isNaN(desde.getTime())) throw new RangeError("desde debe ser una fecha válida.");
+  if (Number.isNaN(ahora.getTime())) throw new RangeError("ahora debe ser una fecha válida.");
+  const minutos = Math.floor((ahora.getTime() - desde.getTime()) / MS_POR_MINUTO);
+  return minutos < 1 ? "hace menos de 1 min" : `hace ${describirDuracion(minutos)}`;
+}
+
+/**
  * Cuánto falta para un plazo, o cuánto lleva vencido. El borde es inclusivo, como en todo el motor
  * de plazos (P-40): con `ahora` igual al límite todavía queda tiempo, no está vencido.
  */

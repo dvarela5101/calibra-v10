@@ -78,7 +78,7 @@ export const GUARDADO_DE_EJEMPLO: ResultadoGuardado = {
 /** 5 de 8: «Puntaje global: 63 %». La fecha es del 4 de octubre en Bogotá y del 5 en UTC. */
 export const FILA_DE_EJEMPLO: FilaDeMiDiagnostico = {
   id_diagnostico: "d1a90000-0000-4000-8000-000000000009",
-  codigo_materia: "FISI-1018",
+  codigo_materia: "FISI-1528",
   nombre_materia: "Física II",
   nombre_evaluacion: "Parcial 1",
   fecha_realizacion: "2026-10-05T03:30:00+00:00",

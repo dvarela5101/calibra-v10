@@ -7,12 +7,13 @@ import type { Database } from "@/lib/supabase/tipos";
 // HU-079: el bucle de una bandeja de salida (leer lo que no tiene `procesado_en`, mandar, marcar, sumar intentos) vive una
 // sola vez, en src/lib/correo/bandeja.ts. La primera parte lee los fuentes, como pruebas/reconstructores.test.ts, y falla si
 // alguien vuelve a copiarlo: una bandeja nueva declara su definición y llama a `procesarBandeja` (README, «Procesadores de
-// la bandeja de salida»). La segunda corre las seis bandejas de hoy con un cliente falso y fija lo que ven el log y la base,
+// la bandeja de salida»). La segunda corre las siete bandejas de hoy con un cliente falso y fija lo que ven el log y la base,
 // que ninguna otra prueba compara entero. Pasa igual antes y después de unificar los procesadores.
 
 vi.mock("@/lib/supabase/admin", () => ({ crearClienteAdmin: () => ({}) }));
 vi.mock("@/lib/correo/servidor", () => ({ enviarCorreoDesdeServidor: vi.fn(), urlDelSitio: (ruta: string) => `https://calibra.test${ruta}` }));
 
+import { procesarAvisosDePagoNuevo } from "@/lib/admin/avisos-pago-nuevo";
 import { procesarAvisosDeRechazoDePago } from "@/lib/admin/avisos-rechazo";
 import { procesarAvisosAlMonitor } from "@/lib/avisos/servidor";
 import { procesarCancelacionesDeCita } from "@/lib/citas/cancelar";
@@ -37,18 +38,20 @@ const textoDe = (ruta: string) => archivos.find((a) => a.ruta === ruta)?.texto ?
 const NUCLEO = "src/lib/correo/bandeja.ts";
 const TIPOS = "src/lib/supabase/tipos.ts";
 
-/** Los módulos de las bandejas. Una bandeja nueva (HU-034) se suma aquí al declararla. */
+/** Los módulos de las bandejas. Una bandeja nueva se suma aquí al declararla. */
 const BANDEJAS = [
   "src/lib/avisos/servidor.ts",
   "src/lib/citas/servidor.ts",
   "src/lib/citas/cancelar.ts",
   "src/lib/reembolsos/pedidos.ts",
   "src/lib/admin/avisos-rechazo.ts",
+  "src/lib/admin/avisos-pago-nuevo.ts",
   "src/lib/resenas/servidor.ts",
 ];
 
 /** Las plantillas que mandan esas bandejas. `pruebas/reconstructores.test.ts` solo las ve si el texto está fuera de src/lib/correo/. */
 const PLANTILLAS = [
+  "aviso_admin_pago_nuevo",
   "aviso_monitor_cancelada",
   "aviso_monitor_confirmada",
   "aviso_monitor_inasistencia_aceptada",
@@ -75,14 +78,14 @@ describe("el bucle de las bandejas vive una sola vez (HU-079)", () => {
     expect(texto).toMatch(/\bprocesarBandeja\(/);
   });
 
-  it("las 11 plantillas siguen escritas en el módulo de su bandeja, una vez cada una", () => {
+  it("las 12 plantillas siguen escritas en el módulo de su bandeja, una vez cada una", () => {
     const escritas = BANDEJAS.flatMap((ruta) => [...textoDe(ruta).matchAll(/plantilla:\s*"([a-z_]+)"/g)].map((m) => m[1])).sort();
     expect(escritas).toEqual([...PLANTILLAS].sort());
   });
 });
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Las seis bandejas, con un cliente falso: qué leen, a qué tabla marcan y qué dicen cuando algo falla.
+// Las siete bandejas, con un cliente falso: qué leen, a qué tabla marcan y qué dicen cuando algo falla.
 // ---------------------------------------------------------------------------------------------------------------------
 
 type Cliente = SupabaseClient<Database>;
@@ -201,6 +204,17 @@ const CASOS: CasoDeBandeja[] = [
     sujeto: `el aviso del rechazo del pago ${id(1)}`,
   },
   {
+    nombre: "avisos de pago nuevo",
+    procesar: procesarAvisosDePagoNuevo,
+    fila: { id: id(10), id_pago: id(1), id_admin: id(2), intentos: 0 },
+    lectura: "aviso_pago_nuevo.select(id, id_pago, id_admin, intentos).is(procesado_en,null).order(creado_en).limit(10)",
+    tabla: "aviso_pago_nuevo",
+    leer: "No se pudieron leer los avisos de pago nuevo",
+    marcar: "No se pudo marcar el aviso de pago nuevo",
+    prefijo: "pagos",
+    sujeto: `el aviso del pago nuevo ${id(1)} para el admin ${id(2)}`,
+  },
+  {
     nombre: "invitaciones de reseña",
     procesar: procesarInvitacionesResena,
     fila: { id: id(10), id_pago: id(1), intentos: 0 },
@@ -213,7 +227,7 @@ const CASOS: CasoDeBandeja[] = [
   },
 ];
 
-describe("las seis bandejas dicen lo que decían (HU-079)", () => {
+describe("las siete bandejas dicen lo que decían (HU-079, HU-034)", () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(AHORA);

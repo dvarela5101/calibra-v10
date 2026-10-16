@@ -23,7 +23,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(90);
+select plan(91);
 
 -- ---------------------------------------------------------------------------
 -- Estructura y permisos
@@ -644,6 +644,9 @@ select is(
 -- D-7: quién lee un diagnóstico
 -- ---------------------------------------------------------------------------
 -- Los diagnósticos de esta prueba son los 17NN. MA dicta las citas d1, d2 (diagnóstico 02), d3 (ninguno) y d4 (07).
+-- La cuenta de Estudiante del Lead 07 (HU-095): lee los diagnósticos de su Lead, los haya hecho la sesión que sea.
+insert into auth.users (id, is_anonymous) values ('d0000000-0000-0000-0000-000000001707', false);
+insert into public.estudiante (id, id_lead) values ('d0000000-0000-0000-0000-000000001707', '40000000-0000-0000-0000-000000001707');
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"b0000000-0000-0000-0000-0000000017a0","role":"authenticated"}';
 select is(
@@ -661,8 +664,14 @@ set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000001707","
 select is(
   (select coalesce(array_agg(right(id::text, 2) order by id), '{}') from public.diagnostico
    where id::text like '60000000-0000-0000-0000-0000000017%'),
+  array['02'],
+  'La sesión del Lead lee solo el que ella hizo (el 02): el 01 y el 03 son del Lead pero no de su sesión (D-53 e, HU-095)');
+set local request.jwt.claims to '{"sub":"d0000000-0000-0000-0000-000000001707","role":"authenticated","is_anonymous":false}';
+select is(
+  (select coalesce(array_agg(right(id::text, 2) order by id), '{}') from public.diagnostico
+   where id::text like '60000000-0000-0000-0000-0000000017%'),
   array['01', '02', '03'],
-  'El Lead dueño lee los suyos, y no los de otro Lead');
+  'La cuenta de Estudiante del Lead 07 lee los tres, hechos por quien sea, y no los de otro Lead (D-55 c)');
 set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000001722","role":"authenticated","is_anonymous":true}';
 select is(
   (select coalesce(array_agg(right(id::text, 2) order by id), '{}') from public.diagnostico

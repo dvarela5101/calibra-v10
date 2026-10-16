@@ -13,14 +13,14 @@ import { enviarCredenciales, expect, test as base, variable, type Cuenta } from 
 //
 // Cada prueba inicia una sola sesión: el Auth local deja 30 inicios cada 5 minutos para toda la suite.
 //
-// HU-077 (D-38): pasada la hora del asignado, cualquier admin activo revisa el pago. En esa prueba los pagos son del
-// otro admin, que nunca entra, y entra el admin de la prueba. Los pagos vencidos de otros admins los ven todos en la
-// bandeja, así que cada prueba busca los suyos por el nombre del pagador.
+// HU-034 (D-56): bandeja común. Cualquier admin activo revisa cualquier pago desde que llega, sea quien sea el
+// responsable. En esas pruebas los pagos son del otro admin, que nunca entra, y entra el admin de la prueba. Los pagos
+// de otros admins los ven todos en la bandeja y la tarjeta cuenta los de las pruebas que corren en paralelo, así que
+// no se espera un total exacto: se mira la lista «Asignados a ti» (exacta) y los demás pagos se buscan por el nombre
+// del pagador.
 
 const ESPERA = { timeout: 20_000 };
 const MINUTO_MS = 60_000;
-/** RN-42: la hora que tiene el admin asignado para revisar un pago, desde que se le asignó. */
-const HORA_DE_REVISION_MS = 60 * MINUTO_MS;
 const PRECIO = 32_000;
 
 // Un PNG de 2x2 que el navegador sí pinta: la prueba abre el comprobante y mira que la imagen cargue.
@@ -52,7 +52,7 @@ const claveSinReembolso = (idPago: string) => `pago_rechazado_sin_reembolso:${id
 // Fixture `escenario`: lo que crea cada prueba, que se borra al terminar
 // ---------------------------------------------------------------------------
 type Materia = { id: string; nombre: string; codigo: string };
-type Pago = { id: string; ruta: string; nombrePagador: string; contacto: string; asignadoEn: Date };
+type Pago = { id: string; ruta: string; nombrePagador: string; contacto: string; llegoEn: Date };
 type FilaDePago = { estado: string; fecha_revision: string | null; observaciones: string | null; id_admin: string; id_admin_revisor: string | null };
 type FilaDeMonitoria = { estado: string; motivo_cancelacion: string | null };
 
@@ -67,7 +67,7 @@ type Escenario = {
   fecha(semana: number): string;
   /** Una monitoría individual del Lead de la prueba, `confirmada` salvo que `extra` diga otra cosa. */
   monitoria(fecha: string, extra?: Record<string, unknown>): Promise<string>;
-  /** Un pago en revisión asignado a `idAdmin` hace `haceMin` minutos, con su comprobante en el bucket. */
+  /** Un pago en revisión de `idAdmin` que llegó hace `haceMin` minutos (`fecha_pago`), con su comprobante en el bucket. */
   pago(idMonitoria: string, datos: { idAdmin: string; haceMin: number; referencia?: string }): Promise<Pago>;
   leerPago(id: string): Promise<FilaDePago>;
   leerMonitoria(id: string): Promise<FilaDeMonitoria>;
@@ -159,7 +159,7 @@ const test = base.extend<{ escenario: Escenario; visitante: Page }>({
           nombrePagador: `Pagador e2e ${randomUUID().slice(0, 6)}`,
           // Un buzón propio en Mailpit: las pruebas corren en paralelo.
           contacto: `pagador-${randomUUID()}@calibra.test`,
-          asignadoEn: new Date(Date.now() - haceMin * MINUTO_MS),
+          llegoEn: new Date(Date.now() - haceMin * MINUTO_MS),
         };
         creados.pagos.push(nuevo);
         const { error } = await cliente.from("comprobante_revisado").insert({ ruta, tipo: "image/png" });
@@ -170,7 +170,8 @@ const test = base.extend<{ escenario: Escenario; visitante: Page }>({
           nombre_pagador: nuevo.nombrePagador,
           contacto: nuevo.contacto,
           id_admin: idAdmin,
-          fecha_asignacion: nuevo.asignadoEn.toISOString(),
+          // La bandeja ordena por cuándo llegó el pago, y la base lo pone en now(): se fija a mano (HU-034).
+          fecha_pago: nuevo.llegoEn.toISOString(),
           comprobante: ruta,
           referencia_transferencia: referencia ?? null,
         });
@@ -244,8 +245,12 @@ const titulo = (page: Page, nombre: string) => page.getByRole("heading", { level
 const seccionPago = (page: Page) => page.getByRole("region", { name: "Pago", exact: true });
 const seccionMonitoria = (page: Page) => page.getByRole("region", { name: "Monitoría", exact: true });
 const pagosDeLaBandeja = (page: Page) => page.getByRole("region", { name: /Pagos por revisar/ });
-// Los asignados al admin. Debajo, en la misma sección, pueden salir pagos vencidos de los admins de otras pruebas (HU-077).
+// Los asignados al admin (la lista no sale si no tiene ninguno). Debajo, en la misma sección, salen «De otros admins»,
+// con los pagos de los admins de otras pruebas (HU-034).
 const misPagosEnLaBandeja = (page: Page) => pagosDeLaBandeja(page).getByRole("list", { name: "Asignados a ti" });
+const pagosDeOtrosEnLaBandeja = (page: Page) => pagosDeLaBandeja(page).getByRole("list", { name: /^De otros admins/ });
+/** La fila de un pago de otro admin en la bandeja, buscada por el nombre del pagador. */
+const filaDeOtro = (page: Page, pago: Pago) => pagosDeOtrosEnLaBandeja(page).getByRole("link", { name: new RegExp(pago.nombrePagador) });
 const botonAprobar = (page: Page) => page.getByRole("button", { name: "Aprobar pago" });
 const abrirRechazo = (page: Page) => page.locator("summary", { hasText: "Rechazar el pago" });
 const botonRechazar = (page: Page) => page.getByRole("button", { name: "Sí, rechazar el pago" });
@@ -285,7 +290,7 @@ async function buzonDe(destinatario: string): Promise<{ asunto: string; texto: s
 // Criterios 1, 2 y 6, y supuesto 1: abrir el pago, ver el comprobante y aprobarlo
 // ---------------------------------------------------------------------------
 test.describe("Criterios 1, 2 y 6 · el admin abre su pago, ve el comprobante y lo aprueba", () => {
-  test("desde la bandeja ve los datos del pago, su monitoría y el tiempo que le queda; el comprobante se firma al tocarlo y carga; al aprobarlo sale de su bandeja; el pago de otro admin, dentro de su hora, lo ve sin acciones y con hasta cuándo es suyo; las páginas respetan las reglas del producto", async ({
+  test("desde la bandeja ve los datos del pago, su monitoría, quién es el responsable y cuándo llegó; el comprobante se firma al tocarlo y carga; al aprobarlo sale de su bandeja; el pago de otro admin, recién llegado, lo ve con sus acciones y la línea de a quién le toca; las páginas respetan las reglas del producto", async ({
     page,
     context,
     request,
@@ -298,22 +303,30 @@ test.describe("Criterios 1, 2 y 6 · el admin abre su pago, ve el comprobante y 
     const ajeno = await escenario.pago(await escenario.monitoria(escenario.fecha(1)), { idAdmin: otroAdmin.id, haceMin: 5 });
     await entrarComoAdmin(page, admin);
 
-    await test.step("en la bandeja está solo su pago, y la tarjeta abre la revisión", async () => {
+    await test.step("en la bandeja está su pago entre los asignados a él, el del otro admin aparte, y la tarjeta abre la revisión", async () => {
       await expect(misPagosEnLaBandeja(page).getByRole("listitem")).toHaveCount(1);
-      await expect(pagosDeLaBandeja(page)).not.toContainText(ajeno.nombrePagador);
+      await expect(misPagosEnLaBandeja(page)).toContainText(suyo.nombrePagador);
+      await expect(misPagosEnLaBandeja(page)).not.toContainText(ajeno.nombrePagador);
+      await expect(misPagosEnLaBandeja(page)).toContainText(/Llegó hace (1[5-9]|2\d) min/);
+      // El del otro admin sale en «De otros admins», no en la lista propia, con de quién es y hace cuánto llegó (HU-034).
+      await expect(filaDeOtro(page, ajeno)).toContainText(new RegExp(`De ${otroAdmin.nombre} · Llegó hace ([5-9]|1\\d) min`));
       await abrirDesdeLaBandeja(page, suyo);
       await expect(titulo(page, "Revisar el pago")).toBeVisible(ESPERA);
     });
 
-    await test.step("criterio 1: pagador, contacto, monto, referencia, estado, tiempo restante y la monitoría", async () => {
+    await test.step("criterio 1: pagador, contacto, monto, referencia, estado, responsable, cuándo llegó y la monitoría", async () => {
       const pago = seccionPago(page);
       await expect(dato(pago, "Pagador")).toHaveText(suyo.nombrePagador);
       await expect(dato(pago, "Contacto")).toHaveText(suyo.contacto);
       await expect(dato(pago, "Monto")).toHaveText(normalizar(formatearPesos(PRECIO)));
       await expect(dato(pago, "Referencia")).toHaveText("M-48213");
       await expect(dato(pago, "Estado")).toHaveText("En revisión");
-      // Se le asignó hace 15 minutos: le quedan unos 45 de su hora (RN-42).
-      await expect(dato(pago, "Tiempo para revisarlo")).toHaveText(/^Quedan (42|43|44|45) min$/);
+      // Es el responsable y el pago llegó hace 15 minutos (HU-034): no hay plazo, ni hora del asignado, ni línea de a quién le toca.
+      await expect(dato(pago, "Responsable")).toHaveText(admin.nombre);
+      await expect(dato(pago, "Llegó")).toHaveText(/^hace (15|16|17|18|19|20) min$/);
+      await expect(pago.locator("dt", { hasText: /^Tiempo para revisarlo$/ })).toHaveCount(0);
+      await expect(page.getByText(/Este pago le toca a/)).toHaveCount(0);
+      await expect(page.getByText(/Este pago está asignado a/)).toHaveCount(0);
       const monitoria = seccionMonitoria(page);
       await expect(dato(monitoria, "Materia")).toHaveText(materia.nombre);
       await expect(dato(monitoria, "Monitor")).toHaveText(monitor.nombre);
@@ -377,30 +390,33 @@ test.describe("Criterios 1, 2 y 6 · el admin abre su pago, ve el comprobante y 
       await expectReglasDelProducto(page, "el pago aprobado");
     });
 
-    await test.step("vuelve a su bandeja: el pago ya no está", async () => {
+    await test.step("vuelve a su bandeja: el pago ya no está entre los suyos", async () => {
       await page.getByRole("link", { name: "Volver a mi bandeja" }).click();
       await expect(page).toHaveURL("/admin", ESPERA);
-      await expect(page.getByRole("navigation", { name: "Resumen de tu bandeja" }).getByRole("link", { name: "0 Pagos por revisar" })).toBeVisible();
-      await expect(page.getByText("No tienes pagos por revisar.")).toBeVisible();
+      // Ya no tiene pagos asignados: la lista propia no sale. La tarjeta suma los de todos (los de otras pruebas también).
+      await expect(pagosDeLaBandeja(page)).toBeVisible(ESPERA);
+      await expect(misPagosEnLaBandeja(page)).toHaveCount(0);
+      await expect(pagosDeLaBandeja(page)).not.toContainText(suyo.nombrePagador);
+      await expect(page.getByRole("navigation", { name: "Resumen de tu bandeja" }).getByRole("link", { name: /^\d+ Pagos por revisar$/ })).toBeVisible();
     });
 
-    await test.step("supuesto 1, dentro de la hora del otro admin (HU-077, criterio 2): su pago se ve con sus datos y hasta cuándo es suyo, pero sin acciones", async () => {
+    await test.step("criterio 9 (HU-034): el pago de otro admin, recién llegado, se ve con sus datos, quién es el responsable, cuándo llegó y las acciones desde el primer minuto", async () => {
       await page.goto(`/admin/pagos/${ajeno.id}`);
       await expect(titulo(page, "Revisar el pago")).toBeVisible(ESPERA);
       await expect(dato(seccionPago(page), "Pagador")).toHaveText(ajeno.nombrePagador);
       await expect(dato(seccionPago(page), "Referencia")).toHaveText("Sin referencia");
-      // HU-077 (criterio 2): dentro de la hora del asignado, también hasta cuándo es suyo. La hora lleva espacios duros.
-      const hasta = formatearFechaHora(new Date(ajeno.asignadoEn.getTime() + HORA_DE_REVISION_MS));
+      await expect(dato(seccionPago(page), "Responsable")).toHaveText(otroAdmin.nombre);
+      await expect(dato(seccionPago(page), "Llegó")).toHaveText(/^hace ([5-9]|1\d) min$/);
       await expect(
-        page.getByText(
-          normalizar(`Este pago está asignado a ${otroAdmin.nombre} hasta el ${hasta} Si para entonces no lo ha revisado, podrás aprobarlo o rechazarlo tú.`),
-          { exact: true },
-        ),
+        page.getByText(`Este pago le toca a ${otroAdmin.nombre} según el orden de revisión. Puedes aprobarlo o rechazarlo tú.`, { exact: true }),
       ).toBeVisible();
+      // Ya no hay hora del asignado ni «hasta cuándo es suyo».
+      await expect(page.getByText(/Este pago está asignado a/)).toHaveCount(0);
+      await expect(page.getByText(/hasta el/)).toHaveCount(0);
+      await expect(seccionPago(page).locator("dt", { hasText: /^Tiempo para revisarlo$/ })).toHaveCount(0);
       await expect(page.getByRole("link", { name: "Ver comprobante" })).toBeVisible();
-      await expect(botonAprobar(page)).toHaveCount(0);
-      await expect(abrirRechazo(page)).toHaveCount(0);
-      await expect(page.locator("form")).toHaveCount(0);
+      await expect(botonAprobar(page)).toBeVisible();
+      await expect(abrirRechazo(page)).toBeVisible();
       expect((await escenario.leerPago(ajeno.id)).estado).toBe("en_revision");
       await expectReglasDelProducto(page, "el pago de otro admin");
     });
@@ -534,7 +550,12 @@ test.describe("Criterios 3, 5 y 7 · el admin rechaza un pago", () => {
 
       await page.getByRole("link", { name: "Volver a mi bandeja" }).click();
       await expect(page).toHaveURL("/admin", ESPERA);
-      await expect(page.getByText("No tienes pagos por revisar.")).toBeVisible();
+      // Ya no le toca ninguno: la lista «Asignados a ti» no sale. La tarjeta y el título suman los pagos de todos los
+      // admins (HU-034), así que no se espera «No hay pagos por revisar.» ni un total exacto. El caso rechazado ya no está
+      // en «Pagos por revisar»: pasó a «Pagos por cobrar o asumir».
+      await expect(pagosDeLaBandeja(page)).toBeVisible(ESPERA);
+      await expect(misPagosEnLaBandeja(page)).toHaveCount(0);
+      await expect(pagosDeLaBandeja(page)).not.toContainText(deRealizada.nombrePagador);
     });
   });
 });
@@ -593,75 +614,161 @@ test.describe("HU-076 · el admin rechaza el pago de una cita que el estudiante 
 });
 
 // ---------------------------------------------------------------------------
-// HU-077, criterios 1 y 3: pasada la hora del asignado, otro admin revisa el pago
+// HU-034, criterios 8 y 9: cualquier admin activo revisa cualquier pago desde que llega
 // ---------------------------------------------------------------------------
-test.describe("HU-077 · otro admin revisa un pago al que se le pasó la hora al asignado", () => {
-  test("lo encuentra en su bandeja con de quién es y desde cuándo está vencido, ve que puede revisarlo, lo aprueba y queda él como revisor; el que sigue en hora no le sale", async ({
+test.describe("HU-034 · otro admin revisa un pago que le toca a otro desde que llega", () => {
+  test("los encuentra en su bandeja con de quién son y hace cuánto llegaron, el más antiguo arriba; abre el que lleva más de una hora, ve que puede revisarlo, lo aprueba y queda él como revisor; el otro sigue en revisión con su responsable", async ({
     page,
     escenario,
   }) => {
     const { admin, otroAdmin } = escenario;
-    // Los dos pagos son del otro admin: uno se le venció hace 30 minutos (RN-42) y el otro todavía está en su hora.
+    // Los dos pagos son del otro admin: uno llegó hace 90 minutos y el otro hace 20. Ninguno está «vencido» ni «en hora»:
+    // los dos se pueden revisar ya (D-56).
     const idCita = await escenario.monitoria(escenario.fecha(0));
-    const vencido = await escenario.pago(idCita, { idAdmin: otroAdmin.id, haceMin: 90 });
-    const enHora = await escenario.pago(await escenario.monitoria(escenario.fecha(1)), { idAdmin: otroAdmin.id, haceMin: 20 });
+    const antiguo = await escenario.pago(idCita, { idAdmin: otroAdmin.id, haceMin: 90 });
+    const reciente = await escenario.pago(await escenario.monitoria(escenario.fecha(1)), { idAdmin: otroAdmin.id, haceMin: 20 });
     await entrarComoAdmin(page, admin);
 
-    await test.step("supuesto 2: no tiene pagos suyos; debajo, el vencido del otro admin, con de quién es y desde cuándo; el que sigue en hora no", async () => {
-      await expect(page.getByRole("navigation", { name: "Resumen de tu bandeja" }).getByRole("link", { name: "0 Pagos por revisar" })).toBeVisible(ESPERA);
-      await expect(pagosDeLaBandeja(page).getByText("No tienes pagos por revisar.")).toBeVisible();
-      const fila = pagosDeLaBandeja(page)
-        .getByRole("list", { name: /Vencidos de otros admins/ })
-        .getByRole("link", { name: new RegExp(vencido.nombrePagador) });
-      await expect(fila).toContainText(normalizar(formatearPesos(PRECIO)));
-      await expect(fila).toContainText(new RegExp(`De ${otroAdmin.nombre} · Vencido hace (30|31|32|33) min`));
-      await expect(pagosDeLaBandeja(page)).not.toContainText(enHora.nombrePagador);
-      await expectReglasDelProducto(page, "la bandeja con un pago vencido de otro admin");
-      await abrirDesdeLaBandeja(page, vencido);
+    await test.step("no tiene pagos suyos; debajo, los dos del otro admin, con de quién son y hace cuánto llegaron, el más antiguo arriba", async () => {
+      // La tarjeta suma los pagos de todos los admins (los dos de esta prueba y los de las otras): sin total exacto.
+      const tarjeta = page.getByRole("navigation", { name: "Resumen de tu bandeja" }).getByRole("link", { name: /^\d+ Pagos por revisar$/ });
+      await expect(tarjeta).toBeVisible(ESPERA);
+      expect(Number((await tarjeta.textContent())!.match(/\d+/)![0])).toBeGreaterThanOrEqual(2);
+      await expect(misPagosEnLaBandeja(page)).toHaveCount(0);
+      await expect(pagosDeLaBandeja(page).getByRole("heading", { level: 3, name: /^De otros admins \(\d+\)$/ })).toBeVisible();
+
+      await expect(filaDeOtro(page, antiguo)).toContainText(normalizar(formatearPesos(PRECIO)));
+      await expect(filaDeOtro(page, antiguo)).toContainText(new RegExp(`De ${otroAdmin.nombre} · Llegó hace 1 h 3\\d min`));
+      await expect(filaDeOtro(page, reciente)).toContainText(new RegExp(`De ${otroAdmin.nombre} · Llegó hace 2\\d min`));
+      await expect(pagosDeOtrosEnLaBandeja(page).getByText(/Quedan|Vencido/)).toHaveCount(0);
+      const filas = await pagosDeOtrosEnLaBandeja(page).getByRole("listitem").allTextContents();
+      const posicion = (pago: Pago) => filas.findIndex((texto) => texto.includes(pago.nombrePagador));
+      expect(posicion(antiguo)).toBeGreaterThanOrEqual(0);
+      expect(posicion(antiguo)).toBeLessThan(posicion(reciente));
+      await expectReglasDelProducto(page, "la bandeja con pagos de otro admin");
+      await filaDeOtro(page, antiguo).click();
+      await expect(page).toHaveURL(`/admin/pagos/${antiguo.id}`, ESPERA);
     });
 
-    await test.step("criterio 1: la revisión dice que al asignado se le pasó la hora y le da las acciones", async () => {
+    await test.step("criterio 9: la revisión dice de quién es y cuándo llegó, y le da las acciones aunque lleve más de una hora", async () => {
       await expect(titulo(page, "Revisar el pago")).toBeVisible(ESPERA);
-      const vencio = formatearFechaHora(new Date(vencido.asignadoEn.getTime() + HORA_DE_REVISION_MS));
       await expect(
-        page.getByText(normalizar(`Este pago está asignado a ${otroAdmin.nombre}, pero se le pasó la hora el ${vencio} Puedes aprobarlo o rechazarlo tú.`), {
-          exact: true,
-        }),
+        page.getByText(`Este pago le toca a ${otroAdmin.nombre} según el orden de revisión. Puedes aprobarlo o rechazarlo tú.`, { exact: true }),
       ).toBeVisible();
-      await expect(dato(seccionPago(page), "Pagador")).toHaveText(vencido.nombrePagador);
-      await expect(dato(seccionPago(page), "Tiempo para revisarlo")).toHaveText(/^Vencido hace (30|31|32|33) min$/);
+      await expect(dato(seccionPago(page), "Pagador")).toHaveText(antiguo.nombrePagador);
+      await expect(dato(seccionPago(page), "Responsable")).toHaveText(otroAdmin.nombre);
+      await expect(dato(seccionPago(page), "Llegó")).toHaveText(/^hace 1 h 3\d min$/);
+      await expect(seccionPago(page).locator("dt", { hasText: /^Tiempo para revisarlo$/ })).toHaveCount(0);
+      await expect(page.getByText(/Este pago está asignado a|se le pasó la hora/)).toHaveCount(0);
       await expect(botonAprobar(page)).toBeVisible();
       await expect(abrirRechazo(page)).toBeVisible();
-      await expectReglasDelProducto(page, "un pago vencido de otro admin");
+      await expectReglasDelProducto(page, "un pago de otro admin con más de una hora");
     });
 
-    await test.step("criterio 3: lo aprueba; queda él como revisor y el pago sigue asignado al otro admin (supuesto 4)", async () => {
+    await test.step("criterio 1: lo aprueba; queda él como revisor y el pago sigue con el otro admin como responsable", async () => {
       await botonAprobar(page).click();
       await expect(aviso(page, "Aprobaste el pago.")).toHaveText("Aprobaste el pago. Ya no aparece en tu bandeja.", ESPERA);
       await expect(titulo(page, "Pago aprobado")).toBeVisible();
       await expect(botonAprobar(page)).toHaveCount(0);
       await expect(abrirRechazo(page)).toHaveCount(0);
 
-      const fila = await escenario.leerPago(vencido.id);
+      const fila = await escenario.leerPago(antiguo.id);
       expect(fila).toMatchObject({ estado: "aprobado", observaciones: null, id_admin: otroAdmin.id, id_admin_revisor: admin.id });
       expect(fila.fecha_revision).not.toBeNull();
       await expect(dato(seccionPago(page), "Estado")).toHaveText("Aprobado");
       await expect(dato(seccionPago(page), "Revisado")).toHaveText(normalizar(formatearFechaHora(new Date(fila.fecha_revision!))));
       await expect(dato(seccionPago(page), "Revisado por")).toHaveText(admin.nombre);
-      await expect(dato(seccionPago(page), "Asignado a")).toHaveText(otroAdmin.nombre);
+      await expect(dato(seccionPago(page), "Responsable")).toHaveText(otroAdmin.nombre);
+      await expect(seccionPago(page).locator("dt", { hasText: /^Asignado a$/ })).toHaveCount(0);
       expect(await escenario.leerMonitoria(idCita)).toEqual({ estado: "confirmada", motivo_cancelacion: null });
-      expect(await escenario.correosDe(vencido.id)).toEqual([]);
-      await expectReglasDelProducto(page, "el pago vencido ya aprobado");
+      expect(await escenario.correosDe(antiguo.id)).toEqual([]);
+      await expectReglasDelProducto(page, "el pago de otro admin ya aprobado");
     });
 
-    await test.step("vuelve a su bandeja: el pago ya no está, y el que sigue en hora sigue en revisión con el otro admin", async () => {
+    await test.step("vuelve a su bandeja: el aprobado ya no está, y el otro sigue en revisión con su responsable", async () => {
       await page.getByRole("link", { name: "Volver a mi bandeja" }).click();
       await expect(page).toHaveURL("/admin", ESPERA);
-      await expect(pagosDeLaBandeja(page).getByText("No tienes pagos por revisar.")).toBeVisible();
-      await expect(pagosDeLaBandeja(page)).not.toContainText(vencido.nombrePagador);
-      await expect(pagosDeLaBandeja(page)).not.toContainText(enHora.nombrePagador);
-      expect(await escenario.leerPago(enHora.id)).toMatchObject({ estado: "en_revision", id_admin: otroAdmin.id, id_admin_revisor: null });
+      await expect(filaDeOtro(page, reciente)).toBeVisible(ESPERA);
+      await expect(pagosDeLaBandeja(page)).not.toContainText(antiguo.nombrePagador);
+      expect(await escenario.leerPago(reciente.id)).toMatchObject({ estado: "en_revision", id_admin: otroAdmin.id, id_admin_revisor: null });
     });
+  });
+
+  test("el admin B abre el pago recién creado del admin A, ve a quién le toca, lo aprueba, y A lo ve aprobado por B con él como responsable; antes, la bandeja de B lo lista en «De otros admins» con «Llegó hace …» desde el primer minuto", async ({
+    page,
+    browser,
+    baseURL,
+    viewport,
+    escenario,
+  }) => {
+    // El pago es del admin A (`otroAdmin`) y acaba de llegar. B es el admin de la prueba. Cada uno entra en su navegador.
+    const { admin: adminB, otroAdmin: adminA } = escenario;
+    const idCita = await escenario.monitoria(escenario.fecha(0));
+    const nuevo = await escenario.pago(idCita, { idAdmin: adminA.id, haceMin: 0 });
+    const contextoDeA = await browser.newContext({ baseURL, viewport, locale: "es-CO", timezoneId: ZONA_HORARIA_NEGOCIO });
+    try {
+      const paginaDeA = await contextoDeA.newPage();
+
+      await test.step("A entra y lo tiene entre los asignados a él, con cuánto lleva esperando y sin «De …»", async () => {
+        await entrarComoAdmin(paginaDeA, adminA);
+        const fila = misPagosEnLaBandeja(paginaDeA).getByRole("listitem").filter({ hasText: nuevo.nombrePagador });
+        await expect(fila).toHaveCount(1);
+        await expect(fila).toContainText(/Llegó hace (menos de 1 min|[1-3] min)/);
+        await expect(fila).not.toContainText(/\bDe /);
+      });
+
+      await entrarComoAdmin(page, adminB);
+
+      await test.step("antes de aprobarlo: la bandeja de B lo lista en «De otros admins» con «Llegó hace …» desde el primer minuto", async () => {
+        await expect(misPagosEnLaBandeja(page)).toHaveCount(0);
+        await expect(pagosDeLaBandeja(page).getByRole("heading", { level: 3, name: /^De otros admins \(\d+\)$/ })).toBeVisible(ESPERA);
+        const fila = filaDeOtro(page, nuevo);
+        await expect(fila).toContainText(normalizar(formatearPesos(PRECIO)));
+        await expect(fila).toContainText(new RegExp(`De ${adminA.nombre} · Llegó hace (menos de 1 min|[1-3] min)`));
+        await expect(fila).not.toContainText(/Quedan|Vencido/);
+        await expectReglasDelProducto(page, "la bandeja con un pago recién llegado de otro admin");
+        await fila.click();
+        await expect(page).toHaveURL(`/admin/pagos/${nuevo.id}`, ESPERA);
+      });
+
+      await test.step("B abre el pago y ve la línea «Este pago le toca a …»; tiene las acciones aunque no sea el responsable", async () => {
+        await expect(titulo(page, "Revisar el pago")).toBeVisible(ESPERA);
+        await expect(
+          page.getByText(`Este pago le toca a ${adminA.nombre} según el orden de revisión. Puedes aprobarlo o rechazarlo tú.`, { exact: true }),
+        ).toBeVisible();
+        await expect(dato(seccionPago(page), "Responsable")).toHaveText(adminA.nombre);
+        await expect(dato(seccionPago(page), "Llegó")).toHaveText(/^hace (menos de 1 min|[1-3] min)$/);
+        await expect(botonAprobar(page)).toBeVisible();
+        await expect(abrirRechazo(page)).toBeVisible();
+        await expectReglasDelProducto(page, "un pago recién llegado de otro admin");
+      });
+
+      await test.step("B lo aprueba y queda como revisor; el responsable sigue siendo A", async () => {
+        await botonAprobar(page).click();
+        await expect(aviso(page, "Aprobaste el pago.")).toHaveText("Aprobaste el pago. Ya no aparece en tu bandeja.", ESPERA);
+        await expect(titulo(page, "Pago aprobado")).toBeVisible();
+        expect(await escenario.leerPago(nuevo.id)).toMatchObject({ estado: "aprobado", id_admin: adminA.id, id_admin_revisor: adminB.id });
+        await expectReglasDelProducto(page, "el pago recién llegado ya aprobado");
+      });
+
+      await test.step("A lo ve aprobado, con «Revisado por» B y «Responsable» A; ya no está en su bandeja", async () => {
+        await paginaDeA.goto(`/admin/pagos/${nuevo.id}`);
+        await expect(titulo(paginaDeA, "Pago aprobado")).toBeVisible(ESPERA);
+        await expect(dato(seccionPago(paginaDeA), "Estado")).toHaveText("Aprobado");
+        await expect(dato(seccionPago(paginaDeA), "Revisado por")).toHaveText(adminB.nombre);
+        await expect(dato(seccionPago(paginaDeA), "Responsable")).toHaveText(adminA.nombre);
+        await expect(botonAprobar(paginaDeA)).toHaveCount(0);
+        await expect(abrirRechazo(paginaDeA)).toHaveCount(0);
+        await expectReglasDelProducto(paginaDeA, "el pago aprobado por otro admin, visto por el responsable");
+
+        await paginaDeA.goto("/admin");
+        await expect(pagosDeLaBandeja(paginaDeA)).toBeVisible(ESPERA);
+        await expect(misPagosEnLaBandeja(paginaDeA)).toHaveCount(0);
+        await expect(pagosDeLaBandeja(paginaDeA)).not.toContainText(nuevo.nombrePagador);
+      });
+    } finally {
+      await contextoDeA.close();
+    }
   });
 });
 
