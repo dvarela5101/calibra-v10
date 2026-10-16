@@ -4,14 +4,18 @@ import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import {
   cierreAutomaticoDe,
+  finDeSesionDe,
   MENSAJES_DE_FINALIZAR,
+  rutaDelDiagnosticoDeLaCita,
   separarAgenda,
+  sePuedeVerDiagnostico,
   textoDeEstado,
   textoDePago,
   type MonitoriaDeAgenda,
 } from "@/lib/agenda/reglas";
 import { cargarAgenda } from "@/lib/agenda/servidor";
 import { exigirRol } from "@/lib/auth/sesion";
+import { TEXTOS } from "@/lib/diagnostico/vista-del-monitor";
 import { formatearDiaConSemana, formatearFechaHora } from "@/lib/fechas";
 import { horaCorta, horaDeFin } from "@/lib/franjas/reglas";
 import { cargarParametros, type ParametrosNegocio } from "@/lib/plazos/parametros";
@@ -38,7 +42,8 @@ function avisoDeFinalizar(finalizada: unknown, noFinalizada: unknown): { exito: 
  * HU-021 (RN-17, RN-36, P-24, P-37, D-11, D-12): el monitor ve sus monitorías próximas y pasadas, con quién
  * agendó (solo el nombre) y el estado del pago (sin cifras). Las notificaciones no existen todavía (P-11):
  * la agenda es su forma de enterarse. HU-023 (P-05, D-13 a D-15): arriba, las confirmadas que ya empezaron,
- * para marcarlas como realizadas, con la hora en que se cierran solas (el recordatorio es este).
+ * para marcarlas como realizadas, con la hora en que se cierran solas (el recordatorio es este). HU-022 (D-54): la tarjeta de una
+ * cita cuyo diagnóstico se puede ver lleva el enlace «Ver diagnóstico»; en el resto no hay enlace ni aviso.
  */
 export default async function MiAgenda({ searchParams }: PageProps<"/monitor/agenda">) {
   await exigirRol("monitor", "/monitor/agenda");
@@ -64,7 +69,9 @@ export default async function MiAgenda({ searchParams }: PageProps<"/monitor/age
     );
   }
 
-  const { porFinalizar, proximas, pasadas } = separarAgenda(monitorias, new Date());
+  // Una sola hora para separar la agenda y para decidir los enlaces: no pueden discrepar dentro de una misma respuesta.
+  const ahora = new Date();
+  const { porFinalizar, proximas, pasadas } = separarAgenda(monitorias, ahora);
   const pasadasALaVista = pasadas.slice(0, PASADAS_A_LA_VISTA);
   const restoDePasadas = pasadas.slice(PASADAS_A_LA_VISTA);
 
@@ -89,10 +96,11 @@ export default async function MiAgenda({ searchParams }: PageProps<"/monitor/age
           <ul className={estilos.lista}>
             {porFinalizar.map((m) => (
               <li key={m.idMonitoria} className={estilos.tarjeta}>
-                <DatosDeMonitoria monitoria={m} idCabeza={`cabeza-${m.idMonitoria}`} />
+                <DatosDeMonitoria monitoria={m} />
                 <span className={estilos.dato}>
                   Si no la finalizas, se cierra sola a partir del {formatearFechaHora(cierreAutomaticoDe(m, parametros))}.
                 </span>
+                <EnlaceDelDiagnostico monitoria={m} ahora={ahora} />
                 <form action={finalizar} className={estilos.accion}>
                   <input type="hidden" name="monitoria" value={m.idMonitoria} />
                   {/* El nombre del botón se repite en cada tarjeta: la descripción dice de qué monitoría es. */}
@@ -113,7 +121,7 @@ export default async function MiAgenda({ searchParams }: PageProps<"/monitor/age
         {proximas.length === 0 ? (
           <p className={formulario.ayuda}>No tienes monitorías próximas.</p>
         ) : (
-          <ListaDeMonitorias monitorias={proximas} />
+          <ListaDeMonitorias monitorias={proximas} ahora={ahora} />
         )}
       </section>
 
@@ -125,13 +133,13 @@ export default async function MiAgenda({ searchParams }: PageProps<"/monitor/age
           <p className={formulario.ayuda}>Todavía no tienes monitorías pasadas.</p>
         ) : (
           <>
-            <ListaDeMonitorias monitorias={pasadasALaVista} />
+            <ListaDeMonitorias monitorias={pasadasALaVista} ahora={ahora} />
             {restoDePasadas.length > 0 && (
               <details className={estilos.mas}>
                 <summary className={estilos.resumen}>
                   Ver {restoDePasadas.length === 1 ? "1 monitoría más" : `${restoDePasadas.length} monitorías más`}
                 </summary>
-                <ListaDeMonitorias monitorias={restoDePasadas} />
+                <ListaDeMonitorias monitorias={restoDePasadas} ahora={ahora} />
               </details>
             )}
           </>
@@ -145,22 +153,38 @@ export default async function MiAgenda({ searchParams }: PageProps<"/monitor/age
   );
 }
 
-function ListaDeMonitorias({ monitorias }: { monitorias: MonitoriaDeAgenda[] }) {
+function ListaDeMonitorias({ monitorias, ahora }: { monitorias: MonitoriaDeAgenda[]; ahora: Date }) {
   return (
     <ul className={estilos.lista}>
       {monitorias.map((m) => (
         <li key={m.idMonitoria} className={estilos.tarjeta}>
           <DatosDeMonitoria monitoria={m} />
+          <EnlaceDelDiagnostico monitoria={m} ahora={ahora} />
         </li>
       ))}
     </ul>
   );
 }
 
-function DatosDeMonitoria({ monitoria: m, idCabeza }: { monitoria: MonitoriaDeAgenda; idCabeza?: string }) {
+/**
+ * HU-022: «Ver diagnóstico» solo si el estado de la cita lo permite (`sePuedeVerDiagnostico`, el espejo de la función de la base).
+ * Es un `a` hijo directo de la tarjeta, no un `span`: las pruebas de la tarjeta cuentan sus `span`. Se repite en cada tarjeta, así que
+ * su descripción es el renglón de fecha y hora de la misma tarjeta; el nombre sigue siendo «Ver diagnóstico». Sin enlace no hay aviso
+ * que lo explique (D-54).
+ */
+function EnlaceDelDiagnostico({ monitoria: m, ahora }: { monitoria: MonitoriaDeAgenda; ahora: Date }) {
+  if (!sePuedeVerDiagnostico(m.estado, finDeSesionDe(m), ahora)) return null;
+  return (
+    <Link href={rutaDelDiagnosticoDeLaCita(m.idMonitoria)} aria-describedby={`cabeza-${m.idMonitoria}`} className={formulario.enlace}>
+      {TEXTOS.verDiagnostico}
+    </Link>
+  );
+}
+
+function DatosDeMonitoria({ monitoria: m }: { monitoria: MonitoriaDeAgenda }) {
   return (
     <>
-      <span id={idCabeza} className={estilos.cabeza}>
+      <span id={`cabeza-${m.idMonitoria}`} className={estilos.cabeza}>
         <time dateTime={m.fecha}>{formatearDiaConSemana(m.fecha)}</time>, {horaCorta(m.hora)} a {horaDeFin(m.hora, m.duracionMin)}
       </span>
       <span className={estilos.detalle}>

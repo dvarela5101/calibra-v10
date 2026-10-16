@@ -16,6 +16,7 @@ import {
   textoDeVerMonitores,
 } from "@/lib/diagnostico/presentacion";
 import { rutaDeDiagnostico } from "@/lib/diagnostico/rutas";
+import { textoDeVeces } from "@/lib/diagnostico/vista-del-monitor";
 import { diaDelNegocio, formatearDia } from "@/lib/fechas";
 import estilos from "./resultado.module.css";
 
@@ -41,9 +42,12 @@ function TituloDeSeccion({ nivel, id, children }: { nivel: NivelDeTitulos; id: s
   );
 }
 
-/** El nivel de una habilidad, escrito: el color del borde solo lo refuerza. */
-export function NivelEscrito({ nivel }: { nivel: NivelHabilidad }) {
-  return <span className={`${estilos.nivel} ${estilos[nivel]}`}>{etiquetaDeNivel(nivel)}</span>;
+/**
+ * El nivel de una habilidad, escrito: el color del borde solo lo refuerza. `etiqueta` es opcional: la persona ve «Lo dominas» y el
+ * monitor (HU-022) «Lo domina»; sin ella, la de la persona.
+ */
+export function NivelEscrito({ nivel, etiqueta }: { nivel: NivelHabilidad; etiqueta?: string }) {
+  return <span className={`${estilos.nivel} ${estilos[nivel]}`}>{etiqueta ?? etiquetaDeNivel(nivel)}</span>;
 }
 
 type PropsDeSeccion = {
@@ -52,8 +56,15 @@ type PropsDeSeccion = {
   nivelDeTitulos?: NivelDeTitulos;
 };
 
-/** «Error detectado» o «Posible error», los confirmados primero. Sin errores, dice que no hubo. */
-export function ErroresDetectados({ errores, idBase, nivelDeTitulos = 2 }: PropsDeSeccion & { errores: ResultadoParaMostrar["errores"] }) {
+/**
+ * «Error detectado» o «Posible error», los confirmados primero. Sin errores, dice que no hubo. El monitor (HU-022) agrega `veces`
+ * a cada error, y entonces se imprime «Lo eligió N veces»; la persona no lo trae y no lo ve.
+ */
+export function ErroresDetectados({
+  errores,
+  idBase,
+  nivelDeTitulos = 2,
+}: PropsDeSeccion & { errores: (ResultadoParaMostrar["errores"][number] & { veces?: number })[] }) {
   const idTitulo = `errores-${idBase}`;
   return (
     <section aria-labelledby={idTitulo} className={estilos.seccion}>
@@ -69,6 +80,7 @@ export function ErroresDetectados({ errores, idBase, nivelDeTitulos = 2 }: Props
               <p className={estilos.textoDelError}>
                 <span className={estilos.prefijo}>{prefijoDeError(error.estado)}</span> <TextoDelBanco texto={error.titulo} />
               </p>
+              {error.veces !== undefined && <p className={estilos.detalle}>{textoDeVeces(error.veces)}</p>}
               {error.descripcionDeLaHabilidad !== null && (
                 <p className={estilos.detalle}>
                   {`${TEXTOS.habilidadDelError} `}
@@ -88,14 +100,22 @@ export function ErroresDetectados({ errores, idBase, nivelDeTitulos = 2 }: Props
   );
 }
 
-/** Una sola lista, sin repetir y sin separar por habilidad, con la otra materia al final del renglón. Sin prerrequisitos no dibuja nada. */
-export function RepasarAntes({ prerrequisitos, idBase, nivelDeTitulos = 2 }: PropsDeSeccion & { prerrequisitos: ResultadoParaMostrar["prerrequisitos"] }) {
+/**
+ * Una sola lista, sin repetir y sin separar por habilidad, con la otra materia al final del renglón. Sin prerrequisitos no dibuja
+ * nada. `titulo` es opcional: la persona ve «Conviene repasar antes» y el monitor (HU-022) «Prerrequisitos».
+ */
+export function RepasarAntes({
+  prerrequisitos,
+  idBase,
+  nivelDeTitulos = 2,
+  titulo,
+}: PropsDeSeccion & { prerrequisitos: ResultadoParaMostrar["prerrequisitos"]; titulo?: string }) {
   if (prerrequisitos.length === 0) return null;
   const idTitulo = `repasar-${idBase}`;
   return (
     <section aria-labelledby={idTitulo} className={estilos.seccion}>
       <TituloDeSeccion nivel={nivelDeTitulos} id={idTitulo}>
-        {TEXTOS.repasarAntes}
+        {titulo ?? TEXTOS.repasarAntes}
       </TituloDeSeccion>
       <ul className={estilos.lista}>
         {prerrequisitos.map((prerrequisito, posicion) => (

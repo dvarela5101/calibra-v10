@@ -7,7 +7,8 @@
 -- otro Lead, un monitor con cita, un admin, un monitor o un admin que además es la sesión dueña, el visitante sin sesión), qué
 -- columnas salen (ni repetido, ni semilla, ni token, ni las copias de las preguntas) y que la Evaluación apagada no cambia nada.
 -- Desde HU-095 también que la política de lectura de la tabla dice lo mismo que la función (D-53 e): cada actor lee de public.diagnostico
--- los mismos diagnósticos que le devuelve mi_diagnostico, salvo el monitor y el admin que no son dueños.
+-- los mismos diagnósticos que le devuelve mi_diagnostico, salvo el admin que no es dueño (el monitor de una cita tampoco lee la tabla
+-- desde HU-022).
 --
 -- Elenco (ids terminados en 0009NN):
 --   sesiones c0000000-...-0009NN: 01 dueña (hizo los diagnósticos 01 y 02), 02 otra sin relación, 03 ligada al Lead 1 por lead_sesion
@@ -91,7 +92,8 @@ from (values
    '20000000-0000-0000-0000-000000000901', '10000000-0000-0000-0000-000000000901')
 ) as v(id, id_lead, sesion, evaluacion, materia);
 
--- Una cita del monitor 04 que apunta al diagnóstico 01 (RN-13, D-7): la política de la tabla le deja leerlo.
+-- Una cita del monitor 04 que apunta al diagnóstico 01 (RN-13, D-7). Desde HU-022 la política de la tabla no le deja leerlo: lo lee
+-- por public.diagnostico_de_mi_monitoria.
 insert into public.certificado (id_monitor, id_materia, id_admin) values
   ('c0000000-0000-0000-0000-000000000904', '10000000-0000-0000-0000-000000000901', 'c0000000-0000-0000-0000-000000000905');
 insert into public.franja (id, id_monitor, dia, hora, presencial, precio, duracion_min, lugar, abierta_desde)
@@ -237,14 +239,16 @@ select is((select count(*)::int from public.mi_diagnostico('60000000-0000-0000-0
 reset role;
 
 -- ---------------------------------------------------------------------------
--- Un monitor con cita y un admin leen la tabla, no la función
+-- Un admin lee la tabla, no la función; un monitor con cita no lee ninguna de las dos (HU-022)
 -- ---------------------------------------------------------------------------
 set local role authenticated;
 set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000000904","role":"authenticated","is_anonymous":false}';
-select is((select count(*)::int from public.diagnostico where id = '60000000-0000-0000-0000-000000000901'), 1,
-  'El monitor de una cita que apunta al diagnóstico lo lee con select (RN-13)');
+-- HU-022 cerró esta vía: el monitor de una cita ya no lee por la tabla el diagnóstico al que ella apunta (lo lee por
+-- public.diagnostico_de_mi_monitoria, que prueba diagnostico_del_monitor.test.sql). Esta cita ni siquiera se ve: está por pagar.
+select is((select count(*)::int from public.diagnostico where id = '60000000-0000-0000-0000-000000000901'), 0,
+  'El monitor de una cita que apunta al diagnóstico ya no lo lee con select (HU-022 cerró esa vía)');
 select is((select count(*)::int from public.mi_diagnostico('60000000-0000-0000-0000-000000000901')), 0,
-  'Pero con mi_diagnostico no: el resultado de un estudiante no se le muestra como suyo');
+  'Y con mi_diagnostico tampoco: el resultado de un estudiante no se le muestra como suyo');
 set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000000905","role":"authenticated","is_anonymous":false}';
 select is((select count(*)::int from public.diagnostico where id = '60000000-0000-0000-0000-000000000901'), 1,
   'Un admin lo lee con select');
@@ -269,7 +273,8 @@ reset role;
 -- ---------------------------------------------------------------------------
 -- Por cada actor, los diagnósticos 01 a 04 que lee de public.diagnostico son los mismos que devuelve mi_diagnostico(id). Así las
 -- dos reglas no se vuelven a separar: si la política de la tabla abre algo que la función cierra (o al revés), una de estas falla.
--- La excepción declarada es el monitor y el admin que no son dueños: leen la tabla y la función los descarta (arriba).
+-- La excepción declarada es el admin que no es dueño: lee la tabla y la función lo descarta (arriba). El monitor de una cita ya no
+-- lee ninguna de las dos (HU-022).
 set local role authenticated;
 
 set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000000901","role":"authenticated","is_anonymous":true}';

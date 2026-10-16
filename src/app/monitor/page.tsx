@@ -6,6 +6,7 @@ import { Pantalla } from "@/components/Pantalla";
 import { separarAgenda } from "@/lib/agenda/reglas";
 import { cargarAgenda } from "@/lib/agenda/servidor";
 import { exigirRol } from "@/lib/auth/sesion";
+import { TEXTOS } from "@/lib/diagnostico/vista-del-monitor";
 import { formatearDia } from "@/lib/fechas";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { FormularioLlave } from "./FormularioLlave";
@@ -46,7 +47,7 @@ export default async function PanelMonitor() {
       subtitulo={
         sinCertificados
           ? "Tu cuenta está lista. Espera a que un admin te certifique en tu materia: cuando lo haga, podrás abrir tus franjas y recibir estudiantes."
-          : "Abre tus franjas para que te agenden y revisa en tu agenda quién agendó. Pronto verás aquí el diagnóstico de cada estudiante."
+          : TEXTOS.panel
       }
     >
       {errorCertificados && (

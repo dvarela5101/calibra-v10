@@ -34,7 +34,8 @@ const CITA: Cita = {
   observacionesReporte: null,
 };
 
-const pintar = (citas: Cita[], ahora: Date = AHORA) => renderToStaticMarkup(createElement(ListaDeCitas, { citas, ahora }));
+const pintar = (citas: Cita[], ahora: Date = AHORA, invitarACrearCuenta?: boolean) =>
+  renderToStaticMarkup(createElement(ListaDeCitas, { citas, ahora, invitarACrearCuenta }));
 
 const texto = (html: string) =>
   html
@@ -98,5 +99,41 @@ describe("ListaDeCitas: la etiqueta según el momento", () => {
 
   it("realizada", () => {
     expect(etiqueta({ ...CITA, estado: "realizada" }, new Date(INICIO.getTime() + 2 * HORA))).toBe("Realizada");
+  });
+});
+
+describe("ListaDeCitas (HU-032, criterio 17): la invitación a crear la cuenta", () => {
+  const INVITACION = "Crea tu cuenta para ver tus citas desde cualquier dispositivo.";
+
+  it("con citas y la prop, invita con el texto exacto y un enlace a /cuenta/crear", () => {
+    const html = pintar([CITA], AHORA, true);
+
+    expect(texto(html)).toContain(INVITACION);
+    expect(html).toMatch(/<a[^>]*href="\/cuenta\/crear"[^>]*>Crear mi cuenta<\/a>/);
+  });
+
+  it("sin la prop (como todas las pruebas de antes) no invita", () => {
+    const html = pintar([CITA]);
+
+    expect(texto(html)).not.toContain("Crea tu cuenta");
+    expect(html).not.toContain("/cuenta/crear");
+  });
+
+  it("con la prop en falso (un Estudiante) no invita", () => {
+    expect(pintar([CITA], AHORA, false)).not.toContain("/cuenta/crear");
+  });
+
+  it("sin citas no invita, aunque se pase la prop: «¿Tienes cuenta? Entra» de un navegador sin citas es de HU-033", () => {
+    const html = pintar([], AHORA, true);
+
+    expect(texto(html)).not.toContain("Crea tu cuenta");
+    expect(html).not.toContain("/cuenta/crear");
+  });
+
+  it("la invitación no cambia la lista: las mismas tarjetas con sus enlaces", () => {
+    const con = pintar([CITA], AHORA, true);
+
+    expect(con.match(/<li>/g)).toHaveLength(1);
+    expect(con).toMatch(/<a[^>]*href="\/cita\/5a5a5a5a-0000-4000-8000-000000000019"/);
   });
 });

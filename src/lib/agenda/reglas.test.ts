@@ -2,14 +2,19 @@ import { describe, expect, it } from "vitest";
 import type { ParametrosNegocio } from "@/lib/plazos/parametros";
 import {
   cierreAutomaticoDe,
+  DIAS_DE_VISTA_TRAS_REALIZADA,
   esEstadoPago,
   esResultadoDeFinalizar,
+  finDeSesionDe,
   MENSAJES_DE_FINALIZAR,
   RESULTADOS_DE_FINALIZAR,
+  rutaDelDiagnosticoDeLaCita,
   sePuedeFinalizar,
+  sePuedeVerDiagnostico,
   separarAgenda,
   textoDeEstado,
   textoDePago,
+  type EstadoMonitoria,
   type MonitoriaDeAgenda,
 } from "./reglas";
 
@@ -147,5 +152,80 @@ describe("textoDePago (P-24, D-11)", () => {
     expect(esEstadoPago("pendiente")).toBe(false);
     expect(esEstadoPago("toString")).toBe(false);
     expect(esEstadoPago(undefined)).toBe(false);
+  });
+});
+
+describe("sePuedeVerDiagnostico (HU-022, D-54 b)", () => {
+  // Una sesión de 90 minutos que empezó a las 14:30 UTC y terminó a las 16:00 UTC.
+  const INICIO = new Date("2026-10-01T14:30:00Z");
+  const FIN = new Date("2026-10-01T16:00:00Z");
+  const MIN = 60_000;
+  const DIA = 24 * 60 * MIN;
+  const ven = (estado: EstadoMonitoria, ahora: Date, fin: Date = FIN) => sePuedeVerDiagnostico(estado, fin, ahora);
+
+  it("el plazo son 30 días", () => {
+    expect(DIAS_DE_VISTA_TRAS_REALIZADA).toBe(30);
+  });
+
+  it("una confirmada se ve, también la que ya empezó y todavía no termina, y la que sigue sin finalizarse hace más de 30 días (M35)", () => {
+    expect(ven("confirmada", new Date(INICIO.getTime() - 5 * DIA))).toBe(true);
+    expect(ven("confirmada", new Date(INICIO.getTime() + 30 * MIN))).toBe(true);
+    expect(ven("confirmada", new Date(FIN.getTime() + 40 * DIA))).toBe(true);
+    expect(ven("confirmada", new Date(FIN.getTime() + 400 * DIA))).toBe(true);
+  });
+
+  it("una realizada se ve mientras ahora < fin + 30 días: 30 días menos un minuto sí, el instante exacto no, más un minuto no (M35)", () => {
+    const limite = FIN.getTime() + 30 * DIA;
+    expect(ven("realizada", new Date(limite - MIN))).toBe(true);
+    expect(ven("realizada", new Date(limite - 1))).toBe(true);
+    expect(ven("realizada", new Date(limite))).toBe(false);
+    expect(ven("realizada", new Date(limite + 1))).toBe(false);
+    expect(ven("realizada", new Date(limite + MIN))).toBe(false);
+  });
+
+  it("una realizada a 29 días se ve y a 31 no; recién terminada, sí (M35)", () => {
+    expect(ven("realizada", new Date(FIN.getTime() + 29 * DIA))).toBe(true);
+    expect(ven("realizada", new Date(FIN.getTime() + 31 * DIA))).toBe(false);
+    expect(ven("realizada", FIN)).toBe(true);
+    expect(ven("realizada", new Date(FIN.getTime() + 1))).toBe(true);
+  });
+
+  it("el plazo se cuenta desde el fin programado, no desde el inicio", () => {
+    // Pasados 30 días desde el INICIO pero no desde el FIN: la sesión de 90 minutos todavía se ve.
+    expect(ven("realizada", new Date(INICIO.getTime() + 30 * DIA + 30 * MIN))).toBe(true);
+    expect(ven("realizada", new Date(INICIO.getTime() + 30 * DIA + 91 * MIN))).toBe(false);
+  });
+
+  it("la reserva por pagar y la cancelada no se ven, a ninguna hora", () => {
+    for (const estado of ["pendiente_pago", "cancelada"] as const) {
+      for (const ahora of [new Date(INICIO.getTime() - 10 * DIA), INICIO, FIN, new Date(FIN.getTime() + 29 * DIA), new Date(FIN.getTime() + 60 * DIA)]) {
+        expect(ven(estado, ahora), `${estado} ${ahora.toISOString()}`).toBe(false);
+      }
+    }
+  });
+
+  it("la zona del servidor no cambia nada: es tiempo absoluto", () => {
+    // 30 días son 720 horas exactas aunque el calendario de Bogotá no cambie de hora en el mes.
+    expect(ven("realizada", new Date(FIN.getTime() + 720 * 60 * MIN - MIN))).toBe(true);
+    expect(ven("realizada", new Date(FIN.getTime() + 720 * 60 * MIN))).toBe(false);
+  });
+});
+
+describe("finDeSesionDe y la dirección del diagnóstico (HU-022)", () => {
+  it("el fin de la sesión es el inicio más la duración de la franja", () => {
+    const m = monitoria("a", "2026-10-05T15:00:00Z", { duracionMin: 90 });
+    expect(finDeSesionDe(m).toISOString()).toBe("2026-10-05T16:30:00.000Z");
+    expect(finDeSesionDe({ inicio: new Date("2026-10-05T15:00:00Z"), duracionMin: 60 }).toISOString()).toBe("2026-10-05T16:00:00.000Z");
+  });
+
+  it("junto con sePuedeVerDiagnostico: una realizada de 90 minutos se ve hasta 30 días después de su fin", () => {
+    const m = monitoria("a", "2026-10-05T15:00:00Z", { duracionMin: 90, estado: "realizada" });
+    const limite = new Date("2026-11-04T16:30:00Z");
+    expect(sePuedeVerDiagnostico(m.estado, finDeSesionDe(m), new Date(limite.getTime() - 60_000))).toBe(true);
+    expect(sePuedeVerDiagnostico(m.estado, finDeSesionDe(m), limite)).toBe(false);
+  });
+
+  it("la dirección del diagnóstico de una cita", () => {
+    expect(rutaDelDiagnosticoDeLaCita("5a5a5a5a-0000-4000-8000-000000000022")).toBe("/monitor/agenda/5a5a5a5a-0000-4000-8000-000000000022");
   });
 });

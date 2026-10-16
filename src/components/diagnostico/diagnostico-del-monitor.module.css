@@ -1,0 +1,195 @@
+/*
+ * El diagnóstico de una cita en el hub del monitor (HU-022). Las secciones, las tarjetas y el resumen son los de
+ * resultado.module.css (HU-009), para que se vean igual que lo que ve la persona; aquí está solo lo propio: la nota de repetido, las
+ * habilidades plegadas y la lista de preguntas. Los colores son los de tokens.css y --alert, --warn y --success son solo relleno o
+ * borde: lo que se dice (el nivel, «Acertó», «Eligió», «Correcta») va siempre en texto.
+ */
+
+.vista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+}
+
+.mensaje {
+  font-size: 16px;
+}
+
+/* La nota de repetido (D-53 b), arriba de todo. --warn es solo el borde; el texto va en --text. */
+.nota {
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-inline-start: 6px solid var(--warn);
+  border-radius: var(--r);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Las habilidades que domina, plegadas. */
+.plegable {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+/* list-item conserva el triángulo que dice si está abierto; 44 px de alto como el resumen de la agenda. */
+.resumenDelPlegable {
+  display: list-item;
+  min-block-size: var(--toque-min);
+  padding-block: var(--e2);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+/* Las preguntas (D-54 c): una tarjeta por pregunta, en el orden en que se respondieron. */
+.preguntas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  list-style: none;
+}
+
+.pregunta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  min-inline-size: 0;
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+  overflow-wrap: anywhere;
+}
+
+.encabezadoDePregunta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+/* «Acertó» o «Falló», escrito: el borde de color solo lo refuerza. */
+.marca {
+  padding: 2px 10px;
+  font-size: var(--texto-min);
+  font-weight: 600;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-inline-start-width: 6px;
+  border-radius: var(--r-chico);
+}
+
+.acerto {
+  border-inline-start-color: var(--success);
+}
+
+.fallo {
+  border-inline-start-color: var(--alert);
+}
+
+/* Siempre un div: un enunciado con código lleva un bloque `pre`, que no cabe en un título, un p ni un label. */
+.enunciado {
+  min-inline-size: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.opciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  list-style: none;
+}
+
+/*
+ * Una opción: la letra, el texto y, en un renglón aparte, las marcas «Eligió» y «Correcta». Gasta poco en relleno y separaciones
+ * porque una fórmula ancha del banco tiene que caber en la tarjeta (la más ancha mide unos 266 px y una opción a 390 px deja unos
+ * 270); si no cabe, la fórmula tiene su propio scroll (contenido.css).
+ */
+.opcion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--e1) var(--e2);
+  min-inline-size: 0;
+  padding: var(--e2) var(--e3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow-wrap: anywhere;
+}
+
+/* La que eligió cambia de borde (2 px en total, sin mover nada), y la correcta lleva una barra de --success a la izquierda. */
+.elegida {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.laCorrecta {
+  border-inline-start: 6px solid var(--success);
+}
+
+.letra {
+  flex: none;
+  inline-size: 16px;
+  margin-block-start: 2px;
+  font-size: var(--texto-min);
+  font-weight: 700;
+  line-height: 24px;
+  text-align: center;
+}
+
+.textoDeOpcion {
+  flex: 1 1 0;
+  min-inline-size: 0;
+  font-size: 16px;
+}
+
+.marcas {
+  display: flex;
+  flex: 0 0 100%;
+  flex-wrap: wrap;
+  gap: var(--e2);
+  padding-inline-start: 24px;
+}
+
+.etiqueta {
+  padding: 2px 10px;
+  font-size: var(--texto-min);
+  font-weight: 600;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--r-chico);
+}
+
+.etiquetaElegida {
+  border-color: var(--primary);
+}
+
+.etiquetaCorrecta {
+  border-color: var(--success);
+}
+
+.solucion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  min-inline-size: 0;
+}
+
+.tituloDeSolucion {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.textoDeSolucion {
+  min-inline-size: 0;
+  font-size: 16px;
+}

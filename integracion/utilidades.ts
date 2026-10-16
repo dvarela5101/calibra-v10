@@ -1,7 +1,7 @@
 import { randomBytes, randomInt, randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
-import type { Database } from "@/lib/supabase/tipos";
+import type { Database, Json } from "@/lib/supabase/tipos";
 
 /** Cliente tipado con la sesión de quien lo use (o sin sesión). */
 export type Cliente = SupabaseClient<Database>;
@@ -330,10 +330,29 @@ export class Fixtures {
    * Diagnóstico terminado de una sesión anónima (id_lead nulo, RN de P-33); id_materia lo llena un trigger. Nace completo, como los
    * que inserta `terminar_diagnostico` (HU-081): `respuestas` es un arreglo con un paso por clave (las vistas antes leen
    * `respuestas[].clave`; por defecto `P1` y `P2`), con semilla y un acierto, y el resultado trae sus tres claves. Con
-   * `idLead`, de ese Lead (HU-053): se borra con él.
+   * `idLead`, de ese Lead (HU-053): se borra con él. Con `respuestas` (las copias de las preguntas), `resultado`, `aciertos`,
+   * `repetido`, `fechaRealizacion`, `puntaje`, `semilla` o `faltaMaterial` queda como lo dejó `terminar_diagnostico` (HU-022);
+   * sin ellos, igual que siempre. `idSesionAnonima` también es opcional: la tabla pide el Lead o la sesión
+   * (`diagnostico_tiene_dueno`).
    */
-  async crearDiagnostico(datos: { idSesionAnonima?: string; idLead?: string; idEvaluacion: string; idMateria: string; claves?: string[] }) {
+  async crearDiagnostico(datos: {
+    idSesionAnonima?: string;
+    idLead?: string;
+    idEvaluacion: string;
+    idMateria: string;
+    claves?: string[];
+    respuestas?: Json;
+    resultado?: Json;
+    aciertos?: number;
+    repetido?: boolean;
+    fechaRealizacion?: string;
+    puntaje?: number;
+    semilla?: number;
+    faltaMaterial?: NonNullable<Json>;
+  }) {
     const claves = datos.claves ?? ["P1", "P2"];
+    const respuestas = datos.respuestas ?? claves.map((clave) => ({ clave }));
+    const total = Array.isArray(respuestas) ? respuestas.length : claves.length;
     return exito(
       await this.admin
         .from("diagnostico")
@@ -342,11 +361,14 @@ export class Fixtures {
           id_lead: datos.idLead ?? null,
           id_evaluacion: datos.idEvaluacion,
           id_materia: datos.idMateria,
-          respuestas: claves.map((clave) => ({ clave })),
-          puntaje: Math.round(10000 / claves.length) / 100,
-          resultado_por_habilidad: { habilidades: [], errores: [], prerrequisitos: [] },
-          semilla: 1,
-          aciertos: 1,
+          respuestas,
+          puntaje: datos.puntaje ?? Math.round(10000 / total) / 100,
+          resultado_por_habilidad: datos.resultado ?? { habilidades: [], errores: [], prerrequisitos: [] },
+          semilla: datos.semilla ?? 1,
+          aciertos: datos.aciertos ?? 1,
+          ...(datos.repetido === undefined ? {} : { repetido: datos.repetido }),
+          ...(datos.fechaRealizacion === undefined ? {} : { fecha_realizacion: datos.fechaRealizacion }),
+          ...(datos.faltaMaterial === undefined ? {} : { falta_material: datos.faltaMaterial }),
         })
         .select()
         .single(),

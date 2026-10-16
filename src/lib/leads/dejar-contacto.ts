@@ -2,10 +2,10 @@ import "server-only";
 import { cookies } from "next/headers";
 import { obtenerSesion } from "@/lib/auth/sesion";
 import { mandarEnlaceDelUltimoDiagnostico, programarEnlace } from "@/lib/diagnostico/recuperacion";
+import { avisoDeVerificacion, CORREO_FIJO } from "@/lib/leads/avisos";
 import { COOKIE_ORIGEN, leerOrigen } from "@/lib/leads/origen";
 import { leerContacto, resumenDeError, type EstadoContacto } from "@/lib/leads/reglas";
-import { registrarContacto, type EnvioDeVerificacion, type ResultadoContacto } from "@/lib/leads/servidor";
-import { HORAS_DE_VIGENCIA } from "@/lib/leads/verificacion";
+import { leadDeLaSesion, registrarContacto, type LeadDeSesion, type ResultadoContacto } from "@/lib/leads/servidor";
 import { leerConsentimiento } from "@/lib/privacidad/consentimiento";
 
 /**
@@ -17,13 +17,6 @@ export type { EstadoContacto };
 
 const CAMPOS = ["nombre", "correo", "numero_telefono"] as const;
 
-/** Qué se le dice a quien escribió un correo que ya es de otro Lead, según lo que pasó con el enlace (P-23). */
-const AVISO_DE_VERIFICACION: Record<EnvioDeVerificacion, string> = {
-  enviado: `Ese correo ya está en Calibra. Si es tuyo, te llega un enlace para confirmarlo: ábrelo en este navegador y sigues agendando aquí. El enlace vence en ${HORAS_DE_VIGENCIA} horas. Si no te llega en unos minutos, revisa la carpeta de spam.`,
-  frenado:
-    "Ese correo ya está en Calibra y ya le mandamos varios enlaces para confirmarlo en la última hora. Busca el más reciente en ese correo (también en spam) o vuelve a intentarlo en una hora.",
-  fallido: "Ese correo ya está en Calibra, pero no pudimos mandarte el enlace para confirmarlo. Intenta de nuevo en unos minutos.",
-};
 const valoresDe = (datos: FormData) => Object.fromEntries(CAMPOS.map((c) => [c, String(datos.get(c) ?? "")]));
 
 /**
@@ -47,6 +40,20 @@ export async function procesarContacto(
 
   const contacto = leerContacto(datos);
   if (!contacto.ok) return fallo(contacto.error);
+
+  // D-55 b (HU-032): el correo de un Estudiante es el de su cuenta y no se cambia. La pantalla lo muestra sin poder
+  // editarlo; si llega otro por fuera de ella, se dice y no se toca nada. El Lead sale de la base, nunca del formulario.
+  if (sesion.rol === "estudiante") {
+    let lead: LeadDeSesion | null;
+    try {
+      lead = await leadDeLaSesion(sesion.idUsuario);
+    } catch (error) {
+      console.error("[leads] no se pudo leer el contacto del Estudiante:", resumenDeError(error));
+      return fallo("No pudimos guardar tus datos. Intenta de nuevo.");
+    }
+    if (lead && contacto.datos.correo !== lead.correo) return fallo(CORREO_FIJO);
+  }
+
   const consentimiento = leerConsentimiento(datos);
   if (!consentimiento.ok) return fallo(consentimiento.error);
 
@@ -67,7 +74,7 @@ export async function procesarContacto(
   }
 
   if (resultado.resultado === "error") return fallo(resultado.error);
-  if (resultado.resultado === "verificar") return { error: null, aviso: AVISO_DE_VERIFICACION[resultado.envio], valores };
+  if (resultado.resultado === "verificar") return { error: null, aviso: avisoDeVerificacion(resultado.envio, "agendando"), valores };
   // HU-031 (P-33, P-34): el Lead se acaba de crear con los diagnósticos que la sesión ya tenía; le llega el enlace del más
   // reciente, sin esperar al proveedor. Al actualizar un Lead o al confirmar uno ajeno (P-23) no sale nada.
   const { idLeadNuevo } = resultado;

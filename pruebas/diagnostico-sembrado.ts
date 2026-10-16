@@ -111,6 +111,16 @@ export type DatosParaSembrar = {
   fecha?: string;
   /** La marca interna de falta de material: por omisión, una habilidad con motivo, para que una fuga se note. */
   faltaMaterial?: unknown;
+  /**
+   * Las respuestas tal como las guarda la base (la copia de la pregunta de cada paso), en lugar de `{clave}` por cada clave. No
+   * se combina con `claves`; su largo es `respondidas`. HU-011: `pruebas/respuestas-con-centinelas.ts` arma unas con un valor
+   * reconocible en cada campo que no puede llegar al navegador.
+   */
+  respuestas?: unknown[];
+  /** El id del diagnóstico, para fijar un empate de fecha (HU-011). Por omisión lo genera la base. */
+  id?: string;
+  /** Entero de 0 a 4294967295 (HU-011: uno reconocible para buscarlo en el HTML). Por omisión, 4242. */
+  semilla?: number;
 };
 
 export type DiagnosticoSembrado = {
@@ -129,19 +139,20 @@ const CLAVES_POR_OMISION = Array.from({ length: FILA_DE_EJEMPLO.respondidas }, (
  * (o con su sesión, que lo arrastra en cascada) y, si hay una cita que lo apunta, después de ella.
  */
 export async function sembrarDiagnostico(bd: pg.ClientBase, datos: DatosParaSembrar): Promise<DiagnosticoSembrado> {
-  const claves = datos.claves ?? CLAVES_POR_OMISION;
-  const aciertos = datos.aciertos ?? Math.min(FILA_DE_EJEMPLO.aciertos, claves.length);
-  if (claves.length < 1 || aciertos < 0 || aciertos > claves.length) {
+  if (datos.claves && datos.respuestas) throw new Error("El diagnóstico a sembrar no cuadra: `claves` y `respuestas` no se combinan.");
+  const respuestas = datos.respuestas ?? (datos.claves ?? CLAVES_POR_OMISION).map((clave) => ({ clave }));
+  const aciertos = datos.aciertos ?? Math.min(FILA_DE_EJEMPLO.aciertos, respuestas.length);
+  if (respuestas.length < 1 || aciertos < 0 || aciertos > respuestas.length) {
     throw new Error("El diagnóstico a sembrar no cuadra: necesita al menos una respuesta y aciertos entre 0 y las respuestas.");
   }
   if (!datos.idSesionAnonima && !datos.idLead) throw new Error("El diagnóstico a sembrar necesita una sesión o un Lead dueños.");
 
-  const puntaje = Math.round((aciertos / claves.length) * 10000) / 100;
+  const puntaje = Math.round((aciertos / respuestas.length) * 10000) / 100;
   const { rows } = await bd.query<{ id: string; token_recuperacion: string }>(
-    `insert into public.diagnostico (id_sesion_anonima, id_lead, id_evaluacion, id_materia, respuestas, fecha_realizacion, puntaje,
+    `insert into public.diagnostico (id, id_sesion_anonima, id_lead, id_evaluacion, id_materia, respuestas, fecha_realizacion, puntaje,
                                      resultado_por_habilidad, semilla, aciertos, repetido, falta_material)
-     select $1::uuid, $2::uuid, e.id, e.id_materia, $4::jsonb, coalesce($5::timestamptz, now()), $6::numeric, $7::jsonb, 4242, $8::integer,
-            $9::boolean, $10::jsonb
+     select coalesce($11::uuid, gen_random_uuid()), $1::uuid, $2::uuid, e.id, e.id_materia, $4::jsonb, coalesce($5::timestamptz, now()),
+            $6::numeric, $7::jsonb, coalesce($12::bigint, 4242), $8::integer, $9::boolean, $10::jsonb
      from public.evaluacion e
      where e.id = $3::uuid
      returning id, token_recuperacion`,
@@ -149,13 +160,15 @@ export async function sembrarDiagnostico(bd: pg.ClientBase, datos: DatosParaSemb
       datos.idSesionAnonima ?? null,
       datos.idLead ?? null,
       datos.idEvaluacion,
-      JSON.stringify(claves.map((clave) => ({ clave }))),
+      JSON.stringify(respuestas),
       datos.fecha ?? null,
       puntaje,
       JSON.stringify(datos.resultado ?? GUARDADO_DE_EJEMPLO),
       aciertos,
       datos.repetido ?? false,
       JSON.stringify(datos.faltaMaterial ?? [{ habilidad: "habilidad-secreta-4", motivos: ["tope_una_respuesta"] }]),
+      datos.id ?? null,
+      datos.semilla ?? null,
     ],
   );
   if (rows.length !== 1) throw new Error(`No se sembró el diagnóstico: no existe la Evaluación ${datos.idEvaluacion}.`);

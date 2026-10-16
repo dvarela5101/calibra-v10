@@ -5,6 +5,7 @@ import { useExigirSesionAnonima } from "@/components/captcha/useExigirSesionAnon
 import { CasillasConsentimiento } from "@/components/CasillasConsentimiento";
 import formulario from "@/components/formulario.module.css";
 import { TEXTO_VERIFICANDO } from "@/lib/captcha/textos";
+import { CORREO_FIJO } from "@/lib/leads/avisos";
 import type { EstadoContacto } from "@/lib/leads/reglas";
 
 const estadoInicial: EstadoContacto = { error: null, aviso: null, valores: {} };
@@ -12,22 +13,38 @@ const estadoInicial: EstadoContacto = { error: null, aviso: null, valores: {} };
 export type ValoresDeContacto = { nombre: string; correo: string; numero_telefono: string };
 
 type Props = {
-  /** La acción del servidor que guarda el contacto: la de agendar (HU-068) o la del resultado del diagnóstico (HU-010). */
+  /** La acción del servidor que guarda el contacto: la de agendar (HU-068), la del resultado del diagnóstico (HU-010) o la de crear la cuenta (HU-032). */
   accion: (anterior: EstadoContacto, datos: FormData) => Promise<EstadoContacto>;
   /** Campos ocultos que la acción necesita (a dónde sigue al agendar, qué diagnóstico se está viendo). */
   ocultos: Record<string, string>;
   iniciales: ValoresDeContacto;
   /** Para qué se usa el correo, bajo su campo. */
   ayudaDelCorreo: string;
+  /** El texto del botón de envío, y el que lleva mientras espera. */
   textoDelBoton: string;
+  textoDelBotonEnviando?: string;
+  /**
+   * El correo de la cuenta de un Estudiante no se cambia aquí (D-55 b, HU-032): se muestra sin poder editarlo y con
+   * la ayuda que dice por qué. `readOnly` sí viaja en el envío, y la acción lo compara con el Lead por si se manda otro.
+   */
+  correoFijo?: boolean;
 };
 
-/** HU-068 y HU-010: nombre, correo y teléfono opcional (P-21, P-22), con la autorización de datos (RN-13). */
-export function FormularioContacto({ accion, ocultos, iniciales, ayudaDelCorreo, textoDelBoton }: Props) {
+/** HU-068, HU-010 y HU-032: nombre, correo y teléfono opcional (P-21, P-22), con la autorización de datos (RN-13). */
+export function FormularioContacto({
+  accion,
+  ocultos,
+  iniciales,
+  ayudaDelCorreo,
+  textoDelBoton,
+  textoDelBotonEnviando = "Guardando…",
+  correoFijo = false,
+}: Props) {
   const [estado, enviar, enviando] = useActionState(accion, estadoInicial);
   // HU-058: sin sesión lista, el envío espera la verificación; el aviso solo sale si no se logra.
   const sesion = useExigirSesionAnonima();
-  const valor = (campo: keyof ValoresDeContacto) => estado.valores[campo] ?? iniciales[campo];
+  // Un correo fijo muestra siempre el de la cuenta, aunque lo devuelto por una acción traiga otro.
+  const valor = (campo: keyof ValoresDeContacto) => (correoFijo && campo === "correo" ? iniciales.correo : (estado.valores[campo] ?? iniciales[campo]));
   // La llave remonta los campos cuando cambian los valores devueltos (React vacía el formulario al enviar).
   const llave = JSON.stringify(estado.valores);
 
@@ -49,7 +66,7 @@ export function FormularioContacto({ accion, ocultos, iniciales, ayudaDelCorreo,
           Tu correo
         </label>
         <p id="correo-ayuda" className={formulario.ayuda}>
-          {ayudaDelCorreo}
+          {correoFijo ? CORREO_FIJO : ayudaDelCorreo}
         </p>
         <input
           id="correo"
@@ -58,6 +75,7 @@ export function FormularioContacto({ accion, ocultos, iniciales, ayudaDelCorreo,
           autoComplete="email"
           defaultValue={valor("correo")}
           aria-describedby="correo-ayuda"
+          readOnly={correoFijo}
           required
           className={formulario.entrada}
         />
@@ -96,7 +114,7 @@ export function FormularioContacto({ accion, ocultos, iniciales, ayudaDelCorreo,
       {sesion.aviso}
 
       <button type="submit" className={formulario.boton} disabled={enviando || sesion.verificando}>
-        {sesion.verificando ? TEXTO_VERIFICANDO : enviando ? "Guardando…" : textoDelBoton}
+        {sesion.verificando ? TEXTO_VERIFICANDO : enviando ? textoDelBotonEnviando : textoDelBoton}
       </button>
     </form>
   );

@@ -2,6 +2,7 @@ import Link from "next/link";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { momentoDeCita, rutaDeMiCita, type Cita } from "@/lib/citas/reglas";
+import { RUTA_CREAR_CUENTA, TEXTOS } from "@/lib/cuentas/reglas";
 import { formatearDiaConSemana } from "@/lib/fechas";
 import { horaCorta, horaDeFin } from "@/lib/franjas/reglas";
 import estilos from "./cita.module.css";
@@ -10,6 +11,11 @@ type Props = {
   /** Las citas del navegador, la más reciente primero (`leerMisCitas`). Vacía si no tiene o si no hay sesión. */
   citas: Cita[];
   ahora: Date;
+  /**
+   * Invita a crear la cuenta (HU-032, criterio 17): para quien tiene citas y todavía no tiene cuenta. Sin la prop no se
+   * invita. Sin citas tampoco, aunque se pase: de un navegador sin citas es el «¿Tienes cuenta? Entra» de HU-033.
+   */
+  invitarACrearCuenta?: boolean;
 };
 
 /** La etiqueta corta de una cita en la lista y el color de su texto. */
@@ -34,7 +40,7 @@ function etiquetaDeCita(cita: Cita, ahora: Date): { texto: string; clase: string
  * "Mis citas" (HU-019, criterio 4 y D-24): las citas de la sesión del navegador, sin el enlace del correo. Cada una
  * lleva a su detalle. Sin citas (o sin sesión, que se ve igual) explica cómo abrir una agendada desde otro dispositivo.
  */
-export function ListaDeCitas({ citas, ahora }: Props) {
+export function ListaDeCitas({ citas, ahora, invitarACrearCuenta = false }: Props) {
   if (citas.length === 0) {
     return (
       <Pantalla
@@ -69,6 +75,14 @@ export function ListaDeCitas({ citas, ahora }: Props) {
           );
         })}
       </ul>
+      {invitarACrearCuenta && (
+        <div className={estilos.enlaces}>
+          <p className={estilos.nota}>{TEXTOS.invitacionDeCitas}</p>
+          <Link href={RUTA_CREAR_CUENTA} className={formulario.enlace}>
+            {TEXTOS.enlaceDeInvitacion}
+          </Link>
+        </div>
+      )}
     </Pantalla>
   );
 }

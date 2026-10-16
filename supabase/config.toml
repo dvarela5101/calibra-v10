@@ -198,7 +198,13 @@ password_requirements = ""
 
 [auth.rate_limit]
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
-email_sent = 2
+# HU-032 (revisión): es el ÚNICO tope que de verdad limita los correos de Auth (cambio de correo de la cuenta, recuperar
+# contraseña). Los topes de `public.parametros_cuenta()` (3 por sesión, 20 en total por hora) frenan a la app, no a Auth: el
+# navegador tiene la llave pública y su sesión anónima, y puede pedir `updateUser({ email })` a cualquier dirección sin pasar
+# por la app. 30 = esos 20 pedidos de cuenta por hora + 10 de margen para «Olvidé mi contraseña». Es un tope global de
+# Auth: quien lo agote bloquea también esa recuperación esa hora, y lo que frena eso es el CAPTCHA del inicio anónimo (HU-058)
+# y `anonymous_users`. En la nube se fija aparte en el panel (docs/pendientes-dvarela.md §C). Auth lee esto al arrancar.
+email_sent = 30
 # Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
 sms_sent = 30
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
@@ -230,7 +236,10 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+# HU-032: también hace que un correo ligado a una sesión anónima se confirme antes de darlo por válido (RN-12). Con
+# false, updateUser({ email }) convertiría al anónimo al instante con un correo que nadie confirmó. Auth lee esto al
+# arrancar: db:reiniciar no lo aplica, hace falta db:detener y db:iniciar.
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
@@ -254,6 +263,12 @@ otp_expiry = 3600
 [auth.email.template.recovery]
 subject = "Restablece tu contraseña de Calibra"
 content_path = "./supabase/templates/recuperar.html"
+
+# Crear la cuenta de Estudiante (HU-032): el correo que Auth manda al pedir un cambio de correo. El enlace va a una
+# página con botón (/cuenta/confirmar), no a /auth/confirmar, para que un revisor de enlaces no gaste el token.
+[auth.email.template.email_change]
+subject = "Confirma tu correo para crear tu cuenta de Calibra"
+content_path = "./supabase/templates/confirmar-correo.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

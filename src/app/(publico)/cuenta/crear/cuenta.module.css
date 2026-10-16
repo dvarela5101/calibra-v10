@@ -1,0 +1,45 @@
+/* /cuenta/crear (HU-032): los datos del contacto y los enlaces de la pantalla. Los controles son los de formulario.module.css. */
+
+/* Nombre y correo del contacto, como texto: no se editan aquí (se cambian en «Cambiar mis datos»). */
+.datos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin: var(--e3) 0 0;
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+.dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+}
+
+.etiqueta {
+  font-size: var(--texto-min);
+  color: var(--muted);
+}
+
+/* Un correo o un nombre largos se parten en lugar de ensanchar la tarjeta (390 px de ancho). */
+.valor {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.enlaces {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e1);
+  margin-block-start: var(--e3);
+}
+
+.pregunta {
+  font-size: 15px;
+  color: var(--muted);
+}
