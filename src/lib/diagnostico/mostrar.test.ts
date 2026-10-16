@@ -27,7 +27,7 @@ describe("proyectarResultado", () => {
   it("la entrada válida de HU-081 produce el resultado esperado", () => {
     expect(resultado).toEqual({
       idDiagnostico: "d1a90000-0000-4000-8000-000000000009",
-      materia: { codigo: "FISI-1018", nombre: "Física II" },
+      materia: { codigo: "FISI-1528", nombre: "Física II" },
       evaluacion: { nombre: "Parcial 1" },
       fecha: "2026-10-05T03:30:00.000Z",
       respondidas: 8,

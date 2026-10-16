@@ -13,7 +13,7 @@ import {
   partirOpcion,
   seCarga,
 } from "../scripts/contenido/banco.mts";
-import { principal } from "../scripts/contenido/convertir.mts";
+import { decidirConexion, leerArgumentos, opcionesTls, principal, REF_DEL_PROTOTIPO } from "../scripts/contenido/convertir.mts";
 import type { ArchivoBanco, Pregunta, ResultadoBanco } from "../scripts/contenido/modelo.mts";
 
 // HU-005: lector y validador del banco de preguntas (scripts/contenido/banco.mts) y su línea de comandos
@@ -638,6 +638,37 @@ describe("línea de comandos (convertir.mts)", () => {
     }
   });
 
+  // HU-103: la carga en la nube. Ninguna de estas pruebas abre una conexión: todas cortan antes.
+  it("--nube con la URL del prototipo, sin certificado o con --borradores sale con 1 antes de conectarse, sin mostrar la contraseña", async () => {
+    const casos: [string, string[], Record<string, string>, string][] = [
+      ["el prototipo", ["--nube"], { SUPABASE_DB_URL: `postgresql://postgres.${REF_DEL_PROTOTIPO}:no-mostrar@aws-0-us-east-1.pooler.supabase.com:5432/postgres` }, "proyecto del prototipo"],
+      ["sin certificado", ["--nube"], { SUPABASE_DB_URL: "postgresql://postgres.nuevo:no-mostrar@aws-0-us-east-1.pooler.supabase.com:5432/postgres", SUPABASE_DB_CA: "" }, "SUPABASE_DB_CA"],
+      ["con borradores", ["--nube", "--borradores"], { SUPABASE_DB_URL: "postgresql://postgres.nuevo:no-mostrar@aws-0-us-east-1.pooler.supabase.com:5432/postgres" }, "--borradores"],
+    ];
+    for (const [nombre, argv, entorno, esperado] of casos) {
+      for (const [clave, valor] of Object.entries(entorno)) vi.stubEnv(clave, valor);
+      try {
+        const { codigo, errores } = await correr(...argv, "--banco", EJEMPLO);
+        expect(codigo, nombre).toBe(1);
+        expect(errores, nombre).toContain(esperado);
+        expect(errores, nombre).not.toContain("no-mostrar");
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    }
+  });
+
+  it("--dry-run con --nube sigue sin conectarse a ninguna base, aunque la URL sea la del prototipo", async () => {
+    vi.stubEnv("SUPABASE_DB_URL", `postgresql://postgres:x@db.${REF_DEL_PROTOTIPO}.supabase.co:5432/postgres`);
+    try {
+      const { codigo, errores } = await correr("--dry-run", "--nube", "--banco", EJEMPLO);
+      expect(codigo).toBe(0);
+      expect(errores).toBe("");
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("un argumento desconocido o --banco sin ruta salen con 1 y el uso", async () => {
     for (const argv of [["--escribir"], ["--banco"]]) {
       const { codigo, errores } = await correr(...argv);
@@ -666,6 +697,86 @@ describe("línea de comandos (convertir.mts)", () => {
       expect(`${mal.stdout}${mal.stderr}`).toContain("m/t.md:11  la pregunta P1 tiene 2 opciones marcadas CORRECTA");
     } finally {
       rmSync(roto, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("a qué base se puede cargar (HU-103, decidirConexion)", () => {
+  const nube = { nube: true, borradores: false };
+  const local = { nube: false, borradores: false };
+  const remota = "postgresql://postgres.nuevo:clave-secreta@aws-0-us-east-1.pooler.supabase.com:5432/postgres";
+
+  it("sin --nube: la local por defecto o la que diga SUPABASE_DB_URL si es local; cualquier otra no", () => {
+    expect(decidirConexion(undefined, local)).toMatchObject({ permitida: true, url: "postgresql://postgres:postgres@127.0.0.1:54322/postgres", nube: false });
+    expect(decidirConexion("postgresql://postgres:postgres@localhost:5432/otra", local)).toMatchObject({ permitida: true, nube: false });
+    expect(decidirConexion("  ", local)).toMatchObject({ permitida: true, nube: false });
+    expect(decidirConexion(remota, local)).toMatchObject({ permitida: false, motivo: expect.stringContaining("no apunta a la base local") });
+  });
+
+  it("el proyecto del prototipo nunca, con o sin --nube, en el host, en el usuario del pooler o en mayúsculas", () => {
+    const urls = [
+      `postgresql://postgres:x@db.${REF_DEL_PROTOTIPO}.supabase.co:5432/postgres`,
+      `postgresql://postgres.${REF_DEL_PROTOTIPO}:x@aws-0-us-east-1.pooler.supabase.com:6543/postgres`,
+      `postgresql://postgres:x@DB.${REF_DEL_PROTOTIPO.toUpperCase()}.SUPABASE.CO:5432/postgres`,
+    ];
+    for (const url of urls) {
+      for (const opciones of [nube, local, { nube: true, borradores: true }]) {
+        expect(decidirConexion(url, opciones), url).toMatchObject({ permitida: false, motivo: expect.stringContaining("proyecto del prototipo") });
+      }
+    }
+  });
+
+  it("con --nube: necesita una URL de la nube, no la local, sin borradores y de Postgres", () => {
+    expect(decidirConexion(undefined, nube)).toMatchObject({ permitida: false, motivo: expect.stringContaining("necesita SUPABASE_DB_URL") });
+    expect(decidirConexion("postgresql://postgres:postgres@127.0.0.1:54322/postgres", nube)).toMatchObject({ permitida: false, motivo: expect.stringContaining("quita --nube") });
+    expect(decidirConexion(remota, { nube: true, borradores: true })).toMatchObject({ permitida: false, motivo: expect.stringContaining("--borradores") });
+    expect(decidirConexion("https://aws-0-us-east-1.pooler.supabase.com", nube)).toMatchObject({ permitida: false });
+    expect(decidirConexion("no es una url", nube)).toMatchObject({ permitida: false });
+  });
+
+  it("con --nube y otro proyecto: permitida, sin sslmode ni sslrootcert en la URL y con un destino sin usuario ni contraseña", () => {
+    const conexion = decidirConexion(`${remota}?sslmode=disable&sslrootcert=/tmp/x.crt&application_name=calibra`, nube);
+    expect(conexion).toMatchObject({ permitida: true, nube: true, destino: "aws-0-us-east-1.pooler.supabase.com:5432" });
+    if (!conexion.permitida) return;
+    const url = new URL(conexion.url);
+    expect(url.searchParams.has("sslmode")).toBe(false);
+    expect(url.searchParams.has("sslrootcert")).toBe(false);
+    expect(url.searchParams.get("application_name")).toBe("calibra");
+    expect(url.password).toBe("clave-secreta");
+    expect(conexion.destino).not.toContain("clave-secreta");
+  });
+
+  it("ningún motivo de rechazo trae la contraseña", () => {
+    const conClave = (host: string) => `postgresql://postgres:clave-secreta@${host}:5432/postgres`;
+    const rechazos = [
+      decidirConexion(conClave("db.ejemplo.com"), local),
+      decidirConexion(conClave(`db.${REF_DEL_PROTOTIPO}.supabase.co`), nube),
+      decidirConexion(conClave("db.ejemplo.com"), { nube: true, borradores: true }),
+      decidirConexion(conClave("127.0.0.1"), nube),
+    ];
+    for (const rechazo of rechazos) {
+      expect(rechazo.permitida).toBe(false);
+      if (!rechazo.permitida) expect(rechazo.motivo).not.toContain("clave-secreta");
+    }
+  });
+
+  it("leerArgumentos entiende --nube", () => {
+    expect(leerArgumentos(["--nube"])).toMatchObject({ nube: true, borradores: false, dryRun: false });
+    expect(leerArgumentos([])).toMatchObject({ nube: false });
+  });
+
+  it("opcionesTls: sin certificado o con una ruta que no existe, el motivo; con el archivo, TLS que verifica el servidor", () => {
+    expect(opcionesTls(undefined)).toEqual(expect.stringContaining("SUPABASE_DB_CA"));
+    expect(opcionesTls("  ")).toEqual(expect.stringContaining("SUPABASE_DB_CA"));
+    expect(opcionesTls(join(tmpdir(), "no-existe-calibra.crt"))).toEqual(expect.stringContaining("No encuentro el certificado"));
+    const carpeta = mkdtempSync(join(tmpdir(), "certificado-"));
+    try {
+      const ruta = join(carpeta, "prod-ca-2021.crt");
+      writeFileSync(ruta, "-----BEGIN CERTIFICATE-----\nprueba\n-----END CERTIFICATE-----\n");
+      expect(opcionesTls(ruta)).toEqual({ ssl: { ca: expect.stringContaining("BEGIN CERTIFICATE"), rejectUnauthorized: true } });
+      expect(opcionesTls(carpeta)).toEqual(expect.stringContaining("No encuentro el certificado"));
+    } finally {
+      rmSync(carpeta, { recursive: true, force: true });
     }
   });
 });

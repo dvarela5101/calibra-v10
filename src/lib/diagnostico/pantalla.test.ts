@@ -38,7 +38,7 @@ function enCurso(idDiagnostico = ID_A, paso = 0): EnCurso {
   return proyectarEnCurso({
     idDiagnostico,
     evaluacion: { id: "e0000000-0000-4000-8000-00000000000a", nombre: "Parcial 1" },
-    materia: { codigo: "FISI-1018", nombre: "Física II" },
+    materia: { codigo: "FISI-1528", nombre: "Física II" },
     paso,
     maximo: 8,
     pregunta: {
@@ -447,11 +447,11 @@ describe("ordenarMaterias (B5)", () => {
 
 describe("resolverSeleccion y errorDeSeleccion (criterio 2)", () => {
   const evaluacion = (id: string, nombre: string) => ({ id, nombre, semana: 4, temas: ["Cinemática"] });
-  const FISICA: MateriaConEvaluaciones = { codigo: "FISI-1018", nombre: "Física II", evaluaciones: [evaluacion("e1", "Parcial 1")] };
+  const FISICA: MateriaConEvaluaciones = { codigo: "FISI-1528", nombre: "Física II", evaluaciones: [evaluacion("e1", "Parcial 1")] };
   const CALCULO: MateriaConEvaluaciones = { codigo: "MATE-1214", nombre: "Cálculo", evaluaciones: [evaluacion("e2", "Parcial 1"), evaluacion("e3", "Parcial 2")] };
 
   it("con una sola Evaluación queda elegida sin que la persona haga nada", () => {
-    expect(resolverSeleccion([FISICA, CALCULO], "FISI-1018", null)).toEqual({ materia: FISICA, evaluacion: FISICA.evaluaciones[0] });
+    expect(resolverSeleccion([FISICA, CALCULO], "FISI-1528", null)).toEqual({ materia: FISICA, evaluacion: FISICA.evaluaciones[0] });
   });
 
   it("con varias hay que elegir una", () => {
@@ -469,12 +469,12 @@ describe("resolverSeleccion y errorDeSeleccion (criterio 2)", () => {
 
   it("tras un router.refresh() la selección que ya no existe se descarta y no se envía", () => {
     // La materia desapareció de la lista (su única Evaluación se apagó).
-    expect(resolverSeleccion([CALCULO], "FISI-1018", "e1")).toEqual({ materia: null, evaluacion: null });
+    expect(resolverSeleccion([CALCULO], "FISI-1528", "e1")).toEqual({ materia: null, evaluacion: null });
     // La Evaluación elegida desapareció, pero la materia sigue con otra.
     const sinParcial2: MateriaConEvaluaciones = { ...CALCULO, evaluaciones: [CALCULO.evaluaciones[0], evaluacion("e4", "Final")] };
     expect(resolverSeleccion([sinParcial2], "MATE-1214", "e3")).toEqual({ materia: sinParcial2, evaluacion: null });
     expect(errorDeSeleccion(resolverSeleccion([sinParcial2], "MATE-1214", "e3"))).toBe("Elige una evaluación");
-    expect(errorDeSeleccion(resolverSeleccion([CALCULO], "FISI-1018", "e1"))).toBe("Elige una materia");
+    expect(errorDeSeleccion(resolverSeleccion([CALCULO], "FISI-1528", "e1"))).toBe("Elige una materia");
   });
 
   it("errorDeSeleccion pide primero la materia, luego la Evaluación, y no dice nada si ya se eligió todo", () => {

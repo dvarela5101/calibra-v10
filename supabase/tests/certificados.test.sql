@@ -161,7 +161,7 @@ reset role;
 -- Semilla local (D-2): materias de prueba para certificar
 -- ---------------------------------------------------------------------------
 select ok(
-  (select count(*) from public.materia where codigo in ('MATE-1214', 'MATE-1207', 'FISI-1018')) = 3,
+  (select count(*) from public.materia where codigo in ('MATE-1214', 'MATE-1207', 'FISI-1518')) = 3,
   'La semilla local trae materias de prueba (corre tras supabase db reset)');
 
 select * from finish();

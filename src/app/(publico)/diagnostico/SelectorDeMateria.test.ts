@@ -11,7 +11,7 @@ import { EvaluacionesDeLaMateria, SelectorDeMateria } from "./SelectorDeMateria"
 const evaluacion = (id: string, nombre: string, temas: string[], semana = 4) => ({ id, nombre, semana, temas });
 
 const FISICA: MateriaConEvaluaciones = {
-  codigo: "FISI-1018",
+  codigo: "FISI-1528",
   nombre: "Física II",
   evaluaciones: [evaluacion("e1", "Parcial 1", ["Cinemática", "Dinámica y Energía"])],
 };
@@ -24,7 +24,7 @@ const CALCULO: MateriaConEvaluaciones = {
 const EN_CURSO: EnCurso = proyectarEnCurso({
   idDiagnostico: "d1000000-0000-4000-8000-000000000001",
   evaluacion: { id: "e1", nombre: "Parcial 1" },
-  materia: { codigo: "FISI-1018", nombre: "Física II" },
+  materia: { codigo: "FISI-1528", nombre: "Física II" },
   paso: 2,
   maximo: 8,
   pregunta: { enunciado: "x", opciones: (["A", "B", "C", "D"] as const).map((letra) => ({ letra, texto: letra })) },
@@ -58,7 +58,7 @@ describe("SelectorDeMateria: con materias", () => {
   it("una tarjeta con radio por materia, con el código como valor, y ninguna elegida", () => {
     const radios = [...html.matchAll(/<input[^>]*type="radio"[^>]*name="materia"[^>]*>/g)].map(([radio]) => radio);
     expect(radios).toHaveLength(2);
-    expect(radios.map((radio) => radio.match(/value="([^"]+)"/)?.[1])).toEqual(["FISI-1018", "MATE-1214"]);
+    expect(radios.map((radio) => radio.match(/value="([^"]+)"/)?.[1])).toEqual(["FISI-1528", "MATE-1214"]);
     expect(html).not.toContain("checked");
     expect(texto(html)).toContain("Física II");
     expect(texto(html)).toContain("Cálculo Integral");

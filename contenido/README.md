@@ -124,16 +124,37 @@ npm run contenido:validar                 # revisa todo, sin tocar ninguna base
 npm run contenido:validar -- --borradores # cuenta también los borradores
 npm run contenido:cargar                  # valida y carga en la base local
 npm run contenido:cargar -- --borradores  # carga también los borradores
+npm run contenido:cargar -- --nube        # solo el día del corte: carga en el proyecto nuevo de la nube
 ```
 
 - La validación señala cada error con archivo y línea, y no carga nada si hay errores. Imprime los avisos, las filas que se cargarían, la cobertura y qué evaluaciones quedan activas. El CI la corre en cada PR.
-- La carga solo acepta la base local. Se puede correr las veces que quieras: cada fila se reconoce por su clave dentro de la materia, y la materia por su carpeta, así que nada se duplica. Sin `--borradores` solo carga las revisadas. Una pregunta que desaparece del banco queda `retirada` en la base. Un tema, una habilidad, una misconcepción o una evaluación que desaparecen no se borran: la carga lo avisa y termina con error porque la base queda con más filas que el banco. Hay que borrarlos a mano en la base local. Una evaluación que ya no está en el banco queda inactiva.
+- La carga solo acepta la base local, salvo con `--nube` (abajo). Se puede correr las veces que quieras: cada fila se reconoce por su clave dentro de la materia, y la materia por su carpeta, así que nada se duplica. Sin `--borradores` solo carga las revisadas. Una pregunta que desaparece del banco queda `retirada` en la base. Un tema, una habilidad, una misconcepción o una evaluación que desaparecen no se borran: la carga lo avisa y termina con error porque la base queda con más filas que el banco. Hay que borrarlos a mano en la base local. Una evaluación que ya no está en el banco queda inactiva.
 - Lo que un admin corrigió en la app (`/admin/materias`) se conserva: el nombre y el código de una materia, y el nombre y la semana de una evaluación. La carga no los vuelve a poner y deja una línea de aviso por fila, con los dos valores: `materia-a: la base conserva lo que un admin cambió en la app (nombre: base "X", materia.md "Y"). Para que vuelva a seguir al banco, iguala materia.md con la base.` Cuando `materia.md` ya dice lo mismo que la base, la carga baja la marca y esa fila vuelve a seguir al banco. Todo lo demás sigue saliendo del banco: temas, habilidades, preguntas, qué evaluaciones están activas, si son acumulativas y los temas de cada una. La marca es por fila: si un admin corrige solo el nombre de una materia, un PR que cambie su código tampoco se aplica hasta que `materia.md` iguale la base.
 - Cambiar la semana de una evaluación en la app no mueve los temas de una acumulativa, porque las acumulativas se expanden con las semanas de `materia.md`. Para mover temas se cambia `materia.md` en un PR.
 - La carga reconoce la materia por su carpeta (`materia.carpeta`) y no por el código. Una materia que un admin creó en la app con el código de una carpeta se adopta en la primera carga: queda con esa carpeta y recibe sus temas, sin duplicarse. Si el código de `materia.md` ya lo tiene otra materia, la carga falla entera con un mensaje que nombra las dos y no cambia nada.
 - Renombrar una carpeta de `contenido/` necesita un paso a mano. La fila conserva la carpeta vieja y la carga falla nombrando las dos materias, así que antes de cargar se corrige en la base local: `update public.materia set carpeta = '<nueva>' where carpeta = '<vieja>'`.
 - Una materia o una evaluación borrada desde la app que siga en `contenido/` vuelve con la siguiente carga, sin aviso: la carga no distingue una que nunca existió de una que se borró. Para quitarla del banco se saca su carpeta o su entrada de `materia.md` en un PR. Una evaluación que sale del banco queda inactiva y conserva sus temas, así que la app no deja borrarla. La app solo borra lo que no tiene nada ligado, y una materia con temas cargados nunca se borra desde ahí.
 - Una edición hecha directo en la base, sin pasar por la app (SQL Editor, `psql` o la llave secreta), no se marca y la siguiente carga la pisa.
+
+### Cargar en la nube (el día del corte, HU-103)
+
+`--nube` es la única forma de cargar fuera de la base local. Es para el proyecto Supabase nuevo de v10 (HU-057, D-72 a):
+
+1. En el panel del proyecto nuevo: **Connect**, la cadena de conexión «Session pooler» (o la directa), con la contraseña de la base. Y **Database**, **SSL Configuration**, **Download certificate**.
+2. Primero `npm run contenido:validar`, que tiene que mostrar las Evaluaciones esperadas activas.
+3. En la misma terminal, sin guardar nada en archivos del repo:
+
+   ```bash
+   SUPABASE_DB_URL='postgresql://…' SUPABASE_DB_CA=/ruta/al/certificado.crt npm run contenido:cargar -- --nube
+   ```
+
+La carga imprime a qué host va (sin la contraseña), conecta con TLS verificado contra ese certificado y termina con los mismos conteos y el mismo reporte que la local. Se niega sin conectarse si:
+- la URL es la del proyecto del prototipo (`uotlhaitdkfroavqkvee`), que nunca se toca;
+- falta el certificado;
+- va con `--borradores`, porque a la nube solo llegan preguntas revisadas;
+- la URL es la local.
+
+`--dry-run` nunca se conecta, con o sin `--nube`.
 
 ## De dónde viene este contenido
 

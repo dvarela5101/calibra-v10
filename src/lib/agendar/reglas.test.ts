@@ -26,10 +26,10 @@ describe("leerPedidoDeAgendar (HU-017)", () => {
   });
 
   it("con varios valores toma el primero y normaliza el uuid a minúsculas", () => {
-    expect(leerPedidoDeAgendar({ franja: [FRANJA.toUpperCase(), "otro"], fecha: ["2026-10-05"], materia: ["FISI-1018"] })).toEqual({
+    expect(leerPedidoDeAgendar({ franja: [FRANJA.toUpperCase(), "otro"], fecha: ["2026-10-05"], materia: ["FISI-1518"] })).toEqual({
       idFranja: FRANJA,
       fecha: "2026-10-05",
-      codigoMateria: "FISI-1018",
+      codigoMateria: "FISI-1518",
     });
   });
 

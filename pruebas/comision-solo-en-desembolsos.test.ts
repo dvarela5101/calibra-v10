@@ -3,9 +3,13 @@ import { join, posix, relative } from "node:path";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
-// HU-050 y D-59: las cifras de comisión se muestran en un solo lugar, `/monitor/desembolsos`, al monitor dueño de
-// cada desembolso. La regla estaba repartida en comentarios y en unas 15 pruebas de pantallas que ya existían; esta
-// vigila la que importa, que ninguna pantalla, correo ni consulta NUEVA la reciba sin que una prueba se ponga en rojo.
+// HU-050 y D-59: las cifras de comisión se muestran en `/monitor/desembolsos`, al monitor dueño de cada desembolso.
+// HU-096 (D-71 b) suma un segundo lugar: la regla general (el porcentaje y el tope, sin ningún monto) en el registro del
+// monitor, solo con una invitación vigente. Ese texto vive en `src/lib/plazos/regla-general.ts`, que ya está permitido;
+// la página del registro es la única que lo llama (regla G), sin ningún literal con la palabra.
+//
+// Antes, la prohibición estaba repartida en comentarios y en unas 15 pruebas de pantallas que ya existían. Esta guarda
+// vigila lo que importa: que ninguna pantalla, correo ni consulta NUEVA reciba la comisión sin que una prueba se ponga en rojo.
 //
 // La excepción cabe en tres lugares: la función de la base (la vigila `supabase/tests/mis_desembolsos.test.sql`), el
 // módulo `src/lib/desembolsos/` y la carpeta `src/app/monitor/desembolsos/`. Aquí se vigilan los dos últimos y el
@@ -19,7 +23,7 @@ const RAIZ = join(__dirname, "..");
 const SRC = join(RAIZ, "src");
 
 type Fuente = { ruta: string; texto: string };
-type Regla = "A" | "B" | "C" | "D" | "E" | "F";
+type Regla = "A" | "B" | "C" | "D" | "E" | "F" | "G";
 type Hallazgo = { regla: Regla; ruta: string; detalle: string };
 
 /** Todos los .ts y .tsx de una carpeta, sin las pruebas. */
@@ -46,12 +50,22 @@ const LECTOR = "src/lib/desembolsos/servidor.ts";
 
 /** Dónde más puede aparecer la palabra, y por qué. Cada entrada tiene que existir. */
 const PERMITIDOS_PARA_LA_PALABRA = [
-  { prefijo: "src/lib/plazos/", motivo: "El motor de plazos calcula la comisión (N-2) y lee sus parámetros de `parametros_comision`; no la pinta ni la entrega a una pantalla." },
+  {
+    prefijo: "src/lib/plazos/",
+    motivo:
+      "El motor de plazos calcula la comisión (N-2) y lee sus parámetros de `parametros_comision`; no la entrega a una pantalla, salvo la regla general (porcentaje y tope, sin montos) que arma `regla-general.ts` para el registro del monitor (HU-096).",
+  },
 ];
 
 /** Quién puede calcular la comisión: solo el motor. Una pantalla que la calcule por su cuenta rompe N-2. */
 const CALCULOS_DE_COMISION = new Set(["calcularComision", "calcularMontoNeto", "cargarParametrosComision"]);
 const FUERA_DE_LOS_CALCULOS = "src/lib/plazos/";
+
+/** La regla general del registro (HU-096): el módulo que la arma, quién puede usarla y con qué nombres. */
+const REGLA_GENERAL = "src/lib/plazos/regla-general";
+const USA_LA_REGLA_GENERAL = "src/app/(cuentas)/monitores/registro/page.tsx";
+const FUNCIONES_DE_LA_REGLA_GENERAL = new Set(["describirReglaDeComision", "textoDeLaReglaDeComision"]);
+const puedeUsarLaReglaGeneral = (ruta: string) => ruta.startsWith(FUERA_DE_LOS_CALCULOS) || ruta === USA_LA_REGLA_GENERAL;
 
 // ---------------------------------------------------------------------------
 // El escáner: una función pura que recibe una ruta y un texto
@@ -140,7 +154,7 @@ function nacioEnDesembolso(llamada: ts.CallExpression): boolean {
 const esDeCliente = (archivo: ts.SourceFile) =>
   archivo.statements.some((s) => ts.isExpressionStatement(s) && ts.isStringLiteral(s.expression) && s.expression.text === "use client");
 
-/** Revisa un archivo contra las reglas A a F de D-59. Vacío si cumple. */
+/** Revisa un archivo contra las reglas A a F de D-59 y la G de HU-096. Vacío si cumple. */
 function revisar(fuente: Fuente): Hallazgo[] {
   const { ruta } = fuente;
   const archivo = analizar(fuente);
@@ -160,9 +174,13 @@ function revisar(fuente: Fuente): Hallazgo[] {
 
     // B. Solo el módulo y la pantalla importan el módulo (o la carpeta de la pantalla, que lo arrastraría).
     const especificador = especificadorDe(nodo);
-    if (especificador !== null && !propio) {
-      const destino = resolver(ruta, especificador);
-      if (destino !== null && esDelModuloOLaPantalla(destino)) nota("B", `importa ${especificador}`);
+    const destino = especificador === null ? null : resolver(ruta, especificador);
+    if (destino !== null && !propio && esDelModuloOLaPantalla(destino)) nota("B", `importa ${especificador}`);
+
+    // G. La regla general (HU-096) solo la usa el registro del monitor: nadie más la importa ni llama sus funciones.
+    if (!puedeUsarLaReglaGeneral(ruta)) {
+      if (destino !== null && destino.replace(/\.tsx?$/, "") === REGLA_GENERAL) nota("G", `importa ${especificador}`);
+      if (ts.isIdentifier(nodo) && FUNCIONES_DE_LA_REGLA_GENERAL.has(nodo.text)) nota("G", `usa ${nodo.text}`);
     }
 
     // D. Nadie calcula la comisión fuera del motor de plazos.
@@ -177,7 +195,7 @@ function revisar(fuente: Fuente): Hallazgo[] {
   return hallazgos;
 }
 
-// `src/` se analiza una sola vez, al cargar el archivo y no dentro de cada prueba: las reglas A a F filtran lo mismo, y
+// `src/` se analiza una sola vez, al cargar el archivo y no dentro de cada prueba: las reglas A a G filtran lo mismo, y
 // con el equipo cargado cada pasada de la API de TypeScript pasaba de los 5 s que tiene una prueba (HU-098).
 const HALLAZGOS: readonly Hallazgo[] = archivos.flatMap(revisar);
 const hallazgosDe = (regla: Regla) => HALLAZGOS.filter((h) => h.regla === regla).map((h) => `${h.ruta}: ${h.detalle}`);
@@ -186,7 +204,7 @@ const hallazgosDe = (regla: Regla) => HALLAZGOS.filter((h) => h.regla === regla)
 // G2. El código fuente
 // ---------------------------------------------------------------------------
 
-describe("la comisión solo se muestra en /monitor/desembolsos (D-59, G2)", () => {
+describe("la comisión solo se muestra en /monitor/desembolsos y la regla general en el registro (D-59, HU-096, G2)", () => {
   it("A. solo src/lib/desembolsos/servidor.ts nombra mis_desembolsos", () => {
     expect(hallazgosDe("A")).toEqual([]);
   });
@@ -209,6 +227,10 @@ describe("la comisión solo se muestra en /monitor/desembolsos (D-59, G2)", () =
 
   it('F. ningún archivo del módulo ni de la pantalla es "use client": no viajan en el paquete del navegador', () => {
     expect(hallazgosDe("F")).toEqual([]);
+  });
+
+  it("G. solo la página del registro del monitor usa la regla general (HU-096): nadie más importa regla-general ni llama sus funciones", () => {
+    expect(hallazgosDe("G")).toEqual([]);
   });
 
   it("la lista de lugares permitidos para la palabra no se pudre: cada entrada existe, tiene motivo y se usa", () => {
@@ -251,12 +273,35 @@ describe("los controles de la guarda (G2.G)", () => {
     for (const consulta of consultas) expect(revisar(consulta).filter((h) => h.regla === "E"), consulta.ruta).toEqual([]);
   });
 
+  it("control positivo (HU-096): el texto de la regla general del registro vive en src/lib/plazos/regla-general.ts, y el registro y los correos no dicen la palabra", () => {
+    const regla = archivos.find((a) => a.ruta === "src/lib/plazos/regla-general.ts");
+    expect(regla, "falta src/lib/plazos/regla-general.ts").toBeDefined();
+    expect(literalesDe(regla!).some((l) => /comisi[oó]n/i.test(l))).toBe(true);
+    expect(revisar(regla!)).toEqual([]);
+    // La página y el formulario del registro solo reciben el texto armado: ningún literal suyo dice comisión ni bruto.
+    const delRegistro = archivos.filter((a) => a.ruta.startsWith("src/app/(cuentas)/monitores/registro/"));
+    expect(delRegistro.map((a) => a.ruta)).toContain("src/app/(cuentas)/monitores/registro/page.tsx");
+    for (const a of delRegistro) expect(revisar(a), a.ruta).toEqual([]);
+    // La página del registro sí la usa: si deja de hacerlo, la regla G vigila un nombre que ya no existe.
+    const pagina = archivos.find((a) => a.ruta === USA_LA_REGLA_GENERAL)!;
+    expect(pagina.texto).toContain("describirReglaDeComision");
+    expect(revisar({ ruta: "src/app/monitor/agenda/page.tsx", texto: pagina.texto }).some((h) => h.regla === "G")).toBe(true);
+    // Las plantillas de correo (invitacion_monitor incluida) existen y siguen limpias.
+    const plantillas = archivos.find((a) => a.ruta === "src/lib/correo/plantillas.ts");
+    expect(plantillas, "falta src/lib/correo/plantillas.ts").toBeDefined();
+    expect(revisar(plantillas!)).toEqual([]);
+  });
+
   const MALAS: [string, Fuente, Regla][] = [
     ["un literal «Comisión» en la agenda del monitor", { ruta: "src/app/monitor/agenda/x.tsx", texto: 'export const x = "Comisión";' }, "C"],
     ["«COMISIÓN» en mayúsculas", { ruta: "src/lib/admin/x.ts", texto: 'export const x = "COMISIÓN";' }, "C"],
     ["«comision» sin tilde", { ruta: "src/lib/admin/x.ts", texto: 'export const x = "comision";' }, "C"],
     ["«Neto y bruto» en un componente del admin", { ruta: "src/app/admin/x/Componente.tsx", texto: "export function X() { return <p>Neto y bruto</p>; }" }, "C"],
     ["un atributo de JSX con la palabra", { ruta: "src/app/admin/x/Componente.tsx", texto: 'export function X() { return <p title="la comisión">.</p>; }' }, "C"],
+    ["la palabra en src/lib/correo/plantillas.ts (D-71 b, pregunta 2)", { ruta: "src/lib/correo/plantillas.ts", texto: 'export const t = "Calibra descuenta una comisión";' }, "C"],
+    ["el mismo texto de la regla general copiado en la página del registro", { ruta: "src/app/(cuentas)/monitores/registro/page.tsx", texto: 'export const t = "Calibra descuenta una comisión del 10 %";' }, "C"],
+    ["la regla general copiada en el formulario del registro (JSX)", { ruta: "src/app/(cuentas)/monitores/registro/FormularioRegistro.tsx", texto: "export function F() { return <p>Calibra descuenta una comisión</p>; }" }, "C"],
+    ["la página del registro calculando la comisión", { ruta: "src/app/(cuentas)/monitores/registro/page.tsx", texto: "export const p = cargarParametrosComision;" }, "D"],
     ["una plantilla de correo con la palabra", { ruta: "src/lib/correo/x.ts", texto: "export const t = (n: number) => `Tu comisión es ${n}`;" }, "C"],
     ["la columna monto_bruto pedida en una consulta", { ruta: "src/lib/admin/x.ts", texto: 'cliente.from("pago").select("id, monto_bruto");' }, "C"],
     ["la función de la comisión llamada por rpc", { ruta: "src/lib/admin/x.ts", texto: 'cliente.rpc("comision", { p_monto_bruto: 1 });' }, "C"],
@@ -277,6 +322,10 @@ describe("los controles de la guarda (G2.G)", () => {
     ['.from("desembolso").update(…).eq(…).select()', { ruta: "src/lib/admin/x.ts", texto: 'cliente.from("desembolso").update({}).eq("id", 1).select();' }, "E"],
     ["un select con * entre otras columnas", { ruta: "src/lib/admin/x.ts", texto: 'cliente!.from("desembolso").select("id, *").single();' }, "E"],
     ['"use client" en el módulo', { ruta: "src/lib/desembolsos/x.ts", texto: '"use client";\nexport const x = 1;' }, "F"],
+    ["la regla general importada en la agenda del monitor", { ruta: "src/app/monitor/agenda/page.tsx", texto: 'import { describirReglaDeComision } from "@/lib/plazos/regla-general";' }, "G"],
+    ["la regla general importada con ruta relativa en una plantilla de correo", { ruta: "src/lib/correo/x.ts", texto: 'import { textoDeLaReglaDeComision } from "../plazos/regla-general";' }, "G"],
+    ["la regla general por import dinámico en el formulario del registro", { ruta: "src/app/(cuentas)/monitores/registro/FormularioRegistro.tsx", texto: 'export async function f() { return import("@/lib/plazos/regla-general"); }' }, "G"],
+    ["la función de la regla general recibida por otro camino", { ruta: "src/app/admin/x/page.tsx", texto: "export const t = m.textoDeLaReglaDeComision;" }, "G"],
     ["'use client' en la tarjeta de la pantalla", { ruta: "src/app/monitor/desembolsos/TarjetaDeDesembolso.tsx", texto: "'use client';\nexport function T() { return null; }" }, "F"],
   ];
 
@@ -299,6 +348,9 @@ describe("los controles de la guarda (G2.G)", () => {
     ["un paquete cualquiera", { ruta: "src/lib/agenda/x.ts", texto: 'import { x } from "desembolsos";' }],
     ['.from("desembolso") pidiendo columnas', { ruta: "src/lib/admin/x.ts", texto: 'cliente.from("desembolso").select("id, estado, monto_neto");' }],
     ['.from("pago").select("*"), que no es la tabla vigilada', { ruta: "src/lib/admin/x.ts", texto: 'cliente.from("pago").select("*");' }],
+    ["la página del registro usando la regla general", { ruta: "src/app/(cuentas)/monitores/registro/page.tsx", texto: 'import { describirReglaDeComision } from "@/lib/plazos/regla-general"; export const t = describirReglaDeComision;' }],
+    ["otro módulo del motor de plazos usando la regla general", { ruta: "src/lib/plazos/x.ts", texto: 'import { textoDeLaReglaDeComision } from "./regla-general";' }],
+    ["un import del motor de plazos que no es la regla general", { ruta: "src/app/monitor/agenda/page.tsx", texto: 'import { x } from "@/lib/plazos/regla-general-otra";' }],
     ["un select de todo en una cadena que no nace en desembolso", { ruta: "src/lib/admin/x.ts", texto: 'cliente.from("monitoria").select("*, desembolso(id)");' }],
   ];
 
