@@ -502,7 +502,7 @@ describe("criterio 6 (D-3): quien todavía no es Lead no agenda", () => {
 });
 
 describe("criterio 7 (RN-15, P-35, D-7): el diagnóstico más reciente de la materia queda ligado a la cita", () => {
-  it("liga el más reciente de la materia del Lead (no el de otra materia ni el de otra sesión), lo comparten sus citas y lo ve el monitor de cada una", async () => {
+  it("liga el más reciente de la materia del Lead (no el de otra materia ni el de otra sesión) y lo comparten sus citas; desde HU-022 el monitor no lo lee por la tabla", async () => {
     const e = await escenario();
     const otraMateria = await fx.crearEvaluacion();
     const duena = await sesionLead(0);
@@ -527,8 +527,9 @@ describe("criterio 7 (RN-15, P-35, D-7): el diagnóstico más reciente de la mat
 
     expect(primera.resultado).toBe("agendada");
     expect((await filaDe(primera.idMonitoria!)).id_diagnostico).toBe(reciente.id);
-    // El monitor de la cita ve el diagnóstico al que apunta (RN-13), pero no los demás de la persona; otro monitor, ninguno.
-    expect(await idsVisibles(delMonitor, "diagnostico", "id", reciente.id)).toEqual([reciente.id]);
+    // HU-022 cerró la lectura del monitor por la tabla: ni el de la cita (aunque apunte a ese diagnóstico) ni otro lee ninguno de
+    // la persona; el de la cita lo lee por public.diagnostico_de_mi_monitoria (integracion/diagnostico-del-monitor.test.ts).
+    expect(await idsVisibles(delMonitor, "diagnostico", "id", reciente.id)).toEqual([]);
     expect(await idsVisibles(delMonitor, "diagnostico", "id", viejo.id)).toEqual([]);
     expect(await idsVisibles(delMonitor, "diagnostico", "id", deOtraSesion.id)).toEqual([]);
     expect(await idsVisibles(deOtroMonitor, "diagnostico", "id", reciente.id)).toEqual([]);
@@ -543,7 +544,7 @@ describe("criterio 7 (RN-15, P-35, D-7): el diagnóstico más reciente de la mat
     }
     const sinCopias = await delMonitor.from("diagnostico").select("id, resultado_por_habilidad").eq("id", reciente.id);
     expect(sinCopias.error).toBeNull();
-    expect(sinCopias.data?.map((d) => d.id)).toEqual([reciente.id]);
+    expect(sinCopias.data).toEqual([]);
 
     // Cancelada la primera reserva, otra fecha comparte el mismo diagnóstico aunque ya esté ligado a otra cita (D-7).
     await expirarReserva(primera.idMonitoria!);
@@ -551,7 +552,7 @@ describe("criterio 7 (RN-15, P-35, D-7): el diagnóstico más reciente de la mat
     expect(segunda.resultado).toBe("agendada");
     expect((await filaDe(segunda.idMonitoria!)).id_diagnostico).toBe(reciente.id);
     expect((await filaDe(primera.idMonitoria!)).id_diagnostico).toBe(reciente.id);
-    expect(await idsVisibles(delMonitor, "diagnostico", "id", reciente.id)).toEqual([reciente.id]);
+    expect(await idsVisibles(delMonitor, "diagnostico", "id", reciente.id)).toEqual([]);
 
     // Si el diagnóstico se borra (supresión de datos), la cita sigue y queda sin él.
     exito(await fx.admin.from("diagnostico").delete().eq("id", reciente.id).select(), "borrar el diagnóstico");

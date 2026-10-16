@@ -184,7 +184,8 @@ insert into public.diagnostico_en_curso (id_sesion, id_evaluacion, id_materia, s
   ('c0000000-0000-0000-0000-000000001109', '20000000-0000-0000-0000-000000001101', '10000000-0000-0000-0000-000000001101',
    3109, '[]'::jsonb, '{}'::jsonb);
 
--- Una cita del monitor 05 que apunta al diagnóstico ganador de la 01 (RN-13, D-7): la política de la tabla le deja leerlo.
+-- Una cita del monitor 05 que apunta al diagnóstico ganador de la 01 (RN-13, D-7). Desde HU-022 la política de la tabla ya no le
+-- deja leerlo: lo lee con public.diagnostico_de_mi_monitoria.
 insert into public.monitoria (id, id_franja, id_monitor, id_materia, id_lead, fecha, estado, valor_total, id_diagnostico) values
   ('50000000-0000-0000-0000-000000001101', '30000000-0000-0000-0000-000000001101', 'c0000000-0000-0000-0000-000000001105',
    '10000000-0000-0000-0000-000000001102', '40000000-0000-0000-0000-000000001102', current_date + 21, 'pendiente_pago', 20000,
@@ -410,8 +411,8 @@ reset role;
 -- Monitor y admin: la política de la tabla les deja leer, la función no
 -- ---------------------------------------------------------------------------
 set local role authenticated;
--- El monitor 05 lee b1 con select por la cita que lo apunta (RN-13, D-7). No se afirma aquí: HU-022 cierra esa política y esta
--- prueba no debe depender de ella. Lo que importa es que la función no le devuelve nada.
+-- Desde HU-022 el monitor 05 ya no lee b1 con select por la cita que lo apunta (lo lee con diagnostico_de_mi_monitoria). Esta
+-- prueba no depende de esa política: lo que importa es que la función no le devuelve nada.
 set local request.jwt.claims to '{"sub":"c0000000-0000-0000-0000-000000001105","role":"authenticated","is_anonymous":false}';
 select is((select count(*)::int from public.mi_ultimo_diagnostico()), 0,
   'El monitor de una cita que apunta a un diagnóstico no recibe nada: el resultado de un estudiante no se le muestra como suyo');
