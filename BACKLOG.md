@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-18 21:35. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-18 21:59. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -21,14 +21,13 @@ _Generado automaticamente: 2026-10-18 21:35. No editar a mano; usa `scripts/back
 | [HU-045](backlog/HU-045.md) | [Estudiante] Reportar inasistencia del monitor en mi grupal | Lista | P1 | XS | HU-029, HU-036 |
 | [HU-046](backlog/HU-046.md) | [Monitor] Finalizar una grupal y entregar el enlace de reseña | Lista | P1 | S | HU-023, HU-036 |
 | [HU-047](backlog/HU-047.md) | [Integrante] Reseñar la sesión grupal eligiendo mi nombre | Lista | P1 | M | HU-046, HU-038, HU-035 |
-| [HU-099](backlog/HU-099.md) | [Contenido] Revisar los borradores de HU-091 y activar Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | Lista | P1 | S | HU-091 |
-| [HU-100](backlog/HU-100.md) | [Contenido] Revisar los borradores del Parcial 1 de Cálculo Diferencial y activarlo | Lista | P1 | M | HU-061 |
 | [HU-102](backlog/HU-102.md) | [Contenido] Completar el Parcial 2 de Cálculo Integral: soluciones, preguntas que faltan y revisión | Lista | P1 | L | HU-100 |
 | [HU-085](backlog/HU-085.md) | [Sistema] Borrar o anonimizar los datos de un Lead o aspirante que retiró su autorización o lleva 24 meses sin actividad | Lista | P2 | L | HU-056, HU-006, HU-062, HU-068 |
 | [HU-092](backlog/HU-092.md) | [Monitor] Marcar en mi perfil los temas en los que soy fuerte | Lista | P2 | M | HU-049 |
+| [HU-099](backlog/HU-099.md) | [Contenido] Revisar los borradores de HU-091 y activar Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | En progreso | P1 | S | HU-091 |
+| [HU-100](backlog/HU-100.md) | [Contenido] Revisar los borradores del Parcial 1 de Cálculo Diferencial y activarlo | En progreso | P1 | M | HU-061 |
 | [HU-101](backlog/HU-101.md) | [Contenido] Parciales 2 y 3 de Cálculo Diferencial: borradores y revisión | En progreso | P1 | L | HU-100 |
 | [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
-| [HU-084](backlog/HU-084.md) | [Técnica] Recorrido de punta a punta del diagnóstico: de la prueba al monitor | En revision | P1 | S | HU-048, HU-010, HU-011, HU-022, HU-087 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
@@ -88,6 +87,7 @@ _Generado automaticamente: 2026-10-18 21:35. No editar a mano; usa `scripts/back
 | [HU-077](backlog/HU-077.md) | [Admin] Revisar un pago que el admin asignado no revisó a tiempo | Hecha | P1 | S | HU-020 |
 | [HU-078](backlog/HU-078.md) | [Admin] Ver y cerrar los pagos rechazados de sesiones que ya ocurrieron (P-24) | Hecha | P1 | M | HU-020, HU-028 |
 | [HU-080](backlog/HU-080.md) | [Lead] No invitar a reseñar a quien reportó que el monitor no llegó | Hecha | P1 | S | HU-029, HU-035 |
+| [HU-084](backlog/HU-084.md) | [Técnica] Recorrido de punta a punta del diagnóstico: de la prueba al monitor | Hecha | P1 | S | HU-048, HU-010, HU-011, HU-022, HU-087 |
 | [HU-091](backlog/HU-091.md) | [Técnica] Borradores para activar las Evaluaciones de Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | Hecha | P1 | S | HU-061 |
 | [HU-093](backlog/HU-093.md) | [Técnica] Acelerar el CI: jobs en paralelo y E2E repartidas con --shard | Hecha | P1 | S |  |
 | [HU-095](backlog/HU-095.md) | [Técnica] Cerrar la lectura de diagnósticos a la sesión que los hizo y a la cuenta de Estudiante de su Lead (D-53 e) | Hecha | P1 | S | HU-009, HU-081 |
