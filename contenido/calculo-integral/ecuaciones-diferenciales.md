@@ -50,6 +50,8 @@ Resuelves dy/dx = x·y² separando variables. ¿Qué queda para integrar?
 - C) $\frac{d^2y}{dx^2} = y^2 + 2xy\cdot\frac{dy}{dx}$ · [deriva-en-vez-de-integrar] derivas la ecuación en vez de integrarla
 - D) Primero se halla C con y(0) y después se separa · [constante-antes] buscas la constante antes de integrar
 
+solución: separar es dejar cada variable con su diferencial: dy/y² = x dx, y entonces se integra ∫ y^(−2) dy = ∫ x dx, que da −1/y = x²/2 + C. ∫ dy = ∫ x·y² dx no separa: la y queda dentro de una integral en x. Derivar la ecuación otra vez no la resuelve. La constante C aparece al integrar, así que se halla después, con la condición inicial.
+
 ### P34 · dificultad 3 · kc: edo-separables · borrador · origen: ia (desconocido)
 La solución general de $\frac{dy}{dx} = \frac{2x}{y}$ es:
 
@@ -57,6 +59,8 @@ La solución general de $\frac{dy}{dx} = \frac{2x}{y}$ es:
 - B) $y = \frac{x^2}{y} + C$ · [no-separa] integras sin separar antes las variables
 - C) $y^2 = 2x^2$ · [constante-antes] descartas la constante antes de terminar de integrar
 - D) $y' = \frac{2}{y} - \frac{2x\cdot y'}{y^2}$ · [deriva-en-vez-de-integrar] derivas la ecuación en vez de integrarla
+
+solución: se separa: y dy = 2x dx. Al integrar, y²/2 = x² + C₁, y multiplicando por 2, y² = 2x² + C. y = x²/y + C sale de integrar el lado derecho sin separar, tratando y como constante. y² = 2x² es solo una solución particular, sin la constante. Y la expresión con y' es una derivada, no una solución.
 
 ### P35 · dificultad 2 · kc: edo-lineal · borrador · origen: ia (desconocido)
 Para dy/dx + 2y = eˣ, el factor integrante es:
@@ -66,6 +70,8 @@ Para dy/dx + 2y = eˣ, el factor integrante es:
 - C) 2x · [factor-sin-exponencial]
 - D) $2\cdot e^x$ · [factor-mezclado] mezclas el coeficiente de y con el lado derecho
 
+solución: la ecuación tiene la forma y' + P(x)·y = Q(x), con P(x) = 2 y Q(x) = eˣ. El factor integrante es μ = e^(∫P dx) = e^(2x). e^(eˣ) usa Q(x) en vez de P(x); 2x es ∫P dx sin la exponencial; y 2·eˣ mezcla el coeficiente de y con el lado derecho.
+
 ### P36 · dificultad 3 · kc: edo-lineal · borrador · origen: ia (desconocido)
 Para $\frac{dy}{dx} + \frac{1}{x}\cdot y = x$, con x > 0, ¿qué factor integrante usas y qué ecuación queda?
 
@@ -73,6 +79,8 @@ Para $\frac{dy}{dx} + \frac{1}{x}\cdot y = x$, con x > 0, ¿qué factor integran
 - B) $\mu = e^{x^2/2}$, y queda $(e^{x^2/2}\cdot y)' = x\cdot e^{x^2/2}$ · [factor-con-q]
 - C) $\mu = \ln(x)$, y queda $(\ln(x)\cdot y)' = x\cdot\ln(x)$ · [factor-sin-exponencial]
 - D) $\mu = x$, y queda $x\cdot y = x$ · [factor-mezclado] multiplicas por el factor pero te saltas la integración
+
+solución: con P(x) = 1/x, μ = e^(∫dx/x) = e^(ln x) = x (x > 0). Al multiplicar, x·y' + y = x², y el lado izquierdo es (x·y)', así que queda (x·y)' = x²; al integrar, x·y = x³/3 + C. e^(x²/2) usa Q(x) = x en vez de P(x); ln(x) es ∫P dx sin la exponencial; y x·y = x se salta la integración del lado derecho.
 
 ### P37 · dificultad 2 · kc: edo-exponencial · borrador · origen: ia (desconocido)
 Una población crece según dP/dt = 0,03·P, con P(0) = 500. ¿Cuál es P(t)?
@@ -82,6 +90,8 @@ Una población crece según dP/dt = 0,03·P, con P(0) = 500. ¿Cuál es P(t)?
 - C) $P(t) = 500\cdot e^t + 0,03$ · [pierde-k-exponente] sacas la constante del exponente
 - D) $P(t) = e^{0,03t} + 500$ · [constante-sumada] sumas la condición inicial en vez de multiplicar
 
+solución: dP/dt = k·P con k = 0,03 tiene solución P(t) = P(0)·e^(kt) = 500·e^(0,03t). Comprobación: P' = 0,03·500·e^(0,03t) = 0,03·P y P(0) = 500. 500 + 0,03t integra como si el lado derecho fuera constante; 500·eᵗ + 0,03 saca k del exponente; y e^(0,03t) + 500 suma la condición inicial en vez de multiplicarla (además, P(0) daría 501).
+
 ### P38 · dificultad 3 · kc: edo-exponencial · borrador · origen: ia (desconocido)
 Si dy/dx = −2y y y(0) = 3, ¿cuánto vale y(1)?
 
@@ -89,3 +99,5 @@ Si dy/dx = −2y y y(0) = 3, ¿cuánto vale y(1)?
 - B) 1 · [integra-directo-ky] resuelves y = 3 − 2x como si fuera integración directa
 - C) $3\cdot e^{-1}$ · [pierde-k-exponente]
 - D) $e^{-2} + 3$ · [constante-sumada] sumas la condición inicial en vez de multiplicar
+
+solución: dy/dx = −2y con y(0) = 3 tiene solución y = 3·e^(−2x), así que y(1) = 3·e^(−2) ≈ 0,41. El 1 sale de integrar −2 como constante, y = 3 − 2x; 3·e^(−1) pierde la k del exponente; y e^(−2) + 3 suma la condición inicial en vez de multiplicarla.
