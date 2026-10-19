@@ -42,7 +42,7 @@ La derivada direccional de f(x,y) = x² + y² en (1,1) en la dirección del vect
 - C) (2, 2) · [parciales-e8]
 - D) 2√2 · [parciales-e9]
 
-### P13 · dificultad 3 · kc: parciales · borrador · origen: ia (sonnet-5.5)
+### P13 · dificultad 3 · kc: parciales · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea f(x,y) = ln(x² + y²). La derivada direccional de f en el punto P(1, 2), en la dirección que va de P hacia el punto Q(4, −2), es:
 
 - A) −2 · [parciales-e7] no divides el vector (3, −4) entre su longitud 5 antes de hacer el producto punto con el gradiente

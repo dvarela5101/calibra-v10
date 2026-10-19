@@ -42,7 +42,7 @@ Reduce a forma escalón reducida la matriz: [[1, 2, 3], [0, 0, 1], [0, 0, 0]].
 - C) Sin solución · [sistemas-e8]
 - D) Dos soluciones · [sistemas-e9]
 
-### P14 · dificultad 1 · kc: sistemas · borrador · origen: ia (sonnet-5.5)
+### P14 · dificultad 1 · kc: sistemas · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Un sistema de 4 ecuaciones con 3 incógnitas (x, y, z) tiene esta matriz aumentada: [[1, 0, 0, 3], [0, 1, 0, −1], [0, 0, 1, 2], [0, 0, 0, 0]]. La última columna son los términos independientes. ¿Cuántas soluciones tiene el sistema?
 
 - A) Ninguna, porque la fila de ceros indica que el sistema es inconsistente · [sistemas-e8] tomas la fila de ceros como una contradicción, cuando solo es la ecuación 0 = 0, que siempre se cumple

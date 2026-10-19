@@ -42,7 +42,7 @@ Una fuerza de 50 N desplaza un objeto 10 m en 5 segundos. ¿Cuál es el trabajo 
 - C) 100 W · [energia-e8]
 - D) 250 J · [energia-e9]
 
-### P15 · dificultad 1 · kc: energia · borrador · origen: ia (sonnet-5.5)
+### P15 · dificultad 1 · kc: energia · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Una pelota de 0.4 kg se suelta desde el reposo a 0.8 m del piso. Sin tener en cuenta la resistencia del aire, ¿cuál es su energía cinética cuando ha descendido 0.45 m? (g = 10 m/s²)
 
 - A) 3.2 J · [energia-e2] olvidas que la energía se reparte entre cinética y potencial: tomas toda la energía inicial, 0.4×10×0.8 = 3.2 J, como si fuera cinética

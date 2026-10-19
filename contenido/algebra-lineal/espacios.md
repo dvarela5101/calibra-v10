@@ -42,7 +42,7 @@ Si dim(V) = 3 y tenemos 4 vectores en V, ¿qué podemos concluir?
 - C) Exactamente 3 de los 4 vectores son independientes · [espacios-e8]
 - D) Los vectores no pertenecen a V · [espacios-e9]
 
-### P16 · dificultad 1 · kc: espacios · borrador · origen: ia (sonnet-5.5)
+### P16 · dificultad 1 · kc: espacios · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 ¿Cuál de los siguientes conjuntos es una base de ℝ²?
 
 - A) {(1, 2), (3, 1)} · CORRECTA

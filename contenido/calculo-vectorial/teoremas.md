@@ -41,7 +41,7 @@ El teorema de Gauss (divergencia) relaciona $\iint_S F\cdot n\,dS$ con:
 - C) $\int_C F\cdot dr$ donde C es la frontera de S · [teoremas-e7]
 - D) 0 si F es conservativo · [teoremas-e8]
 
-### P16 · dificultad 1 · kc: teoremas · borrador · origen: ia (sonnet-5.5)
+### P16 · dificultad 1 · kc: teoremas · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea C la circunferencia x² + y² = 1 recorrida en sentido antihorario. Por el teorema de Green, $\oint_C (3x-y)\,dx + (2x+4y)\,dy$ vale:
 
 - A) −3π · [teoremas-e2] recorres la frontera en sentido horario, así que el signo del resultado cambia

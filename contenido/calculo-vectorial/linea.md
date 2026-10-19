@@ -42,7 +42,7 @@ Si F = ∇f es un campo conservativo y C es una curva de A a B, entonces $\int_C
 - C) |F| · longitud(C) · [linea-e8]
 - D) 0 · [linea-e9]
 
-### P15 · dificultad 1 · kc: linea · borrador · origen: ia (sonnet-5.5)
+### P15 · dificultad 1 · kc: linea · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Calcula $\int_C F\cdot dr$, donde F(x,y) = (y, x) y C es el segmento parametrizado por r(t) = (2t, t), con 0 ≤ t ≤ 1:
 
 - A) −2 · [linea-e1] recorres el segmento de (2, 1) a (0, 0), contra el sentido en que crece t
