@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-19 15:19. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-19 15:38. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -23,6 +23,7 @@ _Generado automaticamente: 2026-10-19 15:19. No editar a mano; usa `scripts/back
 | [HU-047](backlog/HU-047.md) | [Integrante] Reseñar la sesión grupal eligiendo mi nombre | Lista | P1 | M | HU-046, HU-038, HU-035 |
 | [HU-085](backlog/HU-085.md) | [Sistema] Borrar o anonimizar los datos de un Lead o aspirante que retiró su autorización o lleva 24 meses sin actividad | Lista | P2 | L | HU-056, HU-006, HU-062, HU-068 |
 | [HU-092](backlog/HU-092.md) | [Monitor] Marcar en mi perfil los temas en los que soy fuerte | Lista | P2 | M | HU-049 |
+| [HU-104](backlog/HU-104.md) | [Técnica] Que un fallo de red con Cloudflare no tumbe las pruebas de integración del CAPTCHA | En progreso | P1 | XS | HU-058 |
 | [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
 | [HU-099](backlog/HU-099.md) | [Contenido] Revisar los borradores de HU-091 y activar Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | En revision | P1 | S | HU-091 |
 | [HU-100](backlog/HU-100.md) | [Contenido] Revisar los borradores del Parcial 1 de Cálculo Diferencial y activarlo | En revision | P1 | M | HU-061 |
