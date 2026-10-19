@@ -8,11 +8,12 @@
 - **[HU-084](../backlog/HU-084.md) pasa de Juzou04 a dvarela5101**, que la construye el 18-oct, para que a Juzou04 solo le quede el contenido.
 - **Juzou04: revisión del contenido con una sesión de Claude Code.** Revisa todos los borradores que ya existen: [HU-099](../backlog/HU-099.md), [HU-100](../backlog/HU-100.md) y [HU-102](../backlog/HU-102.md). La sesión resuelve cada problema a ciegas y le propone un veredicto; Juzou04 decide y marca `revisada` (D-50 d: la IA nunca la marca). Si todo pasa, quedan activas 7 de 10 Evaluaciones; Cálculo Integral necesita además 4 preguntas nuevas, y [HU-101](../backlog/HU-101.md) (Parciales 2 y 3 de Cálculo Diferencial) no alcanza para el 19-oct.
 - **Repo real:** dvarela5101 ya tiene acceso de escritura a `Juzou04/Calibra`.
+- **D-73 (18-oct):** el corte sale con las Evaluaciones que estén activas (HU-099 a HU-102 ya no lo frenan) y con los textos de P-13, D-54 c y D-71 b aprobados por dvarela5101.
 
 | Persona | Siguiente, en orden |
 |---|---|
 | Juzou04 | 1) [HU-099](../backlog/HU-099.md) (15 borradores). 2) [HU-100](../backlog/HU-100.md) (38 borradores; si aprueba menos del 70 %, para y avisa). 3) [HU-102](../backlog/HU-102.md) (39 borradores sin solución y 4 preguntas que faltan). Después: [HU-101](../backlog/HU-101.md) |
-| dvarela5101 | [HU-084](../backlog/HU-084.md); aprobar los textos de D-72 c; preparar las cuentas y valores del corte ([pendientes-dvarela.md](pendientes-dvarela.md) §A3, B y C) y hacer el corte ([HU-057](../backlog/HU-057.md)) |
+| dvarela5101 | [HU-084](../backlog/HU-084.md); los textos de D-72 c ya los aprobó (D-73 b); preparar las cuentas y valores del corte ([pendientes-dvarela.md](pendientes-dvarela.md) §A3, B y C) y hacer el corte ([HU-057](../backlog/HU-057.md)) |
 | Lorenzo | Integrar `main` en su [PR #69](https://github.com/dvarela5101/calibra-v10/pull/69) (HU-094), que está en conflicto; después [HU-092](../backlog/HU-092.md) y [HU-088](../backlog/HU-088.md) |
 
 ## Ajuste del 14-oct-2026: llega Lorenzo

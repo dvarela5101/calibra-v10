@@ -498,7 +498,7 @@ Todavía no. Se hace una sola vez, cuando el flujo principal esté listo, y lo g
   - `PROVEEDOR_NOMBRE` y `PROVEEDOR_DOCUMENTO`: el nombre o razón social y el documento (cédula o NIT) de quien recibe el pago. La página los muestra antes de pagar (Ley 1480 de 2011, art. 50). Son datos legales: valídalos con asesoría, como P-13. Mientras falten, sale solo "Calibra". El correo que los acompaña es `CORREO_DATOS_PERSONALES` (sección B).
 - [ ] **Datos del prototipo** (D-72 a y d): no se migra nada; leads, diagnósticos, franjas y citas quedan en el respaldo. Los 5 monitores del prototipo se invitan como nuevos desde `/admin`.
 - [ ] **Dirección** (D-72 f): el dominio del prototipo en Vercel pasa al proyecto de v10 cuando todo esté probado en la dirección `*.vercel.app` de v10. Los previews usan la misma base de producción (D-72 e).
-- [ ] **Asesoría** (D-72 c): el corte espera los textos validados de P-13, D-54 c, D-71 b y los datos del proveedor.
+- [x] **Asesoría** (D-72 c): *cambiada por D-73 b (18-oct-2026)*: aprobaste tú los textos de P-13, D-54 c y D-71 b tal como están. Asesoría puede revisarlos después del corte. Falta solo definir `PROVEEDOR_NOMBRE` y `PROVEEDOR_DOCUMENTO` al cargarlos en Vercel (arriba, «Pago por Llave»).
 - [ ] **Publicar** en el repo real de Calibra y archivar el repo temporal. Ya tienes acceso de escritura a `Juzou04/Calibra` (18-oct).
 
 ---
@@ -520,8 +520,8 @@ No bloquean el trabajo actual. Cada una tiene una recomendación en `REVISION_RE
 
 ### Validaciones pendientes
 
-- [ ] **Retención de datos (P-13):** los plazos (90 días, 24 meses, 5 años) quedaron "a validar con asesoría" legal.
-- [ ] **Autorización ampliada (HU-087, D-54 c):** para que el monitor vea las respuestas del diagnóstico, el texto de la autorización y del aviso de privacidad pasa a «mis respuestas y el resultado de mi diagnóstico». Hay que validarlo con asesoría junto con P-13 antes de que HU-022 salga.
+- [x] *Aprobado por ti el 18-oct-2026 (D-73 b); asesoría puede revisarlo después del corte.* **Retención de datos (P-13):** los plazos (90 días, 24 meses, 5 años) quedaron "a validar con asesoría" legal.
+- [x] *Aprobado por ti el 18-oct-2026 (D-73 b); asesoría puede revisarlo después del corte.* **Autorización ampliada (HU-087, D-54 c):** para que el monitor vea las respuestas del diagnóstico, el texto de la autorización y del aviso de privacidad pasa a «mis respuestas y el resultado de mi diagnóstico». Hay que validarlo con asesoría junto con P-13 antes de que HU-022 salga.
 - [x] **Cierre automático de sesiones (P-05):** confirmado el 1-oct (D-14), 24 h después del fin programado.
 
 ---
