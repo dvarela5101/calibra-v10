@@ -14,6 +14,23 @@ export type UsuarioPrueba = { id: string; correo: string; contrasena: string };
  */
 export const TOKEN_CAPTCHA_DE_PRUEBA = "XXXX.DUMMY.TOKEN.XXXX";
 
+/**
+ * HU-104: con el token de prueba, Auth local le pregunta a Cloudflare por internet si es válido; si esa llamada
+ * falla, responde `captcha_failed` aunque el token sirva, y la prueba caía por la red y no por el código. Repite
+ * el pedido solo en ese caso, hasta 3 veces en total y con espera; cualquier otra respuesta vuelve tal cual, y si
+ * Cloudflare sigue sin responder, el último `captcha_failed` llega a la prueba. Nunca con un token vacío: ahí
+ * `captcha_failed` es lo esperado (captcha.test.ts).
+ */
+export async function conReintentoDeCaptcha<T extends { error: { code?: string } | null }>(pedir: () => Promise<T>): Promise<T> {
+  const intentos = 3;
+  for (let intento = 1; ; intento += 1) {
+    const respuesta = await pedir();
+    if (respuesta.error?.code !== "captcha_failed" || intento === intentos) return respuesta;
+    console.warn(`[captcha] Auth no pudo verificar el token de prueba con Cloudflare; intento ${intento + 1} de ${intentos}`);
+    await new Promise((listo) => setTimeout(listo, 1000 * intento));
+  }
+}
+
 const AYUDA = "corre npm run db:iniciar y npm run db:env";
 const HOSTS_LOCALES = ["127.0.0.1", "localhost", "[::1]", "::1"];
 
@@ -96,11 +113,13 @@ export async function idsVisibles(
 /** Cliente nuevo con la sesión de quien entra con correo y contraseña (lleva el token del CAPTCHA, HU-058). */
 export async function iniciarSesionConClave(correo: string, contrasena: string): Promise<Cliente> {
   const cliente = crearCliente();
-  const { error } = await cliente.auth.signInWithPassword({
-    email: correo,
-    password: contrasena,
-    options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA },
-  });
+  const { error } = await conReintentoDeCaptcha(() =>
+    cliente.auth.signInWithPassword({
+      email: correo,
+      password: contrasena,
+      options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA },
+    }),
+  );
   if (error) throw new Error(`signInWithPassword: ${error.message}`);
   return cliente;
 }
@@ -146,7 +165,9 @@ export class Fixtures {
   /** Visitante anónimo: devuelve el cliente con la sesión activa y su id. */
   async crearAnonimo(): Promise<{ cliente: Cliente; id: string }> {
     const cliente = crearCliente();
-    const { data, error } = await cliente.auth.signInAnonymously({ options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA } });
+    const { data, error } = await conReintentoDeCaptcha(() =>
+      cliente.auth.signInAnonymously({ options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA } }),
+    );
     if (error || !data.user) throw new Error(`signInAnonymously: ${error?.message ?? "sin usuario"}`);
     this.usuarios.push(data.user.id);
     return { cliente, id: data.user.id };

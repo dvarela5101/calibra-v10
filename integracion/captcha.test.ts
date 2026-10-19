@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { crearCliente, exigirSupabaseLocal, Fixtures, iniciarSesionConClave, rolDe, TOKEN_CAPTCHA_DE_PRUEBA } from "./utilidades";
+import { conReintentoDeCaptcha, crearCliente, exigirSupabaseLocal, Fixtures, iniciarSesionConClave, rolDe, TOKEN_CAPTCHA_DE_PRUEBA } from "./utilidades";
 
 // Pruebas de integración de HU-058 (criterio 2) contra el Supabase LOCAL: con el CAPTCHA de Auth encendido
 // (`[auth.captcha]` de supabase/config.toml, con la llave secreta de prueba de Turnstile que pone
@@ -63,7 +63,9 @@ describe("Criterio 2: el inicio de sesión anónimo exige un token de CAPTCHA v�
   it("con el token de prueba nace un anónimo con sesión", async () => {
     const cliente = crearCliente();
 
-    const { data, error } = await cliente.auth.signInAnonymously({ options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA } });
+    const { data, error } = await conReintentoDeCaptcha(() =>
+      cliente.auth.signInAnonymously({ options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA } }),
+    );
     try {
       expect(error).toBeNull();
       expect(data.user?.is_anonymous).toBe(true);
@@ -104,11 +106,13 @@ describe("Criterio 2: el inicio de sesión con contraseña exige el token (D-30)
   it("con el token pero con la contraseña equivocada falla por las credenciales, no por el CAPTCHA", async () => {
     const usuario = await fx.crearUsuario();
 
-    const { error } = await crearCliente().auth.signInWithPassword({
-      email: usuario.correo,
-      password: `${usuario.contrasena}-mala`,
-      options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA },
-    });
+    const { error } = await conReintentoDeCaptcha(() =>
+      crearCliente().auth.signInWithPassword({
+        email: usuario.correo,
+        password: `${usuario.contrasena}-mala`,
+        options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA },
+      }),
+    );
 
     expect(error?.code).toBe("invalid_credentials");
   });
