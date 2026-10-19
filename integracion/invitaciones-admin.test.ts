@@ -13,7 +13,7 @@ import {
 } from "@/lib/admin/invitaciones";
 import { desactivarCuenta, reactivarCuenta } from "@/lib/auth/cuentas";
 import { reintentarCorreosDesdeServidor } from "@/lib/correo/procesos";
-import { crearCliente, exigirSupabaseLocal, exito, Fixtures, iniciarSesionConClave, rolDe, TOKEN_CAPTCHA_DE_PRUEBA, type Cliente } from "./utilidades";
+import { conReintentoDeCaptcha, crearCliente, exigirSupabaseLocal, exito, Fixtures, iniciarSesionConClave, rolDe, TOKEN_CAPTCHA_DE_PRUEBA, type Cliente } from "./utilidades";
 
 // HU-072 contra el Supabase LOCAL: la invitación se guarda de verdad, el correo sale por Mailpit, la cuenta se crea en
 // Auth, la lista y la cancelación van con la sesión real de un admin, y la concurrencia se ejerce con dos conexiones pg
@@ -803,7 +803,9 @@ describe("reactivar (criterio 13, D-64 a)", () => {
     expect(recibe).not.toBe(a.id);
 
     // Baneado: no inicia sesión (con el token del CAPTCHA, para que el rechazo sea el del usuario baneado) y no es admin.
-    const bloqueado = await crearCliente().auth.signInWithPassword({ email: a.correo, password: a.contrasena, options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA } });
+    const bloqueado = await conReintentoDeCaptcha(() =>
+      crearCliente().auth.signInWithPassword({ email: a.correo, password: a.contrasena, options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA } }),
+    );
     expect(bloqueado.error?.code).toBe("user_banned");
     expect(await rolDe(sesionA)).not.toBe("admin");
 
@@ -839,7 +841,9 @@ describe("reactivar (criterio 13, D-64 a)", () => {
       expect(await reactivarAdmin(sesion, baneado.id), nombre).toEqual({ ok: false, motivo: "no_encontrado" });
     }
 
-    const intento = await crearCliente().auth.signInWithPassword({ email: baneado.correo, password: baneado.contrasena, options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA } });
+    const intento = await conReintentoDeCaptcha(() =>
+      crearCliente().auth.signInWithPassword({ email: baneado.correo, password: baneado.contrasena, options: { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA } }),
+    );
     expect(intento.error?.code).toBe("user_banned");
   });
 });

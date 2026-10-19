@@ -22,6 +22,7 @@ import { diaIsoDeFecha } from "@/lib/plazos/motor";
 import { CASILLA_TRATAMIENTO, leerConsentimiento, MARCADA } from "@/lib/privacidad/consentimiento";
 import type { Database } from "@/lib/supabase/tipos";
 import {
+  conReintentoDeCaptcha,
   crearCliente,
   exigirEntorno,
   exigirSupabaseLocal,
@@ -486,7 +487,7 @@ describe("D. el diagnóstico y la cita siguen siendo suyos, y se entra desde otr
 
     // Un Estudiante que nunca eligió contraseña recibe el correo de recuperar, aunque nunca haya tenido una.
     const sinContrasena = crearCliente();
-    expect((await sinContrasena.auth.resetPasswordForEmail(correo, { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA })).error).toBeNull();
+    expect((await conReintentoDeCaptcha(() => sinContrasena.auth.resetPasswordForEmail(correo, { captchaToken: TOKEN_CAPTCHA_DE_PRUEBA }))).error).toBeNull();
     const recuperar = await esperarCorreos(correo, ASUNTO_DE_RECUPERAR);
     expect(recuperar[0].HTML).toContain("/auth/confirmar?token_hash=");
 
