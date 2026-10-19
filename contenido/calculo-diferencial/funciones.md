@@ -22,7 +22,7 @@ mc: desplazamiento-sin-factorizar · transformaciones-graficas · en f(2x − 6)
 
 ## Preguntas
 
-### P13 · dificultad 1 · kc: dominio-composicion · borrador · origen: ia (sonnet-5.5)
+### P13 · dificultad 1 · kc: dominio-composicion · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea $f(x)=\sqrt{x-3}+\frac{1}{x-6}+\ln(10-x)$. ¿Cuál de los siguientes valores de x pertenece al dominio de f?
 
 - A) x = 1 · [omite-restriccion-raiz] aceptas x = 1 aunque lo de adentro de la raíz vale −2
@@ -32,7 +32,7 @@ Sea $f(x)=\sqrt{x-3}+\frac{1}{x-6}+\ln(10-x)$. ¿Cuál de los siguientes valores
 
 solución: cada término pone su propia condición: $\sqrt{x-3}$ pide x ≥ 3, $\frac{1}{x-6}$ pide x ≠ 6 y $\ln(10-x)$ pide 10 − x > 0, es decir x < 10. El dominio es [3, 6) ∪ (6, 10). Con x = 1 lo de adentro de la raíz vale −2, con x = 6 el denominador vale 0 y con x = 10 el logaritmo queda en ln 0, que no existe. Con x = 8 las tres condiciones se cumplen: $\sqrt{5}$, $\frac{1}{2}$ y ln 2 están definidos.
 
-### P14 · dificultad 2 · kc: dominio-composicion · borrador · origen: ia (sonnet-5.5)
+### P14 · dificultad 2 · kc: dominio-composicion · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sean $f(x)=e^{x}$ y $g(x)=\ln(x-3)$. ¿Cuál es el dominio de la composición f∘g, definida por (f∘g)(x) = f(g(x))?
 
 - A) (−∞, ∞) · [olvida-restriccion-interna] simplificas la composición a x − 3 y tomas todos los reales, sin exigir que ln(x − 3) esté definido
@@ -42,7 +42,7 @@ Sean $f(x)=e^{x}$ y $g(x)=\ln(x-3)$. ¿Cuál es el dominio de la composición f�
 
 solución: para evaluar $f(g(x))=e^{\ln(x-3)}$ primero hay que evaluar g, y g exige x − 3 > 0, es decir x > 3. La función f(x) = eˣ está definida para todo real y no agrega condiciones. Aunque $e^{\ln(x-3)}$ se simplifica a x − 3, el dominio no es el de esa fórmula final: es (3, ∞). El valor x = 3 queda fuera porque ln 0 no existe. La opción (ln 3, ∞) sale de la composición en el otro orden, $g(f(x))=\ln(e^{x}-3)$, que exige $e^{x}>3$.
 
-### P15 · dificultad 2 · kc: dominio-composicion · borrador · origen: ia (sonnet-5.5)
+### P15 · dificultad 2 · kc: dominio-composicion · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea $g(x)=\sqrt{x^2-4}$ y sea $f(x)=x^2$. ¿Cuál es el dominio de la composición f∘g, definida por (f∘g)(x) = f(g(x))?
 
 - A) [2, ∞) · [desigualdad-cuadratica-un-intervalo] de x² − 4 ≥ 0 te quedas con x ≥ 2 y pierdes el intervalo x ≤ −2
@@ -52,7 +52,7 @@ Sea $g(x)=\sqrt{x^2-4}$ y sea $f(x)=x^2$. ¿Cuál es el dominio de la composici�
 
 solución: para evaluar $f(g(x))=(\sqrt{x^2-4})^2$ primero hay que evaluar g, que exige x² − 4 ≥ 0, es decir (x − 2)(x + 2) ≥ 0. Eso se cumple si x ≤ −2 o si x ≥ 2: son dos intervalos separados. La función f(x) = x² no agrega condiciones. Aunque la fórmula final x² − 4 existe para todo x, la composición no está definida en (−2, 2). El dominio es (−∞, −2] ∪ [2, ∞). El conjunto (−∞, −√2] ∪ [√2, ∞) es el dominio de la composición en el otro orden, $g(f(x))=\sqrt{x^4-4}$.
 
-### P16 · dificultad 3 · kc: dominio-composicion · borrador · origen: ia (sonnet-5.5)
+### P16 · dificultad 3 · kc: dominio-composicion · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sean $f(x)=\frac{\sqrt{x}}{x-5}$ y $g(x)=x^2-4x$. ¿Cuál es el dominio de la composición f∘g, definida por (f∘g)(x) = f(g(x))?
 
 - A) (−∞, −1) ∪ (−1, 0] ∪ [4, 5) ∪ (5, ∞) · CORRECTA
@@ -62,7 +62,7 @@ Sean $f(x)=\frac{\sqrt{x}}{x-5}$ y $g(x)=x^2-4x$. ¿Cuál es el dominio de la co
 
 solución: (f∘g)(x) = f(g(x)) = $\frac{\sqrt{g(x)}}{g(x)-5}$, con g(x) = x² − 4x. Hay dos condiciones. Primera: lo de adentro de la raíz debe ser no negativo, x² − 4x ≥ 0, es decir x(x − 4) ≥ 0, que se cumple si x ≤ 0 o si x ≥ 4 (dos intervalos separados). Segunda: el denominador no puede ser 0, es decir g(x) ≠ 5: x² − 4x − 5 = (x − 5)(x + 1) ≠ 0, así que x ≠ 5 y x ≠ −1. Los dos valores excluidos caen dentro de los intervalos de la primera condición, así que hay que sacarlos: (−∞, −1) ∪ (−1, 0] ∪ [4, 5) ∪ (5, ∞).
 
-### P17 · dificultad 1 · kc: transformaciones-graficas · borrador · origen: ia (sonnet-5.5)
+### P17 · dificultad 1 · kc: transformaciones-graficas · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 El punto (3, 4) está en la gráfica de f. ¿Cuál de los siguientes puntos debe estar en la gráfica de $g(x)=-f(x+2)+1$?
 
 - A) (1, −3) · CORRECTA
@@ -72,7 +72,7 @@ El punto (3, 4) está en la gráfica de f. ¿Cuál de los siguientes puntos debe
 
 solución: como (3, 4) está en la gráfica de f, f(3) = 4. Para que el argumento de f valga 3 se necesita x + 2 = 3, es decir x = 1. Entonces g(1) = −f(3) + 1 = −4 + 1 = −3 y el punto es (1, −3). La gráfica de f se corre 2 unidades a la izquierda, se refleja respecto del eje x y luego sube 1 unidad. Como la reflexión va antes de la suma, el signo menos solo afecta a f: −f(3) + 1, no −(f(3) + 1).
 
-### P18 · dificultad 2 · kc: transformaciones-graficas · borrador · origen: ia (sonnet-5.5)
+### P18 · dificultad 2 · kc: transformaciones-graficas · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 El punto (4, 3) está en la gráfica de f. ¿Cuál de los siguientes puntos debe estar en la gráfica de $g(x)=-f(2x-6)$?
 
 - A) (1, 3) · [reflexion-eje-equivocado] lees −f(2x − 6) como f(−(2x − 6)) y reflejas respecto del eje y en vez del eje x
@@ -82,7 +82,7 @@ El punto (4, 3) está en la gráfica de f. ¿Cuál de los siguientes puntos debe
 
 solución: como (4, 3) está en la gráfica de f, f(4) = 3. Se necesita 2x − 6 = 4, de donde x = 5, y entonces g(5) = −f(4) = −3. El punto es (5, −3). Factorizando, g(x) = −f(2(x − 3)): la gráfica de f se comprime horizontalmente a la mitad, se corre 3 unidades a la derecha (no 6) y se refleja respecto del eje x.
 
-### P19 · dificultad 2 · kc: transformaciones-graficas · borrador · origen: ia (sonnet-5.5)
+### P19 · dificultad 2 · kc: transformaciones-graficas · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 El punto (2, −5) está en la gráfica de f. ¿Cuál de los siguientes puntos debe estar en la gráfica de $g(x)=|f(x-1)|-2$?
 
 - A) (1, 3) · [signo-traslacion-invertido] lees f(x − 1) como un corrimiento de 1 unidad hacia la izquierda
@@ -92,7 +92,7 @@ El punto (2, −5) está en la gráfica de f. ¿Cuál de los siguientes puntos d
 
 solución: como (2, −5) está en la gráfica de f, f(2) = −5. Se necesita x − 1 = 2, de donde x = 3. Entonces g(3) = |f(2)| − 2 = |−5| − 2 = 5 − 2 = 3, y el punto es (3, 3). La gráfica de f se corre 1 unidad a la derecha, la parte que queda bajo el eje x se refleja hacia arriba y después toda la gráfica baja 2 unidades. El valor absoluto va antes de restar 2: |f(2)| − 2 = 3, no |f(2) − 2| = 7. Tampoco es f(|x − 1|) − 2, que deja la y en −7.
 
-### P20 · dificultad 3 · kc: transformaciones-graficas · borrador · origen: ia (sonnet-5.5)
+### P20 · dificultad 3 · kc: transformaciones-graficas · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 La gráfica de $g(x)=|f(2x-6)|$ se obtiene de la de f con tres transformaciones aplicadas una tras otra, en el orden en que aparecen. ¿Cuál es la secuencia correcta?
 
 - A) Comprimir horizontalmente a la mitad, trasladar 6 unidades a la derecha y reflejar hacia arriba la parte que queda bajo el eje x · [desplazamiento-sin-factorizar] trasladas 6 unidades en vez de 3, porque no factorizas 2x − 6 = 2(x − 3)

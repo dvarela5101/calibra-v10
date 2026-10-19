@@ -29,7 +29,7 @@ Sea $f(x) = \frac{x^2 - 1}{x - 1}$ para x ≠ 1 y f(1) = 3. ¿La función es con
 - C) No, porque f(1) no está definida · [formula-falla-no-hay-valor]
 - D) Sí, porque se puede aplicar L'Hôpital · [simplificar-elimina-discontinuidad]
 
-### P44 · dificultad 1 · kc: continuidad · borrador · origen: ia (sonnet-5.5)
+### P44 · dificultad 1 · kc: continuidad · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea $g(x) = \frac{x^2 + x - 12}{x + 4}$ para x ≠ −4 y g(−4) = 2. ¿Qué tipo de discontinuidad tiene g en x = −4?
 
 - A) De salto, porque g(−4) = 2 queda separado del resto de la gráfica · [clasifica-sin-laterales] llamas de salto a una discontinuidad cuyos límites laterales son iguales, sin calcularlos
@@ -39,7 +39,7 @@ Sea $g(x) = \frac{x^2 + x - 12}{x + 4}$ para x ≠ −4 y g(−4) = 2. ¿Qué ti
 
 solución: el numerador se factoriza como x² + x − 12 = (x + 4)(x − 3), así que para x ≠ −4 se tiene g(x) = x − 3 y $\lim_{x\to -4} g(x) = -7$ por los dos lados. Como g(−4) = 2 es distinto de −7, g no es continua en x = −4. Los límites laterales existen, son finitos e iguales, así que la discontinuidad es evitable: bastaría redefinir g(−4) = −7.
 
-### P45 · dificultad 2 · kc: continuidad · borrador · origen: ia (sonnet-5.5)
+### P45 · dificultad 2 · kc: continuidad · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea $f(x) = \frac{x^3 - 8}{x - 2}$ si x < 2, f(2) = a y f(x) = bx − 6 si x > 2. ¿Qué condiciones sobre a y b hacen que f sea continua en x = 2?
 
 - A) Basta con que a = 12, sea cual sea b · [parametro-ignora-un-lado] igualas solo el límite por la izquierda con f(2) y no usas el de la derecha para hallar b
@@ -49,7 +49,7 @@ Sea $f(x) = \frac{x^3 - 8}{x - 2}$ si x < 2, f(2) = a y f(x) = bx − 6 si x > 2
 
 solución: para x < 2 se tiene $\frac{x^3 - 8}{x - 2} = x^2 + 2x + 4$, así que el límite por la izquierda en x = 2 es 12. El límite por la derecha es 2b − 6. La continuidad pide 12 = f(2) = 2b − 6, o sea a = 12 y b = 9. El cociente falla en x = 2, pero allí f vale a, que es justo lo que se ajusta. Si solo se pide a = 12, el límite por la derecha 2b − 6 coincide con 12 únicamente cuando b = 9. Si solo se pide a = 2b − 6, el límite por la izquierda sigue siendo 12 y coincide con a únicamente cuando b = 9.
 
-### P46 · dificultad 3 · kc: continuidad · borrador · origen: ia (sonnet-5.5)
+### P46 · dificultad 3 · kc: continuidad · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea f(x) = ax + b si x ≤ −1, f(x) = x² si −1 < x < 2 y f(x) = bx − a si x ≥ 2. ¿Qué valores de a y b hacen que f sea continua en todos los reales?
 
 - A) a = −1 y b = 0 · [olvida-un-punto-de-union] impones la continuidad solo en x = −1 y no compruebas x = 2
@@ -59,7 +59,7 @@ Sea f(x) = ax + b si x ≤ −1, f(x) = x² si −1 < x < 2 y f(x) = bx − a si
 
 solución: cada trozo es un polinomio, así que solo hay que revisar x = −1 y x = 2. En x = −1: f(−1) = −a + b y el límite por la izquierda es −a + b; el límite por la derecha es (−1)² = 1, así que −a + b = 1. En x = 2: el límite por la izquierda es 2² = 4 y f(2) = 2b − a es también el límite por la derecha, así que 2b − a = 4. Restando la primera ecuación de la segunda queda b = 3 y entonces a = 2. Con a = 2 y b = 3 la función vale 1 en x = −1 y 4 en x = 2, sin saltos. Los pares a = −1, b = 0 y a = 0, b = 2 cumplen una sola de las dos ecuaciones.
 
-### P47 · dificultad 1 · kc: teorema-valor-intermedio · borrador · origen: ia (sonnet-5.5)
+### P47 · dificultad 1 · kc: teorema-valor-intermedio · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea f una función continua en [2, 6] con f(2) = 3 y f(6) = 11. ¿Cuál de estas afirmaciones garantiza el teorema del valor intermedio?
 
 - A) Existe al menos un c en (2, 6) con f(c) = 8 · CORRECTA
@@ -69,7 +69,7 @@ Sea f una función continua en [2, 6] con f(2) = 3 y f(6) = 11. ¿Cuál de estas
 
 solución: f es continua en [2, 6] y 8 está entre f(2) = 3 y f(6) = 11, así que el teorema garantiza al menos un c en (2, 6) con f(c) = 8. El valor 14 es mayor que f(6) = 11 y no está entre los extremos. Con el mismo signo en los extremos el teorema no dice nada sobre los ceros: f podría bajar de 3, cruzar el eje y volver a subir. Tampoco garantiza que c sea único: la función lineal por tramos que une (2, 3), (3, 9), (4, 7) y (6, 11) vale 8 en tres puntos.
 
-### P48 · dificultad 2 · kc: teorema-valor-intermedio · borrador · origen: ia (sonnet-5.5)
+### P48 · dificultad 2 · kc: teorema-valor-intermedio · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 ¿Cuál de las siguientes conclusiones es verdadera y se justifica con el teorema del valor intermedio?
 
 - A) La ecuación $\frac{1}{x} = 0$ tiene solución en (−1, 1): la función vale −1 en x = −1 y 1 en x = 1 · [tvi-sin-continuidad] aplicas el teorema sin comprobar que la función es continua en todo el intervalo, y 1/x no está definida en x = 0
@@ -79,7 +79,7 @@ solución: f es continua en [2, 6] y 8 está entre f(2) = 3 y f(6) = 11, así qu
 
 solución: en la opción B, $x^3 + 2x - 7$ es un polinomio, así que es continua; vale −4 en x = 1 y 5 en x = 2, con signos opuestos, y el teorema da una solución en (1, 2). En la A, $\frac{1}{x}$ no es continua en x = 0, que está en [−1, 1], así que el teorema no se aplica; de hecho $\frac{1}{x}$ nunca vale 0. En la C, $x^3 - 9x = x(x - 3)(x + 3)$ se anula en −3, 0 y 3, así que hay tres soluciones y el teorema solo garantiza al menos una. En la D, con el mismo signo en los extremos el teorema no dice nada, y las soluciones $\frac{3 \pm \sqrt{5}}{2}$, aproximadamente 0,38 y 2,62, están en (0, 3).
 
-### P49 · dificultad 2 · kc: teorema-valor-intermedio · borrador · origen: ia (sonnet-5.5)
+### P49 · dificultad 2 · kc: teorema-valor-intermedio · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea f(x) = x + 1 si x < 2 y f(x) = x + 4 si x ≥ 2, con f(0) = 1 y f(5) = 9. ¿Cuál de estas afirmaciones sobre f en el intervalo [0, 5] es verdadera?
 
 - A) f toma el valor 4 en algún punto de (0, 5), porque 4 está entre f(0) = 1 y f(5) = 9 · [tvi-sin-continuidad] aplicas el teorema sin comprobar que f es continua: en x = 2 salta de 3 a 6 y se salta el 4
@@ -89,7 +89,7 @@ Sea f(x) = x + 1 si x < 2 y f(x) = x + 4 si x ≥ 2, con f(0) = 1 y f(5) = 9. ¿
 
 solución: en x = 2 el límite por la izquierda es 3 y f(2) = 6, así que f salta y no es continua en [0, 5]: el teorema no se aplica. El primer tramo toma los valores de 1 hasta 3, sin llegar a 3, y el segundo, los de 6 a 9; por eso f nunca vale 4, aunque 4 esté entre f(0) = 1 y f(5) = 9. Tampoco vale 0, porque f ≥ 1 en todo el intervalo y los dos extremos son positivos, ni 12, porque el valor más grande es f(5) = 9.
 
-### P50 · dificultad 3 · kc: teorema-valor-intermedio · borrador · origen: ia (sonnet-5.5)
+### P50 · dificultad 3 · kc: teorema-valor-intermedio · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea f(x) = x³ − 4x² − x + 7. ¿Cuál de estas afirmaciones sobre las raíces de f en el intervalo [−2, 4] es verdadera?
 
 - A) No tiene raíces en (−2, 2), porque f(−2) y f(2) son negativos · [mismo-signo-sin-raiz] crees que, con el mismo signo en los extremos, f no puede anularse dentro del intervalo

@@ -22,7 +22,7 @@ mc: no-descarta-fuera-dominio · ecuaciones-exp-log · das como solución un val
 
 ## Preguntas
 
-### P21 · dificultad 1 · kc: funcion-inversa · borrador · origen: ia (sonnet-5.5)
+### P21 · dificultad 1 · kc: funcion-inversa · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 La función $f(x) = (x - 2)^2 + 1$ está definida para todos los reales. ¿Cuál afirmación sobre su inversa es correcta?
 
 - A) No tiene inversa en todo ℝ, porque f(1) = f(3): dos entradas distintas dan la misma salida · CORRECTA
@@ -32,7 +32,7 @@ La función $f(x) = (x - 2)^2 + 1$ está definida para todos los reales. ¿Cuál
 
 solución: f(1) = (1 − 2)² + 1 = 2 y f(3) = (3 − 2)² + 1 = 2. Hay dos entradas distintas con la misma salida: la recta horizontal y = 2 corta la parábola en dos puntos, así que f no es inyectiva y no tiene inversa en todo ℝ. Para tenerla habría que restringir el dominio, por ejemplo a x ≥ 2. La fórmula 2 ± √(x − 1) da dos valores de x para cada x > 1, y eso no es una función. El recíproco 1/f(x) tampoco es la inversa: por ejemplo, f(1/f(1)) = f(1/2) = 3,25, no 1.
 
-### P22 · dificultad 2 · kc: funcion-inversa · borrador · origen: ia (sonnet-5.5)
+### P22 · dificultad 2 · kc: funcion-inversa · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea $f(x) = 2 + \frac{3}{x - 1}$ para $x \ne 1$. El valor de $f^{-1}(5)$ es:
 
 - A) $-\frac{3}{2}$ · [despeje-orden-mal] deshaces los pasos de f en el mismo orden en que f los hizo: primero el −1, luego el cociente y al final el +2
@@ -42,7 +42,7 @@ Sea $f(x) = 2 + \frac{3}{x - 1}$ para $x \ne 1$. El valor de $f^{-1}(5)$ es:
 
 solución: f⁻¹(5) es el x que cumple f(x) = 5. Entonces 2 + 3/(x − 1) = 5, 3/(x − 1) = 3, x − 1 = 1 y x = 2. Se comprueba: f(2) = 2 + 3/1 = 5. El valor 11/4 sale de calcular f(5) = 2 + 3/4, que evalúa f en vez de resolver f(x) = 5. El valor 4/11 es 1/f(5), el recíproco. Y −3/2 sale de sumar 1 a 5, invertir 3/u y restar 2, que es el orden de los pasos de f; para deshacerlos hay que empezar por el último, el +2.
 
-### P23 · dificultad 2 · kc: funcion-inversa · borrador · origen: ia (sonnet-5.5)
+### P23 · dificultad 2 · kc: funcion-inversa · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea $f(x) = (x + 1)^2 - 4$ con dominio $x \le -1$. El valor de $f^{-1}(5)$ es:
 
 - A) −4 o 2 · [inversa-sin-restringir-dominio]
@@ -52,7 +52,7 @@ Sea $f(x) = (x + 1)^2 - 4$ con dominio $x \le -1$. El valor de $f^{-1}(5)$ es:
 
 solución: Se resuelve f(x) = 5: (x + 1)² − 4 = 5, (x + 1)² = 9, x + 1 = ±3, así que x = 2 o x = −4. El dominio pide x ≤ −1 y solo −4 lo cumple, por lo que f⁻¹(5) = −4. Existe porque 5 está en el rango de f: con x ≤ −1 el rango es [−4, ∞), y f⁻¹ recibe valores del rango de f, no de su dominio. El valor 32 sale de calcular f(5) = 36 − 4, no de resolver f(x) = 5.
 
-### P24 · dificultad 3 · kc: funcion-inversa · borrador · origen: ia (sonnet-5.5)
+### P24 · dificultad 3 · kc: funcion-inversa · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea $f(x) = \ln(x^2 + 4)$ con dominio todos los reales. ¿Cuál afirmación es correcta?
 
 - A) f es inyectiva en ℝ porque el logaritmo lo es, y su inversa es $f^{-1}(x) = \sqrt{e^x - 4}$ · [funcion-implica-inyectiva] crees que f es inyectiva porque el logaritmo lo es, sin mirar que x² + 4 repite valores
@@ -62,7 +62,7 @@ Sea $f(x) = \ln(x^2 + 4)$ con dominio todos los reales. ¿Cuál afirmación es c
 
 solución: f(−1) = ln 5 = f(1), así que f no es inyectiva en ℝ: el logaritmo sí lo es, pero x² + 4 repite valores. En x ≥ 0 sí es inyectiva. Para hallar la inversa se despeja: y = ln(x² + 4), eʸ = x² + 4, x = √(eʸ − 4), y por tanto f⁻¹(x) = √(eˣ − 4). Su dominio es el rango de f en x ≥ 0: como x² + 4 ≥ 4, f(x) ≥ ln 4 y el rango es [ln 4, ∞). Con x = 0 la fórmula daría √(1 − 4), que no existe, así que el dominio no es [0, ∞). La fórmula e^(√x − 4) deshace los pasos de f en su mismo orden (raíz, −4, exponencial); el primero que hay que deshacer es el logaritmo, con la exponencial.
 
-### P25 · dificultad 1 · kc: ecuaciones-exp-log · borrador · origen: ia (sonnet-5.5)
+### P25 · dificultad 1 · kc: ecuaciones-exp-log · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Resuelve para $x$: $2\ln(x + 1) = 2$
 
 - A) 0 · [ln-igual-uno-vale-uno]
@@ -72,7 +72,7 @@ Resuelve para $x$: $2\ln(x + 1) = 2$
 
 solución: Se divide entre 2: ln(x + 1) = 1. Se aplica la exponencial: x + 1 = e, así que x = e − 1 ≈ 1,72, que cumple x + 1 > 0. El valor 0 sale de tomar x + 1 = 1. El valor (e² − 2)/2 sale de escribir 2 ln(x + 1) como ln(2x + 2) en vez de ln((x + 1)²). Y e sale de separar ln(x + 1) en ln x + ln 1 = ln x.
 
-### P26 · dificultad 2 · kc: ecuaciones-exp-log · borrador · origen: ia (sonnet-5.5)
+### P26 · dificultad 2 · kc: ecuaciones-exp-log · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Resuelve para $x$: $4^x - 3\cdot 2^x - 10 = 0$
 
 - A) $x = \log_2 5$ · CORRECTA
@@ -82,7 +82,7 @@ Resuelve para $x$: $4^x - 3\cdot 2^x - 10 = 0$
 
 solución: Con u = 2ˣ (u > 0) se tiene 4ˣ = (2ˣ)² = u², y la ecuación queda u² − 3u − 10 = 0, que factoriza como (u − 5)(u + 2) = 0. Entonces u = 5 o u = −2. Como 2ˣ > 0, u = −2 no sirve. De 2ˣ = 5 sale x = log₂ 5 = ln 5 / ln 2 ≈ 2,32. Comprobación: 4ˣ = 25 y 3·2ˣ = 15, y 25 − 15 − 10 = 0. Dar x = 5 y x = −2 es entregar los valores de u como si fueran x. Incluir log₂(−2) es no descartar u = −2. Y x = 1 sale de escribir 5 = 5¹ e igualar los exponentes de dos potencias con bases distintas.
 
-### P27 · dificultad 2 · kc: ecuaciones-exp-log · borrador · origen: ia (sonnet-5.5)
+### P27 · dificultad 2 · kc: ecuaciones-exp-log · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Resuelve para $x$: $3^{4x} - 12\cdot 3^{2x} + 35 = 0$
 
 - A) $x = 5$ o $x = 7$ · [no-deshace-sustitucion]
@@ -92,7 +92,7 @@ Resuelve para $x$: $3^{4x} - 12\cdot 3^{2x} + 35 = 0$
 
 solución: Con u = 3²ˣ (u > 0) se tiene 3⁴ˣ = u², y la ecuación queda u² − 12u + 35 = 0, o sea (u − 5)(u − 7) = 0, con u = 5 o u = 7. Las dos son positivas y sirven. De 3²ˣ = 5 sale 2x = log₃ 5, es decir x = (1/2)·log₃ 5; con 7 pasa lo mismo. Comprobación: para x = (1/2)·log₃ 5, 3²ˣ = 5 y 3⁴ˣ = 25, y 25 − 60 + 35 = 0. Dar x = 5 y x = 7 es entregar los valores de u como si fueran x. Dar x = 1/2 sale de igualar los exponentes de potencias con bases distintas. Y log₃(5/2) no es lo mismo que (1/2)·log₃ 5 = log₃ √5, porque el factor 1/2 no entra al argumento como factor.
 
-### P28 · dificultad 3 · kc: ecuaciones-exp-log · borrador · origen: ia (sonnet-5.5)
+### P28 · dificultad 3 · kc: ecuaciones-exp-log · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Resuelve para $x$: $\ln(x + 3) + \ln(x - 1) = 1$
 
 - A) $x = \frac{e - 2}{2}$ · [log-suma-confundida] combinas ln(x + 3) + ln(x − 1) como ln(2x + 2), sumando los argumentos en vez de multiplicarlos
