@@ -52,7 +52,7 @@ Evalúa $\lim_{x\to 0} \frac{\sen(x)}{x}$
 - C) ∞ · [denominador-cero-implica-infinito]
 - D) Aplico L'Hôpital: cos(0)/1 = 1, pero justificas mal · [lhopital-circular]
 
-### P29 · dificultad 1 · kc: limite-algebraico · borrador · origen: ia (sonnet-5.5)
+### P29 · dificultad 1 · kc: limite-algebraico · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Halla el límite: $\lim_{x\to 2} \frac{\sqrt{3x+10} - 4}{x - 2}$
 
 - A) 3 · [conjugado-incompleto] multiplicas solo el numerador por el conjugado y olvidas el denominador: queda 3(x − 2)/(x − 2) = 3
@@ -62,7 +62,7 @@ Halla el límite: $\lim_{x\to 2} \frac{\sqrt{3x+10} - 4}{x - 2}$
 
 solución: al sustituir x = 2 queda 0/0, así que hay que racionalizar. Se multiplican numerador y denominador por el conjugado √(3x+10) + 4. El numerador queda (3x + 10) − 16 = 3x − 6 = 3(x − 2). Entonces el cociente es 3(x − 2) / ((x − 2)(√(3x+10) + 4)) = 3 / (√(3x+10) + 4) para x ≠ 2, y al sustituir x = 2 da 3 / (4 + 4) = 3/8.
 
-### P30 · dificultad 2 · kc: limite-algebraico · borrador · origen: ia (sonnet-5.5)
+### P30 · dificultad 2 · kc: limite-algebraico · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Calcula $\lim_{x\to 6} \frac{36 - x^2}{x^2 - 4x - 12}$
 
 - A) 0 · [cero-sobre-cero-es-numero] al sustituir queda 0/0 y lo tomas como el valor 0
@@ -72,7 +72,7 @@ Calcula $\lim_{x\to 6} \frac{36 - x^2}{x^2 - 4x - 12}$
 
 solución: al sustituir x = 6 queda 0/0. Se factoriza: 36 − x² = (6 − x)(6 + x) y x² − 4x − 12 = (x − 6)(x + 2). Como 6 − x = −(x − 6), el cociente es −(x − 6)(6 + x) / ((x − 6)(x + 2)) = −(6 + x)/(x + 2) para x ≠ 6. Al sustituir x = 6 da −12/8 = −3/2.
 
-### P31 · dificultad 3 · kc: limite-algebraico · borrador · origen: ia (sonnet-5.5)
+### P31 · dificultad 3 · kc: limite-algebraico · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Calcula $\lim_{x\to 1} \frac{\sqrt{x+3} - \sqrt{5-x}}{1 - x^2}$
 
 - A) 1/4 · [cancela-factor-signo-opuesto] cancelas (x − 1) con (1 − x) como si fueran iguales y pierdes el signo menos
@@ -82,8 +82,8 @@ Calcula $\lim_{x\to 1} \frac{\sqrt{x+3} - \sqrt{5-x}}{1 - x^2}$
 
 solución: al sustituir x = 1 quedan √4 − √4 = 0 arriba y 0 abajo. Se multiplican numerador y denominador por el conjugado √(x+3) + √(5−x). El numerador queda (x + 3) − (5 − x) = 2x − 2 = 2(x − 1), y el denominador queda (1 − x)(1 + x)(√(x+3) + √(5−x)). Como x − 1 = −(1 − x), el cociente es −2 / ((1 + x)(√(x+3) + √(5−x))) para x ≠ 1. Al sustituir x = 1 da −2 / (2·(2 + 2)) = −1/4.
 
-### P32 · dificultad 1 · kc: limites-laterales · borrador · origen: ia (sonnet-5.5)
-Sea f una función definida cerca de x = a, aunque f(a) puede no existir o valer otra cosa. ¿Cuál de estas condiciones es necesaria y suficiente para que $\lim_{x\to a} f(x)$ exista como número real?
+### P32 · dificultad 1 · kc: limites-laterales · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
+Sea f una función definida en un intervalo abierto alrededor de x = a, salvo quizás en el propio a. ¿Cuál de estas condiciones es necesaria y suficiente para que $\lim_{x\to a} f(x)$ exista como número real?
 
 - A) Que los dos límites laterales existan y sean iguales entre sí · CORRECTA
 - B) Que los dos límites laterales existan y sean iguales a f(a) · [compara-laterales-con-valor] exiges que cada lateral coincida con f(a), cuando basta con que coincidan entre sí
@@ -92,7 +92,7 @@ Sea f una función definida cerca de x = a, aunque f(a) puede no existir o valer
 
 solución: el límite existe como número real exactamente cuando los dos límites laterales existen y coinciden entre sí. El valor de f(a) no interviene. La opción B exige de más: f(x) = x² para x ≠ 0 con f(0) = 1 tiene límite 0 en x = 0, y ninguno de sus laterales vale f(0). La opción C no basta: f(x) = |x|/x tiene límite por la izquierda (−1) y no tiene límite en x = 0. La opción D no sirve: 1/x tiende a −∞ por la izquierda y a +∞ por la derecha, y eso no es un número real.
 
-### P33 · dificultad 2 · kc: limites-laterales · borrador · origen: ia (sonnet-5.5)
+### P33 · dificultad 2 · kc: limites-laterales · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea $f(x) = \frac{2x^2 - 8}{|x - 2|}$ para x ≠ 2. ¿Qué ocurre con $\lim_{x\to 2} f(x)$?
 
 - A) Por la izquierda el límite es −8, así que existe y vale −8 · [un-solo-lado-basta] calculas solo el lateral izquierdo y concluyes que el límite existe
@@ -102,7 +102,7 @@ Sea $f(x) = \frac{2x^2 - 8}{|x - 2|}$ para x ≠ 2. ¿Qué ocurre con $\lim_{x\t
 
 solución: el numerador se factoriza como 2x² − 8 = 2(x − 2)(x + 2). A la izquierda de 2, |x − 2| vale −(x − 2) y la función queda −2(x + 2), que tiende a −8. A la derecha de 2, |x − 2| vale x − 2 y la función queda 2(x + 2), que tiende a 8. Los dos laterales son distintos, así que el límite no existe.
 
-### P34 · dificultad 2 · kc: limites-laterales · borrador · origen: ia (sonnet-5.5)
+### P34 · dificultad 2 · kc: limites-laterales · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea $f(x) = \frac{x^2 + 2x - 15}{x^2 - 7x + 12}$ para x ≠ 3 y x ≠ 4, y sea f(3) = 5. Sobre los límites de f en x = 3 y en x = 4, ¿cuál afirmación es correcta?
 
 - A) En x = 3 el límite no existe, porque −8 ≠ f(3); en x = 4 tampoco existe · [compara-laterales-con-valor] comparas los laterales de x = 3 con f(3) = 5 en vez de compararlos entre sí
@@ -112,7 +112,7 @@ Sea $f(x) = \frac{x^2 + 2x - 15}{x^2 - 7x + 12}$ para x ≠ 3 y x ≠ 4, y sea f
 
 solución: el numerador se factoriza como (x − 3)(x + 5) y el denominador como (x − 3)(x − 4), así que f(x) = (x + 5)/(x − 4) para x ≠ 3 y x ≠ 4. En x = 3 los dos laterales valen 8/(−1) = −8. El valor f(3) = 5 no cuenta para el límite, así que el límite existe y vale −8. En x = 4 el numerador tiende a 9. Por la izquierda x − 4 es negativo y cercano a 0, y el cociente tiende a −∞. Por la derecha x − 4 es positivo y cercano a 0, y el cociente tiende a +∞. Los laterales son distintos, así que el límite en x = 4 no existe.
 
-### P35 · dificultad 3 · kc: limites-laterales · borrador · origen: ia (sonnet-5.5)
+### P35 · dificultad 3 · kc: limites-laterales · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 ¿Cuál afirmación es correcta sobre $\lim_{x\to 2} \frac{x + 5}{(x - 2)\,|x - 2|}$?
 
 - A) Existe y es +∞, porque |x − 2| = x − 2 y queda $\frac{x + 5}{(x - 2)^2}$ · [abs-sin-separar-casos] cambias |x − 2| por x − 2 en los dos lados sin separar los casos
@@ -122,7 +122,7 @@ solución: el numerador se factoriza como (x − 3)(x + 5) y el denominador como
 
 solución: si x < 2, |x − 2| = −(x − 2), así que el denominador (x − 2)|x − 2| es −(x − 2)², negativo y cercano a 0, mientras el numerador tiende a 7: el cociente tiende a −∞. Si x > 2, |x − 2| = x − 2 y el denominador es (x − 2)², positivo y cercano a 0: el cociente tiende a +∞. Los laterales son infinitos de signo opuesto, así que el límite no existe.
 
-### P36 · dificultad 1 · kc: limite-trigonometrico · borrador · origen: ia (sonnet-5.5)
+### P36 · dificultad 1 · kc: limite-trigonometrico · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 ¿Cuál de estas afirmaciones es verdadera?
 
 - A) $\lim_{x\to 0} \frac{\sen 7x}{x} = 1$ · [argumento-distinto-del-denominador] usas que sen u / u tiende a 1 aunque el denominador es x y no 7x, y no ajustas el factor 7
@@ -132,7 +132,7 @@ solución: si x < 2, |x − 2| = −(x − 2), así que el denominador (x − 2)
 
 solución: en B se escribe sen 7x / x = 7·sen(7x)/(7x) y, con u = 7x que tiende a 0, se usa que sen u / u tiende a 1: el límite es 7·1 = 7. En A se olvida el factor 7. En C se cancela una x que está dentro del seno, y eso no se puede hacer. En D, sen u / u tiende a 1 solo cuando u tiende a 0; aquí u = x tiende a 2, la función es continua allí y el límite se obtiene sustituyendo: sen 2 / 2, que no es 1.
 
-### P37 · dificultad 2 · kc: limite-trigonometrico · borrador · origen: ia (sonnet-5.5)
+### P37 · dificultad 2 · kc: limite-trigonometrico · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 ¿Cuánto vale $\lim_{x\to\infty} \frac{\sen 6x}{3x}$ y por qué?
 
 - A) 2, porque $\frac{\sen u}{u}$ tiende a 1 con u = 6x, y queda 2·1 · [limite-notable-lejos-de-cero] aplicas que sen u / u tiende a 1 aunque u = 6x crece sin límite y no se acerca a 0
@@ -142,7 +142,7 @@ solución: en B se escribe sen 7x / x = 7·sen(7x)/(7x) y, con u = 7x que tiende
 
 solución: para x > 0 se cumple −1 ≤ sen 6x ≤ 1. Al dividir entre 3x, que es positivo, queda −1/(3x) ≤ sen 6x/(3x) ≤ 1/(3x). Cuando x tiende a ∞ las dos cotas tienden a 0, así que por el teorema del encaje el límite es 0. La opción A no sirve porque sen u / u tiende a 1 solo cuando u tiende a 0, y aquí u = 6x crece. En B, que el numerador oscile no impide el límite: el denominador crece y aplasta la oscilación. La opción D usa las cotas −1 y 1, que no coinciden, y con ellas el teorema del encaje no dice nada; hay que acotar con 1/(3x).
 
-### P38 · dificultad 2 · kc: limite-trigonometrico · borrador · origen: ia (sonnet-5.5)
+### P38 · dificultad 2 · kc: limite-trigonometrico · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Todavía no se ha demostrado cuál es la derivada de sen x. ¿Cuál de estas es una justificación válida de que $\lim_{x\to 0} \frac{\sen x}{x} = 1$?
 
 - A) Por L'Hôpital: la derivada del numerador es cos x, la del denominador es 1, y $\frac{\cos 0}{1} = 1$ · [lhopital-circular] justificas con L'Hôpital sin ver que derivar el seno ya usa este mismo límite
@@ -152,7 +152,7 @@ Todavía no se ha demostrado cuál es la derivada de sen x. ¿Cuál de estas es 
 
 solución: la desigualdad cos x ≤ sen x / x ≤ 1 vale para x ≠ 0 cerca de 0 (sale de comparar áreas en el círculo unitario). Sus dos cotas tienden a 1 cuando x tiende a 0, y el teorema del encaje da el límite 1. La opción A es circular: la derivada del seno se obtiene precisamente de este límite. La opción B usa las cotas 0 y 1, cuyos límites son distintos, y con ellas el teorema del encaje no concluye nada. La opción C es falsa: sen u / u tiende a 1 solo cuando u tiende a 0, y con u cerca de π, por ejemplo, el cociente se acerca a 0.
 
-### P39 · dificultad 3 · kc: limite-trigonometrico · borrador · origen: ia (sonnet-5.5)
+### P39 · dificultad 3 · kc: limite-trigonometrico · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Calcula $\lim_{x\to 0} \frac{\sen 4x + x^2 \cos(1/x)}{x}$
 
 - A) 4 · CORRECTA
@@ -162,7 +162,7 @@ Calcula $\lim_{x\to 0} \frac{\sen 4x + x^2 \cos(1/x)}{x}$
 
 solución: se separa en dos términos: sen 4x / x + x·cos(1/x). Primero: sen 4x / x = 4·sen(4x)/(4x) y, con u = 4x que tiende a 0, tiende a 4·1 = 4. Segundo: como −1 ≤ cos(1/x) ≤ 1, se tiene −|x| ≤ x·cos(1/x) ≤ |x|, y las dos cotas tienden a 0, así que por el teorema del encaje x·cos(1/x) tiende a 0. La suma es 4 + 0 = 4.
 
-### P40 · dificultad 1 · kc: limites-infinito-asintotas · borrador · origen: ia (sonnet-5.5)
+### P40 · dificultad 1 · kc: limites-infinito-asintotas · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 ¿Cuál de estas afirmaciones es verdadera?
 
 - A) $\lim_{x\to\infty} \frac{9x^2 + 2}{3x^2 - x} = 3$ · CORRECTA
@@ -172,7 +172,7 @@ solución: se separa en dos términos: sen 4x / x + x·cos(1/x). Primero: sen 4x
 
 solución: en A, al dividir numerador y denominador entre x² queda (9 + 2/x²)/(3 − 1/x), que tiende a 9/3 = 3. En B, x² − x = x(x − 1) crece sin límite, no vale 0. En C, si x es negativo, √(x²) = |x| = −x, así que √(x²)/x = −1 y el límite es −1. En D, e⁻ˣ = 1/eˣ y eˣ crece sin límite, así que e⁻ˣ tiende a 0.
 
-### P41 · dificultad 2 · kc: limites-infinito-asintotas · borrador · origen: ia (sonnet-5.5)
+### P41 · dificultad 2 · kc: limites-infinito-asintotas · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea $f(x) = \frac{2x^2 - 18}{(x - 3)\sqrt{x^2 + 4}}$. ¿Cuáles son sus asíntotas?
 
 - A) Vertical x = 3; horizontales y = 2 e y = −2 · [vertical-por-denominador-cero] marcas x = 3 porque anula el denominador, aunque el factor x − 3 se cancela con el numerador
@@ -182,7 +182,7 @@ Sea $f(x) = \frac{2x^2 - 18}{(x - 3)\sqrt{x^2 + 4}}$. ¿Cuáles son sus asíntot
 
 solución: se factoriza el numerador: 2x² − 18 = 2(x − 3)(x + 3). Para x ≠ 3, f(x) = 2(x + 3)/√(x² + 4). Cerca de x = 3 esa expresión tiende a 12/√13, un número finito, así que x = 3 no es asíntota vertical (y √(x² + 4) nunca se anula). Cuando x tiende a +∞, √(x² + 4) se comporta como x y f(x) tiende a 2x/x = 2. Cuando x tiende a −∞, √(x² + 4) se comporta como |x| = −x y f(x) tiende a 2x/(−x) = −2. Las horizontales son y = 2 e y = −2.
 
-### P42 · dificultad 2 · kc: limites-infinito-asintotas · borrador · origen: ia (sonnet-5.5)
+### P42 · dificultad 2 · kc: limites-infinito-asintotas · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea $f(x) = \frac{5e^{x}}{e^{x} + 2}$. ¿Cuáles son sus asíntotas horizontales?
 
 - A) Solo y = 5 · [una-sola-horizontal] das una sola horizontal sin calcular por separado el límite en −∞
@@ -192,7 +192,7 @@ Sea $f(x) = \frac{5e^{x}}{e^{x} + 2}$. ¿Cuáles son sus asíntotas horizontales
 
 solución: f(x) = 5eˣ/(eˣ + 2) = 5/(1 + 2e⁻ˣ). Cuando x tiende a +∞, e⁻ˣ tiende a 0 y f(x) tiende a 5. Cuando x tiende a −∞, eˣ tiende a 0 y f(x) tiende a 5·0/(0 + 2) = 0. Son dos horizontales distintas: y = 5 por la derecha y y = 0 por la izquierda.
 
-### P43 · dificultad 3 · kc: limites-infinito-asintotas · borrador · origen: ia (sonnet-5.5)
+### P43 · dificultad 3 · kc: limites-infinito-asintotas · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 ¿Cuál de estas afirmaciones es verdadera?
 
 - A) $\lim_{x\to-\infty} \left(\sqrt{x^2 + 8x} + x\right) = -4$ · CORRECTA
