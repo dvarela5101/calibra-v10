@@ -22,7 +22,7 @@ Quieres cercar un terreno rectangular con 100 m de cerca. ¿Qué dimensiones max
 - C) 30 m × 20 m · [tantea-en-vez-de-optimizar]
 - D) 100 m × 0 m · [no-comprueba-sentido]
 
-### P108 · dificultad 1 · kc: optimizacion · borrador · origen: ia (sonnet-5.5)
+### P108 · dificultad 1 · kc: optimizacion · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Dos números positivos x e y cumplen x + 3y = 90. ¿Cuál es el mayor valor posible del producto xy?
 
 - A) 600 · [tantea-en-vez-de-optimizar] pruebas x = 30 y y = 20, que cumplen la condición, y te quedas con su producto sin derivar para hallar el máximo
@@ -32,7 +32,7 @@ Dos números positivos x e y cumplen x + 3y = 90. ¿Cuál es el mayor valor posi
 
 solución: de x + 3y = 90 se despeja x = 90 − 3y, así que el producto queda en una sola variable: P(y) = (90 − 3y)·y = 90y − 3y². Su derivada es P'(y) = 90 − 6y, que se anula en y = 15. Como P'' = −6 < 0, es un máximo. Entonces x = 90 − 45 = 45 y P = 45·15 = 675. La opción 45 es el valor de x en el óptimo, no el del producto. La opción 600 sale de probar x = 30 y y = 20 (30 + 60 = 90), que cumple la condición pero no es el máximo. La opción 0 sale de derivar xy sin sustituir antes la condición: queda y = 0, que no es un punto del problema.
 
-### P109 · dificultad 2 · kc: optimizacion · borrador · origen: ia (sonnet-5.5)
+### P109 · dificultad 2 · kc: optimizacion · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 De una lámina cuadrada de 24 cm de lado se recorta un cuadrado de lado x en cada esquina y se doblan los bordes hacia arriba para formar una caja sin tapa. ¿Cuál es el mayor volumen posible de la caja, en cm³?
 
 - A) 2048 · [restriccion-mal-planteada] tomas el lado de la base como 24 − x en vez de 24 − 2x, porque olvidas que se recorta en los dos extremos
@@ -42,7 +42,7 @@ De una lámina cuadrada de 24 cm de lado se recorta un cuadrado de lado x en cad
 
 solución: al recortar x en cada esquina, el lado de la base queda 24 − 2x y la altura es x. El volumen es V(x) = x(24 − 2x)² con 0 < x < 12. Derivando, V'(x) = (24 − 2x)² − 4x(24 − 2x) = (24 − 2x)(24 − 6x). Se anula en x = 12 y en x = 4. Con x = 12 la base mide 0 y el volumen es 0, así que no sirve; con x = 4 la base mide 16 y V = 4·16² = 1024. Es un máximo porque V crece de 0 hasta x = 4 y luego decrece hasta 0 en x = 12. La opción 2048 sale de plantear V = x(24 − x)², cuyo máximo está en x = 8. La opción 4 es el lado del corte. La opción 0 es el volumen con x = 12.
 
-### P110 · dificultad 3 · kc: optimizacion · borrador · origen: ia (sonnet-5.5)
+### P110 · dificultad 3 · kc: optimizacion · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 ¿Cuál es la menor distancia entre el punto (4, 0) y la parábola y² = 2x?
 
 - A) 7 · [cantidad-pedida-confundida] das el mínimo de la distancia al cuadrado y no sacas la raíz
