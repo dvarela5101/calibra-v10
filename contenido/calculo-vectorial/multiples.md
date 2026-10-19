@@ -42,7 +42,7 @@ Al calcular $\iint_R e^{x^2+y^2}\,dA$ sobre el círculo unitario usando coordena
 - C) r² dr dθ · [multiples-e8]
 - D) dθ dr · [multiples-e9]
 
-### P14 · dificultad 3 · kc: multiples · borrador · origen: ia (sonnet-5.5)
+### P14 · dificultad 3 · kc: multiples · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Calcula $\iint_D \sqrt{x^2+y^2}\,dA$, donde D es la región del plano que cumple 1 ≤ x² + y² ≤ 4:
 
 - A) 7π/3 · [multiples-e5] recorres θ solo de 0 a π, así que integras sobre la mitad de la región

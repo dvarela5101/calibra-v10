@@ -21,7 +21,7 @@ De un grupo de 10 monitores hay que escoger 3 para un comité. ¿De cuántas for
 - C) 1000 · [conteo-e2]
 - D) 30 · [conteo-e3]
 
-### P13 · dificultad 1 · kc: conteo · borrador · origen: ia (sonnet-5.5)
+### P13 · dificultad 1 · kc: conteo · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 En una reunión hay 6 amigos y cada pareja de amigos se da la mano exactamente una vez. ¿Cuántos apretones de mano hay en total?
 
 - A) 12 · [conteo-e3] multiplicas 6 por 2 en vez de contar cuántas parejas distintas se pueden formar entre 6 personas
@@ -31,7 +31,7 @@ En una reunión hay 6 amigos y cada pareja de amigos se da la mano exactamente u
 
 solución: un apretón de manos involucra a dos personas y no importa quién da la mano primero: el de A con B es el mismo que el de B con A. Entonces se cuentan los subconjuntos de 2 personas entre las 6, que es una combinación: C(6, 2) = 6!/(2!·4!) = (6·5)/2 = 15. Otra forma de verlo: cada una de las 6 personas da la mano a las otras 5, lo que suma 6·5 = 30 apretones contados, pero así cada uno queda contado dos veces (una desde cada extremo) y 30/2 = 15. Las otras opciones salen de contar con orden (30), de contar con orden y además dejar que una persona se dé la mano a sí misma (36) y de multiplicar 6 por 2 (12).
 
-### P14 · dificultad 3 · kc: conteo · borrador · origen: ia (sonnet-5.5)
+### P14 · dificultad 3 · kc: conteo · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Se va a formar un comité de 3 personas escogidas entre 4 profesores y 5 estudiantes. El comité debe tener al menos un profesor. ¿Cuántos comités distintos se pueden formar?
 
 - A) 74 · CORRECTA

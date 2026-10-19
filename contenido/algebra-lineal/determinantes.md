@@ -42,7 +42,7 @@ La matriz C = [[1, 2], [2, 4]] tiene determinante cero. ¿Qué puedes concluir?
 - C) C es la matriz identidad · [determinantes-e8]
 - D) Las filas de C son perpendiculares · [determinantes-e9]
 
-### P15 · dificultad 3 · kc: determinantes · borrador · origen: ia (sonnet-5.5)
+### P15 · dificultad 3 · kc: determinantes · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea A = [[1, 2, 1], [2, k, 3], [1, 1, 2]], donde k es un número real. ¿Para qué valores de k la matriz A tiene inversa?
 
 - A) Para todo k excepto k = −8 · [determinantes-e9] igualas a cero el producto punto de las filas 2 y 3, como si A perdiera la inversa cuando dos filas son perpendiculares y no cuando son linealmente dependientes

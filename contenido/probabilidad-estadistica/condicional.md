@@ -32,7 +32,7 @@ En un experimento con dos eventos A y B, se sabe que P(A) = 0,6, P(B) = 0,5 y P(
 - C) No se puede determinar con la información dada · [condicional-e5]
 - D) No, porque P(A|B) = 0,6 y P(B|A) = 0,5 son distintas · [condicional-e6]
 
-### P15 · dificultad 2 · kc: condicional · borrador · origen: ia (sonnet-5.5)
+### P15 · dificultad 2 · kc: condicional · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Una caja tiene 2 fichas rojas y 3 azules. Se sacan dos fichas al azar, una después de la otra y sin devolver la primera a la caja. ¿Cuál es la probabilidad de que las dos fichas sean rojas?
 
 - A) $\frac{13}{20}$ · [condicional-e2] sumas P(primera roja) = 2/5 con P(segunda roja | primera roja) = 1/4, cuando la regla del producto pide multiplicarlas
