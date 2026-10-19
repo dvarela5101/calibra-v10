@@ -74,7 +74,7 @@ Si f'(c) = 0 y f''(c) > 0, entonces x = c es:
 - C) Necesariamente el mínimo absoluto · [local-por-absoluto]
 - D) Un punto donde f es creciente · [derivada-cero-es-creciente]
 
-### P86 · dificultad 1 · kc: extremos-absolutos · borrador · origen: ia (sonnet-5.5)
+### P86 · dificultad 1 · kc: extremos-absolutos · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Halla el valor mínimo absoluto de f(x) = x² − 6x en el intervalo [4, 8].
 
 - A) 16 · [extremo-por-posicion] eliges el borde derecho, x = 8, porque supones que el mínimo siempre está en un extremo del intervalo, y calculas f(8) = 16
@@ -84,7 +84,7 @@ Halla el valor mínimo absoluto de f(x) = x² − 6x en el intervalo [4, 8].
 
 solución: f'(x) = 2x − 6 = 0 cuando x = 3, pero 3 no está en [4, 8], así que no cuenta. Quedan solo los extremos del intervalo: f(4) = 16 − 24 = −8 y f(8) = 64 − 48 = 16. El menor es −8 (f es creciente en todo [4, 8]). La opción de 16 es el valor en el borde derecho elegido sin comparar; −9 es el valor en el vértice, que está fuera del intervalo; 4 es la posición del mínimo, no su valor.
 
-### P87 · dificultad 2 · kc: extremos-absolutos · borrador · origen: ia (sonnet-5.5)
+### P87 · dificultad 2 · kc: extremos-absolutos · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Halla el valor mínimo absoluto de f(x) = x³ − 12x en el intervalo [0, 3].
 
 - A) −16 · CORRECTA
@@ -94,7 +94,7 @@ Halla el valor mínimo absoluto de f(x) = x³ − 12x en el intervalo [0, 3].
 
 solución: f'(x) = 3x² − 12 = 3(x − 2)(x + 2), con ceros x = 2 y x = −2. Solo x = 2 está en [0, 3]. Se comparan f(0) = 0, f(2) = 8 − 24 = −16 y f(3) = 27 − 36 = −9. El mínimo absoluto es −16. Con solo los extremos se obtiene −9, que no es el menor; 0 es el valor en el borde izquierdo sin comparar; 2 es el lugar del mínimo, no su valor.
 
-### P88 · dificultad 2 · kc: extremos-absolutos · borrador · origen: ia (sonnet-5.5)
+### P88 · dificultad 2 · kc: extremos-absolutos · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Halla el valor mínimo absoluto de $f(x) = \frac{x}{x^2+1}$ en el intervalo [0, 3].
 
 - A) $\frac{1}{2}$ · [omite-extremos-del-intervalo] hallas el punto crítico x = 1 y das f(1) como mínimo sin compararlo con los valores en los extremos
@@ -104,7 +104,7 @@ Halla el valor mínimo absoluto de $f(x) = \frac{x}{x^2+1}$ en el intervalo [0, 
 
 solución: f'(x) = (1 − x²)/(x² + 1)², que se anula en x = 1 y x = −1; solo x = 1 está en [0, 3]. Se comparan f(0) = 0, f(1) = 1/2 y f(3) = 3/10. El menor es 0, en x = 0. El valor 1/2 es el del punto crítico, que en realidad es el máximo; −1/2 sale de un punto fuera del intervalo; 3/10 es el valor en el borde derecho elegido sin comparar.
 
-### P89 · dificultad 3 · kc: extremos-absolutos · borrador · origen: ia (sonnet-5.5)
+### P89 · dificultad 3 · kc: extremos-absolutos · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Halla el valor mínimo absoluto de f(x) = |x² − 2x| en el intervalo [−2, 3].
 
 - A) 3 · [solo-evalua-extremos] evalúas f solo en los extremos, f(−2) = 8 y f(3) = 3, y te quedas con el menor sin buscar otros candidatos
@@ -114,7 +114,7 @@ Halla el valor mínimo absoluto de f(x) = |x² − 2x| en el intervalo [−2, 3]
 
 solución: x² − 2x = x(x − 2) cambia de signo en x = 0 y x = 2, así que en esos puntos la gráfica tiene esquinas y f' no existe; son candidatos. Entre 0 y 2, f(x) = 2x − x² y f'(x) = 2 − 2x se anula en x = 1. Candidatos: f(−2) = 8, f(0) = 0, f(1) = 1, f(2) = 0, f(3) = 3. El mínimo absoluto es 0, en x = 0 y en x = 2. Con solo los extremos sale 3; si se ignoran las esquinas sale 1; 8 es el valor en el borde izquierdo sin comparar.
 
-### P90 · dificultad 1 · kc: teorema-valor-medio · borrador · origen: ia (sonnet-5.5)
+### P90 · dificultad 1 · kc: teorema-valor-medio · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Para f(x) = x³ en el intervalo [0, 3], ¿qué valor de c garantiza el teorema del valor medio?
 
 - A) $\frac{3}{2}$ · [c-punto-medio] supones que c es el punto medio del intervalo
@@ -124,7 +124,7 @@ Para f(x) = x³ en el intervalo [0, 3], ¿qué valor de c garantiza el teorema d
 
 solución: f es un polinomio, así que es continua en [0, 3] y derivable en (0, 3). La pendiente de la secante es (f(3) − f(0))/(3 − 0) = 27/3 = 9. Se resuelve f'(c) = 3c² = 9, o sea c² = 3 y c = ±√3. Solo √3 ≈ 1,73 está en (0, 3). El punto medio 3/2 no cumple f'(3/2) = 27/4 ≠ 9; −√3 queda fuera del intervalo; c = 0 resolvería f'(c) = 0, que es la condición de Rolle y además 0 no está en el intervalo abierto.
 
-### P91 · dificultad 2 · kc: teorema-valor-medio · borrador · origen: ia (sonnet-5.5)
+### P91 · dificultad 2 · kc: teorema-valor-medio · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea f(x) = x² si x < 1 y f(x) = x² + 1 si x ≥ 1. Se quiere usar el teorema del valor medio en [0, 2]. ¿Cuál afirmación es correcta?
 
 - A) El teorema se aplica sin problema, porque f es un polinomio a cada lado de x = 1, y garantiza un c con $f'(c) = \frac{5}{2}$ · [tvm-sin-verificar-hipotesis] no compruebas que f sea continua en todo el intervalo cerrado
@@ -134,7 +134,7 @@ Sea f(x) = x² si x < 1 y f(x) = x² + 1 si x ≥ 1. Se quiere usar el teorema d
 
 solución: en x = 1 hay un salto: el límite por la izquierda es 1 y el límite por la derecha es 2, así que f no es continua en [0, 2] y el teorema no se puede aplicar. Pero que falle la hipótesis no impide que la conclusión se cumpla: la pendiente de la secante es (f(2) − f(0))/2 = 5/2 y en (1, 2) se tiene f'(x) = 2x = 5/2 para x = 5/4, que está en el intervalo. El teorema del valor medio no pide f(a) = f(b); eso es Rolle.
 
-### P92 · dificultad 2 · kc: teorema-valor-medio · borrador · origen: ia (sonnet-5.5)
+### P92 · dificultad 2 · kc: teorema-valor-medio · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Para f(x) = x³ − 3x en el intervalo [0, 4], ¿qué valor de c garantiza el teorema del valor medio?
 
 - A) $\frac{4\sqrt{3}}{3}$ · CORRECTA
@@ -144,7 +144,7 @@ Para f(x) = x³ − 3x en el intervalo [0, 4], ¿qué valor de c garantiza el te
 
 solución: f es un polinomio, continua en [0, 4] y derivable en (0, 4). La pendiente de la secante es (f(4) − f(0))/4 = (52 − 0)/4 = 13. Se resuelve f'(c) = 3c² − 3 = 13, o sea c² = 16/3 y c = ±4/√3 = ±4√3/3. Solo el positivo, ≈ 2,31, está en (0, 4). El punto medio 2 da f'(2) = 9 ≠ 13; c = 1 sale de f'(c) = 0, condición de Rolle que aquí no corresponde porque f(0) ≠ f(4); la raíz negativa queda fuera del intervalo.
 
-### P93 · dificultad 3 · kc: teorema-valor-medio · borrador · origen: ia (sonnet-5.5)
+### P93 · dificultad 3 · kc: teorema-valor-medio · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea h(x) = |x| − x² en el intervalo [−1, 1]. Se observa que h(−1) = h(1) = 0. ¿Cuál afirmación es correcta?
 
 - A) El teorema de Rolle no se puede aplicar porque h no es derivable en x = 0, pero sí existen puntos con h'(c) = 0, por ejemplo $c = \frac{1}{2}$ · CORRECTA
@@ -154,7 +154,7 @@ Sea h(x) = |x| − x² en el intervalo [−1, 1]. Se observa que h(−1) = h(1) 
 
 solución: h es continua en [−1, 1] y h(−1) = h(1) = 0, pero en x = 0 la gráfica tiene una esquina (h'(x) = 1 − 2x a la derecha y −1 − 2x a la izquierda), así que h no es derivable en todo (−1, 1) y Rolle no se puede aplicar. Eso no impide que la conclusión se cumpla: para x > 0, h'(x) = 1 − 2x = 0 en x = 1/2, y para x < 0, h'(x) = −1 − 2x = 0 en x = −1/2. En c = 0 la derivada ni siquiera existe, así que no es el punto buscado.
 
-### P94 · dificultad 1 · kc: extremos-locales · borrador · origen: ia (sonnet-5.5)
+### P94 · dificultad 1 · kc: extremos-locales · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 La función f(x) = x³ − 12x tiene puntos críticos en x = −2 y x = 2. ¿Qué ocurre en x = −2?
 
 - A) Hay un mínimo local · [criterio-segunda-invertido] ves f''(−2) = −12 < 0 y lo lees como mínimo
@@ -164,7 +164,7 @@ La función f(x) = x³ − 12x tiene puntos críticos en x = −2 y x = 2. ¿Qu�
 
 solución: f'(x) = 3x² − 12 = 3(x − 2)(x + 2) y f''(x) = 6x. En x = −2, f''(−2) = −12 < 0, así que hay un máximo local (con f(−2) = 16). Si se invierte el criterio, el signo negativo se lee como mínimo; la inflexión ocurre donde f'' = 0, es decir en x = 0, no en un punto donde f' = 0; y en un punto crítico la tangente es horizontal, la función no está creciendo ni decreciendo en ese punto.
 
-### P95 · dificultad 3 · kc: extremos-locales · borrador · origen: ia (sonnet-5.5)
+### P95 · dificultad 3 · kc: extremos-locales · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 La función g(x) = (x − 1)⁴ + 2 tiene un punto crítico en x = 1, y allí g''(1) = 0. ¿Qué se puede concluir en x = 1?
 
 - A) Hay un mínimo local, porque g' pasa de negativa a positiva en x = 1 · CORRECTA
@@ -174,7 +174,7 @@ La función g(x) = (x − 1)⁴ + 2 tiene un punto crítico en x = 1, y allí g'
 
 solución: g'(x) = 4(x − 1)³ y g''(x) = 12(x − 1)², con g''(1) = 0, así que el criterio de la segunda derivada no decide. Se usa el de la primera: si x < 1, g'(x) < 0, y si x > 1, g'(x) > 0, de modo que g pasa de decrecer a crecer y x = 1 es un mínimo local. No es inflexión: g'' = 12(x − 1)² es no negativa a ambos lados, no cambia de signo. Tampoco es máximo, y "no se puede decidir" es falso porque otro criterio sí decide.
 
-### P96 · dificultad 1 · kc: concavidad-inflexion · borrador · origen: ia (sonnet-5.5)
+### P96 · dificultad 1 · kc: concavidad-inflexion · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 ¿Cuál de estas condiciones basta para que la gráfica de f tenga un punto de inflexión en x = c?
 
 - A) Que f''(c) = 0 · [inflexion-por-segunda-cero] llamas inflexión a todo punto donde f'' se anula, sin pedir que cambie de signo
@@ -184,7 +184,7 @@ solución: g'(x) = 4(x − 1)³ y g''(x) = 12(x − 1)², con g''(1) = 0, así q
 
 solución: un punto de inflexión es un punto de la gráfica donde la concavidad cambia. Para eso f debe ser continua en c (hay un punto de la gráfica y la curva no salta allí) y f'' debe cambiar de signo en c. Que f''(c) = 0 no basta: x⁴ en x = 0 tiene f'' = 0 y no cambia de concavidad. Que f'(c) = 0 habla de tangente horizontal, es decir, de puntos críticos. Y un cambio de signo de f'' en un punto fuera del dominio (como en 1/x, en x = 0) no genera ningún punto de la gráfica, y por eso tampoco hay continuidad en c.
 
-### P97 · dificultad 2 · kc: concavidad-inflexion · borrador · origen: ia (sonnet-5.5)
+### P97 · dificultad 2 · kc: concavidad-inflexion · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea f(x) = x⁴ − 6x². ¿En qué intervalo es f cóncava hacia abajo?
 
 - A) (−∞, −1) ∪ (1, ∞) · [signo-segunda-invertido] lees f'' > 0 como cóncava hacia abajo
@@ -194,7 +194,7 @@ Sea f(x) = x⁴ − 6x². ¿En qué intervalo es f cóncava hacia abajo?
 
 solución: f'(x) = 4x³ − 12x y f''(x) = 12x² − 12 = 12(x − 1)(x + 1). f'' es negativa solo entre −1 y 1, así que f es cóncava hacia abajo en (−1, 1) y hacia arriba en (−∞, −1) y (1, ∞). La opción A invierte el signo; B usa los ceros de f' en lugar de los de f''; D son los intervalos de decrecimiento, que se obtienen con f' y no con f''.
 
-### P98 · dificultad 2 · kc: concavidad-inflexion · borrador · origen: ia (sonnet-5.5)
+### P98 · dificultad 2 · kc: concavidad-inflexion · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea $f(x) = \frac{1}{x-1}$. ¿Cuál descripción de su concavidad es correcta?
 
 - A) Cóncava hacia abajo en (−∞, 1) y hacia arriba en (1, ∞), con un punto de inflexión en x = 1 · [inflexion-fuera-dominio] das como inflexión el punto donde f'' cambia de signo aunque f no está definida allí
@@ -204,7 +204,7 @@ Sea $f(x) = \frac{1}{x-1}$. ¿Cuál descripción de su concavidad es correcta?
 
 solución: f'(x) = −1/(x − 1)² y f''(x) = 2/(x − 1)³. Si x < 1, f''(x) < 0 y f es cóncava hacia abajo; si x > 1, f''(x) > 0 y es cóncava hacia arriba. f'' nunca vale 0, y el único cambio de signo ocurre en x = 1, donde f no está definida; por eso no hay punto de inflexión. La opción A llama inflexión a ese punto; B invierte los signos; C usa el hecho de que f' < 0 en todo el dominio, que describe el crecimiento y no la concavidad.
 
-### P99 · dificultad 3 · kc: concavidad-inflexion · borrador · origen: ia (sonnet-5.5)
+### P99 · dificultad 3 · kc: concavidad-inflexion · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea f(x) = 3x⁵ − 10x⁴. ¿Cuál es la descripción correcta de sus puntos de inflexión y su concavidad?
 
 - A) Dos puntos de inflexión, x = 0 y x = 2 · [inflexion-por-segunda-cero] llamas inflexión a x = 0 solo porque f''(0) = 0, sin ver que f'' no cambia de signo allí
@@ -214,7 +214,7 @@ Sea f(x) = 3x⁵ − 10x⁴. ¿Cuál es la descripción correcta de sus puntos d
 
 solución: f'(x) = 15x⁴ − 40x³ = 5x³(3x − 8) y f''(x) = 60x³ − 120x² = 60x²(x − 2). Los ceros de f'' son x = 0 y x = 2. Como x² ≥ 0, el signo de f'' es el de (x − 2) salvo en x = 0: es negativo a ambos lados de 0 (por ejemplo f''(−1) = −180 y f''(1) = −60) y positivo para x > 2 (f''(3) = 540). Entonces f'' no cambia de signo en 0, y ahí no hay inflexión aunque f''(0) = 0; sí cambia en 2. Así, f es cóncava hacia abajo en (−∞, 2) y hacia arriba en (2, ∞). La opción A cuenta x = 0 como inflexión; C invierte el signo de f''; D usa el cero de f' (x = 8/3, un mínimo local), que no es donde cambia la concavidad.
 
-### P100 · dificultad 1 · kc: lhopital · borrador · origen: ia (sonnet-5.5)
+### P100 · dificultad 1 · kc: lhopital · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Al calcular $\lim_{x\to 0}\frac{e^{2x}-1}{\sen 4x}$ con la regla de L'Hôpital, ¿qué límite hay que calcular después de aplicarla una vez?
 
 - A) $\lim_{x\to 0}\frac{2e^{2x}\sen 4x - 4(e^{2x}-1)\cos 4x}{\sen^2 4x}$ · [cociente-en-lhopital] derivas el cociente completo con la regla del cociente en lugar de derivar numerador y denominador por separado
@@ -224,7 +224,7 @@ Al calcular $\lim_{x\to 0}\frac{e^{2x}-1}{\sen 4x}$ con la regla de L'Hôpital, 
 
 solución: al sustituir x = 0 queda 0/0, así que L'Hôpital aplica. Se deriva por separado el numerador, (e^{2x} − 1)' = 2e^{2x}, y el denominador, (sen 4x)' = 4cos 4x, y se calcula el límite de ese cociente: 2/(4) = 1/2. La opción A es la derivada del cociente, que es otra cosa; B invierte el cociente; D deja sen 4x sin derivar.
 
-### P101 · dificultad 2 · kc: lhopital · borrador · origen: ia (sonnet-5.5)
+### P101 · dificultad 2 · kc: lhopital · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Calcula $\lim_{x\to 0}\frac{\sen 3x}{x+2}$
 
 - A) 3 · [lhopital-sin-indeterminacion] aplicas L'Hôpital sin comprobar que el denominador no tiende a 0, y calculas 3cos 0/1
@@ -234,27 +234,27 @@ Calcula $\lim_{x\to 0}\frac{\sen 3x}{x+2}$
 
 solución: al sustituir x = 0 el numerador es sen 0 = 0 y el denominador es 0 + 2 = 2, así que el límite no es una indeterminación: es 0/2 = 0 por continuidad. L'Hôpital solo se usa con 0/0 o ∞/∞. Si se aplicara de todos modos se obtendría 3cos 3x/1, que tiende a 3, un valor falso. Derivar solo el numerador da 3cos 0/2 = 3/2, y el cociente invertido de derivadas daría 1/(3cos 0) = 1/3.
 
-### P102 · dificultad 2 · kc: lhopital · borrador · origen: ia (sonnet-5.5)
+### P102 · dificultad 2 · kc: lhopital · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Calcula $\lim_{x\to 0}(1+3x)^{2/x}$
 
 - A) 1 · [uno-a-infinito-es-uno] ves que la base tiende a 1 y concluyes que toda la potencia tiende a 1
 - B) 6 · [olvida-deshacer-logaritmo] calculas el límite de ln L = 6 y lo das como respuesta, sin elevar e a ese valor
-- C) 0 · [cero-por-infinito-sin-reescribir] escribes ln L = (2/x)·ln(1 + 3x) como 0·∞ y derivas cada factor por separado, lo que da −∞ y L = e^{−∞} = 0
+- C) 0 · [cero-por-infinito-sin-reescribir] escribes ln L = (2/x)·ln(1 + 3x) como 0·∞ y derivas cada factor por separado, lo que da ln L = −∞ y L = 0
 - D) e⁶ · CORRECTA
 
 solución: es una forma 1^∞. Sea L el límite; entonces ln L = lim (2/x)·ln(1 + 3x) = lim 2 ln(1 + 3x)/x, que es 0/0. Por L'Hôpital: lim 2·(3/(1 + 3x))/1 = 6. Como ln L = 6, L = e⁶. Dejar 1 ignora que la base se acerca a 1 mientras el exponente crece; 6 es el valor de ln L y no de L; derivar los factores por separado en la forma 0·∞ da −∞ y de ahí L = 0, pero la regla pide pasar a cociente.
 
-### P103 · dificultad 3 · kc: lhopital · borrador · origen: ia (sonnet-5.5)
+### P103 · dificultad 3 · kc: lhopital · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Calcula $\lim_{x\to 0}(\cos x + \sen 3x)^{1/x}$
 
 - A) e³ · CORRECTA
 - B) 1 · [uno-a-infinito-es-uno] ves que la base tiende a cos 0 + sen 0 = 1 y concluyes que toda la potencia tiende a 1
 - C) 3 · [olvida-deshacer-logaritmo] calculas el límite de ln L = 3 y lo das como respuesta, sin elevar e a ese valor
-- D) 0 · [cero-por-infinito-sin-reescribir] escribes ln L = (1/x)·ln(cos x + sen 3x) como 0·∞ y derivas cada factor por separado, lo que da −∞ y L = e^{−∞} = 0
+- D) 0 · [cero-por-infinito-sin-reescribir] escribes ln L = (1/x)·ln(cos x + sen 3x) como 0·∞ y derivas cada factor por separado, lo que da ln L = −∞ y L = 0
 
 solución: la base tiende a 1 y el exponente 1/x tiende a infinito: forma 1^∞. Sea L el límite; entonces ln L = lim ln(cos x + sen 3x)/x, que es 0/0. Por L'Hôpital: lim (−sen x + 3cos 3x)/(cos x + sen 3x) = (0 + 3)/(1 + 0) = 3. Luego ln L = 3 y L = e³. Quedarse con 1 es tomar 1^∞ como 1; dar 3 es olvidar que ese valor es el del logaritmo; el 0 sale de derivar por separado los factores (1/x) y ln(cos x + sen 3x) en la forma 0·∞, que da −∞.
 
-### P104 · dificultad 1 · kc: trazado-curvas · borrador · origen: ia (sonnet-5.5)
+### P104 · dificultad 1 · kc: trazado-curvas · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 La función f(x) = x³ − 3x tiene f'(x) = 3(x² − 1) y f''(x) = 6x. ¿Cuál descripción corresponde a la gráfica de f?
 
 - A) Crece en (−∞, −1) y (1, ∞) y decrece en (−1, 1); es cóncava hacia arriba para x < 0 y hacia abajo para x > 0 · [concavidad-invertida-al-trazar] lees f'' > 0 como cóncava hacia abajo y f'' < 0 como cóncava hacia arriba
@@ -264,7 +264,7 @@ La función f(x) = x³ − 3x tiene f'(x) = 3(x² − 1) y f''(x) = 6x. ¿Cuál 
 
 solución: f'(x) = 3(x − 1)(x + 1) es positiva si x < −1 o x > 1, y negativa en (−1, 1): f crece, decrece y vuelve a crecer, con máximo local en x = −1 (f''(−1) = −6 < 0) y mínimo local en x = 1 (f''(1) = 6 > 0). f''(x) = 6x es negativa si x < 0 y positiva si x > 0: cóncava hacia abajo a la izquierda de 0 y hacia arriba a la derecha, con inflexión en el origen. En C se intercambian los papeles de f' y f''; en A se invierte el signo de f''; en D se invierte el criterio de la segunda derivada y por eso el crecimiento sale al revés.
 
-### P105 · dificultad 2 · kc: trazado-curvas · borrador · origen: ia (sonnet-5.5)
+### P105 · dificultad 2 · kc: trazado-curvas · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea $f(x) = \frac{3x}{x-2}$. Se tiene $f'(x) = \frac{-6}{(x-2)^2}$ y $f''(x) = \frac{12}{(x-2)^3}$. ¿Cuál descripción corresponde a la gráfica de f?
 
 - A) Solo tiene la asíntota horizontal y = 3; decrece en (−∞, 2) y en (2, ∞); es cóncava hacia abajo en (−∞, 2) y hacia arriba en (2, ∞) · [omite-asintota-vertical] olvidas la asíntota vertical en el cero del denominador
@@ -274,7 +274,7 @@ Sea $f(x) = \frac{3x}{x-2}$. Se tiene $f'(x) = \frac{-6}{(x-2)^2}$ y $f''(x) = \
 
 solución: el denominador se anula en x = 2 y el numerador no, y lim 3x/(x − 2) cuando x tiende a 2 por un lado es +∞ y por el otro −∞: asíntota vertical x = 2. Cuando x tiende a ±∞ el cociente tiende a 3: asíntota horizontal y = 3. f'(x) = −6/(x − 2)² es negativa en todo el dominio: f decrece en (−∞, 2) y en (2, ∞). f''(x) = 12/(x − 2)³ es negativa si x < 2 y positiva si x > 2: cóncava hacia abajo a la izquierda de 2 y hacia arriba a la derecha. En A falta la asíntota vertical; B invierte el signo de f''; D lee el crecimiento en f'' (negativa y luego positiva) y la concavidad en f' (negativa siempre).
 
-### P106 · dificultad 2 · kc: trazado-curvas · borrador · origen: ia (sonnet-5.5)
+### P106 · dificultad 2 · kc: trazado-curvas · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea f(x) = x ln x, definida para x > 0. Se tiene f'(x) = ln x + 1 y f''(x) = 1/x. ¿Cuál descripción corresponde a la gráfica de f?
 
 - A) Decrece en $(0, \frac{1}{e})$ y crece en $(\frac{1}{e}, \infty)$; es cóncava hacia arriba en todo su dominio y no tiene asíntotas · CORRECTA
@@ -284,7 +284,7 @@ Sea f(x) = x ln x, definida para x > 0. Se tiene f'(x) = ln x + 1 y f''(x) = 1/x
 
 solución: f'(x) = ln x + 1 se anula en x = 1/e; es negativa para 0 < x < 1/e y positiva después: f decrece y luego crece, con mínimo en x = 1/e. f''(x) = 1/x es positiva en todo el dominio: cóncava hacia arriba siempre, sin inflexión. Cuando x tiende a 0 por la derecha, x ln x tiende a 0 (se resuelve con L'Hôpital sobre ln x/(1/x)): no hay asíntota vertical. Cuando x tiende a ∞, f(x) crece sin límite y f(x)/x = ln x también, así que no hay asíntota horizontal ni oblicua. La opción B inventa una asíntota vertical; C parte la concavidad en el punto crítico; D invierte el signo de f''.
 
-### P107 · dificultad 3 · kc: trazado-curvas · borrador · origen: ia (sonnet-5.5)
+### P107 · dificultad 3 · kc: trazado-curvas · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Sea $f(x) = \frac{x^2}{x^2-4}$. Se tiene $f'(x) = \frac{-8x}{(x^2-4)^2}$ y $f''(x) = \frac{24x^2+32}{(x^2-4)^3}$. ¿Cuál descripción corresponde a la gráfica de f?
 
 - A) Solo tiene la asíntota horizontal y = 1; crece en (−∞, −2) y (−2, 0) y decrece en (0, 2) y (2, ∞); máximo local en (0, 0); cóncava hacia abajo en (−2, 2) y hacia arriba fuera de [−2, 2]; sin puntos de inflexión · [omite-asintota-vertical] olvidas las asíntotas verticales en los ceros del denominador
@@ -294,7 +294,7 @@ Sea $f(x) = \frac{x^2}{x^2-4}$. Se tiene $f'(x) = \frac{-8x}{(x^2-4)^2}$ y $f''(
 
 solución: el denominador se anula en x = ±2 y el numerador no, así que x = −2 y x = 2 son asíntotas verticales; lim f(x) = 1 cuando x tiende a ±∞ da la horizontal y = 1. f'(x) = −8x/(x² − 4)² tiene el signo de −x: positiva para x < 0 (salvo x = −2) y negativa para x > 0 (salvo x = 2); f crece hasta x = 0 y decrece después, con f'(0) = 0 y f''(0) = 32/(−64) = −1/2 < 0: máximo local en (0, 0). El numerador de f'' es siempre positivo, así que f'' tiene el signo de (x² − 4)³, o sea el de x² − 4: negativa en (−2, 2) y positiva si |x| > 2. Esos cambios de signo ocurren en x = ±2, donde f no está definida, por lo que no hay puntos de inflexión. En A faltan las verticales; B llama inflexión a x = ±2; C lee el signo negativo de f''(0) como mínimo.
 
-### P123 · dificultad 2 · kc: extremos-locales · borrador · origen: ia (sonnet-5.5)
+### P123 · dificultad 2 · kc: extremos-locales · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 La función f(x) = x²eˣ tiene puntos críticos en x = −2 y x = 0. ¿Cuál clasificación es correcta?
 
 - A) Máximo local en x = −2 y máximo local en x = 0 · [critico-implica-maximo] lees todo punto crítico como máximo, sin aplicar ningún criterio
@@ -304,7 +304,7 @@ La función f(x) = x²eˣ tiene puntos críticos en x = −2 y x = 0. ¿Cuál cl
 
 solución: f'(x) = (2x + x²)eˣ = x(x + 2)eˣ, con ceros x = −2 y x = 0. Además f''(x) = (x² + 4x + 2)eˣ. En x = −2: f''(−2) = (4 − 8 + 2)e⁻² = −2e⁻² < 0, así que hay un máximo local, con f(−2) = 4e⁻² ≈ 0,54. En x = 0: f''(0) = 2 > 0, así que hay un mínimo local, con f(0) = 0. La opción A toma ambos puntos como máximos; B invierte el signo del criterio; D es falsa porque f(x) = x²eˣ crece sin límite cuando x → ∞ (por ejemplo f(10) ≈ 2,2·10⁶), así que no tiene máximo absoluto.
 
-### P124 · dificultad 2 · kc: extremos-locales · borrador · origen: ia (sonnet-5.5)
+### P124 · dificultad 2 · kc: extremos-locales · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 La función f(x) = 3x⁴ − 4x³ tiene puntos críticos en x = 0 y x = 1. ¿Cuál clasificación es correcta?
 
 - A) Máximo local en x = 0 y mínimo local en x = 1 · [critico-implica-maximo] lees x = 0 como máximo porque f'' no es positiva allí, sin mirar el signo de f' a los lados
