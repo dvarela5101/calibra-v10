@@ -32,6 +32,9 @@ const EJEMPLO = join(__dirname, "..", "pruebas", "banco-ejemplo");
 const PROYECTOS: Record<string, { letra: string; sufijo: string }> = {
   movil: { letra: "M", sufijo: "móvil" },
   escritorio: { letra: "E", sufijo: "escritorio" },
+  // HU-084: el recorrido del diagnóstico, a 390 y a 1440 px.
+  "recorrido-movil": { letra: "R", sufijo: "recorrido móvil" },
+  "recorrido-escritorio": { letra: "S", sufijo: "recorrido escritorio" },
 };
 
 /**
@@ -93,8 +96,14 @@ export function bancoEnMemoria(proyecto: string): Banco {
   for (const [de] of cambios) {
     if (!archivos.some((archivo) => archivo.texto.includes(de))) throw new Error(`El cambio al banco de prueba no encontró su texto: ${de}`);
   }
+  // El cargador reconoce la materia por su carpeta: con la misma carpeta, el proyecto que carga segundo le cambiaría el código
+  // y el nombre a la materia del otro, que está en uso. Cada proyecto lleva la suya, también en los prerrequisitos entre materias.
+  const carpeta = (texto: string) => texto.replace(/\bmateria-([ab])\//g, `materia-$1-${PROYECTOS[proyecto].letra.toLowerCase()}/`);
   const resultado = analizarBanco(
-    archivos.map((archivo) => ({ ...archivo, texto: cambios.reduce((texto, [de, a]) => texto.replaceAll(de, a), archivo.texto) })),
+    archivos.map((archivo) => ({
+      ruta: carpeta(archivo.ruta),
+      texto: carpeta(cambios.reduce((texto, [de, a]) => texto.replaceAll(de, a), archivo.texto)),
+    })),
   );
   if (resultado.errores.length > 0) {
     throw new Error(`El banco de prueba no es válido:\n${resultado.errores.map((e) => `${e.archivo}:${e.linea}  ${e.mensaje}`).join("\n")}`);

@@ -334,19 +334,7 @@ export async function agendarYPagar(r: Recorrido): Promise<{ idMonitoria: string
   const page = r.visitante;
   let idSesion = "";
   await test.step("criterio 1: desde la lista de monitores de la materia, toca Agendar en la fecha", async () => {
-    await page.goto(`/monitores?materia=${encodeURIComponent(r.materia.codigo)}`);
-    await page.waitForLoadState("networkidle");
-    // La sesión anónima nace en el navegador; la fixture `cuentas` la borra al final.
-    idSesion = (await esperarSesion(page.context())).id;
-    r.anotarSesion(idSesion);
-    await expectReglasDelProducto(page, "lista de monitores");
-    await tarjetaDeMonitor(page, r.monitor.nombre)
-      .getByRole("link", {
-        name: new RegExp(formatearDiaConSemana(r.fechaDeLaReserva)),
-      })
-      .click();
-    await expect(titulo(page, "Confirma tu monitoría")).toBeVisible(ESPERA);
-    await expectReglasDelProducto(page, "confirmar");
+    idSesion = await abrirLaFecha(r, page, r.materia.codigo);
   });
 
   await test.step("criterio 1: deja nombre, correo y la autorización, y vuelve a confirmar", async () => {
@@ -365,42 +353,69 @@ export async function agendarYPagar(r: Recorrido): Promise<{ idMonitoria: string
 
   let idMonitoria = "";
   await test.step("criterio 1: aparta la fecha y adjunta el comprobante: la monitoría queda confirmada", async () => {
-    await page.waitForLoadState("networkidle");
-    await page.getByRole("button", { name: "Apartar esta fecha" }).click();
-    await expect(page).toHaveURL(RESERVA, ESPERA);
-    idMonitoria = RESERVA.exec(page.url())![1];
-    await expect(titulo(page, "Apartamos tu fecha")).toBeVisible(ESPERA);
-    expect(
-      await r.una<{ estado: string }>("monitoria", "estado", {
-        id: idMonitoria,
-      }),
-    ).toEqual({ estado: "pendiente_pago" });
-    await page.waitForLoadState("networkidle");
-    await expectReglasDelProducto(page, "reserva");
-
-    await page.getByLabel("Comprobante de la transferencia").setInputFiles({
-      name: "comprobante.png",
-      mimeType: "image/png",
-      buffer: PNG,
-    });
-    await page.getByRole("button", { name: "Enviar comprobante" }).click();
-    await expect(titulo(page, "Tu monitoría está confirmada")).toBeVisible(ESPERA);
-    await expect(aviso(page, "Recibimos tu comprobante de pago.")).toBeVisible();
-
-    expect(
-      await r.una<{ estado: string }>("monitoria", "estado", {
-        id: idMonitoria,
-      }),
-    ).toEqual({ estado: "confirmada" });
-    const pago = await r.una<{
-      estado: string;
-      monto: number;
-      comprobante: string;
-    }>("pago", "estado, monto, comprobante", { id_monitoria: idMonitoria });
-    expect(pago).toMatchObject({ estado: "en_revision", monto: PRECIO });
-    expect(pago.comprobante).toMatch(/\.png$/);
+    idMonitoria = await apartarYPagar(r, page);
   });
   return { idMonitoria, idSesion };
+}
+
+/**
+ * Desde la lista de monitores de esa materia, toca la fecha de la reserva en la tarjeta del monitor y llega a «Confirma tu
+ * monitoría». Devuelve la sesión anónima del navegador, ya anotada para borrarla al final. Mide las dos pantallas.
+ */
+export async function abrirLaFecha(r: Recorrido, page: Page, codigoDeLaMateria: string): Promise<string> {
+  await page.goto(`/monitores?materia=${encodeURIComponent(codigoDeLaMateria)}`);
+  await page.waitForLoadState("networkidle");
+  // La sesión anónima nace en el navegador; la fixture `cuentas` la borra al final.
+  const idSesion = (await esperarSesion(page.context())).id;
+  r.anotarSesion(idSesion);
+  await expectReglasDelProducto(page, "lista de monitores");
+  await tarjetaDeMonitor(page, r.monitor.nombre)
+    .getByRole("link", {
+      name: new RegExp(formatearDiaConSemana(r.fechaDeLaReserva)),
+    })
+    .click();
+  await expect(titulo(page, "Confirma tu monitoría")).toBeVisible(ESPERA);
+  await expectReglasDelProducto(page, "confirmar");
+  return idSesion;
+}
+
+/** Desde «Confirma tu monitoría», ya con el contacto, aparta la fecha y adjunta el comprobante. Devuelve la monitoría confirmada. */
+export async function apartarYPagar(r: Recorrido, page: Page): Promise<string> {
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Apartar esta fecha" }).click();
+  await expect(page).toHaveURL(RESERVA, ESPERA);
+  const idMonitoria = RESERVA.exec(page.url())![1];
+  await expect(titulo(page, "Apartamos tu fecha")).toBeVisible(ESPERA);
+  expect(
+    await r.una<{ estado: string }>("monitoria", "estado", {
+      id: idMonitoria,
+    }),
+  ).toEqual({ estado: "pendiente_pago" });
+  await page.waitForLoadState("networkidle");
+  await expectReglasDelProducto(page, "reserva");
+
+  await page.getByLabel("Comprobante de la transferencia").setInputFiles({
+    name: "comprobante.png",
+    mimeType: "image/png",
+    buffer: PNG,
+  });
+  await page.getByRole("button", { name: "Enviar comprobante" }).click();
+  await expect(titulo(page, "Tu monitoría está confirmada")).toBeVisible(ESPERA);
+  await expect(aviso(page, "Recibimos tu comprobante de pago.")).toBeVisible();
+
+  expect(
+    await r.una<{ estado: string }>("monitoria", "estado", {
+      id: idMonitoria,
+    }),
+  ).toEqual({ estado: "confirmada" });
+  const pago = await r.una<{
+    estado: string;
+    monto: number;
+    comprobante: string;
+  }>("pago", "estado, monto, comprobante", { id_monitoria: idMonitoria });
+  expect(pago).toMatchObject({ estado: "en_revision", monto: PRECIO });
+  expect(pago.comprobante).toMatch(/\.png$/);
+  return idMonitoria;
 }
 
 /** El pago de una monitoría, pasado al admin de la prueba. */
