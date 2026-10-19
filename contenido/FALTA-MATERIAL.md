@@ -2,7 +2,7 @@
 
 Este documento lista las materias y las habilidades del banco a las que les falta material, para saber qué hay que conseguir. Lo crea y lo mantiene [HU-061](../backlog/HU-061.md) (D-49 c). [PROCESO.md](PROCESO.md#falta-de-material) dice cuándo se actualiza. No lleva nombres de archivos del material.
 
-Última actualización: corrida de Cálculo Diferencial (HU-061), 5-oct-2026.
+Última actualización: borradores de los Parciales 2 y 3 de Cálculo Diferencial (HU-101), 18-oct-2026.
 
 ## 1. Habilidades sin preguntas sin ver o con una sola respuesta
 
@@ -17,30 +17,7 @@ La meta por habilidad es de 4 preguntas, con 2 o más de dificultad 2, 2 o más 
 
 Alcance de la corrida (Parcial 1 de Cálculo Diferencial): las 10 habilidades llegan a la meta, así que no hay filas.
 
-Fuera del alcance, las 20 habilidades de los parciales 2 y 3 de Cálculo Diferencial no llegan, porque D-50 b dejó sus preguntas nuevas para otra corrida. Para ellas ya hay material: parciales anteriores, talleres, una solución de parcial y libros. Hace falta escribir sus preguntas, y estas filas se quitan cuando una corrida nueva las genere.
-
-| Materia | Habilidad | Evaluación | Motivo | Origen de la anotación | Qué le falta |
-|---|---|---|---|---|---|
-| Cálculo Diferencial | `derivada-definicion` | parcial-2 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 0 de 4 preguntas, faltan 4 |
-| Cálculo Diferencial | `derivada-significado` | parcial-2 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 1 de 4 preguntas, faltan 3 |
-| Cálculo Diferencial | `diferenciabilidad` | parcial-2 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 0 de 4 preguntas, faltan 4 |
-| Cálculo Diferencial | `reglas-derivacion` | parcial-2 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 0 de 4 preguntas, faltan 4 |
-| Cálculo Diferencial | `derivadas-trascendentes` | parcial-2 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 1 de 4 preguntas, faltan 3 |
-| Cálculo Diferencial | `regla-cadena` | parcial-2 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 2 de 4 preguntas, faltan 2 |
-| Cálculo Diferencial | `derivacion-implicita` | parcial-2 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 0 de 4 preguntas, faltan 4 |
-| Cálculo Diferencial | `derivacion-logaritmica` | parcial-2 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 0 de 4 preguntas, faltan 4 |
-| Cálculo Diferencial | `recta-tangente` | parcial-2 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 0 de 4 preguntas, faltan 4 |
-| Cálculo Diferencial | `razones-relacionadas` | parcial-2 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 1 de 4 preguntas, faltan 3 |
-| Cálculo Diferencial | `extremos-absolutos` | parcial-3 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 0 de 4 preguntas, faltan 4 |
-| Cálculo Diferencial | `teorema-valor-medio` | parcial-3 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 0 de 4 preguntas, faltan 4 |
-| Cálculo Diferencial | `extremos-locales` | parcial-3 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 2 de 4 preguntas, faltan 2 |
-| Cálculo Diferencial | `concavidad-inflexion` | parcial-3 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 0 de 4 preguntas, faltan 4 |
-| Cálculo Diferencial | `lhopital` | parcial-3 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 0 de 4 preguntas, faltan 4 |
-| Cálculo Diferencial | `trazado-curvas` | parcial-3 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 0 de 4 preguntas, faltan 4 |
-| Cálculo Diferencial | `optimizacion` | parcial-3 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 1 de 4 preguntas, faltan 3 |
-| Cálculo Diferencial | `antiderivadas` | parcial-3 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 0 de 4 preguntas, faltan 4 |
-| Cálculo Diferencial | `integral-definida` | parcial-3 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 0 de 4 preguntas, faltan 4 |
-| Cálculo Diferencial | `teorema-fundamental` | parcial-3 | `sin preguntas sin ver` | cobertura proyectada de la skill | tiene 0 de 4 preguntas, faltan 4 |
+Alcance de la corrida de HU-101 (Parciales 2 y 3 de Cálculo Diferencial): las 20 habilidades llegan a la meta contando los borradores, así que tampoco hay filas.
 
 ### De las marcas de HU-060
 
@@ -119,7 +96,7 @@ Hay sesiones y complementarias con solución (2025-I). No hay programa ni parcia
 
 ### Cálculo Diferencial (`calculo-diferencial`)
 
-Hay programa, parciales, talleres con solución, soluciones, apuntes y libros. Cumplen 0 de 30 habilidades. Las 20 de los parciales 2 y 3 están en la sección 1. Las 10 del Parcial 1 ya tienen la meta de preguntas con los borradores de IA. Para estas no hay que conseguir material: falta que los desarrolladores revisen los borradores.
+Hay programa, parciales, talleres con solución, soluciones, apuntes y libros; para los parciales 2 y 3 se usaron además apuntes libres en línea. Cumplen 0 de 30 habilidades. Las 30 ya tienen la meta de preguntas con los borradores de IA (las del Parcial 1 desde HU-061 y las de los parciales 2 y 3 desde HU-101). No hay que conseguir material: falta que los desarrolladores revisen los borradores.
 
 | Habilidad | Revisadas hoy | Preguntas proyectadas | Qué falta |
 |---|---|---|---|
@@ -133,3 +110,23 @@ Hay programa, parciales, talleres con solución, soluciones, apuntes y libros. C
 | `limites-infinito-asintotas` | 0 | 4 (4 por revisar) | revisar los borradores (HU nueva A) |
 | `continuidad` | 1, dificultad 2 | 4 (3 por revisar) | revisar los borradores (HU nueva A) |
 | `teorema-valor-intermedio` | 0 | 4 (4 por revisar) | revisar los borradores (HU nueva A) |
+| `derivada-definicion` | 0 | 4 (4 por revisar) | revisar los borradores (HU-101) |
+| `derivada-significado` | 1, dificultad 2 | 4 (3 por revisar) | revisar los borradores (HU-101) |
+| `diferenciabilidad` | 0 | 4 (4 por revisar) | revisar los borradores (HU-101) |
+| `reglas-derivacion` | 0 | 7 (7 por revisar) | revisar los borradores (HU-101) |
+| `derivadas-trascendentes` | 1, dificultad 2 | 7 (6 por revisar) | revisar los borradores (HU-101) |
+| `regla-cadena` | 2, dificultad 2 | 6 (4 por revisar) | revisar los borradores (HU-101) |
+| `derivacion-implicita` | 0 | 4 (4 por revisar) | revisar los borradores (HU-101) |
+| `derivacion-logaritmica` | 0 | 4 (4 por revisar) | revisar los borradores (HU-101) |
+| `recta-tangente` | 0 | 4 (4 por revisar) | revisar los borradores (HU-101) |
+| `razones-relacionadas` | 1, dificultad 2 | 4 (3 por revisar) | revisar los borradores (HU-101) |
+| `extremos-absolutos` | 0 | 4 (4 por revisar) | revisar los borradores (HU-101) |
+| `teorema-valor-medio` | 0 | 4 (4 por revisar) | revisar los borradores (HU-101) |
+| `extremos-locales` | 2, dificultad 2 | 6 (4 por revisar) | revisar los borradores (HU-101) |
+| `concavidad-inflexion` | 0 | 4 (4 por revisar) | revisar los borradores (HU-101) |
+| `lhopital` | 0 | 4 (4 por revisar) | revisar los borradores (HU-101) |
+| `trazado-curvas` | 0 | 4 (4 por revisar) | revisar los borradores (HU-101) |
+| `optimizacion` | 1, dificultad 2 | 4 (3 por revisar) | revisar los borradores (HU-101) |
+| `antiderivadas` | 0 | 4 (4 por revisar) | revisar los borradores (HU-101) |
+| `integral-definida` | 0 | 4 (4 por revisar) | revisar los borradores (HU-101) |
+| `teorema-fundamental` | 0 | 4 (4 por revisar) | revisar los borradores (HU-101) |
