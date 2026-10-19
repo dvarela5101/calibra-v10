@@ -42,7 +42,7 @@ Un proyectil se lanza con velocidad inicial de 50 m/s a 37° sobre la horizontal
 - C) 50 m/s · [cinematica-e8]
 - D) 32 m/s · [cinematica-e9]
 
-### P13 · dificultad 1 · kc: cinematica · borrador · origen: ia (sonnet-5.5)
+### P13 · dificultad 1 · kc: cinematica · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Desde un puente se lanza una piedra verticalmente hacia abajo con una velocidad inicial de 4 m/s. Sin tener en cuenta la resistencia del aire, ¿cuál es su velocidad instantánea 3 s después de ser lanzada? (g = 10 m/s²)
 
 - A) 14 m/s · [cinematica-e6] usas solo el primer segundo de caída, 4 + 10×1 = 14 m/s, en lugar de los 3 s que pasaron

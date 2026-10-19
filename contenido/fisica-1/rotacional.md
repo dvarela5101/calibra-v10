@@ -42,8 +42,8 @@ Un disco de radio 0.5 m tiene momento de inercia I = 2 kg·m². Si se le aplica 
 - C) 4 rad/s² · [rotacional-e8]
 - D) 2.5 rad/s² · [rotacional-e9]
 
-### P16 · dificultad 3 · kc: rotacional · borrador · origen: ia (sonnet-5.5)
-Una varilla delgada y uniforme de 5 kg y 1.5 m de largo gira en un plano horizontal alrededor de un eje vertical fijo que la atraviesa a 0.25 m de su centro. Sobre ese eje actúa un torque neto constante de 15 N·m. Si se desprecia la fricción en el eje, ¿cuál es la aceleración angular inicial de la varilla?
+### P16 · dificultad 3 · kc: rotacional · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
+Una varilla delgada y uniforme de 5 kg y 1.5 m de largo gira en un plano horizontal alrededor de un eje vertical fijo que la atraviesa a 0.25 m de su centro. Sobre ese eje actúa un torque neto constante de 15 N·m. Si se desprecia la fricción en el eje, ¿cuál es la aceleración angular de la varilla?
 
 - A) 12 rad/s² · CORRECTA
 - B) 4 rad/s² · [rotacional-e1] usas el momento de inercia de un eje en el extremo, $\frac{ML^2}{3} = 3.75$ kg·m², aunque el eje no está en el extremo

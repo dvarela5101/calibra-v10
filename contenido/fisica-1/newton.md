@@ -42,7 +42,7 @@ Dos bloques de 3 kg y 5 kg están conectados por una cuerda. Si se aplica una fu
 - C) 16 N · [newton-e8]
 - D) 8 N · [newton-e9]
 
-### P14 · dificultad 3 · kc: newton · borrador · origen: ia (sonnet-5.5)
+### P14 · dificultad 3 · kc: newton · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Un bloque de 4 kg está sobre un plano inclinado 37° con la horizontal, y el coeficiente de fricción cinética entre el bloque y el plano es $\mu_k = 0.25$. Una cuerda ligera, paralela al plano, pasa por una polea ligera y sin fricción en la parte alta del plano y sostiene del otro lado un bloque de 20 kg que cuelga libremente. El sistema se suelta desde el reposo: el bloque que cuelga desciende y el del plano sube. ¿Cuál es la tensión de la cuerda mientras se mueven? (g = 10 m/s², sen 37° = 0.6, cos 37° = 0.8)
 
 - A) 200 N · [newton-e8] tomas la tensión igual al peso del bloque que cuelga, 20 kg × 10 m/s², como si ese peso pasara completo por la cuerda
