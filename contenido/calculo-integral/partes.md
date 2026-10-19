@@ -36,7 +36,7 @@ En ∫ x·eˣ dx, con u = x y dv = eˣ dx, el resultado es:
 - C) eˣ + C · [omite-uv]
 - D) x²·eˣ/2 + C · [producto-factor-a-factor] integras como si fuera un producto de potencias
 
-### P13 · dificultad 2 · kc: partes-eleccion-u · borrador · origen: ia (desconocido)
+### P13 · dificultad 2 · kc: partes-eleccion-u · revisada · origen: ia (desconocido) · revisó: Juzou04
 En ∫ eˣ·x² dx, ¿qué conviene elegir como u?
 
 - A) eˣ · [u-orden-aparicion] eliges u por el orden en que aparece, no por la prioridad ILATE
@@ -46,7 +46,7 @@ En ∫ eˣ·x² dx, ¿qué conviene elegir como u?
 
 solución: por la prioridad ILATE, la parte algebraica (x²) va antes que la exponencial, así que u = x² y dv = eˣ dx. Así du = 2x dx baja el grado del polinomio y v = eˣ es inmediata: ∫ eˣ·x² dx = x²·eˣ − ∫ 2x·eˣ dx, que se resuelve con otra aplicación de partes. Con u = eˣ quedaría v = x³/3 y la integral restante subiría de grado. El diferencial dx nunca es u, y tomar todo el integrando como u deja dv = dx y no avanza.
 
-### P14 · dificultad 3 · kc: partes-eleccion-u · borrador · origen: ia (desconocido)
+### P14 · dificultad 3 · kc: partes-eleccion-u · revisada · origen: ia (desconocido) · revisó: Juzou04
 En ∫ x³·ln(x) dx un compañero toma u = x³ y dv = ln(x) dx. ¿Qué opinas?
 
 - A) Se complica, porque tendría que integrar ln(x) para hallar v: conviene u = ln(x) · CORRECTA
@@ -56,7 +56,7 @@ En ∫ x³·ln(x) dx un compañero toma u = x³ y dv = ln(x) dx. ¿Qué opinas?
 
 solución: con u = x³ y dv = ln(x) dx habría que integrar ln(x) para hallar v (v = x·ln(x) − x), y la integral que queda es más difícil que la original. Por ILATE el logaritmo va antes que la parte algebraica: u = ln(x), du = dx/x, dv = x³ dx y v = x⁴/4. Entonces ∫ x³·ln(x) dx = (x⁴/4)·ln(x) − ∫ (x⁴/4)·(1/x) dx = (x⁴/4)·ln(x) − x⁴/16 + C. El orden en que aparecen los factores no decide nada, u y dv no son intercambiables, y tomar todo el producto como u deja dv = dx y no simplifica.
 
-### P15 · dificultad 2 · kc: partes-formula · borrador · origen: ia (desconocido)
+### P15 · dificultad 2 · kc: partes-formula · revisada · origen: ia (desconocido) · revisó: Juzou04
 En ∫ x·cos(x) dx, con u = x y dv = cos(x) dx, el resultado es:
 
 - A) x·sen(x) + cos(x) + C · CORRECTA
@@ -66,7 +66,7 @@ En ∫ x·cos(x) dx, con u = x y dv = cos(x) dx, el resultado es:
 
 solución: con u = x, du = dx, dv = cos(x) dx y v = sen(x): ∫ x·cos(x) dx = x·sen(x) − ∫ sen(x) dx = x·sen(x) + cos(x) + C. Comprobación: la derivada de x·sen(x) + cos(x) es sen(x) + x·cos(x) − sen(x) = x·cos(x). El −cos(x) sale de equivocar el signo de la fórmula; cos(x) + C es solo −∫ sen(x) dx, sin el término u·v; y (x²/2)·sen(x) integra cada factor por separado.
 
-### P16 · dificultad 3 · kc: partes-formula · borrador · origen: ia (desconocido)
+### P16 · dificultad 3 · kc: partes-formula · revisada · origen: ia (desconocido) · revisó: Juzou04
 ∫ ln(x) dx, usando u = ln(x) y dv = dx, da:
 
 - A) x·ln(x) − x + C · CORRECTA
@@ -76,7 +76,7 @@ solución: con u = x, du = dx, dv = cos(x) dx y v = sen(x): ∫ x·cos(x) dx = x
 
 solución: con u = ln(x), du = dx/x, dv = dx y v = x: ∫ ln(x) dx = x·ln(x) − ∫ x·(1/x) dx = x·ln(x) − ∫ dx = x·ln(x) − x + C. Comprobación: la derivada de x·ln(x) − x es ln(x) + 1 − 1 = ln(x). El +x sale de equivocar el signo de la fórmula, −x + C omite el término u·v, y x·ln(x) + C olvida restar la integral ∫ v du.
 
-### P17 · dificultad 2 · kc: partes-formula · borrador · origen: ia (desconocido)
+### P17 · dificultad 2 · kc: partes-formula · revisada · origen: ia (desconocido) · revisó: Juzou04
 En $\int x\cdot e^{2x}\,dx$, con u = x y $dv = e^{2x}\,dx$, el resultado es:
 
 - A) $\frac{x}{2}e^{2x} - \frac{1}{4}e^{2x} + C$ · CORRECTA
@@ -86,7 +86,7 @@ En $\int x\cdot e^{2x}\,dx$, con u = x y $dv = e^{2x}\,dx$, el resultado es:
 
 solución: con u = x, du = dx, dv = e^(2x) dx y v = e^(2x)/2: ∫ x·e^(2x) dx = (x/2)·e^(2x) − ∫ (1/2)·e^(2x) dx = (x/2)·e^(2x) − (1/4)·e^(2x) + C. Comprobación: la derivada es (1/2)·e^(2x) + x·e^(2x) − (1/2)·e^(2x) = x·e^(2x). La opción sin −(1/4)·e^(2x) olvida restar la integral ∫ v du, la que tiene +(1/4)·e^(2x) equivoca el signo, y (x²/2)·(e^(2x)/2) integra cada factor por separado.
 
-### P18 · dificultad 3 · kc: partes-reiterada, partes-formula · borrador · origen: ia (desconocido)
+### P18 · dificultad 3 · kc: partes-reiterada, partes-formula · revisada · origen: ia (desconocido) · revisó: Juzou04
 Al resolver ∫ x²·eˣ dx con u = x² queda x²·eˣ − ∫ 2x·eˣ dx. ¿Qué sigue?
 
 - A) Aplicar partes otra vez a ∫ 2x·eˣ dx, con u = 2x · CORRECTA
@@ -96,7 +96,7 @@ Al resolver ∫ x²·eˣ dx con u = x² queda x²·eˣ − ∫ 2x·eˣ dx. ¿Qu�
 
 solución: la integral que queda, ∫ 2x·eˣ dx, sigue siendo un producto de un polinomio por una exponencial, así que se aplica partes otra vez con u = 2x (du = 2 dx) y dv = eˣ dx (v = eˣ): ∫ 2x·eˣ dx = 2x·eˣ − 2eˣ. El resultado es x²·eˣ − 2x·eˣ + 2eˣ + C; su derivada es x²·eˣ. Escribir x²·eˣ − 2x·eˣ + C es detenerse antes de tiempo (falta el +2eˣ). Tomar ahora u = eˣ y dv = 2x dx da v = x² y devuelve x²·eˣ − ∫ x²·eˣ dx: deshace el paso anterior. Integrar 2x·eˣ factor por factor como x²·eˣ no es válido.
 
-### P19 · dificultad 3 · kc: partes-reiterada · borrador · origen: ia (desconocido)
+### P19 · dificultad 3 · kc: partes-reiterada · revisada · origen: ia (desconocido) · revisó: Juzou04
 Para I = ∫ eˣ·sen(x) dx, tras aplicar partes dos veces (primero u = sen(x), luego u = cos(x)) llegas a I = eˣ·sen(x) − eˣ·cos(x) − I. ¿Cuánto vale I?
 
 - A) $\frac{e^x}{2}(\sen(x) - \cos(x)) + C$ · CORRECTA
@@ -106,7 +106,7 @@ Para I = ∫ eˣ·sen(x) dx, tras aplicar partes dos veces (primero u = sen(x), 
 
 solución: la integral original reaparece a la derecha con signo menos, así que se despeja: I + I = eˣ·sen(x) − eˣ·cos(x), es decir 2I = eˣ·(sen(x) − cos(x)), e I = (eˣ/2)·(sen(x) − cos(x)) + C. Comprobación: la derivada es (eˣ/2)·(sen(x) − cos(x)) + (eˣ/2)·(cos(x) + sen(x)) = eˣ·sen(x). Quedarse con eˣ·sen(x) − eˣ·cos(x) ignora el −I; eˣ·(sen(x) − cos(x)) despeja pero no divide entre 2; y una tercera aplicación con u = eˣ invierte la elección y regresa al paso anterior.
 
-### P20 · dificultad 3 · kc: partes-reiterada · borrador · origen: ia (desconocido)
+### P20 · dificultad 3 · kc: partes-reiterada · revisada · origen: ia (desconocido) · revisó: Juzou04
 Para I = ∫ eˣ·cos(x) dx, tras dos aplicaciones de partes llegas a I = eˣ·cos(x) + eˣ·sen(x) − I. Entonces I es:
 
 - A) $\frac{e^x}{2}(\cos(x) + \sen(x)) + C$ · CORRECTA
@@ -116,7 +116,7 @@ Para I = ∫ eˣ·cos(x) dx, tras dos aplicaciones de partes llegas a I = eˣ·c
 
 solución: la integral original reaparece a la derecha con signo menos: 2I = eˣ·cos(x) + eˣ·sen(x), así que I = (eˣ/2)·(cos(x) + sen(x)) + C. Comprobación: la derivada es (eˣ/2)·(cos(x) + sen(x)) + (eˣ/2)·(cos(x) − sen(x)) = eˣ·cos(x). eˣ·(cos(x) + sen(x)) olvida dividir entre 2, la expresión que todavía tiene −I no está despejada, y eˣ·cos(x) es solo el término u·v de la primera aplicación.
 
-### P52 · dificultad 2 · kc: partes-reiterada, partes-formula · borrador · origen: ia (sonnet-5.5) · ⚠ revisar
+### P52 · dificultad 2 · kc: partes-reiterada, partes-formula · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Calcula $\int x^2\,\sen(3x)\,dx$.
 
 - A) $-\frac{x^2\cos 3x}{3}-\frac{2x\,\sen 3x}{9}-\frac{2\cos 3x}{27}+C$ · [signo-partes] cambias el signo del término ∫v du en la fórmula y lo sumas en vez de restarlo

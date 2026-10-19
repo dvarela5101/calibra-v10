@@ -26,7 +26,7 @@ El volumen de un sólido de revolución al rotar y = f(x) alrededor del eje x en
 - C) $\int_a^b [f(x)]^2\,dx$ · [omite-pi] omites el π en la fórmula del volumen
 - D) $2\pi\int_a^b x f(x)\,dx$ · [discos-vs-cascarones] confundes método de discos con método de cascarones
 
-### P46 · dificultad 2 · kc: app-volumen · borrador · origen: ia (desconocido)
+### P46 · dificultad 2 · kc: app-volumen · revisada · origen: ia (desconocido) · revisó: Juzou04
 El volumen al rotar y = √x, entre x = 0 y x = 4, alrededor del eje x es:
 
 - A) 8π · CORRECTA
@@ -36,7 +36,7 @@ El volumen al rotar y = √x, entre x = 0 y x = 4, alrededor del eje x es:
 
 solución: al rotar alrededor del eje x se usan discos de radio √x: V = π·∫ de 0 a 4 de (√x)² dx = π·∫ de 0 a 4 de x dx = π·8 = 8π. 16π/3 sale de π·∫ √x dx, sin elevar el radio al cuadrado; 8 omite el π; y 2π·∫ x·√x dx es el volumen con cascarones alrededor del eje y (128π/5), no del eje x.
 
-### P47 · dificultad 3 · kc: app-volumen · borrador · origen: ia (desconocido)
+### P47 · dificultad 3 · kc: app-volumen · revisada · origen: ia (desconocido) · revisó: Juzou04
 Rotas la región bajo y = x², entre x = 0 y x = 2, alrededor del eje y. Con cascarones, el volumen es:
 
 - A) $2\pi\cdot\int_0^2 x\cdot x^2\,dx = 8\pi$ · CORRECTA
@@ -54,7 +54,7 @@ Para calcular la longitud de arco de y = f(x) de a a b, usas:
 - C) $\int_a^b \sqrt{[f(x)]^2}\,dx$ · [arco-f-en-vez-de-fprima] confundes la fórmula usando f(x) en lugar de f'(x)
 - D) $[f(b) - f(a)]$ · [arco-distancia-vertical] usas la distancia vertical en lugar de la longitud de curva
 
-### P48 · dificultad 2 · kc: app-arco · borrador · origen: ia (desconocido)
+### P48 · dificultad 2 · kc: app-arco · revisada · origen: ia (desconocido) · revisó: Juzou04
 La longitud de $y = x^{3/2}$ entre x = 0 y x = 1 se plantea como:
 
 - A) $\int_0^1 \sqrt{1 + \frac{9}{4}\cdot x}\,dx$ · CORRECTA
@@ -64,7 +64,7 @@ La longitud de $y = x^{3/2}$ entre x = 0 y x = 1 se plantea como:
 
 solución: la longitud es ∫ √(1 + (y')²) dx. Con y = x^(3/2), y' = (3/2)·x^(1/2) y (y')² = (9/4)·x, así que L = ∫ de 0 a 1 de √(1 + (9/4)·x) dx (vale (13√13 − 8)/27 ≈ 1,44). ∫ (3/2)·√x dx integra solo la derivada; √(1 + x³) eleva al cuadrado f(x) en vez de f'(x); y f(1) − f(0) = 1 es la diferencia de alturas, no la longitud de la curva.
 
-### P49 · dificultad 3 · kc: app-arco · borrador · origen: ia (desconocido)
+### P49 · dificultad 3 · kc: app-arco · revisada · origen: ia (desconocido) · revisó: Juzou04
 La longitud de la recta y = 2x entre x = 0 y x = 3 es:
 
 - A) 3√5 · CORRECTA
@@ -74,7 +74,7 @@ La longitud de la recta y = 2x entre x = 0 y x = 3 es:
 
 solución: con y = 2x, y' = 2 y L = ∫ de 0 a 3 de √(1 + 2²) dx = 3√5 ≈ 6,71. Comprobación: es la distancia entre (0, 0) y (3, 6), √(3² + 6²) = √45 = 3√5. El 6 es la diferencia de alturas f(3) − f(0); ∫ de 0 a 3 de 2 dx = 6 integra solo la derivada; y √(1 + 4x²) usa f(x) = 2x en vez de f'(x) = 2.
 
-### P50 · dificultad 2 · kc: app-area · borrador · origen: ia (desconocido)
+### P50 · dificultad 2 · kc: app-area · revisada · origen: ia (desconocido) · revisó: Juzou04
 El área entre y = x y y = x², entre sus puntos de corte, es:
 
 - A) $\int_0^1 (x - x^2)\,dx = \frac{1}{6}$ · CORRECTA
@@ -84,17 +84,17 @@ El área entre y = x y y = x², entre sus puntos de corte, es:
 
 solución: las curvas se cortan donde x = x², es decir, en x = 0 y x = 1. En (0, 1), x ≥ x², así que el área es ∫ de 0 a 1 de (x − x²) dx = 1/2 − 1/3 = 1/6. Restar al revés da −1/6, y un área no puede ser negativa. Los límites de 0 a 2 no son los puntos de corte, y ∫ x dx = 1/2 integra solo una de las curvas.
 
-### P51 · dificultad 3 · kc: app-area · borrador · origen: ia (desconocido)
+### P51 · dificultad 3 · kc: app-area · revisada · origen: ia (desconocido) · revisó: Juzou04
 El área encerrada entre y = 4 − x² y el eje x es:
 
 - A) 32/3 · CORRECTA
 - B) −32/3 · [area-sin-orden] restas la parábola al eje en vez de al revés
 - C) $\int_0^4 (4 - x^2)\,dx$ · [area-sin-intersecciones]
-- D) $\int_{-2}^2 x^2\,dx = \frac{16}{3}$ · [area-integra-una]
+- D) $\int_{-2}^2 x^2\,dx = \frac{16}{3}$ · [area-integra-una] integras solo el término x² y dejas por fuera el 4
 
 solución: la parábola corta el eje x donde 4 − x² = 0, en x = −2 y x = 2, y entre ellos está por encima del eje. El área es ∫ de −2 a 2 de (4 − x²) dx = 16 − 16/3 = 32/3. −32/3 resta al revés. Los límites de 0 a 4 no son los puntos de corte (entre 2 y 4 la parábola está bajo el eje). Y ∫ de −2 a 2 de x² dx = 16/3 integra solo el término x² y deja por fuera el 4.
 
-### P55 · dificultad 2 · kc: app-area · borrador · origen: ia (sonnet-5.5)
+### P55 · dificultad 2 · kc: app-area · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 Halla el área de la región encerrada entre las curvas $y=2x^2$ y $y=x+3$.
 
 - A) $\frac{27}{8}$ · [area-sin-intersecciones] solo usas la raíz positiva x = 3/2 y tomas el 0 como límite inferior

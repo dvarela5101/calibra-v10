@@ -27,7 +27,7 @@ Para determinar si una serie $\sum \frac{1}{n^2}$ converge, ¿qué criterio es m
 - C) Criterio de la raíz · [criterio-ineficiente] aplicas un criterio que no es el más eficiente para esta forma
 - D) Comparación con 1/n · [compara-con-divergente] comparas con una serie divergente en vez de convergente
 
-### P39 · dificultad 2 · kc: serie-criterio · borrador · origen: ia (desconocido)
+### P39 · dificultad 2 · kc: serie-criterio · revisada · origen: ia (desconocido) · revisó: Juzou04
 ¿Qué se puede concluir de $\sum \frac{1}{\sqrt{n}}$?
 
 - A) Diverge, porque es una serie p con p = 1/2 ≤ 1 · CORRECTA
@@ -37,7 +37,7 @@ Para determinar si una serie $\sum \frac{1}{n^2}$ converge, ¿qué criterio es m
 
 solución: es una serie p, ∑ 1/nᵖ, con p = 1/2 ≤ 1, así que diverge (lo confirma el criterio de la integral con ∫ desde 1 hasta ∞ de x^(−1/2) dx, que diverge). Que el término tienda a 0 no basta para converger. El criterio del cociente da límite 1, y con 1 no decide. Y comparar con ∑ 1, que diverge, no permite concluir que una serie menor converja.
 
-### P40 · dificultad 3 · kc: serie-criterio · borrador · origen: ia (desconocido)
+### P40 · dificultad 3 · kc: serie-criterio · revisada · origen: ia (desconocido) · revisó: Juzou04
 ¿Converge $\sum \frac{n}{n + 1}$?
 
 - A) No: el término general tiende a 1, no a 0, así que diverge · CORRECTA
@@ -55,7 +55,7 @@ Una serie de potencias $\sum a_n(x-c)^n$ tiene radio de convergencia R = 4. ¿Qu
 - C) Diverge para x = c + 4 siempre · [extremos-asumidos] asumes divergencia en los extremos sin verificar
 - D) R = 4 significa que converge solo en 4 puntos · [radio-como-puntos] confundes radio con número de puntos
 
-### P41 · dificultad 2 · kc: serie-potencias · borrador · origen: ia (desconocido)
+### P41 · dificultad 2 · kc: serie-potencias · revisada · origen: ia (desconocido) · revisó: Juzou04
 La serie $\sum \frac{(x - 3)^n}{2^n}$ tiene radio de convergencia R = 2. ¿Dónde converge con seguridad?
 
 - A) En (1, 5) · CORRECTA
@@ -65,7 +65,7 @@ La serie $\sum \frac{(x - 3)^n}{2^n}$ tiene radio de convergencia R = 2. ¿Dónd
 
 solución: es una serie geométrica de razón (x − 3)/2. Converge cuando |x − 3| < 2, es decir, en el intervalo (1, 5), centrado en 3 con radio 2. En x = 1 y en x = 5 la razón vale −1 y 1, y la serie diverge, así que los extremos no entran. (−2, 2) olvida el centro 3, incluir [1, 5] supone los extremos sin verificarlos, y el radio no son puntos aislados.
 
-### P42 · dificultad 3 · kc: serie-potencias, serie-criterio · borrador · origen: ia (desconocido)
+### P42 · dificultad 3 · kc: serie-potencias, serie-criterio · revisada · origen: ia (desconocido) · revisó: Juzou04
 $\sum \frac{x^n}{n}$ tiene R = 1. ¿Qué pasa en x = −1 y en x = 1?
 
 - A) Converge en x = −1 y diverge en x = 1 · CORRECTA
@@ -83,7 +83,7 @@ Para encontrar la serie de Taylor de f(x) = eˣ centrada en x = 0, necesitas:
 - C) Usar la serie de ln(x) · [taylor-funcion-equivocada] confundes eˣ con su función inversa
 - D) Solo calcular f'(0) y f''(0) · [taylor-trunca] crees que la serie termina después de dos términos
 
-### P43 · dificultad 2 · kc: serie-taylor · borrador · origen: ia (desconocido)
+### P43 · dificultad 2 · kc: serie-taylor · revisada · origen: ia (desconocido) · revisó: Juzou04
 En la serie de Taylor de sen(x) centrada en 0, el coeficiente de x³ es:
 
 - A) −1/6 · CORRECTA
@@ -93,7 +93,7 @@ En la serie de Taylor de sen(x) centrada en 0, el coeficiente de x³ es:
 
 solución: el coeficiente de x³ es f'''(0)/3!. Con f(x) = sen(x), f'''(x) = −cos(x) y f'''(0) = −1, así que el coeficiente es −1/6: sen(x) = x − x³/6 + x⁵/120 − … El −1 no divide entre 3!, el 1/6 tiene el signo de otra serie, y la serie no se corta en f(0) y f'(0).
 
-### P44 · dificultad 3 · kc: serie-taylor · borrador · origen: ia (desconocido)
+### P44 · dificultad 3 · kc: serie-taylor · revisada · origen: ia (desconocido) · revisó: Juzou04
 Los primeros términos de la serie de Taylor de ln(1 + x) centrada en 0 son:
 
 - A) $x - \frac{x^2}{2} + \frac{x^3}{3} - …$ · CORRECTA
@@ -103,7 +103,7 @@ Los primeros términos de la serie de Taylor de ln(1 + x) centrada en 0 son:
 
 solución: con f(x) = ln(1 + x): f(0) = 0, f'(0) = 1, f''(0) = −1 y f'''(0) = 2. Los coeficientes f⁽ⁿ⁾(0)/n! son 0, 1, −1/2 y 2/6 = 1/3, así que ln(1 + x) = x − x²/2 + x³/3 − … x − x² + 2x³ usa las derivadas sin dividir entre n!, 1 + x + x²/2 + x³/6 es la serie de eˣ, y la serie no termina después de dos términos.
 
-### P45 · dificultad 2 · kc: serie-taylor · borrador · origen: ia (desconocido)
+### P45 · dificultad 2 · kc: serie-taylor · revisada · origen: ia (desconocido) · revisó: Juzou04
 Para el coeficiente de x² en la serie de Taylor de f centrada en 0, calculas:
 
 - A) $\frac{f''(0)}{2}$ · CORRECTA

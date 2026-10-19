@@ -25,7 +25,7 @@ mc: ignora-discontinuidad · impropia-discontinuidad · no revisas si el integra
 - C) Converge a 0 · [limite-mal-evaluado] evalúas mal el límite superior
 - D) No se puede determinar · [no-reconoce-convergente] no reconoces una impropia convergente
 
-### P27 · dificultad 2 · kc: impropia-p · borrador · origen: ia (desconocido)
+### P27 · dificultad 2 · kc: impropia-p · revisada · origen: ia (desconocido) · revisó: Juzou04
 ¿Cuál de estas integrales desde 1 hasta ∞ converge?
 
 - A) $\int \frac{1}{x^3}\,dx$ · CORRECTA
@@ -35,7 +35,7 @@ mc: ignora-discontinuidad · impropia-discontinuidad · no revisas si el integra
 
 solución: ∫ desde 1 hasta ∞ de 1/xᵖ converge exactamente cuando p > 1. 1/x³ tiene p = 3 > 1 y converge: lim cuando b → ∞ de (1/2 − 1/(2b²)) = 1/2. 1/x tiene p = 1 y diverge, porque ln(b) tiende a ∞. 1/√x tiene p = 1/2 < 1 y también diverge. Un intervalo infinito puede dar un valor finito, como muestra 1/x³.
 
-### P28 · dificultad 3 · kc: impropia-p, impropia-limite · borrador · origen: ia (desconocido)
+### P28 · dificultad 3 · kc: impropia-p, impropia-limite · revisada · origen: ia (desconocido) · revisó: Juzou04
 $\int_1^{\infty} \frac{1}{x^{3/2}}\,dx$:
 
 - A) Converge a 2 · CORRECTA
@@ -45,7 +45,7 @@ $\int_1^{\infty} \frac{1}{x^{3/2}}\,dx$:
 
 solución: es una integral p con p = 3/2 > 1, así que converge. Como límite: ∫ de 1 a b de x^(−3/2) dx = [−2x^(−1/2)] de 1 a b = 2 − 2/√b, que tiende a 2 cuando b → ∞. La comparación con 1/x no sirve (p = 1 es el único caso de la frontera que diverge), y no hace falta p ≥ 2. El 2/3 sale de equivocar la antiderivada: dividir entre 3/2 en vez de entre −1/2.
 
-### P29 · dificultad 2 · kc: impropia-limite · borrador · origen: ia (desconocido)
+### P29 · dificultad 2 · kc: impropia-limite · revisada · origen: ia (desconocido) · revisó: Juzou04
 ¿Cómo se trabaja correctamente $\int_0^{\infty} e^{-x}\,dx$?
 
 - A) Como $\lim_{b\to\infty} \int_0^b e^{-x}\,dx$ · CORRECTA
@@ -55,7 +55,7 @@ solución: es una integral p con p = 3/2 > 1, así que converge. Como límite: �
 
 solución: una integral con límite infinito se define como un límite: ∫ desde 0 hasta ∞ de e^(−x) dx = lim cuando b → ∞ de ∫ de 0 a b de e^(−x) dx = lim (1 − e^(−b)) = 1. ∞ no se reemplaza como un número en −e^(−x). Que e^(−x) tienda a 0 dice algo del integrando, no de la integral, que vale 1. Y lim e^(−b) es solo uno de los dos extremos de la antiderivada: falta el término de x = 0.
 
-### P30 · dificultad 3 · kc: impropia-limite · borrador · origen: ia (desconocido)
+### P30 · dificultad 3 · kc: impropia-limite · revisada · origen: ia (desconocido) · revisó: Juzou04
 Un estudiante dice que $\int_1^{\infty} \frac{1}{x}\,dx$ converge "porque 1/x tiende a 0". ¿Qué está mal?
 
 - A) Que el integrando tienda a 0 no basta: ln(b) tiende a ∞ cuando b → ∞ · CORRECTA
@@ -65,7 +65,7 @@ Un estudiante dice que $\int_1^{\infty} \frac{1}{x}\,dx$ converge "porque 1/x ti
 
 solución: ∫ de 1 a b de dx/x = ln(b), que tiende a ∞ cuando b → ∞, así que la integral diverge. Que el integrando tienda a 0 es necesario para que converja, pero no suficiente: 1/x² también tiende a 0 y su integral sí converge. No vale 0, ln(∞) no es un número, y el límite superior no se puede ignorar.
 
-### P31 · dificultad 2 · kc: impropia-discontinuidad, impropia-limite · borrador · origen: ia (desconocido)
+### P31 · dificultad 2 · kc: impropia-discontinuidad, impropia-limite · revisada · origen: ia (desconocido) · revisó: Juzou04
 ¿Es impropia $\int_0^1 \frac{1}{\sqrt{x}}\,dx$?
 
 - A) Sí, porque 1/√x no está definida en x = 0 · CORRECTA
@@ -75,7 +75,7 @@ solución: ∫ de 1 a b de dx/x = ln(b), que tiende a ∞ cuando b → ∞, así
 
 solución: aunque los límites son finitos, 1/√x no está definida en x = 0 y crece sin límite cerca de ese extremo, así que la integral es impropia y se calcula como límite: lim cuando a → 0⁺ de ∫ de a a 1 de x^(−1/2) dx = lim (2 − 2√a) = 2. Converge: que el integrando crezca sin límite no obliga a la integral a diverger. Decir que no es impropia ignora que el integrando se indefine en un extremo, y los extremos sí cuentan.
 
-### P32 · dificultad 3 · kc: impropia-discontinuidad, impropia-limite · borrador · origen: ia (desconocido)
+### P32 · dificultad 3 · kc: impropia-discontinuidad, impropia-limite · revisada · origen: ia (desconocido) · revisó: Juzou04
 Un estudiante calcula $\int_{-1}^1 \frac{1}{x^2}\,dx$ como $\left[-\frac{1}{x}\right]$ entre −1 y 1, y obtiene −2. ¿Qué pasa?
 
 - A) No vale: 1/x² se indefine en x = 0, hay que partir la integral y resulta divergente · CORRECTA
@@ -85,7 +85,7 @@ Un estudiante calcula $\int_{-1}^1 \frac{1}{x^2}\,dx$ como $\left[-\frac{1}{x}\r
 
 solución: 1/x² no está definida en x = 0, que está dentro de [−1, 1], así que la integral es impropia y hay que partirla en 0. La mitad derecha es lim cuando a → 0⁺ de ∫ de a a 1 de dx/x² = lim (1/a − 1) = ∞, así que diverge, y con ella toda la integral. El −2 sale de aplicar la regla de Barrow sobre una discontinuidad; además, un integrando positivo no puede dar una integral negativa. Ninguna de las dos mitades vale 1: las dos divergen.
 
-### P54 · dificultad 2 · kc: impropia-discontinuidad, impropia-limite · borrador · origen: ia (sonnet-5.5) · ⚠ revisar
+### P54 · dificultad 2 · kc: impropia-discontinuidad, impropia-limite · revisada · origen: ia (sonnet-5.5) · revisó: Juzou04
 ¿Qué se concluye de la integral $\int_{-2}^{3} \frac{1}{x}\,dx$?
 
 - A) Vale $\ln\frac{3}{2}$ · [ignora-discontinuidad] aplicas directamente ln|x| entre −2 y 3 sin notar que x = 0 está dentro del intervalo

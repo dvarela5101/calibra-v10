@@ -2,7 +2,7 @@
 
 Este documento lista las materias y las habilidades del banco a las que les falta material, para saber qué hay que conseguir. Lo crea y lo mantiene [HU-061](../backlog/HU-061.md) (D-49 c). [PROCESO.md](PROCESO.md#falta-de-material) dice cuándo se actualiza. No lleva nombres de archivos del material.
 
-Última actualización: borradores de los Parciales 2 y 3 de Cálculo Diferencial (HU-101), 18-oct-2026.
+Última actualización: Parcial 2 de Cálculo Integral (HU-102), 19-oct-2026.
 
 ## 1. Habilidades sin preguntas sin ver o con una sola respuesta
 
@@ -18,6 +18,26 @@ La meta por habilidad es de 4 preguntas, con 2 o más de dificultad 2, 2 o más 
 Alcance de la corrida (Parcial 1 de Cálculo Diferencial): las 10 habilidades llegan a la meta, así que no hay filas.
 
 Alcance de la corrida de HU-101 (Parciales 2 y 3 de Cálculo Diferencial): las 20 habilidades llegan a la meta contando los borradores, así que tampoco hay filas.
+
+Alcance de la corrida de HU-102 (Parcial 2 de Cálculo Integral): las 18 habilidades cumplen D-13 con preguntas revisadas, pero 15 no llegan a la meta de preguntas, todas por `sin preguntas sin ver`. A cada una le falta 1 pregunta. Las 4 preguntas nuevas de esta corrida se escribieron sin material: el de la materia no se pudo leer en la corrida.
+
+| Habilidad | Preguntas hoy | Qué falta para la meta |
+|---|---|---|
+| `partes-eleccion-u` | 3 (2 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
+| `partes-reiterada` | 4 (1 de dificultad 2, 3 de dificultad 3) | 1 pregunta más, de dificultad 2 |
+| `sust-reconocer` | 3 (2 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
+| `sust-dx` | 5 (4 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
+| `sust-limites` | 3 (2 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
+| `impropia-p` | 3 (1 de dificultad 2, 2 de dificultad 3) | 1 pregunta más, de dificultad 2 |
+| `impropia-discontinuidad` | 3 (2 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
+| `edo-separables` | 3 (2 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
+| `edo-lineal` | 3 (1 de dificultad 2, 2 de dificultad 3) | 1 pregunta más, de dificultad 2 |
+| `edo-exponencial` | 3 (2 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
+| `serie-potencias` | 3 (1 de dificultad 2, 2 de dificultad 3) | 1 pregunta más, de dificultad 2 |
+| `serie-taylor` | 4 (3 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
+| `app-volumen` | 3 (2 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
+| `app-arco` | 3 (1 de dificultad 2, 2 de dificultad 3) | 1 pregunta más, de dificultad 2 |
+| `app-area` | 3 (2 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
 
 ### De las marcas de HU-060
 
@@ -37,31 +57,6 @@ HU-061 no registra material fuente para esta materia (inventario del 4-oct-2026)
 | `sistemas` | 3, dificultad 2 | 1 pregunta revisada más, con al menos una de otra dificultad |
 | `determinantes` | 3, dificultad 2 | 1 pregunta revisada más, con al menos una de otra dificultad |
 | `espacios` | 3, dificultad 2 | 1 pregunta revisada más, con al menos una de otra dificultad |
-
-### Cálculo Integral (`calculo-integral`)
-
-Hay resúmenes semanales y 4 talleres (2024-1). No hay parciales, soluciones ni programa. Además tiene 39 borradores de IA sin solución, que se completan en una HU aparte. Cumplen 0 de 18 habilidades.
-
-| Habilidad | Revisadas hoy | Qué falta para la cobertura de D-13 |
-|---|---|---|
-| `partes-eleccion-u` | 1, dificultad 2 | 2 preguntas revisadas más, con al menos una de otra dificultad |
-| `partes-formula` | 1, dificultad 2 | 2 preguntas revisadas más, con al menos una de otra dificultad |
-| `partes-reiterada` | 0 | 3 preguntas revisadas, en al menos 2 dificultades |
-| `sust-reconocer` | 1, dificultad 2 | 2 preguntas revisadas más, con al menos una de otra dificultad |
-| `sust-dx` | 0 | 3 preguntas revisadas, en al menos 2 dificultades |
-| `sust-limites` | 0 | 3 preguntas revisadas, en al menos 2 dificultades |
-| `impropia-p` | 1, dificultad 3 | 2 preguntas revisadas más, con al menos una de otra dificultad |
-| `impropia-limite` | 1, dificultad 3 | 2 preguntas revisadas más, con al menos una de otra dificultad |
-| `impropia-discontinuidad` | 0 | 3 preguntas revisadas, en al menos 2 dificultades |
-| `edo-separables` | 1, dificultad 2 | 2 preguntas revisadas más, con al menos una de otra dificultad |
-| `edo-lineal` | 1, dificultad 3 | 2 preguntas revisadas más, con al menos una de otra dificultad |
-| `edo-exponencial` | 1, dificultad 2 | 2 preguntas revisadas más, con al menos una de otra dificultad |
-| `serie-criterio` | 1, dificultad 2 | 2 preguntas revisadas más, con al menos una de otra dificultad |
-| `serie-potencias` | 1, dificultad 3 | 2 preguntas revisadas más, con al menos una de otra dificultad |
-| `serie-taylor` | 1, dificultad 2 | 2 preguntas revisadas más, con al menos una de otra dificultad |
-| `app-volumen` | 1, dificultad 2 | 2 preguntas revisadas más, con al menos una de otra dificultad |
-| `app-arco` | 1, dificultad 3 | 2 preguntas revisadas más, con al menos una de otra dificultad |
-| `app-area` | 0 | 3 preguntas revisadas, en al menos 2 dificultades |
 
 ### Cálculo Vectorial (`calculo-vectorial`)
 
