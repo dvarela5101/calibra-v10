@@ -84,16 +84,45 @@
   color: var(--muted);
 }
 
-/* La única Evaluación de la materia: ya elegida, sin radio. */
-.fija {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e1);
-  padding: var(--e3) var(--e4);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  overflow-wrap: anywhere;
+/* Materias y Evaluaciones del selector (D-74 a): tarjetas en cuadrícula, una columna en el celular. */
+.cuadricula {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: var(--e2);
+}
+
+/*
+ * Una tarjeta que se toca, sin el punto a la vista: el radio nativo va encima, transparente y del mismo tamaño, así que sigue
+ * siendo el control (teclado, lector de pantalla y clic) y la tarjeta solo muestra su estado.
+ */
+.tarjetaSinRadio {
+  composes: tarjeta;
+  position: relative;
+  align-items: center;
+}
+
+.tarjetaSinRadio:hover {
+  border-color: var(--primary);
+}
+
+.tarjetaSinRadio:has(.radioEncima:focus-visible) {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* «Ver monitores sin hacer la prueba» es un enlace con forma de botón secundario: sin el subrayado de los enlaces. */
+.botonAMonitores {
+  text-decoration: none;
+}
+
+.radioEncima {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 
 /* Hay un diagnóstico en curso: --warn es solo relleno, el texto va en --text. */

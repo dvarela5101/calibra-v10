@@ -300,11 +300,18 @@ async function abrirSelector(page: Page): Promise<Response | null> {
   return respuesta;
 }
 
+/**
+ * Elige la materia y, si tiene una sola Evaluación, también esa: desde D-74 b ya no viene elegida. Con varias, la prueba elige
+ * la que quiera.
+ */
 async function elegirMateria(page: Page, nombre: string): Promise<void> {
-  await page.getByRole("radio", { name: nombre, exact: true }).check();
+  await page.getByRole("radiogroup", { name: "Materia", exact: true }).getByRole("radio", { name: nombre, exact: true }).check();
+  const evaluaciones = page.getByRole("radiogroup", { name: "Evaluación", exact: true }).getByRole("radio");
+  await expect(evaluaciones.first()).toBeVisible();
+  if ((await evaluaciones.count()) === 1) await evaluaciones.first().check();
 }
 
-/** Abre el selector, elige la materia (con su única Evaluación) y pulsa «Empezar» hasta que sale la primera pregunta. */
+/** Abre el selector, elige la materia y su única Evaluación, y pulsa «Empezar» hasta que sale la primera pregunta. */
 async function empezarPrueba(page: Page, nombreDeLaMateria: string): Promise<void> {
   await abrirSelector(page);
   await elegirMateria(page, nombreDeLaMateria);
@@ -754,7 +761,7 @@ test("Inicio · «Hacer el diagnóstico» lleva a /diagnostico y la página ya n
 // 2. Selector
 // ===============================================================================================================
 
-test("Selector · la materia con su Evaluación y sus temas, la línea de monitores, ningún dato que escribir y «Empezar» sin elegir no manda nada", async ({
+test("Selector · la materia y su única Evaluación se eligen, el botón a los monitores, ningún dato que escribir y «Empezar» sin elegir no manda nada", async ({
   page,
   context,
   banco,
@@ -764,7 +771,8 @@ test("Selector · la materia con su Evaluación y sus temas, la línea de monito
   await abrirSelector(page);
   limpieza.anotar((await esperarSesion(context)).id);
 
-  await expect(page.getByText("Diagnóstico", { exact: true })).toBeVisible();
+  // «Diagnóstico» también es un paso del carril (D-74 d): el eyebrow es el de la columna principal.
+  await expect(page.getByRole("main").getByText("Diagnóstico", { exact: true })).toBeVisible();
   await expect(page.getByText("Responde unas preguntas de opción múltiple y mira qué habilidades dominas. No necesitas crear una cuenta.")).toBeVisible();
   const materias = page.getByRole("radiogroup", { name: "Materia", exact: true });
   await expect(materias.getByRole("radio", { name: banco.nombreA, exact: true })).toBeVisible();
@@ -777,17 +785,25 @@ test("Selector · la materia con su Evaluación y sus temas, la línea de monito
   await botonEmpezar(page).click();
   await expect(alerta(page, "Elige una materia")).toBeVisible();
 
-  // Con una sola Evaluación activa queda elegida: su nombre y sus temas, sin radio.
-  await elegirMateria(page, banco.nombreA);
-  await expect(alerta(page, "Elige una materia")).toHaveCount(0);
-  const evaluacion = page.getByRole("group", { name: "Evaluación", exact: true });
-  await expect(evaluacion).toContainText("Parcial 1");
-  await expect(evaluacion).toContainText("Temas: Derivadas");
-  await expect(page.getByRole("radiogroup", { name: "Evaluación", exact: true })).toHaveCount(0);
+  // Antes de elegir materia, el botón lleva a la lista de monitores (D-74 c); la línea de D-53 a ya no sale con materias.
+  const aMonitores = page.getByRole("link", { name: "Ver monitores sin hacer la prueba", exact: true });
+  await expect(aMonitores).toHaveAttribute("href", "/monitores");
+  await expect(page.getByText("¿No ves tu materia?")).toHaveCount(0);
 
-  const linea = page.getByText("¿No ves tu materia?");
-  await expect(linea).toContainText("¿No ves tu materia? Mira los monitores");
-  await expect(page.getByRole("link", { name: "Mira los monitores", exact: true })).toHaveAttribute("href", "/monitores");
+  // Con una sola Evaluación activa también hay que elegirla (D-74 b): una tarjeta con su nombre y sus temas, sin elegir.
+  await materias.getByRole("radio", { name: banco.nombreA, exact: true }).check();
+  await expect(alerta(page, "Elige una materia")).toHaveCount(0);
+  const evaluaciones = page.getByRole("radiogroup", { name: "Evaluación", exact: true }).getByRole("radio");
+  await expect(evaluaciones).toHaveCount(1);
+  await expect(evaluaciones.first()).toHaveAccessibleName(/^Parcial 1\s*Temas: Derivadas$/);
+  await expect(evaluaciones.first()).not.toBeChecked();
+  await botonEmpezar(page).click();
+  await expect(alerta(page, "Elige una evaluación")).toBeVisible();
+  await evaluaciones.first().check();
+  await expect(alerta(page, "Elige una evaluación")).toHaveCount(0);
+
+  // Con la materia elegida, el botón lleva a sus monitores.
+  await expect(aMonitores).toHaveAttribute("href", `/monitores?materia=${banco.codigoA}`);
 
   await expectReglas(page, "el selector");
   expect(acciones.total(), "elegir y pulsar «Empezar» sin elegir no llama a ninguna acción").toBe(0);
@@ -859,9 +875,9 @@ test("Casos que no empiezan · una Evaluación que se apagó después de cargar 
   await conEvaluacionActiva(banco, banco.idExamenFinal, async () => {
     await abrirSelector(page);
     limpieza.anotar((await esperarSesion(context)).id);
-    // La materia B tiene hoy una sola Evaluación activa: queda elegida al elegir la materia.
+    // La materia B tiene hoy una sola Evaluación activa: elegirMateria la elige también (D-74 b).
     await elegirMateria(page, banco.nombreB);
-    await expect(page.getByRole("group", { name: "Evaluación", exact: true })).toContainText("Examen final");
+    await expect(page.getByRole("radiogroup", { name: "Evaluación", exact: true })).toContainText("Examen final");
 
     // El banco cambió mientras la página estaba abierta.
     await banco.bd.query("update public.evaluacion set activa = false where id = $1", [banco.idExamenFinal]);
@@ -1411,7 +1427,7 @@ test("Cambiar de materia · si la Evaluación en que va ya no se ofrece, «Volve
     `Llevas un diagnóstico de ${banco.nombreA} · Parcial 2. Si empiezas otro de otra Evaluación, se descarta este.`,
   );
   await elegirMateria(page, banco.nombreA);
-  const evaluacion = page.getByRole("group", { name: "Evaluación", exact: true });
+  const evaluacion = page.getByRole("radiogroup", { name: "Evaluación", exact: true });
   await expect(evaluacion).toContainText("Parcial 1");
   await expect(evaluacion, "la Evaluación en que va ya no se ofrece").not.toContainText("Parcial 2");
 

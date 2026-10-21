@@ -44,7 +44,7 @@ export default async function ReservaApartada({ params }: PageProps<"/agendar/re
   } catch (error) {
     console.error("[agendar] no se pudo cargar la reserva:", error instanceof Error ? error.message : error);
     return (
-      <Pantalla eyebrow={EYEBROW} titulo="No pudimos cargar tu reserva">
+      <Pantalla paso="sesion" eyebrow={EYEBROW} titulo="No pudimos cargar tu reserva">
         <p role="alert" className={formulario.error}>
           Recarga la página; si sigue igual, inténtalo más tarde.
         </p>
@@ -57,7 +57,7 @@ export default async function ReservaApartada({ params }: PageProps<"/agendar/re
   const { titulo, estado } = encabezado(reserva, ahora);
   const quienPaga = lead?.id === reserva.idLead ? lead : null;
   return (
-    <Pantalla eyebrow={EYEBROW} titulo={titulo}>
+    <Pantalla paso="sesion" eyebrow={EYEBROW} titulo={titulo}>
       {estado}
       {quienPaga && reserva.estado === "confirmada" && (
         <p role="status" className={formulario.ayuda}>

@@ -38,12 +38,11 @@ export type Seleccion = { materia: MateriaConEvaluaciones | null; evaluacion: Ev
 
 /**
  * Lo elegido, validado contra las `materias` que llegan en este render: tras un `router.refresh()` (la Evaluación se apagó) lo
- * que ya no existe se descarta y no se envía. Con una sola Evaluación queda elegida; con varias se elige una.
+ * que ya no existe se descarta y no se envía. La Evaluación se elige siempre, también cuando es la única (D-74 b).
  */
 export function resolverSeleccion(materias: readonly MateriaConEvaluaciones[], codigo: string | null, idEvaluacion: string | null): Seleccion {
   const materia = materias.find((m) => m.codigo === codigo) ?? null;
-  const evaluaciones = materia?.evaluaciones ?? [];
-  const evaluacion = evaluaciones.length === 1 ? evaluaciones[0] : (evaluaciones.find((e) => e.id === idEvaluacion) ?? null);
+  const evaluacion = materia?.evaluaciones.find((e) => e.id === idEvaluacion) ?? null;
   return { materia, evaluacion };
 }
 

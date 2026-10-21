@@ -22,7 +22,7 @@ export default async function ContactoParaAgendar({ searchParams }: PageProps<"/
   if (lead && editar !== "1") redirect(siguiente);
 
   return (
-    <Pantalla
+    <Pantalla paso="sesion"
       eyebrow="Agendar"
       titulo={lead ? "Cambia tus datos" : "Tus datos para agendar"}
       subtitulo="Con ellos te confirmamos la cita. No necesitas haber hecho el diagnóstico: si ya sabes qué necesitas, agenda directo."

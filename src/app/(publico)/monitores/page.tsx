@@ -48,7 +48,7 @@ export default async function Monitores({ searchParams }: PageProps<"/monitores"
   } catch (error) {
     console.error("[monitores] no se pudo cargar la lista:", error instanceof Error ? error.message : error);
     return (
-      <Pantalla eyebrow={EYEBROW} titulo="No pudimos cargar los monitores">
+      <Pantalla paso="monitor" eyebrow={EYEBROW} titulo="No pudimos cargar los monitores">
         <p role="alert" className={formulario.error}>
           Recarga la página; si sigue igual, inténtalo más tarde.
         </p>
@@ -63,7 +63,7 @@ export default async function Monitores({ searchParams }: PageProps<"/monitores"
   // HU-049: si los perfiles no cargan, la lista sale sin ellos (cargarPerfiles deja el error en el log).
   const perfiles = await cargarPerfiles(supabase!, monitores.map((m) => m.idMonitor));
   return (
-    <Pantalla
+    <Pantalla paso="monitor"
       eyebrow={EYEBROW}
       titulo={`Monitores de ${elegida.nombre}`}
       subtitulo={
@@ -98,7 +98,7 @@ export default async function Monitores({ searchParams }: PageProps<"/monitores"
 
 function ElegirMateria({ materias, noEncontrada }: { materias: MateriaDeLaLista[]; noEncontrada: boolean }) {
   return (
-    <Pantalla
+    <Pantalla paso="monitor"
       eyebrow={EYEBROW}
       titulo="Elige tu materia"
       subtitulo={`Te mostramos los monitores certificados en ella y sus fechas libres de las próximas ${SEMANAS_DEL_HORIZONTE} semanas.`}

@@ -22,6 +22,8 @@ export const TEXTOS = {
   sinMaterias: "Todavía no hay diagnósticos disponibles",
   noVesTuMateria: "¿No ves tu materia?",
   enlaceAMonitores: "Mira los monitores",
+  // D-74 c: con materias, el botón de debajo de «Empezar» reemplaza la línea de arriba.
+  verMonitoresSinPrueba: "Ver monitores sin hacer la prueba",
   errorDeCarga: "No pudimos cargar el diagnóstico. Recarga la página; si sigue igual, inténtalo más tarde.",
   evaluacionNoDisponible: "Esa evaluación no está disponible",
   errorAlEmpezar: "No pudimos empezar el diagnóstico. Inténtalo de nuevo.",

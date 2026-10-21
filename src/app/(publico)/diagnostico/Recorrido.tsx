@@ -99,7 +99,7 @@ export function Recorrido({ inicial, materias }: Props) {
     const { enCurso } = pantalla;
     return (
       <div ref={raiz}>
-        <Pantalla eyebrow={`${enCurso.materia.nombre} · ${enCurso.evaluacion.nombre}`} titulo={TEXTOS.tituloDeLaPregunta}>
+        <Pantalla paso="prueba" eyebrow={`${enCurso.materia.nombre} · ${enCurso.evaluacion.nombre}`} titulo={TEXTOS.tituloDeLaPregunta}>
           {/* La región viva va fuera de la parte que se remonta: es el mismo elemento en cada pregunta y solo cambia su texto. */}
           <p className={estilos.avance} aria-live="polite" aria-atomic="true">
             {textoDeAvance(enCurso.paso, enCurso.maximo)}
@@ -121,7 +121,7 @@ export function Recorrido({ inicial, materias }: Props) {
     const { idEvaluacion, ultimo } = pantalla;
     return (
       <div ref={raiz}>
-        <Pantalla eyebrow={ultimo?.materia.nombre ?? TEXTOS.eyebrow} titulo={TEXTOS.tituloSinPreguntas}>
+        <Pantalla paso="prueba" eyebrow={ultimo?.materia.nombre ?? TEXTOS.eyebrow} titulo={TEXTOS.tituloSinPreguntas}>
           <SinPreguntasNuevas
             ultimo={ultimo}
             mensaje={pantalla.mensaje}
@@ -137,7 +137,7 @@ export function Recorrido({ inicial, materias }: Props) {
 
   return (
     <div ref={raiz}>
-      <Pantalla eyebrow={TEXTOS.eyebrow} titulo={TEXTOS.tituloDelSelector} subtitulo={TEXTOS.subtituloDelSelector}>
+      <Pantalla paso="prueba" eyebrow={TEXTOS.eyebrow} titulo={TEXTOS.tituloDelSelector} subtitulo={TEXTOS.subtituloDelSelector}>
         <SelectorDeMateria
           materias={materias}
           enCurso={pantalla.enCurso}

@@ -172,6 +172,8 @@ test("del diagnóstico en la portada al monitor que lo abre desde su agenda, con
     r.anotarSesion((await esperarSesion(page.context())).id);
     await expectReglasDelProducto(page, "elegir la materia");
     await page.getByRole("radio", { name: banco.nombreA, exact: true }).check();
+    // D-74 b: la única Evaluación también se elige.
+    await page.getByRole("radiogroup", { name: "Evaluación", exact: true }).getByRole("radio").first().check();
     await page.getByRole("button", { name: "Empezar", exact: true }).click();
     await expect(titulo(page, "Tu diagnóstico")).toBeVisible(LARGA);
     await expectReglasDelProducto(page, "la primera pregunta");

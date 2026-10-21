@@ -7,6 +7,21 @@
   padding-block-end: var(--e5);
 }
 
+/* Con el carril del estudiante (D-74 d), en pantallas anchas: la marca arriba de todo, el carril a la izquierda y la columna de
+   siempre a la derecha, del mismo ancho que sin carril. */
+@media (min-width: 1024px) {
+  .conRiel {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    column-gap: var(--e5);
+    max-inline-size: calc(var(--col) + 200px + var(--e5));
+  }
+
+  .conRiel > .marca {
+    grid-column: 1 / -1;
+  }
+}
+
 .marca {
   display: flex;
   align-items: center;

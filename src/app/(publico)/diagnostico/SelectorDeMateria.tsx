@@ -11,7 +11,7 @@ import type { EnCurso } from "@/lib/diagnostico/reglas";
 import { rutaDeMonitores } from "@/lib/disponibilidad/reglas";
 import estilos from "./diagnostico.module.css";
 
-/** «¿No ves tu materia? Mira los monitores» (D-53 a): sale con las materias y también cuando no hay ninguna. */
+/** «¿No ves tu materia? Mira los monitores» (D-53 a): desde D-74 c sale solo cuando no hay materias. */
 function EnlaceAMonitores() {
   return (
     <p className={estilos.lineaDeMonitores}>
@@ -40,38 +40,31 @@ type PropsDeEvaluaciones = {
 };
 
 /**
- * Las Evaluaciones de la materia elegida. Con una sola, un bloque ya elegido y sin radio; con varias, una tarjeta con radio por
- * Evaluación. En los dos casos cada una lleva su nombre y sus temas («cada Evaluación se reconoce por su nombre y sus temas»).
+ * Las Evaluaciones de la materia elegida: una tarjeta por Evaluación, con su nombre y sus temas («cada Evaluación se reconoce por
+ * su nombre y sus temas»). Ninguna viene elegida, ni siquiera la única (D-74 b).
  */
 export function EvaluacionesDeLaMateria({ evaluaciones, elegida, alElegir }: PropsDeEvaluaciones) {
   if (evaluaciones.length === 0) return null;
-  const unica = evaluaciones.length === 1;
   return (
     <div className={estilos.grupo}>
       <p id="grupo-de-evaluaciones" className={formulario.etiqueta}>
         {TEXTOS.grupoDeEvaluaciones}
       </p>
-      {unica ? (
-        <div role="group" aria-labelledby="grupo-de-evaluaciones" className={estilos.fija}>
-          <NombreYTemas evaluacion={evaluaciones[0]} />
-        </div>
-      ) : (
-        <div role="radiogroup" aria-labelledby="grupo-de-evaluaciones" className={estilos.lista}>
-          {evaluaciones.map((evaluacion) => (
-            <label key={evaluacion.id} className={`${estilos.tarjeta} ${elegida?.id === evaluacion.id ? estilos.elegida : ""}`}>
-              <input
-                type="radio"
-                name="evaluacion"
-                value={evaluacion.id}
-                checked={elegida?.id === evaluacion.id}
-                onChange={() => alElegir(evaluacion.id)}
-                className={estilos.radio}
-              />
-              <NombreYTemas evaluacion={evaluacion} />
-            </label>
-          ))}
-        </div>
-      )}
+      <div role="radiogroup" aria-labelledby="grupo-de-evaluaciones" className={estilos.cuadricula}>
+        {evaluaciones.map((evaluacion) => (
+          <label key={evaluacion.id} className={`${estilos.tarjetaSinRadio} ${elegida?.id === evaluacion.id ? estilos.elegida : ""}`}>
+            <input
+              type="radio"
+              name="evaluacion"
+              value={evaluacion.id}
+              checked={elegida?.id === evaluacion.id}
+              onChange={() => alElegir(evaluacion.id)}
+              className={estilos.radioEncima}
+            />
+            <NombreYTemas evaluacion={evaluacion} />
+          </label>
+        ))}
+      </div>
     </div>
   );
 }
@@ -173,16 +166,16 @@ export function SelectorDeMateria({ materias, enCurso, mensaje, pendiente, ocupa
         <p id="grupo-de-materias" className={formulario.etiqueta}>
           {TEXTOS.grupoDeMaterias}
         </p>
-        <div role="radiogroup" aria-labelledby="grupo-de-materias" className={estilos.lista}>
+        <div role="radiogroup" aria-labelledby="grupo-de-materias" className={estilos.cuadricula}>
           {materias.map((m) => (
-            <label key={m.codigo} className={`${estilos.tarjeta} ${materia?.codigo === m.codigo ? estilos.elegida : ""}`}>
+            <label key={m.codigo} className={`${estilos.tarjetaSinRadio} ${materia?.codigo === m.codigo ? estilos.elegida : ""}`}>
               <input
                 type="radio"
                 name="materia"
                 value={m.codigo}
                 checked={materia?.codigo === m.codigo}
                 onChange={() => elegirMateria(m.codigo)}
-                className={estilos.radio}
+                className={estilos.radioEncima}
               />
               <span className={estilos.nombreDeTarjeta}>{m.nombre}</span>
             </label>
@@ -203,9 +196,11 @@ export function SelectorDeMateria({ materias, enCurso, mensaje, pendiente, ocupa
       <button type="submit" className={`${formulario.boton} ${estilos.envio}`} aria-disabled={ocupado || sesion.verificando || undefined}>
         {sesion.verificando ? TEXTO_VERIFICANDO : pendiente ? TEXTOS.empezando : TEXTOS.empezar}
       </button>
+      {/* D-74 c: directo a los monitores, de la materia elegida si ya hay una. */}
+      <Link href={rutaDeMonitores(materia?.codigo)} className={`${formulario.botonSecundario} ${estilos.botonAMonitores}`}>
+        {TEXTOS.verMonitoresSinPrueba}
+      </Link>
       {enCurso && <VolverAMiPregunta ocupado={ocupado} alVolver={alVolver} />}
-
-      <EnlaceAMonitores />
     </form>
   );
 }
