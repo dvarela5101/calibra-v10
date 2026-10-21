@@ -39,7 +39,7 @@ export default async function Diagnostico() {
     unstable_rethrow(error);
     console.error("[diagnostico] no se pudo cargar:", error instanceof Error ? error.message : error);
     return (
-      <Pantalla eyebrow={TEXTOS.eyebrow} titulo="Diagnóstico">
+      <Pantalla paso="prueba" eyebrow={TEXTOS.eyebrow} titulo="Diagnóstico">
         <p role="alert" className={formulario.error}>
           {TEXTOS.errorDeCarga}
         </p>

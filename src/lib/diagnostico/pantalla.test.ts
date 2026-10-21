@@ -450,8 +450,10 @@ describe("resolverSeleccion y errorDeSeleccion (criterio 2)", () => {
   const FISICA: MateriaConEvaluaciones = { codigo: "FISI-1528", nombre: "Física II", evaluaciones: [evaluacion("e1", "Parcial 1")] };
   const CALCULO: MateriaConEvaluaciones = { codigo: "MATE-1214", nombre: "Cálculo", evaluaciones: [evaluacion("e2", "Parcial 1"), evaluacion("e3", "Parcial 2")] };
 
-  it("con una sola Evaluación queda elegida sin que la persona haga nada", () => {
-    expect(resolverSeleccion([FISICA, CALCULO], "FISI-1528", null)).toEqual({ materia: FISICA, evaluacion: FISICA.evaluaciones[0] });
+  it("con una sola Evaluación también hay que elegirla (D-74 b)", () => {
+    expect(resolverSeleccion([FISICA, CALCULO], "FISI-1528", null)).toEqual({ materia: FISICA, evaluacion: null });
+    expect(errorDeSeleccion(resolverSeleccion([FISICA, CALCULO], "FISI-1528", null))).toBe("Elige una evaluación");
+    expect(resolverSeleccion([FISICA, CALCULO], "FISI-1528", "e1")).toEqual({ materia: FISICA, evaluacion: FISICA.evaluaciones[0] });
   });
 
   it("con varias hay que elegir una", () => {

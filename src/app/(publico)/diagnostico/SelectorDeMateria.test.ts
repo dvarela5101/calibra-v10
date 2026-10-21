@@ -78,10 +78,17 @@ describe("SelectorDeMateria: con materias", () => {
     expect(html).toMatch(/<button type="submit"[^>]*>Empezar<\/button>/);
   });
 
-  it("debajo, «¿No ves tu materia? Mira los monitores» con el enlace a la lista", () => {
-    expect(texto(html)).toContain("¿No ves tu materia? Mira los monitores");
-    expect(html).toMatch(/<a [^>]*href="\/monitores"[^>]*>Mira los monitores<\/a>/);
-    expect(html.indexOf("Mira los monitores")).toBeGreaterThan(html.indexOf("Empezar"));
+  it("las materias son tarjetas en cuadrícula con el radio encima, sin el punto a la vista (D-74 a)", () => {
+    const grupo = html.match(/<div role="radiogroup" aria-labelledby="grupo-de-materias" class="([^"]*)"/)?.[1] ?? "";
+    expect(grupo).toContain("cuadricula");
+    const radios = [...html.matchAll(/<input[^>]*name="materia"[^>]*>/g)].map(([radio]) => radio);
+    for (const radio of radios) expect(radio).toMatch(/class="[^"]*radioEncima[^"]*"/);
+  });
+
+  it("debajo de «Empezar», el botón «Ver monitores sin hacer la prueba» a la lista, en lugar de la línea de D-53 a (D-74 c)", () => {
+    expect(html).toMatch(/<a [^>]*href="\/monitores"[^>]*>Ver monitores sin hacer la prueba<\/a>/);
+    expect(html.indexOf("Ver monitores sin hacer la prueba")).toBeGreaterThan(html.indexOf("Empezar"));
+    expect(html).not.toContain("¿No ves tu materia?");
   });
 
   it("al cargar no hay Evaluaciones ni alertas: primero se elige la materia", () => {
@@ -195,11 +202,14 @@ describe("EvaluacionesDeLaMateria (criterio 2): cada Evaluación se reconoce por
   const pintarEvaluaciones = (evaluaciones: MateriaConEvaluaciones["evaluaciones"], elegida = null as MateriaConEvaluaciones["evaluaciones"][number] | null) =>
     renderToStaticMarkup(createElement(EvaluacionesDeLaMateria, { evaluaciones, elegida, alElegir: vi.fn() }));
 
-  it("con una sola, el bloque ya elegido: su nombre y «Temas: …», sin radio", () => {
-    const html = pintarEvaluaciones(FISICA.evaluaciones, FISICA.evaluaciones[0]);
+  it("con una sola, también una tarjeta para elegir, sin elegir: su nombre y «Temas: …» (D-74 b)", () => {
+    const html = pintarEvaluaciones(FISICA.evaluaciones);
     expect(texto(html)).toContain("Evaluación Parcial 1 Temas: Cinemática y Dinámica y Energía");
-    expect(html).not.toContain("<input");
-    expect(html).toContain('<div role="group" aria-labelledby="grupo-de-evaluaciones"');
+    const radios = [...html.matchAll(/<input[^>]*type="radio"[^>]*>/g)].map(([radio]) => radio);
+    expect(radios).toHaveLength(1);
+    expect(radios[0]).toContain('value="e1"');
+    expect(radios[0]).not.toContain("checked");
+    expect(html).toContain('<div role="radiogroup" aria-labelledby="grupo-de-evaluaciones"');
   });
 
   it("con varias, una tarjeta con radio por Evaluación, cada una con su nombre y sus temas (M43)", () => {

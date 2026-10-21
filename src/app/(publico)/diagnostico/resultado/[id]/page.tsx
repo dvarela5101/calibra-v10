@@ -51,7 +51,7 @@ export default async function ResultadoDeUnDiagnostico({ params }: PageProps<"/d
     // También un resultado guardado que no cuadra (`ErrorDeResultadoGuardado`): el mensaje no trae contenido.
     console.error("[diagnostico] no se pudo cargar el resultado:", error instanceof Error ? error.message : error);
     return (
-      <Pantalla eyebrow={TEXTOS.eyebrow} titulo={TEXTOS.tituloDelResultado}>
+      <Pantalla paso="diagnostico" eyebrow={TEXTOS.eyebrow} titulo={TEXTOS.tituloDelResultado}>
         <p role="alert" className={formulario.error}>
           {TEXTOS.errorDeCargaDelResultado}
         </p>
@@ -63,7 +63,7 @@ export default async function ResultadoDeUnDiagnostico({ params }: PageProps<"/d
   const ranura = await contactoDelResultado(sesion.idUsuario, id);
 
   return (
-    <Pantalla eyebrow={resultado.materia.nombre} titulo={TEXTOS.tituloDelResultado}>
+    <Pantalla paso="diagnostico" eyebrow={resultado.materia.nombre} titulo={TEXTOS.tituloDelResultado}>
       <ResultadoDelDiagnostico resultado={resultado} ranura={ranura} />
     </Pantalla>
   );
