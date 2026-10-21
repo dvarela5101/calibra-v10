@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-20 23:00. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-20 23:10. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -23,6 +23,7 @@ _Generado automaticamente: 2026-10-20 23:00. No editar a mano; usa `scripts/back
 | [HU-085](backlog/HU-085.md) | [Sistema] Borrar o anonimizar los datos de un Lead o aspirante que retiró su autorización o lleva 24 meses sin actividad | Lista | P2 | L | HU-056, HU-006, HU-062, HU-068 |
 | [HU-092](backlog/HU-092.md) | [Monitor] Marcar en mi perfil los temas en los que soy fuerte | Lista | P2 | M | HU-049 |
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | En progreso | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056, HU-084, HU-089, HU-095, HU-096, HU-097, HU-091, HU-103 |
+| [HU-105](backlog/HU-105.md) | Selector del diagnóstico como el prototipo: tarjetas sin radio, elegir siempre la Evaluación y botón «Ver monitores sin hacer la prueba» | En progreso | P0 | S | HU-009 |
 | [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
 | [HU-099](backlog/HU-099.md) | [Contenido] Revisar los borradores de HU-091 y activar Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | En revision | P1 | S | HU-091 |
 | [HU-100](backlog/HU-100.md) | [Contenido] Revisar los borradores del Parcial 1 de Cálculo Diferencial y activarlo | En revision | P1 | M | HU-061 |
