@@ -17,7 +17,7 @@ Tener a mano, en el gestor de contraseñas:
 
 ## 1. La dirección del sitio (Juzou04)
 
-En Vercel, el proyecto del prototipo, **Settings**, **Domains**: anotar la dirección de producción (`https://…vercel.app` o el dominio que tenga). Es la dirección final de v10 (D-72 f). Con ella, dvarela5101 termina en Supabase la `Site URL`, las redirecciones y `calibra_sitio_url` en Vault, y crea el widget de Turnstile.
+La dirección de producción del prototipo es `https://calibra-eight.vercel.app` (la de `Juzou04/Calibra`, comprobada el 20-oct-2026). Es la dirección final de v10 (D-72 f). Juzou04 confirma en Vercel, proyecto, **Settings**, **Domains**, que no hay otro dominio, y anota el sufijo de los previews (`calibra-<algo>-<sufijo>.vercel.app`, en **Deployments**) para las redirecciones de Supabase.
 
 ## 2. Ajustes del proyecto (Juzou04)
 
@@ -39,7 +39,7 @@ En **Deployment Protection**: la protección estándar de Vercel no protege la d
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://glgkmwlssdbonnbehitu.supabase.co` | no |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | la llave publicable `sb_publishable_…` | no |
 | `SUPABASE_SECRET_KEY` | la llave secreta `sb_secret_…` | **sí** |
-| `SITIO_URL` | la dirección del paso 1, con `https://` y sin barra final | no |
+| `SITIO_URL` | `https://calibra-eight.vercel.app` | no |
 | `CORREO_DATOS_PERSONALES` | `calibra.monitorias@gmail.com` | no |
 | `SMTP_SERVIDOR` | `smtp.gmail.com` | no |
 | `SMTP_PUERTO` | `465` | no |
