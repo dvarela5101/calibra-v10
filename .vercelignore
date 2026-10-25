@@ -1,0 +1,2 @@
+# HU-057: ningún .env local se sube al desplegar con la CLI; las variables viven en Vercel.
+.env*
