@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { momentoDeCita, rutaDeMiCita, type Cita } from "@/lib/citas/reglas";
@@ -43,7 +44,7 @@ function etiquetaDeCita(cita: Cita, ahora: Date): { texto: string; clase: string
 export function ListaDeCitas({ citas, ahora, invitarACrearCuenta = false }: Props) {
   if (citas.length === 0) {
     return (
-      <Pantalla
+      <Pantalla acceso={<AccesoDeCabecera />}
         eyebrow="Tus monitorías"
         titulo="Mis citas"
         subtitulo="No tienes citas en este navegador. Si agendaste desde otro dispositivo, abre el enlace del correo de confirmación."
@@ -56,7 +57,7 @@ export function ListaDeCitas({ citas, ahora, invitarACrearCuenta = false }: Prop
   }
 
   return (
-    <Pantalla eyebrow="Tus monitorías" titulo="Mis citas" subtitulo="Las monitorías que agendaste desde este navegador.">
+    <Pantalla acceso={<AccesoDeCabecera />} eyebrow="Tus monitorías" titulo="Mis citas" subtitulo="Las monitorías que agendaste desde este navegador.">
       <ul className={estilos.lista}>
         {citas.map((cita) => {
           const etiqueta = etiquetaDeCita(cita, ahora);

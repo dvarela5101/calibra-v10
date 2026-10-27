@@ -3,7 +3,7 @@ import Link from "next/link";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { formatearFechaHora } from "@/lib/fechas";
-import { buscarInvitacion } from "@/lib/monitores/servidor";
+import { buscarInvitacion, datosDeLaSolicitud } from "@/lib/monitores/servidor";
 import { describirReglaDeComision } from "@/lib/plazos/regla-general";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { FormularioRegistro } from "./FormularioRegistro";
@@ -25,6 +25,20 @@ async function leerTextoDeLaRegla(): Promise<string | undefined> {
     return await describirReglaDeComision(crearClienteAdmin());
   } catch (error) {
     console.error("[monitores] no se pudo leer la regla general para el registro:", error instanceof Error ? error.message : error);
+    return undefined;
+  }
+}
+
+/**
+ * D-75 c: el nombre y el teléfono de la solicitud más reciente con el correo de la invitación. Como la regla, no puede impedir
+ * el registro: si la lectura falla, el formulario sale vacío.
+ */
+async function leerIniciales(correo: string): Promise<Record<string, string> | undefined> {
+  try {
+    const datos = await datosDeLaSolicitud(correo);
+    return datos ? { nombre: datos.nombre, numero_telefono: datos.numeroTelefono } : undefined;
+  } catch (error) {
+    console.error("[monitores] no se pudo leer la solicitud para el registro:", error instanceof Error ? error.message : error);
     return undefined;
   }
 }
@@ -52,7 +66,7 @@ export default async function RegistroMonitor({ searchParams }: PageProps<"/moni
   }
 
   // Solo con una invitación vigente: con las demás ni se lee.
-  const textoDeLaRegla = await leerTextoDeLaRegla();
+  const [textoDeLaRegla, iniciales] = await Promise.all([leerTextoDeLaRegla(), leerIniciales(invitacion.correo)]);
 
   return (
     <Pantalla
@@ -60,7 +74,7 @@ export default async function RegistroMonitor({ searchParams }: PageProps<"/moni
       titulo="Crea tu cuenta de monitor"
       subtitulo={`Con ella vas a abrir tus franjas y recibir tus pagos. Esta invitación vence el ${formatearFechaHora(new Date(invitacion.venceEn))}.`}
     >
-      <FormularioRegistro token={token as string} correo={invitacion.correo} textoDeLaRegla={textoDeLaRegla} />
+      <FormularioRegistro token={token as string} correo={invitacion.correo} textoDeLaRegla={textoDeLaRegla} iniciales={iniciales} />
     </Pantalla>
   );
 }

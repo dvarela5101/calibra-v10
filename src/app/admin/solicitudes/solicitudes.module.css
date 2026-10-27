@@ -98,6 +98,15 @@
   opacity: 0.6;
 }
 
+/* D-75 c: invitar desde la solicitud, el paso que sigue a la evaluación. */
+.botonInvitar {
+  composes: botonEstado;
+  font-weight: 600;
+  color: #fff;
+  background: var(--primary);
+  overflow-wrap: anywhere;
+}
+
 .botonEstado:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;

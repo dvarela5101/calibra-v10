@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
+import { RUTA_DE_REGISTRO } from "@/lib/auth/acceso";
 import { PANEL_POR_ROL, rutaInternaSegura, tienePanel } from "@/lib/auth/roles";
 import { obtenerSesion } from "@/lib/auth/sesion";
 import { FormularioIngreso } from "./FormularioIngreso";
@@ -17,7 +18,7 @@ export default async function Ingresar({ searchParams }: PageProps<"/ingresar">)
 
   return (
     <Pantalla
-      eyebrow="Monitores y equipo de Calibra"
+      eyebrow="Tu cuenta de Calibra"
       titulo="Inicia sesión"
       subtitulo="Entra con el correo y la contraseña de tu cuenta."
     >
@@ -29,6 +30,10 @@ export default async function Ingresar({ searchParams }: PageProps<"/ingresar">)
       <FormularioIngreso siguiente={rutaInternaSegura(typeof siguiente === "string" ? siguiente : "", "")} />
       <Link href="/restablecer" className={formulario.enlace}>
         ¿Olvidaste tu contraseña?
+      </Link>
+      {/* D-75 b */}
+      <Link href={RUTA_DE_REGISTRO} className={formulario.enlace}>
+        ¿No tienes cuenta? Regístrate
       </Link>
     </Pantalla>
   );

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import { Pantalla } from "@/components/Pantalla";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { FormularioSolicitud, type MateriaParaElegir } from "./FormularioSolicitud";
@@ -24,7 +25,7 @@ export default async function QuieroSerMonitor() {
   const materias = await cargarMaterias();
 
   return (
-    <Pantalla
+    <Pantalla acceso={<AccesoDeCabecera />}
       eyebrow="Monitores"
       titulo="Quiero ser monitor"
       subtitulo="Déjanos tus datos y las materias en las que quieres certificarte. Te contactamos para agendar una evaluación presencial; si la apruebas, te invitamos a crear tu cuenta de monitor."

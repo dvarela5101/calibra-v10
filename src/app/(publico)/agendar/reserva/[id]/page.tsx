@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { esUuid } from "@/lib/agendar/reglas";
@@ -44,7 +45,7 @@ export default async function ReservaApartada({ params }: PageProps<"/agendar/re
   } catch (error) {
     console.error("[agendar] no se pudo cargar la reserva:", error instanceof Error ? error.message : error);
     return (
-      <Pantalla paso="sesion" eyebrow={EYEBROW} titulo="No pudimos cargar tu reserva">
+      <Pantalla acceso={<AccesoDeCabecera />} paso="sesion" eyebrow={EYEBROW} titulo="No pudimos cargar tu reserva">
         <p role="alert" className={formulario.error}>
           Recarga la página; si sigue igual, inténtalo más tarde.
         </p>
@@ -57,7 +58,7 @@ export default async function ReservaApartada({ params }: PageProps<"/agendar/re
   const { titulo, estado } = encabezado(reserva, ahora);
   const quienPaga = lead?.id === reserva.idLead ? lead : null;
   return (
-    <Pantalla paso="sesion" eyebrow={EYEBROW} titulo={titulo}>
+    <Pantalla acceso={<AccesoDeCabecera />} paso="sesion" eyebrow={EYEBROW} titulo={titulo}>
       {estado}
       {quienPaga && reserva.estado === "confirmada" && (
         <p role="status" className={formulario.ayuda}>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import { Pantalla } from "@/components/Pantalla";
 import { formatearDia } from "@/lib/fechas";
 import {
@@ -22,7 +23,7 @@ export default async function AvisoPrivacidad() {
   const correo = correoConsultasDatos();
 
   return (
-    <Pantalla
+    <Pantalla acceso={<AccesoDeCabecera />}
       eyebrow="Ley 1581 de 2012"
       titulo="Aviso de privacidad"
       subtitulo="Cómo trata Calibra tus datos personales y qué puedes hacer con ellos."

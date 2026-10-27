@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { formatearFechaHora } from "@/lib/fechas";
@@ -26,7 +27,7 @@ export default async function Resena({ searchParams }: PageProps<"/resena">) {
 
   if (!resena) {
     return (
-      <Pantalla
+      <Pantalla acceso={<AccesoDeCabecera />}
         eyebrow="Tu monitoría"
         titulo="Este enlace no sirve"
         subtitulo="Está incompleto o no lo reconocemos. Abre de nuevo el enlace del correo que te mandamos."
@@ -40,7 +41,7 @@ export default async function Resena({ searchParams }: PageProps<"/resena">) {
 
   if (resena.estado === "ya_resenada") {
     return (
-      <Pantalla eyebrow="Tu monitoría" titulo="Ya calificaste esta monitoría" subtitulo={MENSAJE_YA_RESENADA}>
+      <Pantalla acceso={<AccesoDeCabecera />} eyebrow="Tu monitoría" titulo="Ya calificaste esta monitoría" subtitulo={MENSAJE_YA_RESENADA}>
         <Link href="/" className={formulario.enlace}>
           Ir al inicio
         </Link>
@@ -50,7 +51,7 @@ export default async function Resena({ searchParams }: PageProps<"/resena">) {
 
   if (resena.estado === "con_reporte") {
     return (
-      <Pantalla eyebrow="Tu monitoría" titulo="No se puede calificar" subtitulo={MENSAJE_CON_REPORTE}>
+      <Pantalla acceso={<AccesoDeCabecera />} eyebrow="Tu monitoría" titulo="No se puede calificar" subtitulo={MENSAJE_CON_REPORTE}>
         <Link href="/" className={formulario.enlace}>
           Ir al inicio
         </Link>
@@ -60,7 +61,7 @@ export default async function Resena({ searchParams }: PageProps<"/resena">) {
 
   if (resena.estado === "no_disponible") {
     return (
-      <Pantalla eyebrow="Tu monitoría" titulo="No se puede calificar" subtitulo={MENSAJE_NO_DISPONIBLE}>
+      <Pantalla acceso={<AccesoDeCabecera />} eyebrow="Tu monitoría" titulo="No se puede calificar" subtitulo={MENSAJE_NO_DISPONIBLE}>
         <Link href="/" className={formulario.enlace}>
           Ir al inicio
         </Link>
@@ -69,7 +70,7 @@ export default async function Resena({ searchParams }: PageProps<"/resena">) {
   }
 
   return (
-    <Pantalla
+    <Pantalla acceso={<AccesoDeCabecera />}
       eyebrow="Tu monitoría"
       titulo="Califica tu monitoría"
       subtitulo="Tu opinión ayuda a otros estudiantes a escoger monitor."

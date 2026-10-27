@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { connection } from "next/server";
+import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import { ResultadoDelDiagnostico } from "@/components/diagnostico/ResultadoDelDiagnostico";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
@@ -25,7 +26,7 @@ export default async function Inicio() {
 /** El inicio de HU-009, tal cual. */
 function InicioNormal() {
   return (
-    <Pantalla
+    <Pantalla acceso={<AccesoDeCabecera />}
       eyebrow="Nueva versión en construcción"
       titulo="Descubre en qué tema fallas antes de tu monitoría"
       subtitulo="Calibra conecta a estudiantes de ciclo básico con monitores certificados. Una prueba corta muestra en qué habilidad está el error, y el monitor llega a la sesión sabiendo por dónde empezar."
@@ -49,7 +50,7 @@ function InicioNormal() {
  */
 function PortadaConResultado({ resultado }: { resultado: ResultadoParaMostrar }) {
   return (
-    <Pantalla
+    <Pantalla acceso={<AccesoDeCabecera />}
       eyebrow={resultado.materia.nombre}
       titulo="Tu último diagnóstico"
       subtitulo="Lo hiciste desde este navegador. Puedes ver los monitores de la materia o tomar otro diagnóstico."

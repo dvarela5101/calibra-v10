@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import { ResultadoDelDiagnostico } from "@/components/diagnostico/ResultadoDelDiagnostico";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
@@ -34,7 +35,7 @@ export default async function Resultados({ searchParams }: PageProps<"/resultado
     // Solo el mensaje: el token nunca va al registro.
     console.error("[diagnostico] no se pudo leer el resultado del enlace:", error instanceof Error ? error.message : error);
     return (
-      <Pantalla eyebrow={TEXTOS.eyebrow} titulo="No pudimos cargar tus resultados">
+      <Pantalla acceso={<AccesoDeCabecera />} eyebrow={TEXTOS.eyebrow} titulo="No pudimos cargar tus resultados">
         <p role="alert" className={formulario.error}>
           Recarga la página; si sigue igual, inténtalo más tarde.
         </p>
@@ -44,7 +45,7 @@ export default async function Resultados({ searchParams }: PageProps<"/resultado
   if (!resultado) return <EnlaceQueNoSirve />;
 
   return (
-    <Pantalla eyebrow={resultado.materia.nombre} titulo={TEXTOS.tituloDelResultado}>
+    <Pantalla acceso={<AccesoDeCabecera />} eyebrow={resultado.materia.nombre} titulo={TEXTOS.tituloDelResultado}>
       <ResultadoDelDiagnostico resultado={resultado} />
     </Pantalla>
   );
@@ -52,7 +53,7 @@ export default async function Resultados({ searchParams }: PageProps<"/resultado
 
 function EnlaceQueNoSirve() {
   return (
-    <Pantalla
+    <Pantalla acceso={<AccesoDeCabecera />}
       eyebrow={TEXTOS.eyebrow}
       titulo="Este enlace no sirve"
       subtitulo="Está incompleto o no lo reconocemos. Abre de nuevo el enlace del correo que te mandamos."

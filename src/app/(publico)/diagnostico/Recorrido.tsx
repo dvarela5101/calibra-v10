@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { Pantalla } from "@/components/Pantalla";
 import type { Letra } from "@/lib/diagnostico/motor";
 import {
@@ -22,6 +22,8 @@ type Props = {
   /** Lo que ve la persona al cargar: la pregunta pendiente si hay un diagnóstico en curso, y si no el selector. */
   inicial: PantallaDelRecorrido;
   materias: MateriaConEvaluaciones[];
+  /** D-75 a: el acceso de la cabecera, que se pinta en el servidor. */
+  acceso?: ReactNode;
 };
 
 /**
@@ -35,7 +37,7 @@ type Props = {
  * igual vuelva a anunciarse. Un fallo de la red es el mismo `error` que uno del servidor. Al llegar a una pantalla por una
  * transición, el foco pasa al enunciado de la pregunta o al título; al cargar o recargar la página no se mueve.
  */
-export function Recorrido({ inicial, materias }: Props) {
+export function Recorrido({ inicial, materias, acceso }: Props) {
   const router = useRouter();
   const [pantalla, setPantalla] = useState(inicial);
   const [pendiente, iniciarLlamada] = useTransition();
@@ -99,7 +101,7 @@ export function Recorrido({ inicial, materias }: Props) {
     const { enCurso } = pantalla;
     return (
       <div ref={raiz}>
-        <Pantalla paso="prueba" eyebrow={`${enCurso.materia.nombre} · ${enCurso.evaluacion.nombre}`} titulo={TEXTOS.tituloDeLaPregunta}>
+        <Pantalla acceso={acceso} paso="prueba" eyebrow={`${enCurso.materia.nombre} · ${enCurso.evaluacion.nombre}`} titulo={TEXTOS.tituloDeLaPregunta}>
           {/* La región viva va fuera de la parte que se remonta: es el mismo elemento en cada pregunta y solo cambia su texto. */}
           <p className={estilos.avance} aria-live="polite" aria-atomic="true">
             {textoDeAvance(enCurso.paso, enCurso.maximo)}
@@ -121,7 +123,7 @@ export function Recorrido({ inicial, materias }: Props) {
     const { idEvaluacion, ultimo } = pantalla;
     return (
       <div ref={raiz}>
-        <Pantalla paso="prueba" eyebrow={ultimo?.materia.nombre ?? TEXTOS.eyebrow} titulo={TEXTOS.tituloSinPreguntas}>
+        <Pantalla acceso={acceso} paso="prueba" eyebrow={ultimo?.materia.nombre ?? TEXTOS.eyebrow} titulo={TEXTOS.tituloSinPreguntas}>
           <SinPreguntasNuevas
             ultimo={ultimo}
             mensaje={pantalla.mensaje}
@@ -137,7 +139,7 @@ export function Recorrido({ inicial, materias }: Props) {
 
   return (
     <div ref={raiz}>
-      <Pantalla paso="prueba" eyebrow={TEXTOS.eyebrow} titulo={TEXTOS.tituloDelSelector} subtitulo={TEXTOS.subtituloDelSelector}>
+      <Pantalla acceso={acceso} paso="prueba" eyebrow={TEXTOS.eyebrow} titulo={TEXTOS.tituloDelSelector} subtitulo={TEXTOS.subtituloDelSelector}>
         <SelectorDeMateria
           materias={materias}
           enCurso={pantalla.enCurso}

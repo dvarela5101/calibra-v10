@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
+import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import { FormularioContacto } from "@/components/contacto/FormularioContacto";
 import { ResultadoDelDiagnostico } from "@/components/diagnostico/ResultadoDelDiagnostico";
 import formulario from "@/components/formulario.module.css";
@@ -51,7 +52,7 @@ export default async function ResultadoDeUnDiagnostico({ params }: PageProps<"/d
     // También un resultado guardado que no cuadra (`ErrorDeResultadoGuardado`): el mensaje no trae contenido.
     console.error("[diagnostico] no se pudo cargar el resultado:", error instanceof Error ? error.message : error);
     return (
-      <Pantalla paso="diagnostico" eyebrow={TEXTOS.eyebrow} titulo={TEXTOS.tituloDelResultado}>
+      <Pantalla acceso={<AccesoDeCabecera />} paso="diagnostico" eyebrow={TEXTOS.eyebrow} titulo={TEXTOS.tituloDelResultado}>
         <p role="alert" className={formulario.error}>
           {TEXTOS.errorDeCargaDelResultado}
         </p>
@@ -63,7 +64,7 @@ export default async function ResultadoDeUnDiagnostico({ params }: PageProps<"/d
   const ranura = await contactoDelResultado(sesion.idUsuario, id);
 
   return (
-    <Pantalla paso="diagnostico" eyebrow={resultado.materia.nombre} titulo={TEXTOS.tituloDelResultado}>
+    <Pantalla acceso={<AccesoDeCabecera />} paso="diagnostico" eyebrow={resultado.materia.nombre} titulo={TEXTOS.tituloDelResultado}>
       <ResultadoDelDiagnostico resultado={resultado} ranura={ranura} />
     </Pantalla>
   );

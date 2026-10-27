@@ -15,9 +15,10 @@ const h = vi.hoisted(() => ({
   buscar: vi.fn(),
   parametros: vi.fn(),
   crearAdmin: vi.fn(),
+  solicitud: vi.fn(),
 }));
 
-vi.mock("@/lib/monitores/servidor", () => ({ buscarInvitacion: h.buscar }));
+vi.mock("@/lib/monitores/servidor", () => ({ buscarInvitacion: h.buscar, datosDeLaSolicitud: h.solicitud }));
 vi.mock("@/lib/supabase/admin", () => ({ crearClienteAdmin: h.crearAdmin }));
 vi.mock("./acciones", () => ({ registrarse: async () => ({ error: null, invitacionNoSirve: false, valores: {} }) }));
 
@@ -31,6 +32,7 @@ beforeEach(() => {
   h.buscar.mockReset().mockResolvedValue({ vigente: true, correo: "nuevo@calibra.test", venceEn: VENCE });
   h.parametros.mockReset().mockResolvedValue({ data: { comision_porcentaje: 10, comision_tope: 15000 }, error: null });
   h.crearAdmin.mockReset().mockImplementation(clienteConParametros);
+  h.solicitud.mockReset().mockResolvedValue(null);
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
@@ -116,5 +118,33 @@ describe("si la lectura de la comisión falla, el registro sigue funcionando", (
     const llave = /<input id="llave"[^>]*>/.exec(html)?.[0] ?? "";
     expect(llave).toContain('aria-describedby="llave-ayuda"');
     expect(console.error).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("D-75 c: el registro con la solicitud que la persona ya mandó", () => {
+  const valorDe = (html: string, id: string) => new RegExp(`<input[^>]*id="${id}"[^>]*>`).exec(html)?.[0].match(/value="([^"]*)"/)?.[1];
+
+  it("trae el nombre y el teléfono de la solicitud del correo de la invitación", async () => {
+    h.solicitud.mockResolvedValue({ nombre: "Jorge Pérez", numeroTelefono: "+57 300 123 4567" });
+    const html = await pintar({ token: TOKEN });
+    expect(h.solicitud).toHaveBeenCalledExactlyOnceWith("nuevo@calibra.test");
+    expect(valorDe(html, "nombre")).toBe("Jorge Pérez");
+    expect(valorDe(html, "numero_telefono")).toBe("+57 300 123 4567");
+    expect(valorDe(html, "llave")).toBeUndefined();
+  });
+
+  it("sin solicitud, o si la lectura falla, el formulario sale vacío y se puede registrar igual", async () => {
+    for (const preparar of [() => h.solicitud.mockResolvedValue(null), () => h.solicitud.mockRejectedValue(new Error("caída"))]) {
+      preparar();
+      const html = await pintar({ token: TOKEN });
+      expect(valorDe(html, "nombre")).toBeUndefined();
+      expect(html).toContain("Crear mi cuenta");
+    }
+  });
+
+  it("sin una invitación vigente no se lee ninguna solicitud", async () => {
+    h.buscar.mockResolvedValue({ vigente: false });
+    await pintar({ token: TOKEN });
+    expect(h.solicitud).not.toHaveBeenCalled();
   });
 });

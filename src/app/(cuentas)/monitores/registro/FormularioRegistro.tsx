@@ -49,9 +49,22 @@ function descripcionDe(campo: Campo, textoDeLaRegla?: string): string | undefine
   return ids.filter(Boolean).join(" ") || undefined;
 }
 
-/** HU-096: `textoDeLaRegla` es la línea de la regla general (la arma el servidor); sin ella el formulario sale como antes. */
-export function FormularioRegistro({ token, correo, textoDeLaRegla }: { token: string; correo: string; textoDeLaRegla?: string }) {
-  const [estado, accion, enviando] = useActionState(registrarse, estadoInicial);
+/**
+ * HU-096: `textoDeLaRegla` es la línea de la regla general (la arma el servidor); sin ella el formulario sale como antes.
+ * D-75 c: `iniciales` trae el nombre y el teléfono de la solicitud que la persona mandó con ese correo, si la hay.
+ */
+export function FormularioRegistro({
+  token,
+  correo,
+  textoDeLaRegla,
+  iniciales,
+}: {
+  token: string;
+  correo: string;
+  textoDeLaRegla?: string;
+  iniciales?: Record<string, string>;
+}) {
+  const [estado, accion, enviando] = useActionState(registrarse, { ...estadoInicial, valores: iniciales ?? {} });
   // HU-058 (D-30): al terminar el registro la acción inicia sesión con contraseña, y Auth exige el token.
   const captcha = useTokenCaptcha("registro_monitor", enviando);
 

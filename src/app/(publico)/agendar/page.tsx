@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { leerPedidoDeAgendar, requiereAvisoSinCancelacion, rutaDeContactoParaAgendar } from "@/lib/agendar/reglas";
@@ -27,7 +28,7 @@ export default async function Agendar({ searchParams }: PageProps<"/agendar">) {
   const pedido = leerPedidoDeAgendar(await searchParams);
   if (!pedido) {
     return (
-      <Pantalla paso="sesion" eyebrow={EYEBROW} titulo="No encontramos esa fecha">
+      <Pantalla acceso={<AccesoDeCabecera />} paso="sesion" eyebrow={EYEBROW} titulo="No encontramos esa fecha">
         <p className={formulario.ayuda}>Elige una fecha en la lista de monitores certificados.</p>
         <Link href={rutaDeMonitores()} className={formulario.enlace}>
           Ver monitores certificados
@@ -57,7 +58,7 @@ export default async function Agendar({ searchParams }: PageProps<"/agendar">) {
   } catch (error) {
     console.error("[agendar] no se pudo cargar la fecha:", error instanceof Error ? error.message : error);
     return (
-      <Pantalla paso="sesion" eyebrow={EYEBROW} titulo="No pudimos cargar la fecha">
+      <Pantalla acceso={<AccesoDeCabecera />} paso="sesion" eyebrow={EYEBROW} titulo="No pudimos cargar la fecha">
         <p role="alert" className={formulario.error}>
           Recarga la página; si sigue igual, inténtalo más tarde.
         </p>
@@ -74,7 +75,7 @@ export default async function Agendar({ searchParams }: PageProps<"/agendar">) {
 
   if (!materia || !fecha) {
     return (
-      <Pantalla paso="sesion" eyebrow={EYEBROW} titulo="Esta fecha ya no está disponible">
+      <Pantalla acceso={<AccesoDeCabecera />} paso="sesion" eyebrow={EYEBROW} titulo="Esta fecha ya no está disponible">
         <p role="status" className={formulario.ayuda}>
           Alguien la apartó, ya no cumple las 3 horas de antelación o el monitor la cerró. Elige otra.
         </p>
@@ -84,7 +85,7 @@ export default async function Agendar({ searchParams }: PageProps<"/agendar">) {
   }
 
   return (
-    <Pantalla paso="sesion" eyebrow={EYEBROW} titulo="Confirma tu monitoría">
+    <Pantalla acceso={<AccesoDeCabecera />} paso="sesion" eyebrow={EYEBROW} titulo="Confirma tu monitoría">
       <ResumenDeCita
         cita={{
           nombreMateria: materia.nombre,

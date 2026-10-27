@@ -38,6 +38,21 @@ export function normalizarCorreo(valor: unknown): string | null {
   return esCorreo(correo) ? correo : null;
 }
 
+/** Lo que el admin lee después de invitar, desde `/admin/monitores` o desde una solicitud (D-75 c). */
+export function avisoDeInvitacion(
+  correo: string,
+  resultado: { ok: true; correoEnviado: boolean } | { ok: false; error: string },
+): { error: string | null; exito: string | null } {
+  if (!resultado.ok) return { error: resultado.error, exito: null };
+  if (!resultado.correoEnviado) {
+    return {
+      error: `La invitación quedó creada, pero el correo a ${correo} no salió todavía. Calibra lo reintenta solo; si no sale, lo verás en tu bandeja en "Correos que no salieron". No hace falta invitar de nuevo.`,
+      exito: null,
+    };
+  }
+  return { error: null, exito: `Enviamos la invitación a ${correo}. El enlace vence en ${DIAS_DE_VIGENCIA} días.` };
+}
+
 export type DatosDeRegistro = { nombre: string; numeroTelefono: string; llave: string; contrasena: string };
 
 const LARGO_MAXIMO = 200;

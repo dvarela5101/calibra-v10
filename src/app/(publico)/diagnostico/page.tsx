@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { unstable_rethrow } from "next/navigation";
 import { connection } from "next/server";
+import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { tienePanel } from "@/lib/auth/roles";
@@ -39,7 +40,7 @@ export default async function Diagnostico() {
     unstable_rethrow(error);
     console.error("[diagnostico] no se pudo cargar:", error instanceof Error ? error.message : error);
     return (
-      <Pantalla paso="prueba" eyebrow={TEXTOS.eyebrow} titulo="Diagnóstico">
+      <Pantalla acceso={<AccesoDeCabecera />} paso="prueba" eyebrow={TEXTOS.eyebrow} titulo="Diagnóstico">
         <p role="alert" className={formulario.error}>
           {TEXTOS.errorDeCarga}
         </p>
@@ -47,5 +48,5 @@ export default async function Diagnostico() {
     );
   }
 
-  return <Recorrido inicial={pantallaInicial(enCurso)} materias={materias} />;
+  return <Recorrido inicial={pantallaInicial(enCurso)} materias={materias} acceso={<AccesoDeCabecera />} />;
 }

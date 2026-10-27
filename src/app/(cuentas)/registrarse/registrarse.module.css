@@ -1,0 +1,27 @@
+/* Las dos maneras de tener cuenta (D-75 b). */
+
+.opcion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  padding: var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+.titulo {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.texto {
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.opcion > a {
+  text-decoration: none;
+}
