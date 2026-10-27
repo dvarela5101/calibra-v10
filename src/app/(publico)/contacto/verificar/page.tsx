@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { verificacionVigente } from "@/lib/leads/servidor";
@@ -22,7 +23,7 @@ export default async function VerificarCorreo({ searchParams }: PageProps<"/cont
 
   if (!vigente) {
     return (
-      <Pantalla
+      <Pantalla acceso={<AccesoDeCabecera />}
         eyebrow="Tu correo"
         titulo="Este enlace ya no sirve"
         subtitulo="Ya se usó, venció o está incompleto. Si quieres agendar, vuelve a escribir tu correo y te mandamos otro."
@@ -35,7 +36,7 @@ export default async function VerificarCorreo({ searchParams }: PageProps<"/cont
   }
 
   return (
-    <Pantalla
+    <Pantalla acceso={<AccesoDeCabecera />}
       eyebrow="Tu correo"
       titulo="Confirma que este correo es tuyo"
       subtitulo={`El enlace es para ${vigente.correo}. Al confirmar, este navegador queda con tus datos de Calibra y puedes seguir agendando aquí. Si no fuiste tú quien quiso agendar, cierra esta página: sin confirmar, nadie ve tus datos.`}

@@ -1,0 +1,55 @@
+/* El acceso a las cuentas, a la derecha de la marca (D-75 a). */
+
+.acceso {
+  display: flex;
+  align-items: center;
+  gap: var(--e1);
+  margin-inline-start: auto;
+}
+
+.enlace {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--toque-min);
+  padding-inline: var(--e2);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.principal {
+  composes: enlace;
+  padding-inline: 14px;
+  border: 1px solid var(--primary);
+  border-radius: var(--r-chico);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .enlace:hover {
+    text-decoration: underline;
+  }
+
+  .principal:hover {
+    text-decoration: none;
+    background: var(--primary);
+    color: #fff;
+  }
+}
+
+/* En un teléfono angosto la marca y los dos enlaces apenas caben: menos aire, nunca menos de 14 px ni de 44 px de toque. */
+@media (max-width: 419px) {
+  .acceso {
+    gap: 0;
+  }
+
+  .enlace {
+    padding-inline: 6px;
+    font-size: var(--texto-min);
+  }
+
+  .principal {
+    padding-inline: 10px;
+  }
+}

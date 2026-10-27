@@ -115,6 +115,13 @@ export function leerCambioDeEstado(formulario: FormData): Lectura<CambioDeEstado
   return { ok: true, datos: { idSolicitud, estado: estado as EstadoQueMarcaElAdmin } };
 }
 
+/** D-75 c: la solicitud desde la que el admin invita. Solo el id: el correo sale de la base. */
+export function leerSolicitudAInvitar(formulario: FormData): Lectura<{ idSolicitud: string }> {
+  const idSolicitud = String(formulario.get("id_solicitud") ?? "").trim().toLowerCase();
+  if (!UUID.test(idSolicitud)) return { ok: false, error: "No encontramos esa solicitud. Recarga la página." };
+  return { ok: true, datos: { idSolicitud } };
+}
+
 // ---------------------------------------------------------------------------
 // Páginas de la lista del admin
 // ---------------------------------------------------------------------------

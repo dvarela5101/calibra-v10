@@ -461,7 +461,8 @@ test.describe("Criterios 1 a 7, 14 a 17 y 20 · crear la cuenta en un solo naveg
       await expect(nuevo.page).toHaveURL(/\/privacidad$/, ESPERA);
       expect(leerSesion(await nuevo.context.cookies())).toMatchObject({ id: sesion.id, esAnonimo: false });
 
-      await nuevo.page.getByRole("link", { name: "Mis citas" }).click();
+      // D-75 a: la cabecera también lleva «Mis citas» a un Estudiante; aquí se usa el del pie, como antes.
+      await nuevo.page.getByRole("contentinfo").getByRole("link", { name: "Mis citas" }).click();
       await expect(nuevo.page.getByText(cita.materia)).toBeVisible(ESPERA);
       await nuevo.page.getByRole("link", { name: new RegExp(cita.materia) }).click();
       await expect(nuevo.page).toHaveURL(new RegExp(`/cita/${cita.id}$`), ESPERA);

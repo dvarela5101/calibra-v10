@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import { ResumenDeCita } from "@/app/(publico)/agendar/ResumenDeCita";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
@@ -39,7 +40,7 @@ export function DetalleDeCita({ cita, ahora, acciones, contactoSoporte = null, c
   const conOtraMonitoria = vista.tipo === "cancelada" || vista.tipo === "realizada";
 
   return (
-    <Pantalla eyebrow={EYEBROW} titulo={vista.titulo} subtitulo={vista.textoDelEstado ?? vista.textoDelMotivo ?? undefined}>
+    <Pantalla acceso={<AccesoDeCabecera />} eyebrow={EYEBROW} titulo={vista.titulo} subtitulo={vista.textoDelEstado ?? vista.textoDelMotivo ?? undefined}>
       <ResumenDeCita
         cita={{
           nombreMateria: cita.nombreMateria,
@@ -100,7 +101,7 @@ export function DetalleDeCita({ cita, ahora, acciones, contactoSoporte = null, c
  */
 export function EnlaceQueNoSirve() {
   return (
-    <Pantalla
+    <Pantalla acceso={<AccesoDeCabecera />}
       eyebrow={EYEBROW}
       titulo="Este enlace no sirve"
       subtitulo="Está incompleto o no lo reconocemos. Abre de nuevo el enlace del correo que te mandamos."
@@ -115,7 +116,7 @@ export function EnlaceQueNoSirve() {
 /** La base no respondió: se dice sin dar detalles y se invita a reintentar. */
 export function NoPudimosCargar({ titulo }: { titulo: string }) {
   return (
-    <Pantalla eyebrow={EYEBROW} titulo={titulo}>
+    <Pantalla acceso={<AccesoDeCabecera />} eyebrow={EYEBROW} titulo={titulo}>
       <p role="alert" className={formulario.error}>
         Recarga la página; si sigue igual, inténtalo más tarde.
       </p>

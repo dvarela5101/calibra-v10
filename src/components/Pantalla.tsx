@@ -10,11 +10,13 @@ type Props = {
   subtitulo?: ReactNode;
   /** Solo en el recorrido del estudiante: el paso en que va, para el carril de la izquierda (D-74 d). */
   paso?: PasoDelEstudiante;
+  /** Solo en las pantallas del visitante: `<AccesoDeCabecera />`, a la derecha de la marca (D-75 a). */
+  acceso?: ReactNode;
   children?: ReactNode;
 };
 
 /** Columna de contenido con la marca arriba. El logo lleva al inicio. */
-export function Pantalla({ eyebrow, titulo, subtitulo, paso, children }: Props) {
+export function Pantalla({ eyebrow, titulo, subtitulo, paso, acceso, children }: Props) {
   return (
     <div className={`${estilos.pantalla} ${paso ? estilos.conRiel : ""}`}>
       <header className={estilos.marca}>
@@ -22,6 +24,7 @@ export function Pantalla({ eyebrow, titulo, subtitulo, paso, children }: Props) 
           <Image src="/logo.svg" alt="" width={36} height={36} priority />
           <span className={estilos.nombre}>Calibra</span>
         </Link>
+        {acceso}
       </header>
 
       {paso && <RielDelEstudiante actual={paso} />}

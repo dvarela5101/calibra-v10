@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import { FormularioContacto } from "@/components/contacto/FormularioContacto";
 import { Pantalla } from "@/components/Pantalla";
 import { obtenerSesion } from "@/lib/auth/sesion";
@@ -22,7 +23,7 @@ export default async function ContactoParaAgendar({ searchParams }: PageProps<"/
   if (lead && editar !== "1") redirect(siguiente);
 
   return (
-    <Pantalla paso="sesion"
+    <Pantalla acceso={<AccesoDeCabecera />} paso="sesion"
       eyebrow="Agendar"
       titulo={lead ? "Cambia tus datos" : "Tus datos para agendar"}
       subtitulo="Con ellos te confirmamos la cita. No necesitas haber hecho el diagnóstico: si ya sabes qué necesitas, agenda directo."

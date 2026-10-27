@@ -5,10 +5,11 @@ import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { exigirRol } from "@/lib/auth/sesion";
 import { formatearFechaHora } from "@/lib/fechas";
+import { estadosDeInvitacion, type EstadoDeInvitacion } from "@/lib/monitores/servidor";
 import { listarSolicitudes, paginaDeLaPrimeraAbierta, type PaginaDeSolicitudes } from "@/lib/solicitudes/admin";
 import { leerPagina } from "@/lib/solicitudes/reglas";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
-import { TarjetaDeSolicitud } from "./TarjetaDeSolicitud";
+import { TarjetaDeSolicitud, type DatosDeTarjeta } from "./TarjetaDeSolicitud";
 import estilos from "./solicitudes.module.css";
 
 export const metadata: Metadata = { title: "Solicitudes para ser monitor · Calibra" };
@@ -27,6 +28,21 @@ async function cargar(pagina: number): Promise<PaginaDeSolicitudes | null> {
     console.error("[admin] no se pudieron leer las solicitudes:", error instanceof Error ? error.message : error);
     return null;
   }
+}
+
+/** D-75 c: con qué invitación va cada correo de la página. Si falla, las tarjetas salen sin ese dato y con el botón de invitar. */
+async function cargarInvitaciones(correos: string[]): Promise<Map<string, EstadoDeInvitacion> | null> {
+  try {
+    return await estadosDeInvitacion([...new Set(correos)]);
+  } catch (error) {
+    console.error("[admin] no se pudieron leer las invitaciones de las solicitudes:", error instanceof Error ? error.message : error);
+    return null;
+  }
+}
+
+function paraLaTarjeta(estado: EstadoDeInvitacion | undefined): DatosDeTarjeta["invitacion"] {
+  if (!estado) return null;
+  return estado.tipo === "invitado" ? { tipo: "invitado", vence: formatearFechaHora(new Date(estado.venceEn)) } : estado;
 }
 
 async function paginaDeInicio(): Promise<number> {
@@ -51,6 +67,7 @@ export default async function Solicitudes({ searchParams }: PageProps<"/admin/so
   const { pagina: pedida } = await searchParams;
   if (pedida === undefined) redirect(rutaDePagina(await paginaDeInicio()));
   const resultado = await cargar(leerPagina(pedida));
+  const invitaciones = resultado ? await cargarInvitaciones(resultado.solicitudes.map((s) => s.correo)) : null;
 
   return (
     <Pantalla
@@ -72,10 +89,10 @@ export default async function Solicitudes({ searchParams }: PageProps<"/admin/so
           </Link>
         </p>
       ) : (
-        <ListaDeSolicitudes resultado={resultado} />
+        <ListaDeSolicitudes resultado={resultado} invitaciones={invitaciones} />
       )}
       <Link href="/admin/monitores" className={formulario.enlace}>
-        Invitar a un monitor
+        Invitar a un monitor con otro correo
       </Link>
       <Link href="/admin" className={formulario.enlace}>
         Volver a mi bandeja
@@ -84,7 +101,13 @@ export default async function Solicitudes({ searchParams }: PageProps<"/admin/so
   );
 }
 
-function ListaDeSolicitudes({ resultado: { solicitudes, total, abiertas, pagina, porPagina } }: { resultado: PaginaDeSolicitudes }) {
+function ListaDeSolicitudes({
+  resultado: { solicitudes, total, abiertas, pagina, porPagina },
+  invitaciones,
+}: {
+  resultado: PaginaDeSolicitudes;
+  invitaciones: Map<string, EstadoDeInvitacion> | null;
+}) {
   const desde = (pagina - 1) * porPagina + 1;
   const hasta = desde + solicitudes.length - 1;
   const hayAnterior = pagina > 1;
@@ -108,6 +131,7 @@ function ListaDeSolicitudes({ resultado: { solicitudes, total, abiertas, pagina,
                 estado: s.estado,
                 enviada: formatearFechaHora(s.creadaEn),
                 materias: s.materias,
+                invitacion: paraLaTarjeta(invitaciones?.get(s.correo)),
               }}
             />
           </li>

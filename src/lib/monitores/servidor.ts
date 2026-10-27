@@ -59,6 +59,64 @@ export async function buscarInvitacion(token: unknown, ahora: Date = new Date())
   return { vigente: true, correo: data.correo, venceEn: data.vence_en };
 }
 
+/** D-75 c: dónde va cada correo de una solicitud. Una cuenta de monitor manda sobre una invitación que quede abierta. */
+export type EstadoDeInvitacion = { tipo: "sin_invitar" } | { tipo: "invitado"; venceEn: string } | { tipo: "monitor" };
+
+/**
+ * El estado de varios correos de una vez (los de una página de solicitudes). Los correos llegan normalizados, como los guardan
+ * las tres tablas. De varias invitaciones vigentes de un mismo correo cuenta la que vence más tarde.
+ */
+export async function estadosDeInvitacion(correos: readonly string[], ahora: Date = new Date()): Promise<Map<string, EstadoDeInvitacion>> {
+  const estados = new Map<string, EstadoDeInvitacion>(correos.map((correo) => [correo, { tipo: "sin_invitar" }]));
+  if (correos.length === 0) return estados;
+
+  const admin = crearClienteAdmin();
+  const [monitores, invitaciones] = await Promise.all([
+    admin.from("monitor_privado").select("correo").in("correo", [...correos]),
+    admin
+      .from("invitacion_monitor")
+      .select("correo, vence_en")
+      .in("correo", [...correos])
+      .is("usada_en", null)
+      .gt("vence_en", ahora.toISOString())
+      .order("vence_en", { ascending: true }),
+  ]);
+  if (monitores.error) throw monitores.error;
+  if (invitaciones.error) throw invitaciones.error;
+
+  // En orden de vencimiento: la última que se escribe es la que vence más tarde.
+  for (const { correo, vence_en } of invitaciones.data ?? []) estados.set(correo, { tipo: "invitado", venceEn: vence_en });
+  for (const { correo } of monitores.data ?? []) estados.set(correo, { tipo: "monitor" });
+  return estados;
+}
+
+/** D-75 c: el correo de una solicitud, leído de la base: la invitación nunca usa uno que mande el navegador. */
+export async function correoDeLaSolicitud(idSolicitud: string): Promise<{ correo: string; nombre: string } | null> {
+  const { data, error } = await crearClienteAdmin()
+    .from("solicitud_monitor")
+    .select("correo, nombre")
+    .eq("id", idSolicitud)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * D-75 c: el nombre y el teléfono que la persona dejó en su solicitud más reciente con ese correo, para que el registro ya los
+ * traiga. Solo se llama con una invitación vigente, que llegó a esa misma bandeja.
+ */
+export async function datosDeLaSolicitud(correo: string): Promise<{ nombre: string; numeroTelefono: string } | null> {
+  const { data, error } = await crearClienteAdmin()
+    .from("solicitud_monitor")
+    .select("nombre, numero_telefono")
+    .eq("correo", correo)
+    .order("creada_en", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? { nombre: data.nombre, numeroTelefono: data.numero_telefono } : null;
+}
+
 export type ResultadoRegistro =
   | { ok: true; correo: string }
   | { ok: false; motivo: "invitacion_no_sirve" | "correo_con_cuenta" | "fallo"; error: string };

@@ -8,7 +8,7 @@ import {
   enlaceDeCorreo,
   type EstadoDeSolicitud,
 } from "@/lib/solicitudes/reglas";
-import { marcarSolicitud, type EstadoCambio } from "./acciones";
+import { invitarDesdeSolicitud, marcarSolicitud, type EstadoCambio } from "./acciones";
 import estilos from "./solicitudes.module.css";
 
 export type DatosDeTarjeta = {
@@ -20,6 +20,8 @@ export type DatosDeTarjeta = {
   /** La fecha de envío, ya escrita para leer. */
   enviada: string;
   materias: string[];
+  /** D-75 c: si el correo ya tiene cuenta de monitor o una invitación vigente (con su vencimiento escrito). `null` si no se pudo leer. */
+  invitacion: { tipo: "sin_invitar" } | { tipo: "invitado"; vence: string } | { tipo: "monitor" } | null;
 };
 
 const inicial: EstadoCambio = { error: null, exito: null };
@@ -77,6 +79,41 @@ export function TarjetaDeSolicitud({ solicitud: s }: { solicitud: DatosDeTarjeta
           {enviando ? null : (resultado.error ?? resultado.exito)}
         </p>
       </form>
+      <Invitacion solicitud={s} />
     </>
+  );
+}
+
+/**
+ * D-75 c: invitar a la persona con el correo de su solicitud. Si ya tiene cuenta de monitor no hay nada que invitar; si tiene
+ * una invitación vigente se puede reenviar (otra invitación, con un enlace nuevo). Si no se pudo leer, el botón sale igual:
+ * el servidor no invita a quien ya es monitor.
+ */
+function Invitacion({ solicitud: s }: { solicitud: DatosDeTarjeta }) {
+  const [resultado, accion, enviando] = useActionState(invitarDesdeSolicitud, inicial);
+  const { invitacion } = s;
+
+  if (invitacion?.tipo === "monitor") return <p className={estilos.dato}>Ya tiene cuenta de monitor.</p>;
+
+  return (
+    <form action={accion} className={estilos.acciones} aria-label={`Invitar a ${s.nombre} a crear su cuenta de monitor`}>
+      <input type="hidden" name="id_solicitud" value={s.id} />
+      {invitacion?.tipo === "invitado" && (
+        <p className={estilos.dato}>Ya tiene una invitación, que vence el {invitacion.vence}.</p>
+      )}
+      <button
+        type="submit"
+        aria-disabled={enviando || undefined}
+        onClick={(evento) => {
+          if (enviando) evento.preventDefault();
+        }}
+        className={estilos.botonInvitar}
+      >
+        {invitacion?.tipo === "invitado" ? "Reenviar la invitación" : `Invitar a ${s.nombre}`}
+      </button>
+      <p role="status" className={resultado.error ? estilos.error : estilos.exito}>
+        {enviando ? null : (resultado.error ?? resultado.exito)}
+      </p>
+    </form>
   );
 }

@@ -1,5 +1,5 @@
 import { randomInt, randomUUID } from "node:crypto";
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { enviarCredenciales, expect, test as base, type Cuenta } from "./utilidades";
 
 // HU-062: quien quiere ser monitor deja sus datos desde "Quiero ser monitor", y el admin ve la solicitud y la
@@ -12,8 +12,8 @@ const ESPERA = { timeout: 20_000 };
 type Escenario = {
   /** Una materia con nombre único, para reconocerla entre las demás. */
   materia(): Promise<{ id: string; nombre: string }>;
-  /** Un correo único, que la limpieza usa para borrar la solicitud. */
-  correo(): string;
+  /** Un correo único (o `existente`, el de una cuenta), que la limpieza usa para borrar la solicitud. */
+  correo(existente?: string): string;
   /** Un celular al azar: como lo escribe la persona y como lo guarda la base. */
   telefono(): { escrito: string; guardado: string };
   /** Una solicitud creada como la crea el servidor. */
@@ -36,8 +36,8 @@ const test = base.extend<{ escenario: Escenario }>({
         materias.push(data.id);
         return { id: data.id, nombre };
       },
-      correo() {
-        const correo = `aspirante-e2e-${randomUUID()}@calibra.test`;
+      correo(existente) {
+        const correo = existente ?? `aspirante-e2e-${randomUUID()}@calibra.test`;
         correos.push(correo);
         return correo;
       },
@@ -81,6 +81,9 @@ test.describe.configure({ mode: "default", timeout: 90_000 });
 
 /** La lista del admin siempre lleva el número de página: sin él, la página redirige a la que corresponde. */
 const LISTA = /\/admin\/solicitudes\?pagina=\d+$/;
+
+/** El aviso de los cambios de estado: la tarjeta tiene otro, el de la invitación (D-75 c). */
+const estadoDe = (tarjeta: Locator) => tarjeta.getByRole("form", { name: /^Cambiar el estado/ }).getByRole("status");
 
 async function entrar(page: Page, ruta: string, cuenta: Cuenta, destino: string | RegExp = ruta): Promise<void> {
   await page.goto(ruta);
@@ -196,7 +199,7 @@ test.describe("Criterio 4 · el admin ve las solicitudes y las marca", () => {
     await contactada.click();
     await expect(tarjeta.getByText("Contactada", { exact: true })).toBeVisible(ESPERA);
     // Se anuncia el cambio, el botón queda marcado y el foco sigue en él.
-    await expect(tarjeta.getByRole("status")).toHaveText("Quedó como contactada.");
+    await expect(estadoDe(tarjeta)).toHaveText("Quedó como contactada.");
     await expect(contactada).toHaveAttribute("aria-pressed", "true");
     await expect(contactada).toBeFocused();
     expect(await escenario.guardadas(correo)).toEqual([{ estado: "contactada", numero_telefono: telefono, id_admin_actualizo: admin.id }]);
@@ -205,7 +208,7 @@ test.describe("Criterio 4 · el admin ve las solicitudes y las marca", () => {
     const descartar = tarjeta.getByRole("button", { name: "Descartar" });
     await descartar.click();
     await expect(tarjeta.getByText("Descartada", { exact: true })).toBeVisible(ESPERA);
-    await expect(tarjeta.getByRole("status")).toHaveText("Quedó como descartada.");
+    await expect(estadoDe(tarjeta)).toHaveText("Quedó como descartada.");
     await expect(descartar).toHaveAttribute("aria-pressed", "true");
     await expect(contactada).toHaveAttribute("aria-pressed", "false");
     await expect(descartar).toBeFocused();
@@ -226,6 +229,62 @@ test.describe("Criterio 4 · el admin ve las solicitudes y las marca", () => {
     await page.getByRole("link", { name: "Solicitudes para ser monitor" }).click();
     await expect(page).toHaveURL(LISTA, ESPERA);
     await expect(page.getByRole("heading", { level: 1, name: "Solicitudes para ser monitor" })).toBeVisible();
+  });
+});
+
+test.describe("D-75 c · invitar desde la solicitud", () => {
+  test("el admin invita con el correo de la solicitud y el registro ya trae el nombre y el teléfono", async ({
+    page,
+    browser,
+    cuentas,
+    escenario,
+  }) => {
+    const materia = await escenario.materia();
+    const correo = escenario.correo();
+    const nombre = `Jorge e2e ${randomUUID().slice(0, 6)}`;
+    const { guardado: telefono } = escenario.telefono();
+    await escenario.solicitud({ nombre, correo, telefono, materias: [materia.id] });
+    const admin = await cuentas.crearAdmin();
+
+    await entrar(page, "/admin/solicitudes", admin, LISTA);
+    const tarjeta = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: nombre }) });
+    const invitacion = tarjeta.getByRole("form", { name: `Invitar a ${nombre} a crear su cuenta de monitor` });
+    await invitacion.getByRole("button", { name: `Invitar a ${nombre}` }).click();
+    await expect(invitacion.getByRole("status")).toHaveText(`Enviamos la invitación a ${correo}. El enlace vence en 7 días.`, ESPERA);
+    // La tarjeta ya sabe que tiene una invitación vigente y ofrece reenviarla; el estado de la solicitud no cambió.
+    await expect(invitacion.getByText(/^Ya tiene una invitación, que vence el /)).toBeVisible(ESPERA);
+    await expect(invitacion.getByRole("button", { name: "Reenviar la invitación" })).toBeVisible();
+    await expect(tarjeta.getByText("Nueva", { exact: true })).toBeVisible();
+
+    const mensaje = await cuentas.esperarCorreo(correo);
+    const enlace = /href="([^"]*\/monitores\/registro\?[^"]*)"/.exec(mensaje.html)?.[1]?.replaceAll("&amp;", "&");
+    expect(enlace, "el correo debía traer el enlace de registro").toBeTruthy();
+
+    // En un contexto limpio, como el aspirante: el formulario ya trae lo que dejó en su solicitud.
+    const contexto = await browser.newContext();
+    try {
+      const aspirante = await contexto.newPage();
+      await aspirante.goto(enlace!);
+      await expect(aspirante.getByLabel("Correo", { exact: true })).toHaveValue(correo, ESPERA);
+      await expect(aspirante.getByLabel("Nombre completo")).toHaveValue(nombre);
+      await expect(aspirante.getByLabel("Teléfono")).toHaveValue(telefono);
+      await expect(aspirante.getByLabel("Tu llave")).toHaveValue("");
+    } finally {
+      await contexto.close();
+    }
+  });
+
+  test("a quien ya tiene cuenta de monitor no se le ofrece invitar", async ({ page, cuentas, escenario }) => {
+    const materia = await escenario.materia();
+    const monitor = await cuentas.crearMonitor();
+    const nombre = `Monitor e2e ${randomUUID().slice(0, 6)}`;
+    await escenario.solicitud({ nombre, correo: escenario.correo(monitor.correo), telefono: escenario.telefono().guardado, materias: [materia.id] });
+    const admin = await cuentas.crearAdmin();
+
+    await entrar(page, "/admin/solicitudes", admin, LISTA);
+    const tarjeta = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: nombre }) });
+    await expect(tarjeta.getByText("Ya tiene cuenta de monitor.")).toBeVisible(ESPERA);
+    await expect(tarjeta.getByRole("button", { name: /Invitar|Reenviar/ })).toHaveCount(0);
   });
 });
 

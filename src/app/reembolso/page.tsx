@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { formatearFechaHora } from "@/lib/fechas";
@@ -38,7 +39,7 @@ export default async function Reembolso({ searchParams }: PageProps<"/reembolso"
     // Solo el mensaje: el token nunca va al registro.
     console.error("[reembolsos] no se pudo leer el reembolso del enlace:", error instanceof Error ? error.message : error);
     return (
-      <Pantalla eyebrow={EYEBROW} titulo="No pudimos cargar tu reembolso">
+      <Pantalla acceso={<AccesoDeCabecera />} eyebrow={EYEBROW} titulo="No pudimos cargar tu reembolso">
         <p role="alert" className={formulario.error}>
           Recarga la página; si sigue igual, inténtalo más tarde.
         </p>
@@ -51,7 +52,7 @@ export default async function Reembolso({ searchParams }: PageProps<"/reembolso"
   const esperando = llave.estado === "esperando_llave";
 
   return (
-    <Pantalla eyebrow={EYEBROW} titulo={vista.titulo} subtitulo={vista.texto}>
+    <Pantalla acceso={<AccesoDeCabecera />} eyebrow={EYEBROW} titulo={vista.titulo} subtitulo={vista.texto}>
       <dl className={estilos.resumen}>
         <div className={estilos.dato}>
           <dt className={estilos.rotulo}>Monto</dt>
@@ -94,7 +95,7 @@ export default async function Reembolso({ searchParams }: PageProps<"/reembolso"
  */
 function EnlaceQueNoSirve() {
   return (
-    <Pantalla
+    <Pantalla acceso={<AccesoDeCabecera />}
       eyebrow={EYEBROW}
       titulo="Este enlace no sirve"
       subtitulo="Está incompleto o no lo reconocemos. Abre de nuevo el enlace del correo que te mandamos."
