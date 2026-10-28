@@ -1,10 +1,11 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { esUuid } from "@/lib/agendar/reglas";
 import type { ResultadoDeFinalizar } from "@/lib/agenda/reglas";
-import { finalizarMonitoria } from "@/lib/agenda/servidor";
-import { obtenerSesion } from "@/lib/auth/sesion";
+import { finalizarMonitoria, ponerLugar } from "@/lib/agenda/servidor";
+import { exigirRol, obtenerSesion } from "@/lib/auth/sesion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
 const RUTA = "/monitor/agenda";
@@ -34,4 +35,30 @@ export async function finalizar(datos: FormData): Promise<void> {
 
   if (resultado === "finalizada" || resultado === "ya_finalizada") redirect(`${RUTA}?finalizada=1`);
   redirect(`${RUTA}?${new URLSearchParams({ no_finalizada: resultado })}`);
+}
+
+export type EstadoLugar = { error: string | null; exito: string | null };
+
+/**
+ * HU-107 (D-76): el monitor pone o cambia el lugar o el enlace de una monitoría suya. La base decide con su sesión y su hora si
+ * se puede y si el dato sirve; `presencial` solo elige el texto de la confirmación.
+ */
+export async function guardarLugar(_anterior: EstadoLugar, datos: FormData): Promise<EstadoLugar> {
+  await exigirRol("monitor", RUTA);
+  const id = String(datos.get("id_monitoria") ?? "");
+  if (!esUuid(id)) return { error: "No encontramos esa monitoría en tu agenda.", exito: null };
+
+  let resultado;
+  try {
+    const supabase = await crearClienteServidor();
+    if (!supabase) throw new Error("Faltan las variables de Supabase.");
+    resultado = await ponerLugar(supabase, id, String(datos.get("valor") ?? ""));
+  } catch (error) {
+    console.error("[agenda] no se pudo guardar el lugar:", error instanceof Error ? error.message : error);
+    return { error: "No pudimos guardarlo. Intenta de nuevo.", exito: null };
+  }
+  if (!resultado.ok) return { error: resultado.error, exito: null };
+
+  revalidatePath(RUTA);
+  return { error: null, exito: datos.get("presencial") === "si" ? "Guardamos el lugar." : "Guardamos el enlace." };
 }

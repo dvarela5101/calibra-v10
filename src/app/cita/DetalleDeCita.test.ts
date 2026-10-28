@@ -116,8 +116,30 @@ describe("DetalleDeCita (HU-019): confirmada virtual", () => {
     for (const enlace of ["javascript:alert(1)", "http://meet.example/a", "data:text/html,hola"]) {
       const html = pintar({ ...VIRTUAL, enlace });
       expect(html, enlace).not.toContain(enlace);
-      expect(texto(html), enlace).not.toContain("Enlace de la videollamada");
+      expect(html, enlace).not.toContain("Abrir la videollamada");
+      // D-76: uno que no sirve cuenta como que el monitor aún no lo ha puesto.
+      expect(texto(html), enlace).toContain("Tu monitor aún no ha puesto el enlace de la videollamada.");
     }
+  });
+});
+
+describe("DetalleDeCita (HU-107, D-76): el monitor aún no pone el dato", () => {
+  it("una virtual confirmada sin enlace dice que el monitor aún no lo ha puesto", () => {
+    const t = texto(pintar({ ...VIRTUAL, enlace: null }));
+    expect(t).toContain("Enlace de la videollamada");
+    expect(t).toContain("Tu monitor aún no ha puesto el enlace de la videollamada. Vuelve a esta página más cerca de la hora.");
+    expect(t).not.toContain("Lugar");
+  });
+
+  it("una presencial confirmada sin lugar dice que el monitor aún no lo ha puesto", () => {
+    const t = texto(pintar({ ...PRESENCIAL, lugar: null }));
+    expect(t).toContain("Tu monitor aún no ha puesto el lugar de la sesión. Vuelve a esta página más cerca de la hora.");
+    expect(t).not.toContain("videollamada");
+  });
+
+  it("con el dato puesto no lo dice", () => {
+    expect(texto(pintar(PRESENCIAL))).not.toContain("aún no ha puesto");
+    expect(texto(pintar(VIRTUAL))).not.toContain("aún no ha puesto");
   });
 });
 

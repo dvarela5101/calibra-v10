@@ -206,14 +206,27 @@ describe("criterio 1: el monitor certificado abre franjas", () => {
     expect(exito(await fx.admin.from("franja").select("id").eq("id_monitor", monitor.usuario.id), "franjas")).toEqual([]);
   });
 
-  it("una franja presencial sin lugar y una virtual sin enlace se rechazan con su mensaje", async () => {
+  it("D-76 (HU-107): una franja presencial sin lugar y una virtual sin enlace se aceptan; el dato es de cada monitoría", async () => {
     const monitor = await crearMonitorCertificado();
 
-    const sinLugar = await monitor.cliente.from("franja").insert(presencial(monitor.usuario.id, { lugar: null }));
-    expect(sinLugar.error).toMatchObject({ code: "P0001", message: "Una franja presencial necesita el lugar de la sesión." });
+    const sinLugar = exito(
+      await monitor.cliente.from("franja").insert(presencial(monitor.usuario.id, { lugar: null })).select("id").single(),
+      "franja presencial sin lugar",
+    );
+    franjas.push(sinLugar.id);
 
-    const sinEnlace = await monitor.cliente.from("franja").insert(virtual(monitor.usuario.id, { enlace: null }));
-    expect(sinEnlace.error).toMatchObject({ code: "P0001", message: "Una franja virtual necesita el enlace de la videollamada." });
+    const sinEnlace = exito(
+      await monitor.cliente.from("franja").insert(virtual(monitor.usuario.id, { hora: "14:00", enlace: null })).select("id").single(),
+      "franja virtual sin enlace",
+    );
+    franjas.push(sinEnlace.id);
+
+    // La llave secreta lee lo guardado: ni lugar ni enlace.
+    const guardadas = exito(await fx.admin.from("franja").select("lugar, enlace").in("id", [sinLugar.id, sinEnlace.id]), "franjas");
+    expect(guardadas).toEqual([
+      { lugar: null, enlace: null },
+      { lugar: null, enlace: null },
+    ]);
   });
 
   it("el enlace debe ir por https y una franja no lleva lugar y enlace a la vez", async () => {

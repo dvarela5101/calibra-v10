@@ -415,8 +415,12 @@ function contenidoDe<P extends Plantilla>(plantilla: P, datos: DatosPorPlantilla
             `Duración: ${d.duracionMin} minutos.`,
             `Materia: ${cerrar(materia)}`,
             `Modalidad: ${d.presencial ? "presencial" : "virtual"}.`,
+            // D-76 (HU-107): el lugar o el enlace es de cada monitoría y lo pone el monitor.
+            d.presencial
+              ? "Pon en tu agenda el lugar de esta monitoría (el edificio y el salón). Lo puedes cambiar cuando quieras: el estudiante ve siempre el último."
+              : "Pon en tu agenda el enlace de la videollamada de esta monitoría. Lo puedes cambiar cuando quieras: el estudiante ve siempre el último.",
           ],
-          boton: { texto: "Ver mi agenda", enlace: d.enlace },
+          boton: { texto: d.presencial ? "Poner el lugar" : "Poner el enlace", enlace: d.enlace },
           pie: "Si no puedes darla, escríbenos cuanto antes.",
         },
       };
@@ -455,6 +459,9 @@ function contenidoDe<P extends Plantilla>(plantilla: P, datos: DatosPorPlantilla
       // D-5 y D-21: el lugar de la presencial o el enlace de la virtual llegan con la cita confirmada.
       if (d.presencial && d.lugar != null) parrafos.push(`Lugar: ${cerrar(linea(d.lugar, "lugar"))}`);
       if (!d.presencial && d.enlaceSesion != null) parrafos.push(`Enlace de la videollamada: ${enlaceSeguro(d.enlaceSesion)}`);
+      // D-76 (HU-107): el monitor lo pone en cada monitoría; si aún no lo ha puesto, la página de la cita lo mostrará.
+      if (d.presencial && d.lugar == null) parrafos.push("Tu monitor pondrá el lugar de la sesión en la página de tu cita.");
+      if (!d.presencial && d.enlaceSesion == null) parrafos.push("Tu monitor pondrá el enlace de la videollamada en la página de tu cita.");
       parrafos.push(`Valor: ${cerrar(formatearPesos(d.valorTotal))}`);
       parrafos.push(
         d.cancelableHasta == null

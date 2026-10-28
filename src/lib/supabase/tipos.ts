@@ -667,6 +667,37 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"lugar_de_monitoria": {
+                  Row: {
+                    "actualizado_en": string,"enlace": string | null,"id_monitoria": string,"lugar": string | null
+                  }
+                  Insert: {
+                    "actualizado_en"?: string,"enlace"?: string | null,"id_monitoria": string,"lugar"?: string | null
+                  }
+                  Update: {
+                    "actualizado_en"?: string,"enlace"?: string | null,"id_monitoria"?: string,"lugar"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lugar_de_monitoria_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
+    },{
+      foreignKeyName: "lugar_de_monitoria_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "monitoria"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lugar_de_monitoria_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: true
+      referencedRelation: "monitoria_plazos"
+      referencedColumns: ["id_monitoria"]
+    }
+                  ]
                 },"materia": {
                   Row: {
                     "carpeta": string | null,"codigo": string,"editada_en_app": boolean,"id": string,"nombre": string
@@ -1470,6 +1501,11 @@ isOneToOne: false
               "id_reembolso": string,"monto": number,"token": string
             }[]
                            },
+"lugares_de_mi_agenda":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "enlace": string,"id_monitoria": string,"lugar": string
+            }[]
+                           },
 "mi_agenda":
 { Args: Record<PropertyKey, never>; Returns: {
               "codigo_materia": string,"duracion_min": number,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"fecha": string,"hora": string,"id_monitoria": string,"inicio": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_estudiante": string,"nombre_materia": string,"presencial": boolean,"reserva_vencida": boolean
@@ -1539,7 +1575,7 @@ isOneToOne: false
                            },
 "parametros_negocio":
 { Args: Record<PropertyKey, never>; Returns: {
-              "antelacion_grupal_min": number,"antelacion_individual_min": number,"cancelacion_grupal_min": number,"cancelacion_individual_min": number,"cierre_automatico_min": number,"desembolso_min": number,"diferencia_min": number,"pago_integrantes_min": number,"reporte_inasistencia_min": number,"resena_grupal_min": number,"reserva_min": number,"revision_min": number
+              "antelacion_grupal_min": number,"antelacion_individual_min": number,"cancelacion_grupal_min": number,"cancelacion_individual_min": number,"desembolso_min": number,"diferencia_min": number,"pago_integrantes_min": number,"reporte_inasistencia_min": number,"resena_grupal_min": number,"reserva_min": number,"revision_min": number
             }[]
                            },
 "parametros_reembolso":
@@ -1554,6 +1590,9 @@ isOneToOne: false
                            },
 "plazo_alcanzado":
 { Args: { "p_ahora": string,"p_desde": string }; Returns: boolean
+                           },
+"poner_lugar_de_mi_monitoria":
+{ Args: { "p_id_monitoria": string,"p_valor": string }; Returns: undefined
                            },
 "reabrir_reembolso":
 { Args: { "p_id_reembolso": string }; Returns: string
@@ -1571,6 +1610,8 @@ isOneToOne: false
 { Args: { "p_correo": string,"p_id_usuario": string,"p_nombre": string,"p_token_hash": string }; Returns: boolean
                            },
 "registrar_lead":
+{ Args: { "p_acepta_contacto": boolean,"p_correo": string,"p_fecha_consentimiento": string,"p_id_sesion": string,"p_nombre": string,"p_numero_telefono": string,"p_origen": string }; Returns: string
+                           } |
 { Args: { "p_acepta_contacto": boolean,"p_correo": string,"p_fecha_consentimiento": string,"p_id_sesion": string,"p_nombre": string,"p_numero_telefono": string,"p_origen": string,"p_version_autorizacion"?: string }; Returns: string
                            },
 "registrar_monitor":

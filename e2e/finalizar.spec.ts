@@ -333,7 +333,7 @@ test.describe("Criterio 1 y D-15 · el monitor finaliza una confirmada cuyo inic
       await expect(subtitulo(page, "Próximas (1)")).toBeVisible();
       await expect(proximas.getByRole("listitem")).toHaveCount(1);
       await expectTarjeta(proximas, leadFutura, renglonesDeLaFutura(materia, leadFutura));
-      await expect(proximas.getByRole("button")).toHaveCount(0);
+      await expect(botonDeFinalizar(proximas)).toHaveCount(0);
       await expect(proximas.getByText("Si no la finalizas")).toHaveCount(0);
       await expect(subtitulo(page, "Pasadas (0)")).toBeVisible();
       await expect(page.getByText("Todavía no tienes monitorías pasadas.")).toBeVisible();
@@ -411,12 +411,14 @@ test.describe("Criterio 2 · una monitoría que aún no empieza no se puede fina
       await expect(botonDeFinalizar(page)).toHaveCount(1);
       await expect(botonDeFinalizar(porFinalizar)).toHaveCount(1);
       await expectTarjeta(proximas, leadFutura, renglonesDeLaFutura(materia, leadFutura));
-      await expect(proximas.getByRole("button")).toHaveCount(0);
-      await expect(proximas.locator("form, input")).toHaveCount(0);
-      // El único campo del formulario lleva el id de la que ya empezó: el de la futura no está en la página.
+      await expect(botonDeFinalizar(proximas)).toHaveCount(0);
+      // HU-107: la futura sí lleva el formulario de su enlace o su lugar, pero ninguno de finalizar.
+      await expect(proximas.locator('input[name="monitoria"]')).toHaveCount(0);
+      // El único campo de finalizar lleva el id de la que ya empezó: el de la futura no está en ningún formulario de finalizar
+      // (sí en el de su enlace o su lugar, HU-107, que se llama `id_monitoria`).
       await expect(page.locator('input[name="monitoria"]')).toHaveCount(1);
       await expect(page.locator('input[name="monitoria"]')).toHaveValue(idEmpezada);
-      await expect(page.locator(`[value="${idFutura}"]`)).toHaveCount(0);
+      await expect(page.locator(`input[name="monitoria"][value="${idFutura}"]`)).toHaveCount(0);
     });
 
     await test.step("una URL armada a mano no finaliza nada: la agenda es de solo lectura por GET", async () => {
@@ -450,7 +452,7 @@ test.describe("Criterio 2 · una monitoría que aún no empieza no se puede fina
       await expect(subtitulo(page, "Por finalizar (1)")).toBeVisible();
       await expectTarjeta(porFinalizar, leadEmpezada, renglonesDeLaEmpezada(materia, sesion, leadEmpezada));
       await expectTarjeta(proximas, leadFutura, renglonesDeLaFutura(materia, leadFutura));
-      await expect(proximas.getByRole("button")).toHaveCount(0);
+      await expect(botonDeFinalizar(proximas)).toHaveCount(0);
       await expect(subtitulo(page, "Pasadas (0)")).toBeVisible();
     });
 

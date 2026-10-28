@@ -1,14 +1,15 @@
 /**
  * Franjas semanales del monitor (HU-015, RN-30, RN-31, P-30, P-31). Validación del formulario, igual a
  * la de la base (trigger `privado.validar_franja_del_monitor`): aquí se da el mensaje antes de ir a la
- * base, y la base lo exige aunque alguien se salte la app.
+ * base, y la base lo exige aunque alguien se salte la app. Desde D-76 (HU-107) la franja no lleva lugar
+ * ni enlace: son de cada monitoría y el monitor los pone desde su agenda.
  */
 
 /** Día ISO: 1 = lunes ... 7 = domingo, como `franja.dia` y `extract(isodow ...)`. */
 export const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] as const;
 
 export const MINUTOS_DEL_DIA = 24 * 60;
-const LARGO_MAXIMO_LUGAR = 200;
+export const LARGO_MAXIMO_LUGAR = 200;
 const LARGO_MAXIMO_ENLACE = 500;
 
 export type DatosDeFranja = {
@@ -19,8 +20,6 @@ export type DatosDeFranja = {
   /** Pesos colombianos enteros (RN-31). */
   precio: number;
   duracionMin: number;
-  lugar: string | null;
-  enlace: string | null;
 };
 
 export type Lectura<T> = { ok: true; datos: T } | { ok: false; error: string };
@@ -88,17 +87,7 @@ export function leerFranja(formulario: FormData): Lectura<DatosDeFranja> {
   if (modalidad !== "presencial" && modalidad !== "virtual") return { ok: false, error: "Elige si es presencial o virtual." };
   const presencial = modalidad === "presencial";
 
-  if (presencial) {
-    const lugar = texto(formulario.get("lugar"));
-    if (!lugar) return { ok: false, error: "Escribe el lugar de la sesión, por ejemplo el salón o el edificio." };
-    if (lugar.length > LARGO_MAXIMO_LUGAR) return { ok: false, error: "El lugar es demasiado largo." };
-    return { ok: true, datos: { dia, hora: horaDe(inicio), presencial, precio, duracionMin, lugar, enlace: null } };
-  }
-  const enlace = String(formulario.get("enlace") ?? "").trim();
-  if (!esEnlaceDeVideollamada(enlace)) {
-    return { ok: false, error: "Escribe el enlace de la videollamada completo, que empiece por https://." };
-  }
-  return { ok: true, datos: { dia, hora: horaDe(inicio), presencial, precio, duracionMin, lugar: null, enlace } };
+  return { ok: true, datos: { dia, hora: horaDe(inicio), presencial, precio, duracionMin } };
 }
 
 /**

@@ -98,18 +98,23 @@ describe("esEnlaceDeVideollamada", () => {
 });
 
 describe("leerFranja (RN-30, RN-31, P-31)", () => {
-  it("lee una franja presencial: precio sin separadores y lugar limpio", () => {
+  it("lee una franja presencial con el precio sin separadores, sin lugar (D-76: es de cada monitoría)", () => {
     expect(leerFranja(formulario(PRESENCIAL))).toEqual({
       ok: true,
-      datos: { dia: 1, hora: "14:00", presencial: true, precio: 25000, duracionMin: 90, lugar: "Edificio ML, salón 101", enlace: null },
+      datos: { dia: 1, hora: "14:00", presencial: true, precio: 25000, duracionMin: 90 },
     });
   });
 
-  it("lee una franja virtual con su enlace, sin lugar", () => {
+  it("lee una franja virtual sin enlace (D-76), aunque el formulario traiga uno", () => {
     expect(leerFranja(formulario({ ...VIRTUAL, lugar: "ignorado" }))).toEqual({
       ok: true,
-      datos: { dia: 3, hora: "18:30", presencial: false, precio: 30000, duracionMin: 60, lugar: null, enlace: "https://meet.example.com/abc-defg" },
+      datos: { dia: 3, hora: "18:30", presencial: false, precio: 30000, duracionMin: 60 },
     });
+  });
+
+  it("ya no pide lugar ni enlace (D-76)", () => {
+    expect(leerFranja(formulario({ ...PRESENCIAL, lugar: "" })).ok).toBe(true);
+    expect(leerFranja(formulario({ ...VIRTUAL, enlace: "" })).ok).toBe(true);
   });
 
   it.each([
@@ -121,21 +126,12 @@ describe("leerFranja (RN-30, RN-31, P-31)", () => {
     ["con precio cero", { precio: "0" }, "Escribe el precio en pesos, sin decimales, por ejemplo 25000."],
     ["con precio con decimales", { precio: "25000,50" }, "Escribe el precio en pesos, sin decimales, por ejemplo 25000."],
     ["sin modalidad", { modalidad: "" }, "Elige si es presencial o virtual."],
-    ["presencial sin lugar", { lugar: "   " }, "Escribe el lugar de la sesión, por ejemplo el salón o el edificio."],
-    ["con un lugar demasiado largo", { lugar: "x".repeat(201) }, "El lugar es demasiado largo."],
   ])("rechaza una franja %s", (_caso, cambios, error) => {
     expect(leerFranja(formulario({ ...PRESENCIAL, ...cambios }))).toEqual({ ok: false, error });
   });
 
   it("una franja que termina justo a la medianoche sí sirve", () => {
     expect(leerFranja(formulario({ ...PRESENCIAL, hora: "23:00", duracion_min: "60" })).ok).toBe(true);
-  });
-
-  it("una virtual necesita un enlace https", () => {
-    expect(leerFranja(formulario({ ...VIRTUAL, enlace: "http://meet.example.com/x" }))).toEqual({
-      ok: false,
-      error: "Escribe el enlace de la videollamada completo, que empiece por https://.",
-    });
   });
 });
 

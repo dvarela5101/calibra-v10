@@ -244,8 +244,17 @@ describe("avisos al monitor (HU-051, D-16)", () => {
     expect(plano).toContain("Duración: 90 minutos.");
     expect(plano).toContain("Materia: Cálculo Integral.");
     expect(plano).toContain("Modalidad: presencial.");
-    expect(plano).toContain("Ver mi agenda: https://calibra.example/monitor/agenda");
+    expect(plano).toContain("Poner el lugar: https://calibra.example/monitor/agenda");
     expect(render("aviso_monitor_confirmada", { presencial: false }).texto).toContain("Modalidad: virtual.");
+  });
+
+  it("confirmada: le pide poner el lugar o el enlace de la monitoría en su agenda (D-76)", () => {
+    expect(render("aviso_monitor_confirmada").texto).toContain(
+      "Pon en tu agenda el lugar de esta monitoría (el edificio y el salón). Lo puedes cambiar cuando quieras: el estudiante ve siempre el último.",
+    );
+    const virtual = render("aviso_monitor_confirmada", { presencial: false }).texto;
+    expect(virtual).toContain("Pon en tu agenda el enlace de la videollamada de esta monitoría.");
+    expect(virtual).toContain("Poner el enlace: https://calibra.example/monitor/agenda");
   });
 
   it("cancelada: quién la canceló, la materia, la fecha y la hora", () => {
@@ -537,9 +546,17 @@ describe("confirmación de la cita (HU-019, P-04, D-19 a D-23)", () => {
     expect(plano("confirmacion_cita", { presencial: false, lugar: "Edificio Principal", enlaceSesion: null })).not.toContain("Edificio Principal");
   });
 
-  it("sin lugar o sin enlace no inventa la línea: el dato puede faltar", () => {
-    expect(plano("confirmacion_cita", { lugar: null })).not.toContain("Lugar:");
-    expect(plano("confirmacion_cita", { presencial: false, enlaceSesion: null })).not.toContain("videollamada");
+  it("sin lugar o sin enlace no inventa la línea: dice que el monitor lo pondrá en la página de la cita (D-76)", () => {
+    const sinLugar = plano("confirmacion_cita", { lugar: null });
+    expect(sinLugar).not.toContain("Lugar:");
+    expect(sinLugar).toContain("Tu monitor pondrá el lugar de la sesión en la página de tu cita.");
+    const sinEnlace = plano("confirmacion_cita", { presencial: false, enlaceSesion: null });
+    expect(sinEnlace).not.toContain("Enlace de la videollamada:");
+    expect(sinEnlace).toContain("Tu monitor pondrá el enlace de la videollamada en la página de tu cita.");
+  });
+
+  it("con el dato puesto no dice que el monitor lo pondrá", () => {
+    expect(plano("confirmacion_cita")).not.toContain("Tu monitor pondrá");
   });
 
   it("dice hasta cuándo se puede cancelar, y si ya no se podía al confirmar lo dice sin escribir un plazo", () => {
