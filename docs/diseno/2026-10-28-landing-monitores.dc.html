@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Calibra para monitores</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=STIX+Two+Text:ital,wght@0,400;0,500;1,400;1,500&amp;display=swap">
+<style>
+body{margin:0;background:#FFFDF5;color:#0B1B33;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#0B1B33}a:hover{color:#3D4A5E}
+*{box-sizing:border-box}
+:focus-visible{outline:3px solid #0B1B33;outline-offset:3px;border-radius:6px}
+.m{font-family:"STIX Two Text","Cambria Math",Georgia,serif;font-size:1.18em;letter-spacing:0}
+.m i{font-style:italic}
+.m sup{font-size:.68em;line-height:0}
+.cuadricula{background-color:#FFFDF5;background-image:linear-gradient(rgba(0,87,237,.085) 1px,transparent 1px),linear-gradient(90deg,rgba(0,87,237,.085) 1px,transparent 1px);background-size:26px 26px;background-position:-1px -1px}
+.liso{background-color:#FFFDF5}
+.opcion{cursor:pointer;transition:border-color 150ms ease,background-color 150ms ease}
+.opcion:hover{border-color:#9AA6B8 !important}
+.cta{transition:filter 150ms ease}
+.cta:hover{filter:brightness(.88);color:#FFFFFF !important}
+.trazo ellipse{stroke-dasharray:640;stroke-dashoffset:640;animation:trazar 520ms cubic-bezier(.6,.05,.3,1) forwards}
+@keyframes trazar{to{stroke-dashoffset:0}}
+details>summary{list-style:none;cursor:pointer}
+details>summary::-webkit-details-marker{display:none}
+details>summary::after{content:"+";flex:none;font-size:24px;font-weight:400;line-height:1;color:#5A6678}
+details[open]>summary::after{content:"\2212"}
+.barra-movil{display:none}
+.partido{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:32px clamp(48px,6vw,96px);align-items:start}
+.pasos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px 48px;position:relative}
+.pasos::before{content:"";position:absolute;top:22px;left:22px;right:22px;border-top:1.5px solid #B9C6DE}
+.paso{position:relative}
+.numero{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:#F3F6FC;border:1.5px solid #0B1B33;font-size:17px;font-weight:700}
+.pasos.cuatro{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width: 959px){.partido,.pasos{grid-template-columns:minmax(0,1fr)}.pasos::before{top:22px;bottom:22px;left:22px;right:auto;border-top:0;border-left:1.5px solid #B9C6DE}.paso{padding-left:68px}.numero{position:absolute;left:0;top:0}.paso h3{margin-top:8px !important}.pasos.cuatro{grid-template-columns:minmax(0,1fr)}}
+@media (max-width: 719px){.barra-movil{display:block}}
+@media (prefers-reduced-motion: reduce){.trazo ellipse{animation:none;stroke-dashoffset:0}.opcion,.cta{transition:none}}
+</style>
+</helmet>
+
+<div style="min-height: 100vh; background: #FFFDF5; color: #0B1B33; font-family: Inter, system-ui, sans-serif">
+
+  <!-- Solo la marca: sin menú ni enlaces que saquen al visitante -->
+  <header style="border-bottom: 1px solid #E6EAF1">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 12px clamp(20px, 4vw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 16px">
+      <p style="margin: 0; display: flex; align-items: center; gap: 10px">
+        <svg viewBox="0 0 2084 2084" width="34" height="34" role="img" aria-label="Calibra" style="flex: none; color: #0057ED"><path fill="currentColor" d="M1939.9,1443.68c-2.72-9.27-21-33.86-38.97-47.68c-0.78-0.6-1.55-1.18-2.33-1.76c-22.22-16.4-49.45-24.59-77.05-23.84c-82.09,2.23-324,1.91-487.56-69.86c-35.65-15.64-64.16-43.39-82.07-64.34c-11.43-13.36-6.65-33.97,9.48-40.95c61.88-26.78,200.98-66.11,254.53-81.84c52.57-15.44,161.75-42.51,222.16-60.25c46.12-13.55,64.61-18.7,72.44-64.57c4.12-24.1,3.66-39.46,6.8-78.39c6.27-77.58,0.29-176.24-0.7-220.57c-1.14-51.05-3.21-163.46-14.26-245.03c-4.19-30.94-11.86-57.44-17.67-74.47c-4.1-12.01-16.39-19.21-28.88-16.93c-15.95,2.92-39.53,8.09-65.92,16.68c-58.01,18.89-129.65,50.8-163.9,64.51c-37.17,14.88-95.69,39.62-160.23,67.34c-3.39,1.45-6.79,2.92-10.2,4.38c-6.75,2.9-13.56,5.84-20.41,8.79c-153.6,66.23-326.82,142.71-326.82,142.71s250.86-142.2,336.48-185.26c69.73-35.08,289.94-125.3,289.94-125.3l-22.08-87.18c0,0-145.56,72.89-191.74,100.86c-86.13,52.15-322.02,202.45-387.94,244.5c-11.04,7.04-17.31,11.05-17.31,11.05l488.17-339.79l-12.43-83.03L1014.5,593.74l384.72-373.44l-20.39-62.8c0,0-213.31,205.17-281.75,279.56c-33.71,36.65-119.24,149.14-143.3,180.94c-3.16,4.17-9.57,3.69-12.05-0.92c-2.93-5.46-6.54-13.11-9.61-22.47c-6.58-20.02-10.91-47.78-21.79-70.19c-16.29-33.56-54.49-67.19-57.65-71.34c-3.63-4.77-85.69-61.62-184.11-76.46c-81.04-12.22-166.81-2.52-197.59,1.8c-8.56,1.2-17.2,1.67-25.83,1.37c-14.85-0.51-37.35-1.46-45.97-2.75c-7.95-1.19-36.53-9.21-47.21-11.85c-77.23-19.11-210.37-60.52-210.37-60.52l206.85,75.55c67.15,24.52,120.23,77.53,143.98,144.95c0.45,1.27,0.89,2.56,1.34,3.86c35.47,103.83,177.22,109.39,190.75,115.87c13.53,6.48-111.77,15.26-118.36-5.4c-3.3-10.33-40.7,120.54-48.48,247.2c-9.75,158.79,25.5,246.49,68.6,320.83c83.94,144.77,165.4,213.99,343.92,269.76c71.31,22.28,96.99,53.99,126.1,101.26c0.33,0.54,0.67,1.09,1,1.63c51.2,83.87,48.37,137.09,101.65,231.57c54.79,97.16,223.02,90.87,223.02,90.87l-154.51-295.06c0,0,191.05,319.13,241.46,313.52c0,0,32.47,14.44,64.62-3.86c0.92-0.52,2.06-1,3.24-1.73c27.27-16.81,29.33-55.72,4.55-76.03c-21.47-17.59-46.33-39.85-62.54-60.39c-31.49-39.88-155.95-237.51-155.95-237.51s157.13,198.74,210.83,256.99c18.75,20.33,64.18,66.78,94.47,91.04c16.35,13.09,48.42,6.59,67.97-0.94c16.29-6.27,36.26-19.01,44.94-29.37c9.5-11.34,29.16-41.5,42.69-73.83c8.42-20.12-1.43-43.23-21.66-51.38c-38.73-15.61-162.11-78.2-219.87-121.66c-48.81-36.73-207.83-168.6-207.83-168.6s223.27,143.66,274.36,174.88c26.14,15.97,85.91,52.92,133.15,73.87c47.24,20.95,72.87,39.99,95.94,33.91c20.38-5.37,35.82-50.1,42.09-70.47c3.14-10.19,3.98-35.04,0.26-58.41c-2.37-14.89-14.84-26.06-29.9-26.68c-36.77-1.52-109.79-9.38-193.25-44.69c-66.66-28.2-290.59-133.37-290.59-133.37s225.63,94.01,303.85,114.18c26.73,6.89,79.97,22.79,127.33,29.3c27.26,3.74,52.75,5.06,71.54,5.44c26.81,0.54,52.02-13.72,64.46-37.48c0.31-0.6,0.62-1.2,0.91-1.81C1945.13,1480.64,1942.98,1454.16,1939.9,1443.68zM1234.11,724.13c10.75-36.25,29.64-65.86,56.65-88.85c27-22.97,61.65-37.44,103.93-43.41c41.69-5.88,75.72-1.39,102.07,13.45c26.35,14.85,41.35,35.2,44.99,61.03c1.82,12.92,0.13,23.2-5.09,30.81c-5.21,7.63-13.99,12.31-26.32,14.04c-12.92,1.82-23.24-0.16-30.94-5.97c-7.71-5.790-14.33-13.39-19.84-22.81c-5.52-9.4-11.18-18.78-17-28.15c-5.81-9.36-13.16-16.86-22.04-22.5c-8.88-5.63-20.96-7.38-36.22-5.22c-35.83,5.05-62.02,22.08-78.59,51.06c-16.57,28.99-21.3,68.74-14.18,119.24c7.54,53.44,24.74,95.78,51.61,127.03c26.87,31.25,62.9,43.68,108.13,37.31c28.77-4.06,51.28-13.21,67.55-27.49c16.25-14.27,32.58-35.44,48.99-63.51l18.48,9.97c-7.85,25.07-17.6,48.3-29.25,69.71c-11.66,21.41-27.26,39.19-46.83,53.32c-19.57,14.13-45.21,23.45-76.92,27.92c-36.42,5.14-69.07,0.76-97.98-13.13c-28.91-13.89-52.63-35.55-71.16-64.98c-18.52-29.42-30.65-64.41-36.36-104.93C1221.25,801.72,1223.35,760.39,1234.11,724.13z"></path></svg>
+        <span style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: #0B1B33">Calibra</span>
+      </p>
+      <a href="#" data-evento="clic_iniciar_sesion" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1.5px solid #DDE3EC; border-radius: 10px; color: #0B1B33; text-decoration: none; font-size: 15px; font-weight: 600">Iniciar sesión</a>
+    </div>
+  </header>
+
+  <!-- 1. Hero: a quién le habla, qué gana, el CTA y su agenda real, sin scrollear -->
+  <section class="{{claseHero}}" style="border-bottom: 1px solid #E6EAF1">
+    <div style="max-width: 1200px; margin: 0 auto; padding: clamp(40px, 7vw, 96px) clamp(20px, 4vw, 48px) clamp(48px, 7vw, 104px); display: flex; flex-wrap: wrap; align-items: flex-start; gap: clamp(40px, 6vw, 88px)">
+
+      <div style="flex: 1 1 420px; min-width: 0; max-width: 560px; margin-top: clamp(0px, 4vw, 56px)">
+        <h1 style="margin: 0; font-size: clamp(38px, 5.6vw, 72px); line-height: 1.02; letter-spacing: -0.035em; font-weight: 800; color: #0B1B33">Monitorías de ciclo básico donde ya sabes qué explicar.</h1>
+        <p style="margin: 24px 0 0; font-size: clamp(17px, 1.5vw, 20px); line-height: 1.55; color: #3D4A5E; max-width: 34em">Antes de cada sesión ves el diagnóstico de tu estudiante: qué domina y en qué se equivoca. Calibra te certifica por materia, tú pones horarios y precio, y el pago te llega a tu llave.</p>
+        <div style="margin-top: 32px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px">
+          <a class="cta" href="#" data-evento="clic_cta_ser_monitor" data-ubicacion="hero" style="display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 28px; border-radius: 12px; background: {{acento}}; color: #FFFFFF; text-decoration: none; font-size: 18px; font-weight: 600">Quiero ser monitor</a>
+          <p style="margin: 0; font-size: 15px; color: #5A6678">Dejas tus datos y te contactamos para la evaluación.</p>
+        </div>
+      </div>
+
+      <!-- La agenda del monitor: cada monitoría abre el diagnóstico de quien agendó. Es el beneficio: saber en qué está mal antes de llegar. -->
+      <div style="flex: 1 1 400px; min-width: 0; max-width: 500px; background: #FFFFFF; border: 1px solid #DDE3EC; border-radius: 16px; box-shadow: 0 1px 1px rgba(11,27,51,.04), 0 10px 30px rgba(11,27,51,.07); padding: clamp(20px, 3vw, 32px)">
+        <p style="margin: 0; font-size: 14px; color: #5A6678">Tu agenda, esta semana</p>
+        <h2 style="margin: 10px 0 0; font-size: 21px; line-height: 1.4; font-weight: 600; letter-spacing: -0.01em">Tus próximas monitorías</h2>
+        <div role="group" aria-label="Monitorías agendadas" style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px">
+          <button type="button" class="opcion" onClick="{{s1.elegir}}" aria-pressed="{{s1.presionada}}" style="display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 14px; min-height: 60px; width: 100%; padding: 10px 16px; text-align: left; font: inherit; color: #0B1B33; border-radius: 10px; border: 1.5px solid {{s1.borde}}; background: {{s1.fondo}}">
+            <span style="font-size: 15px; line-height: 1.3; font-weight: 600">Mar<br><span style="font-weight: 400; color: #5A6678">4:00 p. m.</span></span>
+            <span style="font-size: 16px; line-height: 1.35"><strong style="font-weight: 600">Laura</strong> · Cálculo Diferencial<br><span style="font-size: 14px; color: #5A6678">60 min · Presencial</span></span>
+          </button>
+          <button type="button" class="opcion" onClick="{{s2.elegir}}" aria-pressed="{{s2.presionada}}" style="display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 14px; min-height: 60px; width: 100%; padding: 10px 16px; text-align: left; font: inherit; color: #0B1B33; border-radius: 10px; border: 1.5px solid {{s2.borde}}; background: {{s2.fondo}}">
+            <span style="font-size: 15px; line-height: 1.3; font-weight: 600">Mié<br><span style="font-weight: 400; color: #5A6678">6:00 p. m.</span></span>
+            <span style="font-size: 16px; line-height: 1.35"><strong style="font-weight: 600">Santiago</strong> · Física I<br><span style="font-size: 14px; color: #5A6678">90 min · Virtual</span></span>
+          </button>
+          <button type="button" class="opcion" onClick="{{s3.elegir}}" aria-pressed="{{s3.presionada}}" style="display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 14px; min-height: 60px; width: 100%; padding: 10px 16px; text-align: left; font: inherit; color: #0B1B33; border-radius: 10px; border: 1.5px solid {{s3.borde}}; background: {{s3.fondo}}">
+            <span style="font-size: 15px; line-height: 1.3; font-weight: 600">Sáb<br><span style="font-weight: 400; color: #5A6678">10:00 a. m.</span></span>
+            <span style="font-size: 16px; line-height: 1.35"><strong style="font-weight: 600">Camila</strong> · Álgebra Lineal<br><span style="font-size: 14px; color: #5A6678">60 min · Presencial</span></span>
+          </button>
+        </div>
+        <div aria-live="polite" style="margin-top: 20px; padding-top: 16px; border-top: 1px dashed #DDE3EC; min-height: 300px">
+          <sc-if value="{{s1.visible}}" hint-placeholder-val="{{true}}">
+            <p style="margin: 0; font-size: 14px; color: #5A6678">Diagnóstico de Laura · Cálculo Diferencial, parcial 2</p>
+            <ul style="list-style: none; margin: 6px 0 0; padding: 0">
+              <li style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #F0F2F6">
+                <span style="font-size: 15px; line-height: 1.45">Derivar potencias, sumas, productos y cocientes</span>
+                <span style="position: relative; flex: none; margin-right: 8px; font-size: 14px; font-weight: 600; padding: 2px 10px; border-left: 4px solid #0F9D58">Lo domina</span>
+              </li>
+              <li style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #F0F2F6">
+                <span style="font-size: 15px; line-height: 1.45">Derivar funciones trigonométricas, exponenciales y logarítmicas</span>
+                <span style="position: relative; flex: none; margin-right: 8px; font-size: 14px; font-weight: 600; padding: 2px 10px; border-left: 4px solid #C98A00">En proceso</span>
+              </li>
+              <li style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0">
+                <span style="font-size: 15px; line-height: 1.45">Derivar una composición con la regla de la cadena</span>
+                <span style="position: relative; flex: none; margin-right: 8px; font-size: 14px; font-weight: 600; padding: 2px 10px; border-left: 4px solid #E5484D">No lo domina<svg class="trazo" aria-hidden="true" viewBox="0 0 200 60" preserveAspectRatio="none" style="position: absolute; left: -8px; top: -9px; width: calc(100% + 16px); height: 44px; pointer-events: none; overflow: visible"><ellipse cx="100" cy="30" rx="96" ry="26" fill="none" stroke="#C62A2F" stroke-width="3" stroke-linecap="round" transform="rotate(-3 100 30)"></ellipse></svg></span>
+              </li>
+            </ul>
+            <div style="margin-top: 12px; padding: 14px 0 0; border-top: 1px dashed #F0C9CA">
+              <p style="margin: 0; font-size: 15px; font-weight: 700; color: #C62A2F">Error detectado</p>
+              <p style="margin: 6px 0 0; font-size: 17px; line-height: 1.5; color: #0B1B33">Laura deriva la función de afuera y olvida multiplicar por la derivada de lo que está adentro.</p>
+              <p style="margin: 8px 0 0; font-size: 14px; color: #5A6678">Lo eligió 2 veces</p>
+            </div>
+          </sc-if>
+          <sc-if value="{{s2.visible}}" hint-placeholder-val="{{false}}">
+            <p style="margin: 0; font-size: 14px; color: #5A6678">Diagnóstico de Santiago · Física I, parcial 2</p>
+            <ul style="list-style: none; margin: 6px 0 0; padding: 0">
+              <li style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #F0F2F6">
+                <span style="font-size: 15px; line-height: 1.45">Cinemática</span>
+                <span style="position: relative; flex: none; margin-right: 8px; font-size: 14px; font-weight: 600; padding: 2px 10px; border-left: 4px solid #0F9D58">Lo domina</span>
+              </li>
+              <li style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #F0F2F6">
+                <span style="font-size: 15px; line-height: 1.45">Leyes de Newton</span>
+                <span style="position: relative; flex: none; margin-right: 8px; font-size: 14px; font-weight: 600; padding: 2px 10px; border-left: 4px solid #E5484D">No lo domina<svg class="trazo" aria-hidden="true" viewBox="0 0 200 60" preserveAspectRatio="none" style="position: absolute; left: -8px; top: -9px; width: calc(100% + 16px); height: 44px; pointer-events: none; overflow: visible"><ellipse cx="100" cy="30" rx="96" ry="26" fill="none" stroke="#C62A2F" stroke-width="3" stroke-linecap="round" transform="rotate(-3 100 30)"></ellipse></svg></span>
+              </li>
+              <li style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0">
+                <span style="font-size: 15px; line-height: 1.45">Trabajo y energía</span>
+                <span style="position: relative; flex: none; margin-right: 8px; font-size: 14px; font-weight: 600; padding: 2px 10px; border-left: 4px solid #C98A00">En proceso</span>
+              </li>
+            </ul>
+            <div style="margin-top: 12px; padding: 14px 0 0; border-top: 1px dashed #F0C9CA">
+              <p style="margin: 0; font-size: 15px; font-weight: 700; color: #C62A2F">Error detectado</p>
+              <p style="margin: 6px 0 0; font-size: 17px; line-height: 1.5; color: #0B1B33">Santiago asume que la normal siempre es igual al peso.</p>
+              <p style="margin: 8px 0 0; font-size: 14px; color: #5A6678">Lo eligió 3 veces</p>
+            </div>
+          </sc-if>
+          <sc-if value="{{s3.visible}}" hint-placeholder-val="{{false}}">
+            <p style="margin: 0; font-size: 14px; color: #5A6678">Diagnóstico de Camila · Álgebra Lineal, parcial 1</p>
+            <ul style="list-style: none; margin: 6px 0 0; padding: 0">
+              <li style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #F0F2F6">
+                <span style="font-size: 15px; line-height: 1.45">Vectores, rectas y planos</span>
+                <span style="position: relative; flex: none; margin-right: 8px; font-size: 14px; font-weight: 600; padding: 2px 10px; border-left: 4px solid #0F9D58">Lo domina</span>
+              </li>
+              <li style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0">
+                <span style="font-size: 15px; line-height: 1.45">Sistemas lineales y Gauss-Jordan</span>
+                <span style="position: relative; flex: none; margin-right: 8px; font-size: 14px; font-weight: 600; padding: 2px 10px; border-left: 4px solid #E5484D">No lo domina<svg class="trazo" aria-hidden="true" viewBox="0 0 200 60" preserveAspectRatio="none" style="position: absolute; left: -8px; top: -9px; width: calc(100% + 16px); height: 44px; pointer-events: none; overflow: visible"><ellipse cx="100" cy="30" rx="96" ry="26" fill="none" stroke="#C62A2F" stroke-width="3" stroke-linecap="round" transform="rotate(-3 100 30)"></ellipse></svg></span>
+              </li>
+            </ul>
+            <div style="margin-top: 12px; padding: 14px 0 0; border-top: 1px dashed #F0C9CA">
+              <p style="margin: 0; font-size: 15px; font-weight: 700; color: #C62A2F">Error detectado</p>
+              <p style="margin: 6px 0 0; font-size: 17px; line-height: 1.5; color: #0B1B33">Camila confunde un sistema consistente dependiente con uno inconsistente.</p>
+              <p style="margin: 8px 0 0; font-size: 14px; color: #5A6678">Lo eligió 2 veces</p>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 2. El problema: lo que cuesta dar monitorías por tu cuenta -->
+  <section style="max-width: 1200px; margin: 0 auto; padding: clamp(72px, 10vw, 136px) clamp(20px, 4vw, 48px) 0">
+    <div class="partido">
+      <h2 style="margin: 0; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.08; letter-spacing: -0.03em; font-weight: 700">Dar monitorías por tu cuenta es más trabajo que enseñar.</h2>
+      <div style="display: flex; flex-direction: column">
+        <div style="padding: 22px 0; border-top: 1px solid #DDE3EC">
+          <p style="margin: 0; font-size: 20px; font-weight: 600; line-height: 1.4">Conseguir estudiantes.</p>
+          <p style="margin: 6px 0 0; font-size: 17px; line-height: 1.6; color: #3D4A5E">Publicar en grupos, responder mensajes y cuadrar horarios uno por uno.</p>
+        </div>
+        <div style="padding: 22px 0; border-top: 1px solid #DDE3EC">
+          <p style="margin: 0; font-size: 20px; font-weight: 600; line-height: 1.4">Cobrar.</p>
+          <p style="margin: 6px 0 0; font-size: 17px; line-height: 1.6; color: #3D4A5E">Recordar la transferencia y perder la hora cuando alguien cancela a última hora.</p>
+        </div>
+        <div style="padding: 22px 0; border-top: 1px solid #DDE3EC; border-bottom: 1px solid #DDE3EC">
+          <p style="margin: 0; font-size: 20px; font-weight: 600; line-height: 1.4">Adivinar qué no entiende.</p>
+          <p style="margin: 6px 0 0; font-size: 17px; line-height: 1.6; color: #3D4A5E">El estudiante dice «no entiendo nada» y la primera parte de la sesión se va en encontrar el problema.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Cómo funciona: los cuatro pasos reales (solicitud, evaluación presencial, invitación, horarios), en línea -->
+  <section style="margin-top: clamp(72px, 10vw, 136px); background: #F3F6FC; border-top: 1px solid #E6EAF1; border-bottom: 1px solid #E6EAF1">
+    <div style="max-width: 1200px; margin: 0 auto; padding: clamp(64px, 8vw, 112px) clamp(20px, 4vw, 48px)">
+      <h2 style="margin: 0; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.08; letter-spacing: -0.03em; font-weight: 700">Cómo llegas a tu primera monitoría</h2>
+      <ol class="pasos cuatro" style="list-style: none; margin: 48px 0 0; padding: 0">
+        <li class="paso">
+          <span class="numero" aria-hidden="true">1</span>
+          <h3 style="margin: 20px 0 0; font-size: 21px; line-height: 1.3; font-weight: 600">Deja tus datos</h3>
+          <p style="margin: 8px 0 0; font-size: 17px; line-height: 1.6; color: #3D4A5E">Y las materias en las que quieres certificarte.</p>
+        </li>
+        <li class="paso">
+          <span class="numero" aria-hidden="true">2</span>
+          <h3 style="margin: 20px 0 0; font-size: 21px; line-height: 1.3; font-weight: 600">Presenta la evaluación</h3>
+          <p style="margin: 8px 0 0; font-size: 17px; line-height: 1.6; color: #3D4A5E">Es presencial, por materia. Te contactamos para agendarla.</p>
+        </li>
+        <li class="paso">
+          <span class="numero" aria-hidden="true">3</span>
+          <h3 style="margin: 20px 0 0; font-size: 21px; line-height: 1.3; font-weight: 600">Crea tu cuenta</h3>
+          <p style="margin: 8px 0 0; font-size: 17px; line-height: 1.6; color: #3D4A5E">Si apruebas, te certificamos y te llega la invitación.</p>
+        </li>
+        <li class="paso">
+          <span class="numero" aria-hidden="true">4</span>
+          <h3 style="margin: 20px 0 0; font-size: 21px; line-height: 1.3; font-weight: 600">Abre tus horarios</h3>
+          <p style="margin: 8px 0 0; font-size: 17px; line-height: 1.6; color: #3D4A5E">Desde ahí los estudiantes de tu materia te pueden agendar.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 4. Beneficios, con la pantalla de horarios al lado -->
+  <section style="max-width: 1200px; margin: 0 auto; padding: clamp(72px, 10vw, 136px) clamp(20px, 4vw, 48px) 0">
+    <div class="partido" style="align-items: center">
+      <div>
+        <h2 style="margin: 0; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.08; letter-spacing: -0.03em; font-weight: 700">Tú enseñas. Lo demás lo hace Calibra.</h2>
+        <ul style="list-style: none; margin: 32px 0 0; padding: 0; display: flex; flex-direction: column; gap: 18px">
+          <li style="display: flex; gap: 14px; align-items: flex-start">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#0B1B33" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 3px"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+            <p style="margin: 0; font-size: 17px; line-height: 1.6; color: #3D4A5E"><strong style="color: #0B1B33; font-weight: 600">Tu horario, tu precio.</strong> Cada horario lleva su día, hora, duración y precio, y puede costar más un domingo.</p>
+          </li>
+          <li style="display: flex; gap: 14px; align-items: flex-start">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#0B1B33" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 3px"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+            <p style="margin: 0; font-size: 17px; line-height: 1.6; color: #3D4A5E"><strong style="color: #0B1B33; font-weight: 600">Los estudiantes te encuentran.</strong> Apareces en cada materia en que estás certificado, con los temas que marcas como tu fuerte.</p>
+          </li>
+          <li style="display: flex; gap: 14px; align-items: flex-start">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#0B1B33" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 3px"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+            <p style="margin: 0; font-size: 17px; line-height: 1.6; color: #3D4A5E"><strong style="color: #0B1B33; font-weight: 600">No persigues pagos.</strong> El estudiante paga antes de la sesión y Calibra revisa el comprobante.</p>
+          </li>
+          <li style="display: flex; gap: 14px; align-items: flex-start">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#0B1B33" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 3px"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+            <p style="margin: 0; font-size: 17px; line-height: 1.6; color: #3D4A5E"><strong style="color: #0B1B33; font-weight: 600">Sin cancelaciones de último minuto.</strong> Una individual se cancela hasta 12 horas antes; una grupal, hasta 24.</p>
+          </li>
+          <li style="display: flex; gap: 14px; align-items: flex-start">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#0B1B33" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 3px"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+            <p style="margin: 0; font-size: 17px; line-height: 1.6; color: #3D4A5E"><strong style="color: #0B1B33; font-weight: 600">El certificado no vence.</strong> Te certificas una vez por materia.</p>
+          </li>
+        </ul>
+      </div>
+
+      <figure style="margin: 0">
+        <div style="background: #FFFFFF; border: 1px solid #DDE3EC; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 1px rgba(11,27,51,.04), 0 10px 30px rgba(11,27,51,.07)">
+          <div style="padding: 18px 24px; border-bottom: 1px solid #E6EAF1; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 16px">
+            <p style="margin: 0; font-size: 17px; font-weight: 600">Tus horarios</p>
+            <p style="margin: 0; font-size: 14px; color: #5A6678">Se repiten cada semana</p>
+          </div>
+          <ul style="list-style: none; margin: 0; padding: 6px 24px">
+            <li style="display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding: 14px 0; border-bottom: 1px solid #F0F2F6">
+              <span style="font-size: 16px; font-weight: 600">Martes, 4:00 p. m.</span>
+              <span style="font-size: 16px; font-weight: 600; text-align: right">$25.000</span>
+              <span style="font-size: 14px; color: #5A6678">60 min · Presencial</span>
+            </li>
+            <li style="display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding: 14px 0; border-bottom: 1px solid #F0F2F6">
+              <span style="font-size: 16px; font-weight: 600">Miércoles, 6:00 p. m.</span>
+              <span style="font-size: 16px; font-weight: 600; text-align: right">$35.000</span>
+              <span style="font-size: 14px; color: #5A6678">90 min · Virtual</span>
+            </li>
+            <li style="display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding: 14px 0">
+              <span style="font-size: 16px; font-weight: 600">Domingo, 10:00 a. m.</span>
+              <span style="font-size: 16px; font-weight: 600; text-align: right">$30.000</span>
+              <span style="font-size: 14px; color: #5A6678">60 min · Presencial</span>
+            </li>
+          </ul>
+          <div style="padding: 16px 24px 20px; background: #FFFDF5; border-top: 1px solid #E6EAF1">
+            <p style="margin: 0; font-size: 15px; line-height: 1.5">El estudiante escoge la materia al agendar, entre las que tienes certificadas.</p>
+          </div>
+        </div>
+        <figcaption style="margin-top: 12px; font-size: 14px; color: #5A6678">Precios de ejemplo: cada monitor pone los suyos.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 5. Materias: en la voz de la prueba social de estudiantes (en la app, la lista sale de la base) -->
+  <section style="max-width: 1200px; margin: 0 auto; padding: clamp(72px, 10vw, 136px) clamp(20px, 4vw, 48px) 0">
+    <div class="partido">
+      <h2 style="margin: 0; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.08; letter-spacing: -0.03em; font-weight: 700">Materias en las que puedes certificarte</h2>
+      <p style="margin: 0; font-size: clamp(22px, 2.2vw, 30px); line-height: 1.4; letter-spacing: -0.015em; color: #3D4A5E"><strong style="color: #0B1B33; font-weight: 700">Cálculo Diferencial</strong>, <strong style="color: #0B1B33; font-weight: 700">Cálculo Integral con Ecuaciones Diferenciales</strong>, <strong style="color: #0B1B33; font-weight: 700">Cálculo Vectorial</strong>, <strong style="color: #0B1B33; font-weight: 700">Álgebra Lineal</strong>, <strong style="color: #0B1B33; font-weight: 700">Física I</strong>, <strong style="color: #0B1B33; font-weight: 700">Física II</strong>, <strong style="color: #0B1B33; font-weight: 700">Introducción a la Programación</strong> y <strong style="color: #0B1B33; font-weight: 700">Probabilidad y Estadística</strong>. Una evaluación por materia, y tus estudiantes llegan con un diagnóstico hecho sobre los parciales de esa materia.</p>
+    </div>
+  </section>
+
+  <!-- 6. Objeciones del monitor. Sin cifras ni la palabra de la guarda (D-78 c): la regla se muestra solo al registrarse con invitación (HU-096). -->
+  <section style="max-width: 1200px; margin: 0 auto; padding: clamp(72px, 10vw, 136px) clamp(20px, 4vw, 48px) 0">
+    <div class="partido">
+      <h2 style="margin: 0; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.08; letter-spacing: -0.03em; font-weight: 700">Preguntas frecuentes</h2>
+      <div style="border-top: 1px solid #DDE3EC">
+        <details style="border-bottom: 1px solid #DDE3EC">
+          <summary style="display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 60px; padding: 14px 0; font-size: 18px; font-weight: 600">¿Cuándo y cómo me pagan?</summary>
+          <p style="margin: 0 0 20px; font-size: 17px; line-height: 1.6; color: #3D4A5E">Por cada monitoría realizada, Calibra te transfiere a tu llave. El pago sale a partir de 24 horas después de que termina la sesión, que es el plazo del estudiante para reportar si no llegaste.</p>
+        </details>
+        <details style="border-bottom: 1px solid #DDE3EC">
+          <summary style="display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 60px; padding: 14px 0; font-size: 18px; font-weight: 600">¿Calibra se queda con una parte?</summary>
+          <p style="margin: 0 0 20px; font-size: 17px; line-height: 1.6; color: #3D4A5E">Sí, Calibra se queda con una parte de cada monitoría. Te mostramos la regla exacta cuando creas tu cuenta, antes de abrir tu primer horario.</p>
+        </details>
+        <details style="border-bottom: 1px solid #DDE3EC">
+          <summary style="display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 60px; padding: 14px 0; font-size: 18px; font-weight: 600">¿Qué pasa si un estudiante cancela?</summary>
+          <p style="margin: 0 0 20px; font-size: 17px; line-height: 1.6; color: #3D4A5E">Una individual se puede cancelar hasta 12 horas antes y una grupal hasta 24. Después de eso no se cancela, salvo casos extremos que revisa Calibra.</p>
+        </details>
+        <details style="border-bottom: 1px solid #DDE3EC">
+          <summary style="display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 60px; padding: 14px 0; font-size: 18px; font-weight: 600">¿Puedo dar monitorías virtuales?</summary>
+          <p style="margin: 0 0 20px; font-size: 17px; line-height: 1.6; color: #3D4A5E">Sí. Cada horario dice si es presencial o virtual, y el enlace o el lugar lo pones en cada monitoría.</p>
+        </details>
+        <details style="border-bottom: 1px solid #DDE3EC">
+          <summary style="display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 60px; padding: 14px 0; font-size: 18px; font-weight: 600">¿Y las sesiones grupales?</summary>
+          <p style="margin: 0 0 20px; font-size: 17px; line-height: 1.6; color: #3D4A5E">Un estudiante con cuenta puede organizar una grupal en uno de tus horarios, con 36 horas de antelación. Ves el diagnóstico de cada integrante.</p>
+        </details>
+        <details style="border-bottom: 1px solid #DDE3EC">
+          <summary style="display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 60px; padding: 14px 0; font-size: 18px; font-weight: 600">¿Quién ve el diagnóstico del estudiante?</summary>
+          <p style="margin: 0 0 20px; font-size: 17px; line-height: 1.6; color: #3D4A5E">Solo el monitor de la monitoría que el estudiante agendó, y con su autorización.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. CTA final -->
+  <section class="{{claseHero}}" style="margin-top: clamp(80px, 11vw, 144px); border-top: 1px solid #E6EAF1">
+    <div style="max-width: 1200px; margin: 0 auto; padding: clamp(80px, 10vw, 128px) clamp(20px, 4vw, 48px); text-align: center">
+      <h2 style="margin: 0 auto; max-width: 16em; font-size: clamp(32px, 4.8vw, 60px); line-height: 1.05; letter-spacing: -0.035em; font-weight: 800">Tu primera monitoría empieza con una evaluación.</h2>
+      <div style="margin-top: 32px; display: flex; flex-direction: column; align-items: center; gap: 12px">
+        <a class="cta" href="#" data-evento="clic_cta_ser_monitor" data-ubicacion="final" style="display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 28px; border-radius: 12px; background: {{acento}}; color: #FFFFFF; text-decoration: none; font-size: 18px; font-weight: 600">Quiero ser monitor</a>
+        <p style="margin: 0; font-size: 15px; color: #5A6678">Dejas tus datos y te contactamos para la evaluación.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer style="border-top: 1px solid #E6EAF1">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 20px clamp(20px, 4vw, 48px) 28px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px">
+      <p style="margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em">Calibra</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 0 24px">
+        <a href="./Main.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; color: #5A6678; text-underline-offset: 4px">Soy estudiante</a>
+        <a href="#" style="display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; color: #5A6678; text-underline-offset: 4px">Aviso de privacidad</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Móvil: el CTA siempre al alcance del pulgar -->
+  <div class="barra-movil" style="position: sticky; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: rgba(255,253,245,.96); border-top: 1px solid #DDE3EC">
+    <a class="cta" href="#" data-evento="clic_cta_ser_monitor" data-ubicacion="barra_movil" style="display: flex; align-items: center; justify-content: center; min-height: 52px; border-radius: 12px; background: {{acento}}; color: #FFFFFF; text-decoration: none; font-size: 17px; font-weight: 600">Quiero ser monitor</a>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"acento":{"editor":"color","default":"#0057ED","options":["#0057ED","#0B1B33","#005EFF"]},"cuadricula":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":5000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { elegida: 's1' };
+  }
+
+  renderVals() {
+    // Habilidades y errores del banco (contenido/): regla-cadena, newton-e1 y sistemas-e2.
+    var self = this;
+    var elegida = this.state.elegida;
+    function estudiante(clave) {
+      var marcada = elegida === clave;
+      return {
+        elegir: function () { self.setState({ elegida: clave }); },
+        presionada: marcada ? 'true' : 'false',
+        borde: marcada ? '#0B1B33' : '#DDE3EC',
+        fondo: marcada ? '#F3F6FC' : '#FFFFFF',
+        visible: marcada
+      };
+    }
+    return {
+      acento: this.props.acento ?? '#0057ED',
+      claseHero: (this.props.cuadricula ?? true) ? 'cuadricula' : 'liso',
+      s1: estudiante('s1'), s2: estudiante('s2'), s3: estudiante('s3')
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Calibra: diagnóstico y monitorías</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=STIX+Two+Text:ital,wght@0,400;0,500;1,400;1,500&amp;display=swap">
+<style>
+body{margin:0;background:#FFFDF5;color:#0B1B33;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#0B1B33}a:hover{color:#3D4A5E}
+*{box-sizing:border-box}
+:focus-visible{outline:3px solid #0B1B33;outline-offset:3px;border-radius:6px}
+.m{font-family:"STIX Two Text","Cambria Math",Georgia,serif;font-size:1.18em;letter-spacing:0}
+.m i{font-style:italic}
+.m sup{font-size:.68em;line-height:0}
+.cuadricula{background-color:#FFFDF5;background-image:linear-gradient(rgba(0,87,237,.085) 1px,transparent 1px),linear-gradient(90deg,rgba(0,87,237,.085) 1px,transparent 1px);background-size:26px 26px;background-position:-1px -1px}
+.liso{background-color:#FFFDF5}
+.opcion{cursor:pointer;transition:border-color 150ms ease,background-color 150ms ease}
+.opcion:hover{border-color:#9AA6B8 !important}
+.cta{transition:filter 150ms ease}
+.cta:hover{filter:brightness(.88);color:#FFFFFF !important}
+.trazo ellipse{stroke-dasharray:640;stroke-dashoffset:640;animation:trazar 520ms cubic-bezier(.6,.05,.3,1) forwards}
+@keyframes trazar{to{stroke-dashoffset:0}}
+details>summary{list-style:none;cursor:pointer}
+details>summary::-webkit-details-marker{display:none}
+details>summary::after{content:"+";flex:none;font-size:24px;font-weight:400;line-height:1;color:#5A6678}
+details[open]>summary::after{content:"\2212"}
+.barra-movil{display:none}
+.partido{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:32px clamp(48px,6vw,96px);align-items:start}
+.pasos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px 48px;position:relative}
+.pasos::before{content:"";position:absolute;top:22px;left:22px;right:22px;border-top:1.5px solid #B9C6DE}
+.paso{position:relative}
+.numero{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:#F3F6FC;border:1.5px solid #0B1B33;font-size:17px;font-weight:700}
+@media (max-width: 959px){.partido,.pasos{grid-template-columns:minmax(0,1fr)}.pasos::before{top:22px;bottom:22px;left:22px;right:auto;border-top:0;border-left:1.5px solid #B9C6DE}.paso{padding-left:68px}.numero{position:absolute;left:0;top:0}.paso h3{margin-top:8px !important}}
+@media (max-width: 719px){.barra-movil{display:block}}
+@media (prefers-reduced-motion: reduce){.trazo ellipse{animation:none;stroke-dashoffset:0}.opcion,.cta{transition:none}}
+</style>
+</helmet>
+
+<div style="min-height: 100vh; background: #FFFDF5; color: #0B1B33; font-family: Inter, system-ui, sans-serif">
+
+  <!-- Solo la marca: sin menú ni enlaces que saquen al visitante -->
+  <header style="border-bottom: 1px solid #E6EAF1">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 12px clamp(20px, 4vw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 16px">
+      <p style="margin: 0; display: flex; align-items: center; gap: 10px">
+        <svg viewBox="0 0 2084 2084" width="34" height="34" role="img" aria-label="Calibra" style="flex: none; color: #0057ED"><path fill="currentColor" d="M1939.9,1443.68c-2.72-9.27-21-33.86-38.97-47.68c-0.78-0.6-1.55-1.18-2.33-1.76c-22.22-16.4-49.45-24.59-77.05-23.84c-82.09,2.23-324,1.91-487.56-69.86c-35.65-15.64-64.16-43.39-82.07-64.34c-11.43-13.36-6.65-33.97,9.48-40.95c61.88-26.78,200.98-66.11,254.53-81.84c52.57-15.44,161.75-42.51,222.16-60.25c46.12-13.55,64.61-18.7,72.44-64.57c4.12-24.1,3.66-39.46,6.8-78.39c6.27-77.58,0.29-176.24-0.7-220.57c-1.14-51.05-3.21-163.46-14.26-245.03c-4.19-30.94-11.86-57.44-17.67-74.47c-4.1-12.01-16.39-19.21-28.88-16.93c-15.95,2.92-39.53,8.09-65.92,16.68c-58.01,18.89-129.65,50.8-163.9,64.51c-37.17,14.88-95.69,39.62-160.23,67.34c-3.39,1.45-6.79,2.92-10.2,4.38c-6.75,2.9-13.56,5.84-20.41,8.79c-153.6,66.23-326.82,142.71-326.82,142.71s250.86-142.2,336.48-185.26c69.73-35.08,289.94-125.3,289.94-125.3l-22.08-87.18c0,0-145.56,72.89-191.74,100.86c-86.13,52.15-322.02,202.45-387.94,244.5c-11.04,7.04-17.31,11.05-17.31,11.05l488.17-339.79l-12.43-83.03L1014.5,593.74l384.72-373.44l-20.39-62.8c0,0-213.31,205.17-281.75,279.56c-33.71,36.65-119.24,149.14-143.3,180.94c-3.16,4.17-9.57,3.69-12.05-0.92c-2.93-5.46-6.54-13.11-9.61-22.47c-6.58-20.02-10.91-47.78-21.79-70.19c-16.29-33.56-54.49-67.19-57.65-71.34c-3.63-4.77-85.69-61.62-184.11-76.46c-81.04-12.22-166.81-2.52-197.59,1.8c-8.56,1.2-17.2,1.67-25.83,1.37c-14.85-0.51-37.35-1.46-45.97-2.75c-7.95-1.19-36.53-9.21-47.21-11.85c-77.23-19.11-210.37-60.52-210.37-60.52l206.85,75.55c67.15,24.52,120.23,77.53,143.98,144.95c0.45,1.27,0.89,2.56,1.34,3.86c35.47,103.83,177.22,109.39,190.75,115.87c13.53,6.48-111.77,15.26-118.36-5.4c-3.3-10.33-40.7,120.54-48.48,247.2c-9.75,158.79,25.5,246.49,68.6,320.83c83.94,144.77,165.4,213.99,343.92,269.76c71.31,22.28,96.99,53.99,126.1,101.26c0.33,0.54,0.67,1.09,1,1.63c51.2,83.87,48.37,137.09,101.65,231.57c54.79,97.16,223.02,90.87,223.02,90.87l-154.51-295.06c0,0,191.05,319.13,241.46,313.52c0,0,32.47,14.44,64.62-3.86c0.92-0.52,2.06-1,3.24-1.73c27.27-16.81,29.33-55.72,4.55-76.03c-21.47-17.59-46.33-39.85-62.54-60.39c-31.49-39.88-155.95-237.51-155.95-237.51s157.13,198.74,210.83,256.99c18.75,20.33,64.18,66.78,94.47,91.04c16.35,13.09,48.42,6.59,67.97-0.94c16.29-6.27,36.26-19.01,44.94-29.37c9.5-11.34,29.16-41.5,42.69-73.83c8.42-20.12-1.43-43.23-21.66-51.38c-38.73-15.61-162.11-78.2-219.87-121.66c-48.81-36.73-207.83-168.6-207.83-168.6s223.27,143.66,274.36,174.88c26.14,15.97,85.91,52.92,133.15,73.87c47.24,20.95,72.87,39.99,95.94,33.91c20.38-5.37,35.82-50.1,42.09-70.47c3.14-10.19,3.98-35.04,0.26-58.41c-2.37-14.89-14.84-26.06-29.9-26.68c-36.77-1.52-109.79-9.38-193.25-44.69c-66.66-28.2-290.59-133.37-290.59-133.37s225.63,94.01,303.85,114.18c26.73,6.89,79.97,22.79,127.33,29.3c27.26,3.74,52.75,5.06,71.54,5.44c26.81,0.54,52.02-13.72,64.46-37.48c0.31-0.6,0.62-1.2,0.91-1.81C1945.13,1480.64,1942.98,1454.16,1939.9,1443.68zM1234.11,724.13c10.75-36.25,29.64-65.86,56.65-88.85c27-22.97,61.65-37.44,103.93-43.41c41.69-5.88,75.72-1.39,102.07,13.45c26.35,14.85,41.35,35.2,44.99,61.03c1.82,12.92,0.13,23.2-5.09,30.81c-5.21,7.63-13.99,12.31-26.32,14.04c-12.92,1.82-23.24-0.16-30.94-5.97c-7.71-5.790-14.33-13.39-19.84-22.81c-5.52-9.4-11.18-18.78-17-28.15c-5.81-9.36-13.16-16.86-22.04-22.5c-8.88-5.63-20.96-7.38-36.22-5.22c-35.83,5.05-62.02,22.08-78.59,51.06c-16.57,28.99-21.3,68.74-14.18,119.24c7.54,53.44,24.74,95.78,51.61,127.03c26.87,31.25,62.9,43.68,108.13,37.31c28.77-4.06,51.28-13.21,67.55-27.49c16.25-14.27,32.58-35.44,48.99-63.51l18.48,9.97c-7.85,25.07-17.6,48.3-29.25,69.71c-11.66,21.41-27.26,39.19-46.83,53.32c-19.57,14.13-45.21,23.45-76.92,27.92c-36.42,5.14-69.07,0.76-97.98-13.13c-28.91-13.89-52.63-35.55-71.16-64.98c-18.52-29.42-30.65-64.41-36.36-104.93C1221.25,801.72,1223.35,760.39,1234.11,724.13z"></path></svg>
+        <span style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: #0B1B33">Calibra</span>
+      </p>
+      <a href="#" data-evento="clic_iniciar_sesion" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1.5px solid #DDE3EC; border-radius: 10px; color: #0B1B33; text-decoration: none; font-size: 15px; font-weight: 600">Iniciar sesión</a>
+    </div>
+  </header>
+
+  <!-- 1. Hero: propuesta de valor, CTA y el producto funcionando, sin scrollear -->
+  <section class="{{claseHero}}" style="border-bottom: 1px solid #E6EAF1">
+    <div style="max-width: 1200px; margin: 0 auto; padding: clamp(40px, 7vw, 96px) clamp(20px, 4vw, 48px) clamp(48px, 7vw, 104px); display: flex; flex-wrap: wrap; align-items: flex-start; gap: clamp(40px, 6vw, 88px)">
+
+      <div style="flex: 1 1 420px; min-width: 0; max-width: 560px; margin-top: clamp(0px, 4vw, 56px)">
+        <h1 style="margin: 0; font-size: clamp(38px, 5.6vw, 72px); line-height: 1.02; letter-spacing: -0.035em; font-weight: 800; color: #0B1B33">Monitorías de ciclo básico que empiezan por tu error.</h1>
+        <p style="margin: 24px 0 0; font-size: clamp(17px, 1.5vw, 20px); line-height: 1.55; color: #3D4A5E; max-width: 34em">Un diagnóstico corto encuentra en qué te equivocas exactamente. El monitor certificado de tu materia lo lee antes de la sesión, así que no gastas la hora explicando qué no entiendes.</p>
+        <div style="margin-top: 32px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px">
+          <a class="cta" href="#" data-evento="clic_cta_diagnostico" data-ubicacion="hero" style="display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 28px; border-radius: 12px; background: {{acento}}; color: #FFFFFF; text-decoration: none; font-size: 18px; font-weight: 600">Hacer mi diagnóstico gratis</a>
+          <p style="margin: 0; font-size: 15px; color: #5A6678">Sin crear cuenta.</p>
+        </div>
+      </div>
+
+      <div style="flex: 1 1 400px; min-width: 0; max-width: 500px; background: #FFFFFF; border: 1px solid #DDE3EC; border-radius: 16px; box-shadow: 0 1px 1px rgba(11,27,51,.04), 0 10px 30px rgba(11,27,51,.07); padding: clamp(20px, 3vw, 32px)">
+        <p style="margin: 0; font-size: 14px; color: #5A6678">Cálculo Diferencial, parcial 2</p>
+        <h2 style="margin: 10px 0 0; font-size: 21px; line-height: 1.4; font-weight: 600; letter-spacing: -0.01em">¿Cuál es la derivada de <span class="m"><i>f</i>(<i>x</i>) = sen(<i>x</i><sup>2</sup>)</span>?</h2>
+
+        <div role="group" aria-label="Opciones de respuesta" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px">
+          <button type="button" class="opcion" onClick="{{a.elegir}}" aria-pressed="{{a.presionada}}" style="position: relative; display: flex; align-items: center; min-height: 52px; width: 100%; padding: 10px 18px; text-align: left; font: inherit; color: #0B1B33; border-radius: 10px; border: 1.5px solid {{a.borde}}; background: {{a.fondo}}">
+            <span class="m">cos(<i>x</i><sup>2</sup>)</span>
+            <sc-if value="{{a.circulo}}" hint-placeholder-val="{{false}}"><svg class="trazo" aria-hidden="true" viewBox="0 0 200 60" preserveAspectRatio="none" style="position: absolute; left: 4px; top: -6px; width: 150px; height: 64px; pointer-events: none; overflow: visible"><ellipse cx="100" cy="30" rx="92" ry="25" fill="none" stroke="#C62A2F" stroke-width="3" stroke-linecap="round" transform="rotate(-3 100 30)"></ellipse></svg></sc-if>
+          </button>
+          <button type="button" class="opcion" onClick="{{c.elegir}}" aria-pressed="{{c.presionada}}" style="position: relative; display: flex; align-items: center; min-height: 52px; width: 100%; padding: 10px 18px; text-align: left; font: inherit; color: #0B1B33; border-radius: 10px; border: 1.5px solid {{c.borde}}; background: {{c.fondo}}">
+            <span class="m"><i>x</i><sup>2</sup> cos(<i>x</i><sup>2</sup>)</span>
+            <sc-if value="{{c.circulo}}" hint-placeholder-val="{{false}}"><svg class="trazo" aria-hidden="true" viewBox="0 0 200 60" preserveAspectRatio="none" style="position: absolute; left: 4px; top: -6px; width: 170px; height: 64px; pointer-events: none; overflow: visible"><ellipse cx="100" cy="30" rx="92" ry="25" fill="none" stroke="#C62A2F" stroke-width="3" stroke-linecap="round" transform="rotate(-3 100 30)"></ellipse></svg></sc-if>
+          </button>
+          <button type="button" class="opcion" onClick="{{b.elegir}}" aria-pressed="{{b.presionada}}" style="position: relative; display: flex; align-items: center; justify-content: space-between; min-height: 52px; width: 100%; padding: 10px 18px; text-align: left; font: inherit; color: #0B1B33; border-radius: 10px; border: 1.5px solid {{b.borde}}; background: {{b.fondo}}">
+            <span class="m">2<i>x</i> cos(<i>x</i><sup>2</sup>)</span>
+            <sc-if value="{{b.marca}}" hint-placeholder-val="{{false}}"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#0B7A44" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"></path></svg></sc-if>
+          </button>
+          <button type="button" class="opcion" onClick="{{e.elegir}}" aria-pressed="{{e.presionada}}" style="position: relative; display: flex; align-items: center; min-height: 52px; width: 100%; padding: 10px 18px; text-align: left; font: inherit; color: #0B1B33; border-radius: 10px; border: 1.5px solid {{e.borde}}; background: {{e.fondo}}">
+            <span class="m">2<i>x</i> sen(<i>x</i><sup>2</sup>)</span>
+            <sc-if value="{{e.circulo}}" hint-placeholder-val="{{false}}"><svg class="trazo" aria-hidden="true" viewBox="0 0 200 60" preserveAspectRatio="none" style="position: absolute; left: 4px; top: -6px; width: 160px; height: 64px; pointer-events: none; overflow: visible"><ellipse cx="100" cy="30" rx="92" ry="25" fill="none" stroke="#C62A2F" stroke-width="3" stroke-linecap="round" transform="rotate(-3 100 30)"></ellipse></svg></sc-if>
+          </button>
+          <button type="button" class="opcion" onClick="{{d.elegir}}" aria-pressed="{{d.presionada}}" style="position: relative; display: flex; align-items: center; min-height: 52px; width: 100%; padding: 10px 18px; text-align: left; font: inherit; color: #0B1B33; border-radius: 10px; border: 1.5px solid {{d.borde}}; background: {{d.fondo}}">
+            <span class="m">cos(2<i>x</i>)</span>
+            <sc-if value="{{d.circulo}}" hint-placeholder-val="{{false}}"><svg class="trazo" aria-hidden="true" viewBox="0 0 200 60" preserveAspectRatio="none" style="position: absolute; left: 4px; top: -6px; width: 140px; height: 64px; pointer-events: none; overflow: visible"><ellipse cx="100" cy="30" rx="92" ry="25" fill="none" stroke="#C62A2F" stroke-width="3" stroke-linecap="round" transform="rotate(-3 100 30)"></ellipse></svg></sc-if>
+          </button>
+        </div>
+
+        <div aria-live="polite" style="margin-top: 20px; min-height: 150px">
+          <sc-if value="{{sinElegir}}" hint-placeholder-val="{{true}}">
+            <p style="margin: 0; padding: 16px 0 0; border-top: 1px dashed #DDE3EC; font-size: 15px; line-height: 1.55; color: #5A6678">Elige una respuesta. Si te equivocas, Calibra te dice qué error cometiste.</p>
+          </sc-if>
+          <sc-if value="{{esError}}" hint-placeholder-val="{{false}}">
+            <div style="padding: 16px 0 0; border-top: 1px dashed #F0C9CA">
+              <p style="margin: 0; font-size: 15px; font-weight: 700; color: #C62A2F">Error detectado</p>
+              <p style="margin: 6px 0 0; font-size: 17px; line-height: 1.5; color: #0B1B33">{{errTexto}}</p>
+              <p style="margin: 10px 0 0; font-size: 14px; color: #5A6678">Habilidad: {{errHabilidad}}. Esto es lo que tu monitor lee antes de la sesión.</p>
+              <div style="margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px">
+                <a href="#" data-evento="clic_cta_diagnostico" data-ubicacion="pregunta" style="display: inline-flex; align-items: center; min-height: 44px; font-size: 16px; font-weight: 600; color: {{acento}}; text-underline-offset: 4px">Hacer el diagnóstico completo</a>
+                <button type="button" onClick="{{reiniciar}}" style="min-height: 44px; padding: 0; background: none; border: 0; font: inherit; font-size: 15px; color: #5A6678; text-decoration: underline; text-underline-offset: 4px; cursor: pointer">Probar otra respuesta</button>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{esCorrecta}}" hint-placeholder-val="{{false}}">
+            <div style="padding: 16px 0 0; border-top: 1px dashed #BFE0CC">
+              <p style="margin: 0; font-size: 15px; font-weight: 700; color: #0B7A44">Lo dominas: regla de la cadena</p>
+              <p style="margin: 6px 0 0; font-size: 17px; line-height: 1.5; color: #0B1B33">En el diagnóstico completo cada habilidad tiene varias preguntas, y cada opción equivocada apunta a un error distinto.</p>
+              <div style="margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px">
+                <a href="#" data-evento="clic_cta_diagnostico" data-ubicacion="pregunta" style="display: inline-flex; align-items: center; min-height: 44px; font-size: 16px; font-weight: 600; color: {{acento}}; text-underline-offset: 4px">Hacer el diagnóstico completo</a>
+                <button type="button" onClick="{{reiniciar}}" style="min-height: 44px; padding: 0; background: none; border: 0; font: inherit; font-size: 15px; color: #5A6678; text-decoration: underline; text-underline-offset: 4px; cursor: pointer">Probar otra respuesta</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Desde aquí: un solo recorrido. En escritorio cada sección se parte en dos (el titular a la izquierda, el contenido a la derecha); en el teléfono todo va en una columna. -->
+
+  <!-- 2. El problema -->
+  <section style="max-width: 1200px; margin: 0 auto; padding: clamp(72px, 10vw, 136px) clamp(20px, 4vw, 48px) 0">
+    <div class="partido">
+      <h2 style="margin: 0; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.08; letter-spacing: -0.03em; font-weight: 700">Estudiar más horas no arregla un error que no sabes que tienes.</h2>
+      <div style="display: flex; flex-direction: column">
+        <div style="padding: 22px 0; border-top: 1px solid #DDE3EC">
+          <p style="margin: 0; font-size: 20px; font-weight: 600; line-height: 1.4">Crees que entendiste hasta que llega el parcial.</p>
+          <p style="margin: 6px 0 0; font-size: 17px; line-height: 1.6; color: #3D4A5E">Los parciales viejos te dicen que fallaste un punto, no qué paso del razonamiento está mal.</p>
+        </div>
+        <div style="padding: 22px 0; border-top: 1px solid #DDE3EC">
+          <p style="margin: 0; font-size: 20px; font-weight: 600; line-height: 1.4">Pedir ayuda da pena, y las monitorías del departamento se llenan.</p>
+          <p style="margin: 6px 0 0; font-size: 17px; line-height: 1.6; color: #3D4A5E">Entonces dejas la duda para después, y después es la semana del parcial.</p>
+        </div>
+        <div style="padding: 22px 0; border-top: 1px solid #DDE3EC; border-bottom: 1px solid #DDE3EC">
+          <p style="margin: 0; font-size: 20px; font-weight: 600; line-height: 1.4">El monitor llega sin saber qué explicarte.</p>
+          <p style="margin: 6px 0 0; font-size: 17px; line-height: 1.6; color: #3D4A5E">La primera parte de la sesión se va en encontrar dónde está el problema.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Cómo funciona: es una secuencia, por eso va numerada y en línea -->
+  <section style="margin-top: clamp(72px, 10vw, 136px); background: #F3F6FC; border-top: 1px solid #E6EAF1; border-bottom: 1px solid #E6EAF1">
+    <div style="max-width: 1200px; margin: 0 auto; padding: clamp(64px, 8vw, 112px) clamp(20px, 4vw, 48px)">
+      <h2 style="margin: 0; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.08; letter-spacing: -0.03em; font-weight: 700">Cómo funciona</h2>
+      <ol class="pasos" style="list-style: none; margin: 48px 0 0; padding: 0">
+        <li class="paso">
+          <span class="numero" aria-hidden="true">1</span>
+          <h3 style="margin: 20px 0 0; font-size: 21px; line-height: 1.3; font-weight: 600">Haz el diagnóstico</h3>
+          <p style="margin: 8px 0 0; font-size: 17px; line-height: 1.6; color: #3D4A5E; max-width: 26em">Escoges materia y parcial y respondes preguntas de opción múltiple. Al final ves qué habilidades dominas y qué errores aparecieron.</p>
+        </li>
+        <li class="paso">
+          <span class="numero" aria-hidden="true">2</span>
+          <h3 style="margin: 20px 0 0; font-size: 21px; line-height: 1.3; font-weight: 600">Agenda con un monitor certificado</h3>
+          <p style="margin: 8px 0 0; font-size: 17px; line-height: 1.6; color: #3D4A5E; max-width: 26em">Eliges horario entre los monitores certificados en tu materia y pagas por transferencia.</p>
+        </li>
+        <li class="paso">
+          <span class="numero" aria-hidden="true">3</span>
+          <h3 style="margin: 20px 0 0; font-size: 21px; line-height: 1.3; font-weight: 600">La sesión empieza por tu error</h3>
+          <p style="margin: 8px 0 0; font-size: 17px; line-height: 1.6; color: #3D4A5E; max-width: 26em">El monitor ya leyó tu diagnóstico y llega con el plan de por dónde empezar.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 4. Beneficios, con el producto real al lado -->
+  <section style="max-width: 1200px; margin: 0 auto; padding: clamp(72px, 10vw, 136px) clamp(20px, 4vw, 48px) 0">
+    <div class="partido" style="align-items: center">
+      <div>
+        <h2 style="margin: 0; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.08; letter-spacing: -0.03em; font-weight: 700">La hora de monitoría rinde, porque nadie empieza a ciegas.</h2>
+        <ul style="list-style: none; margin: 32px 0 0; padding: 0; display: flex; flex-direction: column; gap: 18px">
+          <li style="display: flex; gap: 14px; align-items: flex-start">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#0B1B33" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 3px"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+            <p style="margin: 0; font-size: 17px; line-height: 1.6; color: #3D4A5E"><strong style="color: #0B1B33; font-weight: 600">Sabes qué repasar aunque no agendes.</strong> El resultado es tuyo: qué habilidades dominas y qué errores cometiste.</p>
+          </li>
+          <li style="display: flex; gap: 14px; align-items: flex-start">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#0B1B33" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 3px"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+            <p style="margin: 0; font-size: 17px; line-height: 1.6; color: #3D4A5E"><strong style="color: #0B1B33; font-weight: 600">Tu monitor llega preparado.</strong> Ve lo mismo que tú, con cuántas veces elegiste cada error.</p>
+          </li>
+          <li style="display: flex; gap: 14px; align-items: flex-start">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#0B1B33" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 3px"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+            <p style="margin: 0; font-size: 17px; line-height: 1.6; color: #3D4A5E"><strong style="color: #0B1B33; font-weight: 600">Solo te enseña quien sabe la materia.</strong> Cada monitor está certificado por materia; si no tiene el de la tuya, no aparece.</p>
+          </li>
+          <li style="display: flex; gap: 14px; align-items: flex-start">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#0B1B33" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 3px"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+            <p style="margin: 0; font-size: 17px; line-height: 1.6; color: #3D4A5E"><strong style="color: #0B1B33; font-weight: 600">Si se te cruza algo, recuperas tu plata.</strong> Cancelas hasta 12 horas antes y te devolvemos todo.</p>
+          </li>
+        </ul>
+      </div>
+
+      <figure style="margin: 0">
+        <div style="background: #FFFFFF; border: 1px solid #DDE3EC; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 1px rgba(11,27,51,.04), 0 10px 30px rgba(11,27,51,.07)">
+          <div style="padding: 18px 24px; border-bottom: 1px solid #E6EAF1; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 16px">
+            <p style="margin: 0; font-size: 17px; font-weight: 600">Diagnóstico de tu estudiante</p>
+            <p style="margin: 0; font-size: 14px; color: #5A6678">Cálculo Diferencial, parcial 2</p>
+          </div>
+          <ul style="list-style: none; margin: 0; padding: 6px 24px">
+            <li style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid #F0F2F6">
+              <span style="font-size: 15px; line-height: 1.45">Derivar potencias, sumas, productos y cocientes</span>
+              <span style="flex: none; font-size: 14px; font-weight: 600; padding: 2px 10px; border-left: 4px solid #0F9D58">Lo domina</span>
+            </li>
+            <li style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid #F0F2F6">
+              <span style="font-size: 15px; line-height: 1.45">Derivar funciones trigonométricas, exponenciales y logarítmicas</span>
+              <span style="flex: none; font-size: 14px; font-weight: 600; padding: 2px 10px; border-left: 4px solid #C98A00">En proceso</span>
+            </li>
+            <li style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 0">
+              <span style="font-size: 15px; line-height: 1.45">Derivar una composición con la regla de la cadena</span>
+              <span style="flex: none; font-size: 14px; font-weight: 600; padding: 2px 10px; border-left: 4px solid #E5484D">No lo domina</span>
+            </li>
+          </ul>
+          <div style="padding: 18px 24px 22px; background: #FFFDF5; border-top: 1px solid #E6EAF1">
+            <p style="margin: 0; font-size: 15px; line-height: 1.5"><strong style="color: #C62A2F; font-weight: 600">Error detectado:</strong> deriva la función de afuera y olvida multiplicar por la derivada de lo que está adentro.</p>
+            <p style="margin: 4px 0 0; font-size: 14px; color: #5A6678">Lo eligió 2 veces</p>
+          </div>
+        </div>
+        <figcaption style="margin-top: 12px; font-size: 14px; color: #5A6678">Lo que recibe el monitor antes de la sesión.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 5. Prueba social: solo lo que es real (sin testimonios hasta tener citas con permiso, D-77 f) -->
+  <section style="max-width: 1200px; margin: 0 auto; padding: clamp(72px, 10vw, 136px) clamp(20px, 4vw, 48px) 0">
+    <div class="partido">
+      <h2 style="margin: 0; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.08; letter-spacing: -0.03em; font-weight: 700">Hecho con los parciales de ciclo básico</h2>
+      <p style="margin: 0; font-size: clamp(22px, 2.2vw, 30px); line-height: 1.4; letter-spacing: -0.015em; color: #3D4A5E">El diagnóstico cubre <strong style="color: #0B1B33; font-weight: 700">8 materias</strong> de ciclo básico, con <strong style="color: #0B1B33; font-weight: 700">más de 250 preguntas</strong> y <strong style="color: #0B1B33; font-weight: 700">más de 400 errores típicos</strong> catalogados a partir de parciales de semestres anteriores.</p>
+    </div>
+  </section>
+
+  <!-- 6. Objeciones -->
+  <section style="max-width: 1200px; margin: 0 auto; padding: clamp(72px, 10vw, 136px) clamp(20px, 4vw, 48px) 0">
+    <div class="partido">
+      <h2 style="margin: 0; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.08; letter-spacing: -0.03em; font-weight: 700">Preguntas frecuentes</h2>
+      <div style="border-top: 1px solid #DDE3EC">
+        <details style="border-bottom: 1px solid #DDE3EC">
+          <summary style="display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 60px; padding: 14px 0; font-size: 18px; font-weight: 600">¿Cuánto cuesta?</summary>
+          <p style="margin: 0 0 20px; font-size: 17px; line-height: 1.6; color: #3D4A5E">El diagnóstico es gratis. La monitoría se paga por sesión, por transferencia, y cada monitor pone el precio de su horario: lo ves antes de agendar.</p>
+        </details>
+        <details style="border-bottom: 1px solid #DDE3EC">
+          <summary style="display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 60px; padding: 14px 0; font-size: 18px; font-weight: 600">¿Qué pasa con mis datos?</summary>
+          <p style="margin: 0 0 20px; font-size: 17px; line-height: 1.6; color: #3D4A5E">Tu resultado solo lo ve el monitor de la monitoría que agendas. El correo o el teléfono te los pedimos al final, con tu autorización según la Ley 1581 de 2012, y para ver tu resultado desde otro dispositivo te enviamos un enlace.</p>
+        </details>
+        <details style="border-bottom: 1px solid #DDE3EC">
+          <summary style="display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 60px; padding: 14px 0; font-size: 18px; font-weight: 600">¿Por qué no le pregunto a una IA?</summary>
+          <p style="margin: 0 0 20px; font-size: 17px; line-height: 1.6; color: #3D4A5E">Una IA te explica lo que le preguntas. El diagnóstico encuentra lo que no sabías que tenías que preguntar, y después te sientas con una persona certificada en tu materia.</p>
+        </details>
+        <details style="border-bottom: 1px solid #DDE3EC">
+          <summary style="display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 60px; padding: 14px 0; font-size: 18px; font-weight: 600">¿Quiénes son los monitores?</summary>
+          <p style="margin: 0 0 20px; font-size: 17px; line-height: 1.6; color: #3D4A5E">Estudiantes que Calibra certifica materia por materia. Un monitor solo aparece en las materias en que tiene el certificado.</p>
+        </details>
+        <details style="border-bottom: 1px solid #DDE3EC">
+          <summary style="display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 60px; padding: 14px 0; font-size: 18px; font-weight: 600">¿Y si tengo que cancelar?</summary>
+          <p style="margin: 0 0 20px; font-size: 17px; line-height: 1.6; color: #3D4A5E">Cancelas hasta 12 horas antes de una sesión individual, o 24 horas antes de una grupal, y te devolvemos todo. Si el monitor no llega, lo reportas hasta 24 horas después y revisamos el caso.</p>
+        </details>
+        <details style="border-bottom: 1px solid #DDE3EC">
+          <summary style="display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 60px; padding: 14px 0; font-size: 18px; font-weight: 600">¿Necesito crear una cuenta?</summary>
+          <p style="margin: 0 0 20px; font-size: 17px; line-height: 1.6; color: #3D4A5E">No para el diagnóstico ni para agendar una sesión individual. Solo si quieres organizar una sesión grupal, con 36 horas de antelación.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. CTA final: sobre el mismo papel del hero, para cerrar como empieza -->
+  <section class="{{claseHero}}" style="margin-top: clamp(80px, 11vw, 144px); border-top: 1px solid #E6EAF1">
+    <div style="max-width: 1200px; margin: 0 auto; padding: clamp(80px, 10vw, 128px) clamp(20px, 4vw, 48px); text-align: center">
+      <h2 style="margin: 0 auto; max-width: 16em; font-size: clamp(32px, 4.8vw, 60px); line-height: 1.05; letter-spacing: -0.035em; font-weight: 800">Averigua qué te falla antes del próximo parcial.</h2>
+      <div style="margin-top: 32px; display: flex; flex-direction: column; align-items: center; gap: 12px">
+        <a class="cta" href="#" data-evento="clic_cta_diagnostico" data-ubicacion="final" style="display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 28px; border-radius: 12px; background: {{acento}}; color: #FFFFFF; text-decoration: none; font-size: 18px; font-weight: 600">Hacer mi diagnóstico gratis</a>
+        <p style="margin: 0; font-size: 15px; color: #5A6678">Sin crear cuenta.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. Para monitores: una línea que lleva a su propia landing. Va después del CTA final y con borde, para no competir con el del estudiante. -->
+  <section style="background: #F3F6FC; border-top: 1px solid #E6EAF1">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 28px clamp(20px, 4vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px">
+      <p style="margin: 0; font-size: 18px; line-height: 1.45"><strong style="font-weight: 600">¿Dominas una materia de ciclo básico?</strong> <span style="color: #3D4A5E">Enséñala con Calibra: tú pones tus horarios y tu precio.</span></p>
+      <a href="./Monitores.dc.html" data-evento="clic_ser_monitor" style="display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 20px; border: 1.5px solid #0B1B33; border-radius: 12px; color: #0B1B33; text-decoration: none; font-size: 16px; font-weight: 600; background: #FFFFFF">Quiero ser monitor</a>
+    </div>
+  </section>
+
+  <footer style="border-top: 1px solid #E6EAF1">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 20px clamp(20px, 4vw, 48px) 28px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px">
+      <p style="margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em">Calibra</p>
+      <a href="#" style="display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; color: #5A6678; text-underline-offset: 4px">Aviso de privacidad</a>
+    </div>
+  </footer>
+
+  <!-- Móvil: el CTA siempre al alcance del pulgar -->
+  <div class="barra-movil" style="position: sticky; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: rgba(255,253,245,.96); border-top: 1px solid #DDE3EC">
+    <a class="cta" href="#" data-evento="clic_cta_diagnostico" data-ubicacion="barra_movil" style="display: flex; align-items: center; justify-content: center; min-height: 52px; border-radius: 12px; background: {{acento}}; color: #FFFFFF; text-decoration: none; font-size: 17px; font-weight: 600">Hacer mi diagnóstico gratis</a>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"acento":{"editor":"color","default":"#0057ED","options":["#0057ED","#0B1B33","#005EFF"]},"cuadricula":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":5200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { elegida: null };
+  }
+
+  renderVals() {
+    var ERRORES = {
+      a: { texto: 'Derivas la función de afuera y olvidas multiplicar por la derivada de lo que está adentro.', habilidad: 'regla de la cadena' },
+      c: { texto: 'Multiplicas por la expresión de adentro en vez de multiplicar por su derivada.', habilidad: 'regla de la cadena' },
+      d: { texto: 'Derivas la expresión de adentro, pero la dejas dentro de la función de afuera en lugar de multiplicar por ella.', habilidad: 'regla de la cadena' },
+      e: { texto: 'Al derivar sen u multiplicas por la derivada del interior, pero dejas sen u sin pasarlo a cos u.', habilidad: 'derivadas de funciones trigonométricas' }
+    };
+    var self = this;
+    var elegida = this.state.elegida;
+    function opcion(clave) {
+      var marcada = elegida === clave;
+      var correcta = clave === 'b';
+      return {
+        elegir: function () { self.setState({ elegida: clave }); },
+        presionada: marcada ? 'true' : 'false',
+        borde: marcada ? (correcta ? '#0B7A44' : '#C62A2F') : '#DDE3EC',
+        fondo: marcada ? (correcta ? '#EEF8F2' : '#FDF3F3') : '#FFFFFF',
+        circulo: marcada && !correcta,
+        marca: marcada && correcta
+      };
+    }
+    var error = elegida && elegida !== 'b' ? ERRORES[elegida] : null;
+    return {
+      acento: this.props.acento ?? '#0057ED',
+      claseHero: (this.props.cuadricula ?? true) ? 'cuadricula' : 'liso',
+      a: opcion('a'), b: opcion('b'), c: opcion('c'), d: opcion('d'), e: opcion('e'),
+      sinElegir: !elegida,
+      esError: !!error,
+      esCorrecta: elegida === 'b',
+      errTexto: error ? error.texto : '',
+      errHabilidad: error ? error.habilidad.charAt(0).toUpperCase() + error.habilidad.slice(1) : '',
+      reiniciar: function () { self.setState({ elegida: null }); }
+    };
+  }
+}
+</script>
+</body>
+</html>
