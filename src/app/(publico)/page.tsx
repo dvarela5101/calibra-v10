@@ -1,17 +1,15 @@
-import Link from "next/link";
 import { connection } from "next/server";
 import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import { ResultadoDelDiagnostico } from "@/components/diagnostico/ResultadoDelDiagnostico";
-import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
+import { Portada } from "@/components/portada/Portada";
 import type { ResultadoParaMostrar } from "@/lib/diagnostico/mostrar";
-import { rutaDeDiagnostico } from "@/lib/diagnostico/rutas";
 import { ultimoDiagnosticoDeLaSesion } from "@/lib/diagnostico/ultimo";
-import { rutaDeMonitores } from "@/lib/disponibilidad/reglas";
+import { parametrosParaLaPortada } from "@/lib/portada/parametros";
 
 /**
  * HU-011: la portada. Quien ya hizo un diagnóstico desde este navegador ve el último (D-53 d: uno solo, el más reciente, de
- * cualquier materia) con las dos salidas del resultado; todos los demás ven el inicio de siempre: sin sesión, sin diagnósticos
+ * cualquier materia) con las dos salidas del resultado; todos los demás ven la landing (HU-108): sin sesión, sin diagnósticos
  * terminados (uno a medias no cuenta), una cuenta del equipo, una sesión que no hizo ese diagnóstico (D-53 e) o cualquier fallo de
  * lectura. Nunca un error: lo que falle queda en el registro del servidor (`ultimoDiagnosticoDeLaSesion`).
  */
@@ -20,27 +18,9 @@ export default async function Inicio() {
   // `null` antes de `cookies()` y la portada saldría estática (`s-maxage` de un año): a todos les llegaría el inicio normal.
   await connection();
   const ultimo = await ultimoDiagnosticoDeLaSesion();
-  return ultimo ? <PortadaConResultado resultado={ultimo} /> : <InicioNormal />;
-}
-
-/** El inicio de HU-009, tal cual. */
-function InicioNormal() {
-  return (
-    <Pantalla acceso={<AccesoDeCabecera />}
-      eyebrow="Nueva versión en construcción"
-      titulo="Descubre en qué tema fallas antes de tu monitoría"
-      subtitulo="Calibra conecta a estudiantes de ciclo básico con monitores certificados. Una prueba corta muestra en qué habilidad está el error, y el monitor llega a la sesión sabiendo por dónde empezar."
-    >
-      {/* HU-009: el diagnóstico se toma sin iniciar sesión. */}
-      <Link href={rutaDeDiagnostico()} className={formulario.boton}>
-        Hacer el diagnóstico
-      </Link>
-      {/* HU-016 (D-4) y HU-017: desde la lista de monitores se agenda. */}
-      <Link href={rutaDeMonitores()} className={formulario.enlace}>
-        Ver monitores certificados
-      </Link>
-    </Pantalla>
-  );
+  if (ultimo) return <PortadaConResultado resultado={ultimo} />;
+  // HU-108: la landing. Los plazos que citan las preguntas frecuentes se leen aquí, no dentro de un componente asíncrono.
+  return <Portada parametros={await parametrosParaLaPortada()} />;
 }
 
 /**

@@ -31,7 +31,16 @@ import * as modulo from "./page";
 
 const Inicio = modulo.default;
 
-const H1_NORMAL = "Descubre en qué tema fallas antes de tu monitoría";
+const H1_LANDING = "Monitorías de ciclo básico que empiezan por tu error.";
+const SECCIONES = [
+  H1_LANDING,
+  "Estudiar más horas no arregla un error que no sabes que tienes.",
+  "Cómo funciona",
+  "La hora de monitoría rinde, porque nadie empieza a ciegas.",
+  "Hecho con los parciales de ciclo básico",
+  "Preguntas frecuentes",
+  "Averigua qué te falla antes del próximo parcial.",
+];
 // Un código que necesita codificación: `URLSearchParams` escribe el espacio como `+`. Se fija el literal, no se recalcula con
 // `rutaDeMonitores` (sería comparar la función consigo misma).
 const CODIGO = "E2E-a b";
@@ -61,19 +70,37 @@ beforeEach(() => {
   falsos.ultimo = null;
 });
 
-describe("/ sin resultado: el inicio de siempre", () => {
-  it("lleva el h1, «Hacer el diagnóstico» a /diagnostico y «Ver monitores certificados» a /monitores", async () => {
+describe("/ sin resultado: la landing (HU-108)", () => {
+  it("lleva el h1 de la landing, único, y «Hacer mi diagnóstico gratis» a /diagnostico en el hero, al final y en la barra móvil", async () => {
     const html = await pintar();
-    expect(html).toMatch(new RegExp(`<h1[^>]*>${H1_NORMAL}</h1>`));
-    expect(html).toMatch(enlace("/diagnostico", "Hacer el diagnóstico"));
-    expect(html).toMatch(enlace("/monitores", "Ver monitores certificados"));
-    expect(texto(html)).toContain("Nueva versión en construcción");
-    expect(texto(html)).toContain("Una prueba corta muestra en qué habilidad está el error");
+    expect(html.match(/<h1[\s>]/g)).toHaveLength(1);
+    expect(html).toMatch(new RegExp(`<h1[^>]*>${H1_LANDING}</h1>`));
+    expect(html.match(/<a[^>]*href="\/diagnostico"[^>]*>Hacer mi diagnóstico gratis<\/a>/g)).toHaveLength(3);
+    expect(html.match(/data-evento="clic_cta_diagnostico"/g)).toHaveLength(3);
+    expect(texto(html)).toContain("Sin crear cuenta.");
   });
 
-  it("no trae nada del resultado", async () => {
+  it("tiene las secciones en el orden del diseño", async () => {
     const t = texto(await pintar());
-    for (const ajeno of ["Tu último diagnóstico", "Puntaje global", "Respondiste", "Habilidades", "Tomar otro diagnóstico", "Ver monitores de"]) {
+    const posiciones = SECCIONES.map((seccion) => t.indexOf(seccion));
+    expect(posiciones.every((p) => p >= 0), String(posiciones)).toBe(true);
+    expect([...posiciones].sort((a, b) => a - b)).toEqual(posiciones);
+  });
+
+  it("no tiene menú ni más enlaces que el aviso de privacidad (D-77 b); el acceso lo prueba su propio archivo", async () => {
+    const hrefs = [...(await pintar()).matchAll(/<a[^>]*href="([^"]*)"/g)].map(([, href]) => href);
+    expect(new Set(hrefs)).toEqual(new Set(["/", "/diagnostico", "/privacidad"]));
+    expect(hrefs).not.toContain("/monitores");
+    expect(hrefs).not.toContain("/quiero-ser-monitor");
+  });
+
+  it("marca la página como landing para que globals.css esconda el pie global (D-77 b)", async () => {
+    expect(await pintar()).toContain("data-landing");
+  });
+
+  it("no trae nada del resultado ni del inicio de antes", async () => {
+    const t = texto(await pintar());
+    for (const ajeno of ["Tu último diagnóstico", "Puntaje global", "Respondiste", "Tomar otro diagnóstico", "Nueva versión en construcción", "Ver monitores certificados"]) {
       expect(t).not.toContain(ajeno);
     }
   });
@@ -119,13 +146,12 @@ describe("/ con el último diagnóstico", () => {
     expect(await pintar()).toMatch(enlace("/diagnostico", "Tomar otro diagnóstico"));
   });
 
-  it("no pinta el inicio normal debajo (M27): ni el h1 de siempre ni sus dos enlaces", async () => {
+  it("no pinta la landing debajo (M27, HU-108): ni su h1 ni su CTA", async () => {
     const html = await pintar();
     const t = texto(html);
-    expect(t).not.toContain(H1_NORMAL);
-    expect(t).not.toContain("Hacer el diagnóstico");
-    expect(t).not.toContain("Ver monitores certificados");
-    expect(t).not.toContain("Nueva versión en construcción");
+    expect(t).not.toContain(H1_LANDING);
+    expect(t).not.toContain("Hacer mi diagnóstico gratis");
+    expect(html).not.toContain("data-landing");
     // El único enlace a /diagnostico es el del componente.
     expect(html.match(/href="\/diagnostico"/g)).toHaveLength(1);
   });

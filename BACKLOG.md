@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-28 09:00. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-28 11:13. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -23,7 +23,6 @@ _Generado automaticamente: 2026-10-28 09:00. No editar a mano; usa `scripts/back
 | [HU-085](backlog/HU-085.md) | [Sistema] Borrar o anonimizar los datos de un Lead o aspirante que retiró su autorización o lleva 24 meses sin actividad | Lista | P2 | L | HU-056, HU-006, HU-062, HU-068 |
 | [HU-092](backlog/HU-092.md) | [Monitor] Marcar en mi perfil los temas en los que soy fuerte | Lista | P2 | M | HU-049 |
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | En progreso | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056, HU-084, HU-089, HU-095, HU-096, HU-097, HU-091, HU-103 |
-| [HU-108](backlog/HU-108.md) | Landing de la portada: pregunta de muestra, una sola acción y medición de conversión | En progreso | P1 | L | HU-011, HU-106 |
 | [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
 | [HU-105](backlog/HU-105.md) | Selector del diagnóstico como el prototipo: tarjetas sin radio, elegir siempre la Evaluación y botón «Ver monitores sin hacer la prueba» | En revision | P0 | S | HU-009 |
 | [HU-106](backlog/HU-106.md) | Acceso visible en la cabecera (Iniciar sesión / Registrarse) e invitar a un monitor desde su solicitud | En revision | P0 | M |  |
@@ -33,6 +32,7 @@ _Generado automaticamente: 2026-10-28 09:00. No editar a mano; usa `scripts/back
 | [HU-101](backlog/HU-101.md) | [Contenido] Parciales 2 y 3 de Cálculo Diferencial: borradores y revisión | En revision | P1 | L | HU-100 |
 | [HU-102](backlog/HU-102.md) | [Contenido] Completar el Parcial 2 de Cálculo Integral: soluciones, preguntas que faltan y revisión | En revision | P1 | L | HU-100 |
 | [HU-104](backlog/HU-104.md) | [Técnica] Que un fallo de red con Cloudflare no tumbe las pruebas de integración del CAPTCHA | En revision | P1 | XS | HU-058 |
+| [HU-108](backlog/HU-108.md) | Landing de la portada: pregunta de muestra, una sola acción y medición de conversión | En revision | P1 | L | HU-011, HU-106 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |

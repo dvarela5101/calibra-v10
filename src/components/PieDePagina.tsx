@@ -6,11 +6,12 @@ import estilos from "./pie.module.css";
 /**
  * Pie de todas las páginas: el aviso de privacidad queda a un toque desde cualquier lugar (HU-008),
  * "Mis citas" (HU-019, D-24: el mismo navegador ve sus citas sin el enlace del correo) y "Quiero ser
- * monitor" (HU-062), por donde entra quien quiere certificarse.
+ * monitor" (HU-062), por donde entra quien quiere certificarse. La landing de la portada lo esconde y lleva el suyo, con solo
+ * el aviso (D-77 b; la regla está en globals.css).
  */
 export function PieDePagina() {
   return (
-    <footer className={estilos.pie}>
+    <footer className={estilos.pie} data-pie-global="">
       <Link href={RUTA_AVISO} className={estilos.enlace}>
         Aviso de privacidad
       </Link>

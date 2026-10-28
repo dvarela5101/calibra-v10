@@ -52,7 +52,7 @@ test("quien vuelve con la cookie de una sesión borrada ve el inicio normal y re
 
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { level: 1, name: "Descubre en qué tema fallas antes de tu monitoría" }),
+    page.getByRole("heading", { level: 1, name: "Monitorías de ciclo básico que empiezan por tu error." }),
   ).toBeVisible(ESPERA);
   // Ningún mensaje de error. Next.js pone en toda página un anunciador de rutas con role=alert, vacío.
   await expect(page.getByRole("alert").filter({ hasText: /\S/ })).toHaveCount(0);

@@ -8,7 +8,8 @@ const ESPERA = { timeout: 20_000 };
 
 test.describe("D-75 · acceso a las cuentas", () => {
   test("el visitante llega a registrarse y a iniciar sesión desde la cabecera", async ({ page }) => {
-    await page.goto("/");
+    // Desde una pantalla del visitante que no es la portada: la landing lleva solo «Iniciar sesión» (D-77 a, e2e/portada.spec.ts).
+    await page.goto("/privacidad");
     const cuenta = page.getByRole("navigation", { name: "Tu cuenta" });
     await expect(cuenta.getByRole("link")).toHaveText(["Iniciar sesión", "Registrarse"], ESPERA);
 

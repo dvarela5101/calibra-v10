@@ -21,6 +21,9 @@
   --muted-disabled: #55606f; /* texto del botón inactivo, sobre --border */
   --border: #dde3ec;
   --marca: #0057ed; /* relleno del logo y del favicon */
+  /* Papel cuadriculado del hero de la portada (HU-108): una celda de 26 px con líneas de --marca al 9 %. Es un patrón SVG
+     y no un degradado, que el producto no usa. */
+  --papel-cuadriculado: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26'%3E%3Cpath d='M0 .5H26M.5 0V26' fill='none' stroke='%230057ed' stroke-opacity='.09'/%3E%3C/svg%3E");
 
   /* Radios */
   --r: 14px;

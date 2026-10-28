@@ -18,3 +18,11 @@ export function enlacesDeAcceso(rol: Rol | null): EnlaceDeAcceso[] {
     { texto: "Registrarse", href: RUTA_DE_REGISTRO, principal: true },
   ];
 }
+
+/**
+ * D-77 a (HU-108): en la landing de la portada, quien no tiene cuenta ve solo «Iniciar sesión» (`/ingresar` enlaza el
+ * registro), para no competir con el único CTA. Con cuenta, lo mismo que en las demás pantallas.
+ */
+export function enlacesDeAccesoDeLaPortada(rol: Rol | null): EnlaceDeAcceso[] {
+  return enlacesDeAcceso(rol).filter((enlace) => enlace.href !== RUTA_DE_REGISTRO);
+}
