@@ -8,12 +8,15 @@ import {
   MENSAJES_DE_FINALIZAR,
   rutaDelDiagnosticoDeLaCita,
   separarAgenda,
+  sePuedePonerLugar,
   sePuedeVerDiagnostico,
   textoDeEstado,
+  textoDelLugar,
   textoDePago,
+  type LugarDeMonitoria,
   type MonitoriaDeAgenda,
 } from "@/lib/agenda/reglas";
-import { cargarAgenda } from "@/lib/agenda/servidor";
+import { cargarAgenda, cargarLugares } from "@/lib/agenda/servidor";
 import { exigirRol } from "@/lib/auth/sesion";
 import { TEXTOS } from "@/lib/diagnostico/vista-del-monitor";
 import { formatearDiaConSemana, formatearFechaHora } from "@/lib/fechas";
@@ -22,6 +25,7 @@ import { cargarParametros, type ParametrosNegocio } from "@/lib/plazos/parametro
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { finalizar } from "./acciones";
 import estilos from "./agenda.module.css";
+import { FormularioLugar } from "./FormularioLugar";
 
 export const metadata: Metadata = { title: "Mi agenda · Calibra" };
 
@@ -43,7 +47,8 @@ function avisoDeFinalizar(finalizada: unknown, noFinalizada: unknown): { exito: 
  * agendó (solo el nombre) y el estado del pago (sin cifras). Las notificaciones no existen todavía (P-11):
  * la agenda es su forma de enterarse. HU-023 (P-05, D-13 a D-15): arriba, las confirmadas que ya empezaron,
  * para marcarlas como realizadas, con la hora en que se cierran solas (el recordatorio es este). HU-022 (D-54): la tarjeta de una
- * cita cuyo diagnóstico se puede ver lleva el enlace «Ver diagnóstico»; en el resto no hay enlace ni aviso.
+ * cita cuyo diagnóstico se puede ver lleva el enlace «Ver diagnóstico»; en el resto no hay enlace ni aviso. HU-107 (D-76): la
+ * tarjeta de una monitoría vigente lleva su lugar o su enlace y el formulario para ponerlo o cambiarlo.
  */
 export default async function MiAgenda({ searchParams }: PageProps<"/monitor/agenda">) {
   await exigirRol("monitor", "/monitor/agenda");
@@ -53,8 +58,9 @@ export default async function MiAgenda({ searchParams }: PageProps<"/monitor/age
 
   let monitorias: MonitoriaDeAgenda[];
   let parametros: ParametrosNegocio;
+  let lugares: Map<string, LugarDeMonitoria>;
   try {
-    [monitorias, parametros] = await Promise.all([cargarAgenda(supabase!), cargarParametros(supabase!)]);
+    [monitorias, parametros, lugares] = await Promise.all([cargarAgenda(supabase!), cargarParametros(supabase!), cargarLugares(supabase!)]);
   } catch (error) {
     console.error("[agenda] no se pudo cargar la agenda:", error instanceof Error ? error.message : error);
     return (
@@ -101,6 +107,7 @@ export default async function MiAgenda({ searchParams }: PageProps<"/monitor/age
                   Si no la finalizas, se cierra sola a partir del {formatearFechaHora(cierreAutomaticoDe(m, parametros))}.
                 </span>
                 <EnlaceDelDiagnostico monitoria={m} ahora={ahora} />
+                <LugarDeLaMonitoria monitoria={m} lugares={lugares} ahora={ahora} />
                 <form action={finalizar} className={estilos.accion}>
                   <input type="hidden" name="monitoria" value={m.idMonitoria} />
                   {/* El nombre del botón se repite en cada tarjeta: la descripción dice de qué monitoría es. */}
@@ -121,7 +128,7 @@ export default async function MiAgenda({ searchParams }: PageProps<"/monitor/age
         {proximas.length === 0 ? (
           <p className={formulario.ayuda}>No tienes monitorías próximas.</p>
         ) : (
-          <ListaDeMonitorias monitorias={proximas} ahora={ahora} />
+          <ListaDeMonitorias monitorias={proximas} lugares={lugares} ahora={ahora} />
         )}
       </section>
 
@@ -133,13 +140,13 @@ export default async function MiAgenda({ searchParams }: PageProps<"/monitor/age
           <p className={formulario.ayuda}>Todavía no tienes monitorías pasadas.</p>
         ) : (
           <>
-            <ListaDeMonitorias monitorias={pasadasALaVista} ahora={ahora} />
+            <ListaDeMonitorias monitorias={pasadasALaVista} lugares={lugares} ahora={ahora} />
             {restoDePasadas.length > 0 && (
               <details className={estilos.mas}>
                 <summary className={estilos.resumen}>
                   Ver {restoDePasadas.length === 1 ? "1 monitoría más" : `${restoDePasadas.length} monitorías más`}
                 </summary>
-                <ListaDeMonitorias monitorias={restoDePasadas} ahora={ahora} />
+                <ListaDeMonitorias monitorias={restoDePasadas} lugares={lugares} ahora={ahora} />
               </details>
             )}
           </>
@@ -153,13 +160,16 @@ export default async function MiAgenda({ searchParams }: PageProps<"/monitor/age
   );
 }
 
-function ListaDeMonitorias({ monitorias, ahora }: { monitorias: MonitoriaDeAgenda[]; ahora: Date }) {
+type ConLugares = { lugares: Map<string, LugarDeMonitoria>; ahora: Date };
+
+function ListaDeMonitorias({ monitorias, lugares, ahora }: { monitorias: MonitoriaDeAgenda[] } & ConLugares) {
   return (
     <ul className={estilos.lista}>
       {monitorias.map((m) => (
         <li key={m.idMonitoria} className={estilos.tarjeta}>
           <DatosDeMonitoria monitoria={m} />
           <EnlaceDelDiagnostico monitoria={m} ahora={ahora} />
+          <LugarDeLaMonitoria monitoria={m} lugares={lugares} ahora={ahora} />
         </li>
       ))}
     </ul>
@@ -178,6 +188,26 @@ function EnlaceDelDiagnostico({ monitoria: m, ahora }: { monitoria: MonitoriaDeA
     <Link href={rutaDelDiagnosticoDeLaCita(m.idMonitoria)} aria-describedby={`cabeza-${m.idMonitoria}`} className={formulario.enlace}>
       {TEXTOS.verDiagnostico}
     </Link>
+  );
+}
+
+/**
+ * HU-107 (D-76): en una monitoría vigente, el lugar o el enlace que ya puso el monitor (o que aún falta) y el formulario para
+ * ponerlo o cambiarlo. Es un `div` hijo de la tarjeta, no un `span`: las pruebas de la tarjeta cuentan sus `span`.
+ */
+function LugarDeLaMonitoria({ monitoria: m, lugares, ahora }: { monitoria: MonitoriaDeAgenda } & ConLugares) {
+  if (!sePuedePonerLugar(m, ahora)) return null;
+  const dato = lugares.get(m.idMonitoria);
+  return (
+    <div className={estilos.lugar}>
+      <p className={estilos.dato}>{textoDelLugar(m.presencial, dato)}</p>
+      <FormularioLugar
+        idMonitoria={m.idMonitoria}
+        presencial={m.presencial}
+        valor={(m.presencial ? dato?.lugar : dato?.enlace) ?? null}
+        descripcion={`cabeza-${m.idMonitoria}`}
+      />
+    </div>
   );
 }
 

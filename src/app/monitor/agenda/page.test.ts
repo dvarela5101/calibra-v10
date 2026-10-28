@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buscarTodos, elementosHijos, leerHtml, porEtiqueta, textoDe, type Nodo } from "../../../../pruebas/arbol-html";
-import type { EstadoMonitoria, MonitoriaDeAgenda } from "@/lib/agenda/reglas";
+import type { EstadoMonitoria, LugarDeMonitoria, MonitoriaDeAgenda } from "@/lib/agenda/reglas";
 import type { ParametrosNegocio } from "@/lib/plazos/parametros";
 
 // HU-022: la agenda del monitor con el enlace «Ver diagnóstico». Sin navegador ni base: la sesión, la agenda y los parámetros son
@@ -9,14 +9,14 @@ import type { ParametrosNegocio } from "@/lib/plazos/parametros";
 // enlace sea un `a` hijo directo de la tarjeta (las pruebas de la tarjeta cuentan sus `span`) y que la agenda no gane ninguna región de
 // estado. Que la agenda se separe en por finalizar, próximas y pasadas ya lo prueban las pruebas de `reglas.ts`.
 
-const datos = vi.hoisted(() => ({ agenda: [] as MonitoriaDeAgenda[] }));
+const datos = vi.hoisted(() => ({ agenda: [] as MonitoriaDeAgenda[], lugares: new Map<string, LugarDeMonitoria>() }));
 
 vi.mock("@/lib/auth/sesion", () => ({ exigirRol: async () => ({ idUsuario: "d0d0d0d0-0000-4000-8000-000000000022", rol: "monitor" }) }));
 vi.mock("@/lib/supabase/servidor", () => ({ crearClienteServidor: async () => ({}) }));
-vi.mock("@/lib/agenda/servidor", () => ({ cargarAgenda: async () => datos.agenda }));
+vi.mock("@/lib/agenda/servidor", () => ({ cargarAgenda: async () => datos.agenda, cargarLugares: async () => datos.lugares }));
 vi.mock("@/lib/plazos/parametros", () => ({ cargarParametros: async () => PARAMETROS }));
 // La acción de finalizar es del servidor (usa las cookies y redirige): aquí solo importa el formulario que la lleva.
-vi.mock("./acciones", () => ({ finalizar: async () => undefined }));
+vi.mock("./acciones", () => ({ finalizar: async () => undefined, guardarLugar: async () => ({ error: null, exito: null }) }));
 
 import MiAgenda from "./page";
 
@@ -48,8 +48,9 @@ function cita(nombre: string, estado: EstadoMonitoria, fin: Date, cambios: Parti
   };
 }
 
-async function pintar(agenda: MonitoriaDeAgenda[]): Promise<string> {
+async function pintar(agenda: MonitoriaDeAgenda[], lugares = new Map<string, LugarDeMonitoria>()): Promise<string> {
   datos.agenda = agenda;
+  datos.lugares = lugares;
   return renderToStaticMarkup(await MiAgenda({ params: Promise.resolve({}), searchParams: Promise.resolve({}) }));
 }
 
@@ -220,5 +221,51 @@ describe("la agenda sigue siendo la agenda", () => {
     const seccion = buscarTodos(arbol, (n) => n.etiqueta === "section" && n.atributos["aria-labelledby"] === "por-finalizar")[0];
     expect(seccion).toBeDefined();
     expect(porEtiqueta(seccion, "a").filter((a) => textoDe(a) === "Ver diagnóstico")).toHaveLength(1);
+  });
+});
+
+describe("el lugar o el enlace de cada monitoría (HU-107, D-76)", () => {
+  const proxima = cita("presenci", "confirmada", new Date(AHORA.getTime() + 2 * DIA));
+  const virtual = cita("virtual1", "confirmada", new Date(AHORA.getTime() + 3 * DIA), { presencial: false });
+  const pendiente = cita("pendient", "pendiente_pago", new Date(AHORA.getTime() + 4 * DIA), { presencial: false });
+  const cancelada = cita("cancelad", "cancelada", new Date(AHORA.getTime() + 5 * DIA));
+  const realizada = cita("realizad", "realizada", new Date(AHORA.getTime() - DIA));
+
+  it("una vigente sin dato dice que falta y ofrece el campo según su modalidad", async () => {
+    const arbol = leerHtml(await pintar([proxima, virtual]));
+    const presencial = textoDe(tarjetaDe(arbol, "presenci")!);
+    expect(presencial).toContain("Aún no has puesto el lugar.");
+    expect(presencial).toContain("Lugar de la sesión");
+    const enLinea = textoDe(tarjetaDe(arbol, "virtual1")!);
+    expect(enLinea).toContain("Aún no has puesto el enlace de la videollamada.");
+    expect(enLinea).toContain("Enlace de la videollamada");
+  });
+
+  it("con el dato puesto lo muestra y el campo empieza con él", async () => {
+    const html = await pintar(
+      [proxima, virtual],
+      new Map([
+        [proxima.idMonitoria, { lugar: "ML-301", enlace: null }],
+        [virtual.idMonitoria, { lugar: null, enlace: "https://meet.google.com/abc-defg-hij" }],
+      ]),
+    );
+    expect(textoDe(tarjetaDe(leerHtml(html), "presenci")!)).toContain("Lugar: ML-301");
+    expect(textoDe(tarjetaDe(leerHtml(html), "virtual1")!)).toContain("Enlace: https://meet.google.com/abc-defg-hij");
+    expect(html).toMatch(/<input[^>]*id="lugar-[^"]*"[^>]*value="ML-301"/);
+  });
+
+  it("también en una pendiente de pago vigente; no en una cancelada ni en una realizada", async () => {
+    const arbol = leerHtml(await pintar([pendiente, cancelada, realizada]));
+    expect(textoDe(tarjetaDe(arbol, "pendient")!)).toContain("Enlace de la videollamada");
+    expect(textoDe(tarjetaDe(arbol, "cancelad")!)).not.toContain("Lugar");
+    expect(textoDe(tarjetaDe(arbol, "realizad")!)).not.toContain("Lugar");
+  });
+
+  it("cada campo tiene su propio id y su descripción es el renglón de fecha de su tarjeta", async () => {
+    const html = await pintar([proxima, virtual]);
+    for (const m of [proxima, virtual]) {
+      expect(html).toContain(`id="lugar-${m.idMonitoria}"`);
+      expect(html).toMatch(new RegExp(`<input[^>]*aria-describedby="cabeza-${m.idMonitoria}"`));
+    }
   });
 });

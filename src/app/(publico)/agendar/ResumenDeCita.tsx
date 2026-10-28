@@ -18,7 +18,12 @@ export type DatosDeCita = {
   lugar?: string | null;
   /** La videollamada de la virtual (D-5). Solo se muestra como enlace si es `https:`. */
   enlace?: string | null;
+  /** D-76: el dato es de cada monitoría y lo pone el monitor. Con la cita confirmada, si aún no está, se dice. */
+  avisarSiFalta?: boolean;
 };
+
+export const FALTA_EL_LUGAR = "Tu monitor aún no ha puesto el lugar de la sesión. Vuelve a esta página más cerca de la hora.";
+export const FALTA_EL_ENLACE = "Tu monitor aún no ha puesto el enlace de la videollamada. Vuelve a esta página más cerca de la hora.";
 
 /** Un enlace de videollamada solo se abre si es `https:`: nada de `javascript:`, `data:` ni `http:`. */
 export function esEnlaceHttps(enlace: string): boolean {
@@ -34,6 +39,9 @@ export function esEnlaceHttps(enlace: string): boolean {
  * agrega, si se los pasan, el lugar de la presencial o el enlace de la virtual.
  */
 export function ResumenDeCita({ cita }: { cita: DatosDeCita }) {
+  const conEnlace = !!cita.enlace && esEnlaceHttps(cita.enlace);
+  const faltaElLugar = !!cita.avisarSiFalta && cita.presencial && !cita.lugar;
+  const faltaElEnlace = !!cita.avisarSiFalta && !cita.presencial && !conEnlace;
   return (
     <dl className={estilos.resumen}>
       <dt className={estilos.dato}>Materia</dt>
@@ -56,14 +64,26 @@ export function ResumenDeCita({ cita }: { cita: DatosDeCita }) {
           <dd className={estilos.valor}>{cita.lugar}</dd>
         </>
       )}
-      {cita.enlace && esEnlaceHttps(cita.enlace) && (
+      {faltaElLugar && (
+        <>
+          <dt className={estilos.dato}>Lugar</dt>
+          <dd className={estilos.valor}>{FALTA_EL_LUGAR}</dd>
+        </>
+      )}
+      {conEnlace && (
         <>
           <dt className={estilos.dato}>Enlace de la videollamada</dt>
           <dd className={estilos.valor}>
-            <a href={cita.enlace} target="_blank" rel="noopener noreferrer" className={formulario.enlace}>
+            <a href={cita.enlace!} target="_blank" rel="noopener noreferrer" className={formulario.enlace}>
               Abrir la videollamada
             </a>
           </dd>
+        </>
+      )}
+      {faltaElEnlace && (
+        <>
+          <dt className={estilos.dato}>Enlace de la videollamada</dt>
+          <dd className={estilos.valor}>{FALTA_EL_ENLACE}</dd>
         </>
       )}
       <dt className={estilos.dato}>Valor</dt>

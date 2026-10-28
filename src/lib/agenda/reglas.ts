@@ -144,3 +144,21 @@ export function textoDePago(estado: EstadoPago): string {
 export function esEstadoPago(valor: unknown): valor is EstadoPago {
   return typeof valor === "string" && Object.hasOwn(PAGOS, valor);
 }
+
+/** D-76 (HU-107): el lugar de la presencial o el enlace de la virtual de una monitoría, que pone el monitor. */
+export type LugarDeMonitoria = { lugar: string | null; enlace: string | null };
+
+/**
+ * D-76: el monitor pone o cambia el dato mientras la monitoría siga vigente: confirmada, o pendiente de pago sin vencer, y sin
+ * terminar. Es el espejo de `privado.poner_lugar_de_monitoria`, que lo vuelve a decidir con su hora.
+ */
+export function sePuedePonerLugar(m: MonitoriaDeAgenda, ahora: Date): boolean {
+  const vigente = m.estado === "confirmada" || (m.estado === "pendiente_pago" && !m.reservaVencida);
+  return vigente && ahora.getTime() < finDeSesionDe(m).getTime();
+}
+
+/** Lo que dice la tarjeta del dato de una monitoría, según su modalidad. */
+export function textoDelLugar(presencial: boolean, dato: LugarDeMonitoria | undefined): string {
+  if (presencial) return dato?.lugar ? `Lugar: ${dato.lugar}` : "Aún no has puesto el lugar.";
+  return dato?.enlace ? `Enlace: ${dato.enlace}` : "Aún no has puesto el enlace de la videollamada.";
+}

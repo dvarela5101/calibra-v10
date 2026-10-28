@@ -10,9 +10,11 @@ import {
   RESULTADOS_DE_FINALIZAR,
   rutaDelDiagnosticoDeLaCita,
   sePuedeFinalizar,
+  sePuedePonerLugar,
   sePuedeVerDiagnostico,
   separarAgenda,
   textoDeEstado,
+  textoDelLugar,
   textoDePago,
   type EstadoMonitoria,
   type MonitoriaDeAgenda,
@@ -227,5 +229,34 @@ describe("finDeSesionDe y la dirección del diagnóstico (HU-022)", () => {
 
   it("la dirección del diagnóstico de una cita", () => {
     expect(rutaDelDiagnosticoDeLaCita("5a5a5a5a-0000-4000-8000-000000000022")).toBe("/monitor/agenda/5a5a5a5a-0000-4000-8000-000000000022");
+  });
+});
+
+describe("sePuedePonerLugar (HU-107, D-76)", () => {
+  const inicio = "2026-10-05T15:00:00Z";
+  const antes = new Date("2026-10-05T14:00:00Z");
+
+  it("una confirmada, desde que se agenda hasta un instante antes de terminar", () => {
+    expect(sePuedePonerLugar(monitoria("a", inicio), AHORA)).toBe(true);
+    expect(sePuedePonerLugar(monitoria("a", inicio), new Date("2026-10-05T15:59:59.999Z"))).toBe(true);
+    expect(sePuedePonerLugar(monitoria("a", inicio), new Date("2026-10-05T16:00:00Z"))).toBe(false);
+  });
+
+  it("una pendiente de pago vigente sí; una con la reserva vencida no", () => {
+    expect(sePuedePonerLugar(monitoria("a", inicio, { estado: "pendiente_pago", estadoPago: "sin_pagar" }), antes)).toBe(true);
+    expect(sePuedePonerLugar(monitoria("a", inicio, { estado: "pendiente_pago", estadoPago: "sin_pagar", reservaVencida: true }), antes)).toBe(false);
+  });
+
+  it.each<EstadoMonitoria>(["realizada", "cancelada"])("una %s no", (estado) => {
+    expect(sePuedePonerLugar(monitoria("a", inicio, { estado }), antes)).toBe(false);
+  });
+});
+
+describe("textoDelLugar (HU-107, D-76)", () => {
+  it("dice el dato según la modalidad, o que aún falta", () => {
+    expect(textoDelLugar(true, { lugar: "ML-301", enlace: null })).toBe("Lugar: ML-301");
+    expect(textoDelLugar(false, { lugar: null, enlace: "https://meet.google.com/abc" })).toBe("Enlace: https://meet.google.com/abc");
+    expect(textoDelLugar(true, undefined)).toBe("Aún no has puesto el lugar.");
+    expect(textoDelLugar(false, undefined)).toBe("Aún no has puesto el enlace de la videollamada.");
   });
 });

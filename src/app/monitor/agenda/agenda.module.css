@@ -64,3 +64,11 @@
   color: var(--primary);
   cursor: pointer;
 }
+
+/* HU-107 (D-76): el lugar o el enlace de la monitoría, con su formulario. */
+.lugar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin-block-start: var(--e2);
+}

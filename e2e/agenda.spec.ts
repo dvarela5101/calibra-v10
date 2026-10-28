@@ -61,7 +61,7 @@ type Escenario = {
   /** Un monitor con certificado en esa materia. */
   monitorCertificado(materia: Materia): Promise<Cuenta>;
   /** Franja semanal que cae el mismo día de la semana que hoy (así `enSemanas(n)` es una fecha suya). */
-  franja(monitor: Cuenta, datos: { hora: string; duracionMin: number; presencial: boolean }): Promise<Franja>;
+  franja(monitor: Cuenta, datos: { hora: string; duracionMin: number; presencial: boolean; sinDato?: boolean }): Promise<Franja>;
   /** Un Lead con correo y teléfono propios; el nombre lleva un sufijo único. */
   lead(nombre: string): Promise<Lead>;
   /** Una monitoría creada con la llave secreta. Devuelve su id. */
@@ -113,8 +113,9 @@ const test = base.extend<{ escenario: Escenario }>({
           duracion_min: datos.duracionMin,
           presencial: datos.presencial,
           precio: 25_000,
-          lugar: datos.presencial ? "Edificio ML, salón 101" : null,
-          enlace: datos.presencial ? null : "https://meet.example.com/e2e-agenda",
+          // D-76: una franja de ahora no lleva lugar ni enlace (`sinDato`); las de antes sí, y sus monitorías lo heredan.
+          lugar: datos.presencial && !datos.sinDato ? "Edificio ML, salón 101" : null,
+          enlace: datos.presencial || datos.sinDato ? null : "https://meet.example.com/e2e-agenda",
         });
         return { id: franja.id };
       },
@@ -581,6 +582,62 @@ test.describe("Muchas pasadas · diez a la vista y el resto en Ver N monitorías
       await resto.locator("summary").click();
       await expect(resto).not.toHaveAttribute("open", /.*/);
       await expectReglasDelProducto(page, "mi agenda con el details cerrado");
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// HU-107 (D-76): el monitor pone el enlace o el lugar de cada monitoría
+// ---------------------------------------------------------------------------
+test.describe("HU-107 · el monitor pone y cambia el enlace de una monitoría desde su agenda", () => {
+  test("una virtual confirmada sin enlace dice que falta; uno sin https se rechaza; uno bueno se guarda y se puede cambiar", async ({
+    page,
+    cuentas,
+    escenario,
+  }) => {
+    const materia = await escenario.materia();
+    const monitor = await escenario.monitorCertificado(materia);
+    const franja = await escenario.franja(monitor, { hora: "19:00", duracionMin: 60, presencial: false, sinDato: true });
+    const lead = await escenario.lead("Renata");
+    const idMonitoria = await escenario.monitoria(monitor, materia, franja, lead, enSemanas(1), { estado: "confirmada" });
+
+    await entrar(page, RUTA, monitor);
+    await expect(titulo(page)).toBeVisible(ESPERA);
+    // El campo es controlado por React (useActionState): hay que esperar a que la página termine de hidratarse.
+    await page.waitForLoadState("networkidle");
+    const tarjeta = seccion(page, "Próximas (1)").getByRole("listitem").filter({ hasText: lead.nombre });
+    const campo = tarjeta.getByLabel("Enlace de la videollamada");
+
+    await test.step("sin dato, la tarjeta lo dice y ofrece el campo", async () => {
+      await expect(tarjeta).toContainText("Aún no has puesto el enlace de la videollamada.");
+      await expect(campo).toHaveValue("");
+    });
+
+    await test.step("un enlace sin https no se guarda", async () => {
+      await campo.fill("http://meet.google.com/abc-defg-hij");
+      await tarjeta.getByRole("button", { name: "Guardar" }).click();
+      await expect(tarjeta.getByRole("alert")).toHaveText("Escribe el enlace de la videollamada completo, que empiece por https://.", ESPERA);
+      const { data } = await cuentas.cliente.from("lugar_de_monitoria").select("enlace").eq("id_monitoria", idMonitoria);
+      expect(data).toEqual([]);
+    });
+
+    await test.step("uno bueno se guarda y la tarjeta lo muestra", async () => {
+      await campo.fill("https://meet.google.com/abc-defg-hij");
+      await tarjeta.getByRole("button", { name: "Guardar" }).click();
+      await expect(tarjeta.getByRole("status")).toHaveText("Guardamos el enlace.", ESPERA);
+      await expect(tarjeta).toContainText("Enlace: https://meet.google.com/abc-defg-hij", ESPERA);
+    });
+
+    await test.step("lo cambia y queda el último", async () => {
+      await campo.fill("https://meet.google.com/otra-sala-xyz");
+      await tarjeta.getByRole("button", { name: "Guardar" }).click();
+      await expect(tarjeta).toContainText("Enlace: https://meet.google.com/otra-sala-xyz", ESPERA);
+      const { data } = await cuentas.cliente.from("lugar_de_monitoria").select("lugar, enlace").eq("id_monitoria", idMonitoria).single();
+      expect(data).toEqual({ lugar: null, enlace: "https://meet.google.com/otra-sala-xyz" });
+    });
+
+    await test.step("la agenda con el formulario respeta las reglas de accesibilidad del producto", async () => {
+      await expectReglasDelProducto(page, "mi agenda con el formulario del enlace");
     });
   });
 });

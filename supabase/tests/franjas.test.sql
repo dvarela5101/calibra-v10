@@ -73,14 +73,15 @@ select lives_ok(
 select is((select abierta_desde from public.franja where id = '30000000-0000-0000-0000-000000000001'),
   (select hoy from fechas), 'Queda abierta desde hoy, en la zona del negocio');
 
-select throws_ok(
-  $$insert into public.franja (id_monitor, dia, hora, presencial, precio, duracion_min)
-    values ('b0000000-0000-0000-0000-00000000000a', 2, '10:00', true, 25000, 60)$$,
-  'P0001', 'Una franja presencial necesita el lugar de la sesión.', 'Presencial sin lugar: no');
-select throws_ok(
-  $$insert into public.franja (id_monitor, dia, hora, presencial, precio, duracion_min)
-    values ('b0000000-0000-0000-0000-00000000000a', 2, '10:00', false, 25000, 60)$$,
-  'P0001', 'Una franja virtual necesita el enlace de la videollamada.', 'Virtual sin enlace: no');
+-- D-76 (HU-107): el lugar y el enlace ya no se piden en la franja; son de cada monitoría.
+select lives_ok(
+  $$insert into public.franja (id, id_monitor, dia, hora, presencial, precio, duracion_min)
+    values ('30000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-00000000000a', 6, '10:00', true, 25000, 60)$$,
+  'Presencial sin lugar: sí (D-76)');
+select lives_ok(
+  $$insert into public.franja (id, id_monitor, dia, hora, presencial, precio, duracion_min)
+    values ('30000000-0000-0000-0000-000000000006', 'b0000000-0000-0000-0000-00000000000a', 7, '10:00', false, 25000, 60)$$,
+  'Virtual sin enlace: sí (D-76)');
 select throws_ok(
   $$insert into public.franja (id_monitor, dia, hora, presencial, precio, duracion_min, enlace)
     values ('b0000000-0000-0000-0000-00000000000a', 2, '10:00', false, 25000, 60, 'http://meet.example.com/abc')$$,
@@ -110,7 +111,9 @@ select results_eq(
   $$values ('30000000-0000-0000-0000-000000000001', 'Edificio ML, salón 101'::text, null::text),
            ('30000000-0000-0000-0000-000000000002', null, 'https://meet.example.com/abc'),
            ('30000000-0000-0000-0000-000000000003', 'Edificio ML, salón 101', null),
-           ('30000000-0000-0000-0000-000000000004', 'Salón', null)$$,
+           ('30000000-0000-0000-0000-000000000004', 'Salón', null),
+           ('30000000-0000-0000-0000-000000000005', null, null),
+           ('30000000-0000-0000-0000-000000000006', null, null)$$,
   'El monitor lee el lugar y el enlace de sus franjas con acceso_a_mis_franjas()');
 select throws_ok($$select enlace from public.franja$$, '42501', null, 'Ni el monitor lee el enlace directo de la tabla');
 select throws_ok(

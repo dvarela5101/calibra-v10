@@ -467,9 +467,10 @@ HU-052 (RN-60, D-60): un admin autoriza cancelar una individual `confirmada` a l
 
 ## Franjas del monitor
 
-`/monitor/franjas` (HU-015): el monitor certificado abre franjas semanales (día, hora, duración, precio y modalidad, con lugar o enlace de videollamada), las edita y las cierra desde una fecha. Las reglas (P-30, P-31) las aplica el trigger `privado.validar_franja_del_monitor` a toda escritura que no sea de confianza, y `src/lib/franjas/reglas.ts` da los mismos mensajes antes de ir a la base.
+`/monitor/franjas` (HU-015): el monitor certificado abre franjas semanales (día, hora, duración, precio y modalidad), las edita y las cierra desde una fecha. Desde D-76 (HU-107) la franja no lleva lugar ni enlace: el monitor los pone en cada monitoría desde `/monitor/agenda`. Las reglas (P-30, P-31) las aplica el trigger `privado.validar_franja_del_monitor` a toda escritura que no sea de confianza, y `src/lib/franjas/reglas.ts` da los mismos mensajes antes de ir a la base.
 
 - La franja se lee en público (para agendar), pero el lugar y el enlace no: los permisos de `select` son por columna. El monitor lee los suyos con `public.acceso_a_mis_franjas()`. Quien necesite mostrarlos a un estudiante (la cita confirmada, HU-019) los lee desde el servidor.
+- HU-107 (D-76): el lugar o el enlace de cada monitoría vive en `public.lugar_de_monitoria`, sin grants a `anon` ni `authenticated`. El monitor lo pone con `public.poner_lugar_de_mi_monitoria(id, valor)` y lo lee con `public.lugares_de_mi_agenda()`; la cita (`privado.datos_de_cita`) y el correo de confirmación lo leen de ahí. Una monitoría nueva en una franja vieja que aún tiene `franja.lugar` o `franja.enlace` empieza con ese dato (trigger `monitoria_lugar_inicial`).
 - Día, hora y duración no cambian si la franja tiene monitorías no canceladas: los plazos de cada monitoría salen del horario de la franja. El precio sí cambia; la monitoría guarda su `valor_total` (RN-32).
 - Cerrar es poner `cerrada_desde`, posterior a la última monitoría activa. Una franja ya cerrada no se edita ni se reabre.
 - Las escrituras con la llave secreta (pruebas, herramientas) no pasan por esas reglas: quien escriba franjas así tiene que respetarlas por su cuenta.

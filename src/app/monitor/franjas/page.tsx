@@ -17,19 +17,17 @@ export default async function MisFranjas({ searchParams }: PageProps<"/monitor/f
   const sesion = await exigirRol("monitor", "/monitor/franjas");
   const { cerrada } = await searchParams;
   const supabase = await crearClienteServidor();
-  // El lugar y el enlace no se leen de la tabla (P-31): los da acceso_a_mis_franjas(), solo de las propias.
-  const [{ data: franjas, error }, { data: accesos }, { count: certificados }] = await Promise.all([
+  // D-76: la franja ya no lleva lugar ni enlace; son de cada monitoría (en la agenda).
+  const [{ data: franjas, error }, { count: certificados }] = await Promise.all([
     supabase!
       .from("franja")
       .select("id, dia, hora, duracion_min, presencial, precio, cerrada_desde")
       .eq("id_monitor", sesion.idUsuario)
       .order("dia", { ascending: true })
       .order("hora", { ascending: true }),
-    supabase!.rpc("acceso_a_mis_franjas"),
     supabase!.from("certificado").select("id", { count: "exact", head: true }).eq("id_monitor", sesion.idUsuario),
   ]);
   if (error) console.error("[franjas] no se pudieron leer las franjas:", error.message);
-  const lugares = new Map((accesos ?? []).map((a) => [a.id_franja, a.lugar]));
   const hoy = diaDelNegocio(new Date());
   const abiertas = (franjas ?? []).filter((f) => !f.cerrada_desde || f.cerrada_desde > hoy);
   const cerradas = (franjas ?? []).filter((f) => f.cerrada_desde && f.cerrada_desde <= hoy);
@@ -67,7 +65,7 @@ export default async function MisFranjas({ searchParams }: PageProps<"/monitor/f
                     {nombreDelDia(f.dia)}, {horaCorta(f.hora)} a {horaDeFin(f.hora, f.duracion_min)}
                   </span>
                   <span className={estilos.detalle}>
-                    {f.presencial ? `Presencial · ${lugares.get(f.id) ?? "sin lugar"}` : "Virtual"} · {formatearPesos(f.precio)}
+                    {f.presencial ? "Presencial" : "Virtual"} · {formatearPesos(f.precio)}
                   </span>
                   {f.cerrada_desde && (
                     <span className={estilos.cerrada}>Se cierra desde el {formatearDia(f.cerrada_desde)}</span>
