@@ -45,7 +45,7 @@ export type EstadoLugar = { error: string | null; exito: string | null };
  */
 export async function guardarLugar(_anterior: EstadoLugar, datos: FormData): Promise<EstadoLugar> {
   await exigirRol("monitor", RUTA);
-  const id = String(datos.get("monitoria") ?? "");
+  const id = String(datos.get("id_monitoria") ?? "");
   if (!esUuid(id)) return { error: "No encontramos esa monitoría en tu agenda.", exito: null };
 
   let resultado;

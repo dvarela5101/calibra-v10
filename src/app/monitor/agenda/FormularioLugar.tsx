@@ -26,7 +26,7 @@ export function FormularioLugar({ idMonitoria, presencial, valor, descripcion }:
 
   return (
     <form action={accion} className={estilos.lugar} noValidate>
-      <input type="hidden" name="monitoria" value={idMonitoria} />
+      <input type="hidden" name="id_monitoria" value={idMonitoria} />
       <input type="hidden" name="presencial" value={presencial ? "si" : "no"} />
       <div className={formulario.campo}>
         <label htmlFor={campo} className={formulario.etiqueta}>
