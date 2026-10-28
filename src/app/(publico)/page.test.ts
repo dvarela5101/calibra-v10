@@ -87,11 +87,18 @@ describe("/ sin resultado: la landing (HU-108)", () => {
     expect([...posiciones].sort((a, b) => a - b)).toEqual(posiciones);
   });
 
-  it("no tiene menú ni más enlaces que el aviso de privacidad (D-77 b); el acceso lo prueba su propio archivo", async () => {
+  it("no tiene menú ni más enlaces que el aviso y la franja de monitores (D-77 b, D-78 b); el acceso lo prueba su propio archivo", async () => {
     const hrefs = [...(await pintar()).matchAll(/<a[^>]*href="([^"]*)"/g)].map(([, href]) => href);
-    expect(new Set(hrefs)).toEqual(new Set(["/", "/diagnostico", "/privacidad"]));
+    expect(new Set(hrefs)).toEqual(new Set(["/", "/diagnostico", "/privacidad", "/quiero-ser-monitor"]));
     expect(hrefs).not.toContain("/monitores");
-    expect(hrefs).not.toContain("/quiero-ser-monitor");
+  });
+
+  it("después del CTA final, una sola franja lleva a la landing de monitores y registra clic_ser_monitor (D-78 b)", async () => {
+    const html = await pintar();
+    expect(html.match(/<a[^>]*href="\/quiero-ser-monitor"[^>]*>Quiero ser monitor<\/a>/g)).toHaveLength(1);
+    expect(html.match(/data-evento="clic_ser_monitor"/g)).toHaveLength(1);
+    const t = texto(html);
+    expect(t.indexOf("¿Dominas una materia de ciclo básico?")).toBeGreaterThan(t.indexOf("Averigua qué te falla antes del próximo parcial."));
   });
 
   it("marca la página como landing para que globals.css esconda el pie global (D-77 b)", async () => {

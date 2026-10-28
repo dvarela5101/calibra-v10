@@ -100,13 +100,13 @@ test.describe("Criterios 1 a 3 · el aspirante deja sus datos", () => {
     const errores: string[] = [];
     page.on("pageerror", (error) => errores.push(error.message));
 
-    // Desde el pie de una página del visitante: la landing de la portada no lo lleva (D-77 b).
+    // Desde el pie de una página del visitante (la portada lo lleva en su franja, D-78 b). El formulario va al final de la landing de monitores (HU-109).
     await page.goto("/privacidad");
     await page.waitForLoadState("networkidle");
     await page.getByRole("contentinfo").getByRole("link", { name: "Quiero ser monitor" }).click();
     await expect(page).toHaveURL(/\/quiero-ser-monitor$/, ESPERA);
     await expect(page).toHaveTitle("Quiero ser monitor · Calibra");
-    await expect(page.getByRole("heading", { level: 1, name: "Quiero ser monitor" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Quiero ser monitor" })).toBeVisible();
 
     // La autorización viene desmarcada y enlaza al aviso de privacidad.
     const autorizacion = page.getByRole("checkbox", { name: /Autorizo a Calibra a tratar mis datos personales para contactarme/ });

@@ -1,5 +1,7 @@
 "use server";
 
+import { EVENTOS } from "@/lib/analitica/eventos";
+import { registrarEventoDelServidor } from "@/lib/analitica/servidor";
 import { leerConsentimiento } from "@/lib/privacidad/consentimiento";
 import { CASILLA_TRATAMIENTO, MARCADA } from "@/lib/privacidad/consentimiento";
 import { CAMPO_MATERIAS, ERROR_SIN_AUTORIZACION_ASPIRANTE, cayoEnLaTrampa, leerSolicitud } from "@/lib/solicitudes/reglas";
@@ -46,5 +48,7 @@ export async function enviarSolicitud(_anterior: EstadoSolicitud, datos: FormDat
   }
   if (!resultado.ok) return fallo(resultado.error);
 
+  // HU-109: la conversión de la landing de monitores, sin datos personales.
+  await registrarEventoDelServidor(EVENTOS.solicitudMonitorEnviada, { materias: lectura.datos.materias.length });
   return { error: null, enviada: true, valores: VACIOS };
 }

@@ -1,13 +1,15 @@
 /*
  * HU-108: la landing de la portada (docs/diseno/2026-10-27-landing.dc.html). Colores solo de tokens.css (lo que no está es una
- * mezcla de tokens); el azul es solo del CTA (D-77). Una columna desde el hero; el hero, dos en pantallas anchas.
+ * mezcla de tokens); el azul es solo del CTA (D-77).
+ *
+ * HU-109: el ancho del hero en todas las secciones, partidas en dos en pantallas anchas (docs/diseno/2026-10-28-landing.dc.html),
+ * y lo de la landing de monitores (docs/diseno/2026-10-28-landing-monitores.dc.html), que usa este mismo módulo.
  */
 
 .portada {
   /* Texto de cuerpo: más oscuro que --muted (que queda para notas) y siempre por encima de AA sobre --bg y --surface. */
   --cuerpo: color-mix(in srgb, var(--text) 82%, var(--bg));
   --ancho-hero: 1200px;
-  --ancho-columna: 720px;
   --lado: clamp(16px, 4vw, 48px);
   --radio-grande: 16px;
   --sombra-flotante: 0 1px 1px color-mix(in srgb, var(--text) 4%, transparent), 0 10px 30px color-mix(in srgb, var(--text) 7%, transparent);
@@ -347,22 +349,34 @@
   cursor: pointer;
 }
 
-/* Desde aquí, una sola columna. */
+/* Desde aquí, el ancho del hero (HU-109): en pantallas anchas cada sección se parte en dos, el titular a la izquierda y el
+   contenido a la derecha; por debajo de 960 px, una columna. */
 
-.columna {
-  max-inline-size: var(--ancho-columna);
+.contenedor {
+  max-inline-size: var(--ancho-hero);
   margin-inline: auto;
   padding-inline: var(--lado);
 }
 
 .seccion {
-  padding-block-start: clamp(72px, 10vw, 120px);
+  padding-block-start: clamp(72px, 10vw, 136px);
+}
+
+.partido {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 32px clamp(48px, 6vw, 96px);
+  align-items: start;
+}
+
+.partidoAlCentro {
+  align-items: center;
 }
 
 .tituloSeccion {
-  font-size: clamp(30px, 4vw, 44px);
-  line-height: 1.1;
-  letter-spacing: -0.025em;
+  font-size: clamp(30px, 3.6vw, 48px);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
   font-weight: 700;
   text-wrap: balance;
 }
@@ -376,40 +390,70 @@
 .problemas {
   display: flex;
   flex-direction: column;
-  gap: 28px;
-  margin-block-start: 36px;
 }
 
-.afirmacion {
-  margin-block-end: 6px;
-  font-size: 19px;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.pasos {
-  list-style: none;
-  margin-block-start: 36px;
-}
-
-.paso {
-  display: flex;
-  gap: var(--e4);
+.problema {
   padding-block: 22px;
   border-block-start: 1px solid var(--border);
 }
 
-.paso:last-child {
+.problema:last-child {
   border-block-end: 1px solid var(--border);
 }
 
+.afirmacion {
+  margin-block-end: 6px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* «Cómo funciona»: una franja de borde a borde con los pasos en línea, unidos por una raya. */
+
+.franjaPasos {
+  --fondo-franja: color-mix(in srgb, var(--primary) 5%, var(--surface));
+
+  margin-block-start: clamp(72px, 10vw, 136px);
+  padding-block: clamp(64px, 8vw, 112px);
+  background: var(--fondo-franja);
+  border-block: 1px solid var(--border);
+}
+
+.pasos {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 40px 48px;
+  margin-block-start: 48px;
+  list-style: none;
+}
+
+.pasosCuatro {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* La raya que une los números: pasa por su centro (44 px / 2). */
+.pasos::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 22px;
+  inset-inline: 22px;
+  border-block-start: 1.5px solid color-mix(in srgb, var(--text) 22%, var(--surface));
+}
+
+.paso {
+  position: relative;
+}
+
 .numeroPaso {
-  flex: none;
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  inline-size: 40px;
-  block-size: 40px;
+  inline-size: var(--toque-min);
+  block-size: var(--toque-min);
+  background: var(--fondo-franja);
   border: 1.5px solid var(--text);
   border-radius: 50%;
   font-size: 17px;
@@ -417,10 +461,14 @@
 }
 
 .tituloPaso {
-  margin-block-end: 6px;
-  font-size: 20px;
-  line-height: 1.35;
+  margin-block: 20px 8px;
+  font-size: 21px;
+  line-height: 1.3;
   font-weight: 600;
+}
+
+.paso .parrafo {
+  max-inline-size: 26em;
 }
 
 .beneficios {
@@ -457,7 +505,7 @@
 /* La vista del monitor. */
 
 .figura {
-  margin-block-start: 40px;
+  min-inline-size: 0;
 }
 
 .vista {
@@ -538,17 +586,23 @@
   margin-block-start: var(--e3);
 }
 
+/* La prueba social: una frase grande, con las cifras en negrita. */
+
 .cifras {
-  margin-block-start: var(--e4);
-  font-size: 19px;
-  line-height: 1.55;
+  font-size: clamp(22px, 2.2vw, 30px);
+  line-height: 1.4;
+  letter-spacing: -0.015em;
   color: var(--cuerpo);
+}
+
+.cifra {
+  font-weight: 700;
+  color: var(--text);
 }
 
 /* Preguntas frecuentes. */
 
 .faq {
-  margin-block-start: 28px;
   border-block-start: 1px solid var(--border);
 }
 
@@ -593,24 +647,243 @@
   color: var(--cuerpo);
 }
 
-/* El cierre: el mismo CTA de arriba. */
+/* El cierre: sobre el mismo papel del hero, para cerrar como empieza. */
 
 .cierre {
-  padding-block: clamp(80px, 11vw, 136px) clamp(72px, 10vw, 120px);
+  margin-block-start: clamp(80px, 11vw, 144px);
+  padding-block: clamp(80px, 10vw, 128px);
   text-align: center;
+  background-color: var(--bg);
+  background-image: var(--papel-cuadriculado);
+  background-position: -1px -1px;
+  border-block-start: 1px solid var(--border);
 }
 
 .tituloCierre {
-  max-inline-size: 14em;
+  max-inline-size: 16em;
   margin-inline: auto;
-  font-size: clamp(32px, 4.6vw, 52px);
-  line-height: 1.08;
-  letter-spacing: -0.03em;
+  font-size: clamp(32px, 4.8vw, 60px);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
   font-weight: 800;
   text-wrap: balance;
 }
 
-/* El pie de la landing: solo el aviso de privacidad (D-77 b). */
+/* La franja para monitores (D-78 b): después del CTA final, con un botón con borde y sin el color de acento. */
+
+.franjaMonitores {
+  background: color-mix(in srgb, var(--primary) 5%, var(--surface));
+  border-block-start: 1px solid var(--border);
+}
+
+.franjaMonitoresInterior {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e4) 32px;
+  padding-block: 28px;
+}
+
+.textoFranja {
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+.cuerpoFranja {
+  color: var(--cuerpo);
+}
+
+.botonBorde {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 48px;
+  padding-inline: var(--e4);
+  background: var(--surface);
+  border: 1.5px solid var(--text);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .botonBorde:hover {
+    background: var(--bg);
+  }
+}
+
+/* Por debajo de 960 px, una columna: los pasos van uno debajo del otro y la raya baja vertical. */
+@media (max-width: 959px) {
+  .partido,
+  .pasos,
+  .pasosCuatro {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pasos::before {
+    inset-block: 22px;
+    inset-inline: 22px auto;
+    border-block-start: 0;
+    border-inline-start: 1.5px solid color-mix(in srgb, var(--text) 22%, var(--surface));
+  }
+
+  .paso {
+    padding-inline-start: 68px;
+  }
+
+  .numeroPaso {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+  }
+
+  .tituloPaso {
+    margin-block-start: 8px;
+  }
+}
+
+/* La landing de monitores (HU-109). El hero es su agenda: cada monitoría, con la forma de las opciones de la pregunta de
+   muestra, abre el diagnóstico de quien agendó. */
+
+.agenda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin-block-start: 16px;
+}
+
+.monitoria {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  min-block-size: 60px;
+  padding: 10px 16px;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.monitoriaElegida,
+.monitoriaElegida:hover {
+  border-color: var(--text);
+  background: color-mix(in srgb, var(--primary) 5%, var(--surface));
+}
+
+.cuando {
+  font-size: 15px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.hora,
+.detalleMonitoria {
+  display: block;
+  font-size: var(--texto-min);
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.diagnosticoDeMuestra {
+  min-block-size: 300px;
+  margin-block-start: var(--e4);
+  padding-block-start: 16px;
+  border-block-start: 1px dashed var(--border);
+}
+
+.habilidadesDeMuestra {
+  margin-block-start: 6px;
+  list-style: none;
+}
+
+.habilidadDeMuestra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e4);
+  padding-block: 12px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.habilidadDeMuestra + .habilidadDeMuestra {
+  border-block-start: 1px solid var(--border);
+}
+
+.habilidadDeMuestra > :last-child {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* El nivel que no domina va encerrado con el trazo; el margen le deja aire al trazo contra el borde de la tarjeta. */
+.nivelEncerrado {
+  position: relative;
+  flex: none;
+  margin-inline-end: var(--e2);
+}
+
+.errorDeMuestra {
+  margin-block-start: var(--e3);
+}
+
+/* La pantalla de horarios de los beneficios. */
+
+.horarios {
+  list-style: none;
+  padding: 6px 22px;
+}
+
+.horario {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--e1) var(--e4);
+  padding-block: 14px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.horario + .horario {
+  border-block-start: 1px solid var(--border);
+}
+
+.precio {
+  text-align: end;
+}
+
+.detalleHorario {
+  font-size: var(--texto-min);
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* El formulario de HU-062, al final: la única acción de la página. */
+
+.solicitud {
+  scroll-margin-block-start: var(--e4);
+}
+
+.bajadaSolicitud {
+  margin-block-start: var(--e4);
+  max-inline-size: 30em;
+}
+
+.tarjetaSolicitud {
+  min-inline-size: 0;
+  padding: clamp(20px, 3vw, 32px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radio-grande);
+  box-shadow: var(--sombra-flotante);
+}
+
+.cierreMonitores {
+  padding-block-end: clamp(72px, 10vw, 120px);
+}
+
+/* El pie de la landing: el aviso de privacidad (D-77 b) y, en la de monitores, «Soy estudiante». */
 
 .pie {
   display: flex;
@@ -627,6 +900,12 @@
 .nombrePie {
   font-size: 15px;
   font-weight: 700;
+}
+
+.enlacesPie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--e4);
 }
 
 .enlacePie {
@@ -682,6 +961,11 @@
   .cta {
     align-items: stretch;
   }
+}
+
+/* La barra de monitores se esconde cuando el formulario está a la vista: ya no hace falta llevar a él. */
+.barraMovil.barraOculta {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
