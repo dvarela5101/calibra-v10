@@ -6,6 +6,10 @@ import { normalizarCorreo, normalizarTelefono } from "@/lib/leads/reglas";
  * exigir cada dato (`*_solicitud_monitor.sql`).
  */
 
+/** La landing de monitores con el formulario al final (HU-109, D-78 a), y el ancla del formulario. */
+export const RUTA_SER_MONITOR = "/quiero-ser-monitor";
+export const ANCLA_DE_LA_SOLICITUD = "solicitud";
+
 export type DatosDeSolicitud = {
   nombre: string;
   correo: string;

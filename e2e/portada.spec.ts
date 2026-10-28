@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-// HU-108: la landing de la portada, para quien no tiene un diagnóstico terminado (la portada con resultado la prueba
+// HU-108 y HU-109: la landing de la portada, para quien no tiene un diagnóstico terminado (la portada con resultado la prueba
 // e2e/ultimo-diagnostico.spec.ts). Corre en `movil` (390x844) y `escritorio` (1280x800). No necesita sesión: el alta anónima
 // se bloquea para no dejar usuarios en el Supabase local.
 
@@ -76,20 +76,43 @@ test.describe("HU-108 · la landing de la portada", () => {
     await expect(opciones(page).nth(3).locator("ellipse")).toHaveCSS("animation-name", "none");
   });
 
-  test("una sola acción: sin menú, solo «Iniciar sesión» en la cabecera y el aviso en el pie (D-77 a y b)", async ({ page }) => {
+  test("una sola acción: sin menú, solo «Iniciar sesión» en la cabecera, el aviso en el pie y la franja de monitores (D-77, D-78 b)", async ({ page }) => {
     await abrir(page);
     await expect(page.getByRole("navigation", { name: "Tu cuenta" }).getByRole("link")).toHaveText(["Iniciar sesión"]);
     await expect(page.getByRole("link", { name: "Iniciar sesión" })).toHaveAttribute("href", "/ingresar");
     await expect(page.locator("[data-pie-global]")).toBeHidden();
 
     const destinos = await page.getByRole("link").evaluateAll((enlaces) => [...new Set(enlaces.map((a) => a.getAttribute("href")))].sort());
-    expect(destinos).toEqual(["/", "/diagnostico", "/ingresar", "/privacidad"]);
+    expect(destinos).toEqual(["/", "/diagnostico", "/ingresar", "/privacidad", "/quiero-ser-monitor"]);
 
     // El color de acento es solo del CTA: «Iniciar sesión» va con borde y texto oscuro.
     const fondoDelCta = await page.getByRole("link", { name: CTA, exact: true }).first().evaluate((a) => getComputedStyle(a).backgroundColor);
     const acceso = page.getByRole("link", { name: "Iniciar sesión" });
     await expect(acceso).not.toHaveCSS("background-color", fondoDelCta);
     await expect(acceso).not.toHaveCSS("color", fondoDelCta);
+
+    // La franja de monitores va después del CTA final, con borde y sin el color de acento (D-78 b).
+    const serMonitor = page.getByRole("region", { name: "Para monitores" }).getByRole("link", { name: "Quiero ser monitor" });
+    await expect(serMonitor).toHaveAttribute("href", "/quiero-ser-monitor");
+    await expect(serMonitor).not.toHaveCSS("background-color", fondoDelCta);
+    const cierre = await page.getByRole("heading", { name: "Averigua qué te falla antes del próximo parcial." }).boundingBox();
+    expect((await serMonitor.boundingBox())!.y).toBeGreaterThan(cierre!.y);
+  });
+
+  test("en escritorio las secciones se parten en dos; en el teléfono van en una columna (HU-109)", async ({ page }) => {
+    await abrir(page);
+    const titulo = await page.getByRole("heading", { name: "Estudiar más horas no arregla un error que no sabes que tienes." }).boundingBox();
+    const primerProblema = await page.getByText("Crees que entendiste hasta que llega el parcial.").boundingBox();
+    const pasos = page.getByRole("main").getByRole("listitem").filter({ has: page.getByRole("heading", { level: 3 }) });
+    const [uno, dos] = [await pasos.nth(0).boundingBox(), await pasos.nth(1).boundingBox()];
+    if (esMovil(page)) {
+      expect(primerProblema!.y).toBeGreaterThan(titulo!.y + titulo!.height);
+      expect(dos!.y).toBeGreaterThan(uno!.y + uno!.height - 1);
+    } else {
+      expect(primerProblema!.x).toBeGreaterThan(titulo!.x + titulo!.width);
+      expect(Math.abs(dos!.y - uno!.y)).toBeLessThan(2);
+      expect(dos!.x).toBeGreaterThan(uno!.x + uno!.width);
+    }
   });
 
   test("las preguntas frecuentes se abren y citan los plazos de la base", async ({ page }) => {

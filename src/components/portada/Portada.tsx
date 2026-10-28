@@ -1,14 +1,11 @@
-import Image from "next/image";
-import Link from "next/link";
-import type { ReactNode } from "react";
 import { NivelEscrito } from "@/components/diagnostico/ResultadoDelDiagnostico";
 import { EVENTOS, type UbicacionDelCta } from "@/lib/analitica/eventos";
 import { rutaDeDiagnostico } from "@/lib/diagnostico/rutas";
 import type { ParametrosNegocio } from "@/lib/plazos/parametros";
 import { respuestaDeCancelar, respuestaDeCuenta, textoDelBeneficioDeCancelar } from "@/lib/portada/textos";
-import { RUTA_AVISO } from "@/lib/privacidad/consentimiento";
-import { AccesoDeLaPortada } from "./AccesoDeLaPortada";
+import { RUTA_SER_MONITOR } from "@/lib/solicitudes/reglas";
 import { EnlaceConEvento } from "./EnlaceConEvento";
+import { Beneficio, CabeceraDeLaPortada, Paso, PieDeLaPortada, Pregunta, Problema } from "./piezas";
 import { PreguntaDeMuestra } from "./PreguntaDeMuestra";
 import estilos from "./portada.module.css";
 
@@ -18,19 +15,14 @@ import estilos from "./portada.module.css";
  * sin menú, y hero → problema → cómo funciona → beneficios → prueba social → preguntas frecuentes → CTA final.
  *
  * `data-landing` le dice a globals.css que esconda el pie global: este lleva el suyo, con solo el aviso (D-77 b).
+ *
+ * HU-109 (D-78): en pantallas anchas cada sección se parte en dos (el titular a la izquierda, el contenido a la derecha) dentro
+ * del ancho del hero, y después del CTA final una franja lleva a la landing de monitores (D-78 b).
  */
 export function Portada({ parametros }: { parametros: ParametrosNegocio | null }) {
   return (
     <div className={estilos.portada} data-landing="">
-      <header className={estilos.cabecera}>
-        <div className={estilos.cabeceraInterior}>
-          <Link href="/" className={estilos.enlaceMarca} aria-label="Calibra, ir al inicio">
-            <Image src="/logo.svg" alt="" width={34} height={34} priority />
-            <span className={estilos.nombreMarca}>Calibra</span>
-          </Link>
-          <AccesoDeLaPortada />
-        </div>
-      </header>
+      <CabeceraDeLaPortada />
 
       <main>
         <section className={estilos.hero}>
@@ -47,101 +39,84 @@ export function Portada({ parametros }: { parametros: ParametrosNegocio | null }
           </div>
         </section>
 
-        <div className={estilos.columna}>
-          <section className={estilos.seccion} aria-labelledby="problema">
+        <section className={`${estilos.contenedor} ${estilos.seccion}`} aria-labelledby="problema">
+          <div className={estilos.partido}>
             <h2 id="problema" className={estilos.tituloSeccion}>
               Estudiar más horas no arregla un error que no sabes que tienes.
             </h2>
             <div className={estilos.problemas}>
-              <div>
-                <p className={estilos.afirmacion}>Crees que entendiste hasta que llega el parcial.</p>
-                <p className={estilos.parrafo}>
-                  Los parciales viejos te dicen que fallaste un punto, no qué paso del razonamiento está mal.
-                </p>
-              </div>
-              <div>
-                <p className={estilos.afirmacion}>Pedir ayuda da pena, y las monitorías del departamento se llenan.</p>
-                <p className={estilos.parrafo}>Entonces dejas la duda para después, y después es la semana del parcial.</p>
-              </div>
-              <div>
-                <p className={estilos.afirmacion}>El monitor llega sin saber qué explicarte.</p>
-                <p className={estilos.parrafo}>La primera parte de la sesión se va en encontrar dónde está el problema.</p>
-              </div>
+              <Problema titulo="Crees que entendiste hasta que llega el parcial.">
+                Los parciales viejos te dicen que fallaste un punto, no qué paso del razonamiento está mal.
+              </Problema>
+              <Problema titulo="Pedir ayuda da pena, y las monitorías del departamento se llenan.">
+                Entonces dejas la duda para después, y después es la semana del parcial.
+              </Problema>
+              <Problema titulo="El monitor llega sin saber qué explicarte.">
+                La primera parte de la sesión se va en encontrar dónde está el problema.
+              </Problema>
             </div>
-          </section>
+          </div>
+        </section>
 
-          <section className={estilos.seccion} aria-labelledby="como-funciona">
+        <section className={estilos.franjaPasos} aria-labelledby="como-funciona">
+          <div className={estilos.contenedor}>
             <h2 id="como-funciona" className={estilos.tituloSeccion}>
               Cómo funciona
             </h2>
             <ol className={estilos.pasos}>
-              <li className={estilos.paso}>
-                <span className={estilos.numeroPaso} aria-hidden="true">
-                  1
-                </span>
-                <div>
-                  <h3 className={estilos.tituloPaso}>Haz el diagnóstico</h3>
-                  <p className={estilos.parrafo}>
-                    Escoges materia y parcial y respondes preguntas de opción múltiple. Al final ves qué habilidades dominas y
-                    qué errores aparecieron.
-                  </p>
-                </div>
-              </li>
-              <li className={estilos.paso}>
-                <span className={estilos.numeroPaso} aria-hidden="true">
-                  2
-                </span>
-                <div>
-                  <h3 className={estilos.tituloPaso}>Agenda con un monitor certificado</h3>
-                  <p className={estilos.parrafo}>
-                    Eliges horario entre los monitores certificados en tu materia y pagas por transferencia.
-                  </p>
-                </div>
-              </li>
-              <li className={estilos.paso}>
-                <span className={estilos.numeroPaso} aria-hidden="true">
-                  3
-                </span>
-                <div>
-                  <h3 className={estilos.tituloPaso}>La sesión empieza por tu error</h3>
-                  <p className={estilos.parrafo}>El monitor ya leyó tu diagnóstico y llega con el plan de por dónde empezar.</p>
-                </div>
-              </li>
+              <Paso numero={1} titulo="Haz el diagnóstico">
+                Escoges materia y parcial y respondes preguntas de opción múltiple. Al final ves qué habilidades dominas y qué
+                errores aparecieron.
+              </Paso>
+              <Paso numero={2} titulo="Agenda con un monitor certificado">
+                Eliges horario entre los monitores certificados en tu materia y pagas por transferencia.
+              </Paso>
+              <Paso numero={3} titulo="La sesión empieza por tu error">
+                El monitor ya leyó tu diagnóstico y llega con el plan de por dónde empezar.
+              </Paso>
             </ol>
-          </section>
+          </div>
+        </section>
 
-          <section className={estilos.seccion} aria-labelledby="beneficios">
-            <h2 id="beneficios" className={estilos.tituloSeccion}>
-              La hora de monitoría rinde, porque nadie empieza a ciegas.
-            </h2>
-            <ul className={estilos.beneficios}>
-              <Beneficio titulo="Sabes qué repasar aunque no agendes.">
-                El resultado es tuyo: qué habilidades dominas y qué errores cometiste.
-              </Beneficio>
-              <Beneficio titulo="Tu monitor llega preparado.">
-                Ve lo mismo que tú, con cuántas veces elegiste cada error.
-              </Beneficio>
-              <Beneficio titulo="Solo te enseña quien sabe la materia.">
-                Cada monitor está certificado por materia; si no tiene el de la tuya, no aparece.
-              </Beneficio>
-              <Beneficio titulo="Si se te cruza algo, recuperas tu plata.">{textoDelBeneficioDeCancelar(parametros)}</Beneficio>
-            </ul>
+        <section className={`${estilos.contenedor} ${estilos.seccion}`} aria-labelledby="beneficios">
+          <div className={`${estilos.partido} ${estilos.partidoAlCentro}`}>
+            <div>
+              <h2 id="beneficios" className={estilos.tituloSeccion}>
+                La hora de monitoría rinde, porque nadie empieza a ciegas.
+              </h2>
+              <ul className={estilos.beneficios}>
+                <Beneficio titulo="Sabes qué repasar aunque no agendes.">
+                  El resultado es tuyo: qué habilidades dominas y qué errores cometiste.
+                </Beneficio>
+                <Beneficio titulo="Tu monitor llega preparado.">Ve lo mismo que tú, con cuántas veces elegiste cada error.</Beneficio>
+                <Beneficio titulo="Solo te enseña quien sabe la materia.">
+                  Cada monitor está certificado por materia; si no tiene el de la tuya, no aparece.
+                </Beneficio>
+                <Beneficio titulo="Si se te cruza algo, recuperas tu plata.">{textoDelBeneficioDeCancelar(parametros)}</Beneficio>
+              </ul>
+            </div>
             <VistaDelMonitor />
-          </section>
+          </div>
+        </section>
 
-          <section className={estilos.seccion} aria-labelledby="prueba-social">
+        <section className={`${estilos.contenedor} ${estilos.seccion}`} aria-labelledby="prueba-social">
+          <div className={estilos.partido}>
             <h2 id="prueba-social" className={estilos.tituloSeccion}>
               Hecho con los parciales de ciclo básico
             </h2>
             {/* D-77 f: los testimonios aparecen solo con citas reales y con permiso; aún no hay. D-77 d: cifras revisadas a
                 mano contra lo activo en producción (el 28-oct-2026, en el banco: 263 preguntas y 445 errores revisados). */}
             <p className={estilos.cifras}>
-              El diagnóstico cubre 8 materias de ciclo básico, con más de 250 preguntas y más de 400 errores típicos catalogados a
-              partir de parciales de semestres anteriores.
+              El diagnóstico cubre <strong className={estilos.cifra}>8 materias</strong> de ciclo básico, con{" "}
+              <strong className={estilos.cifra}>más de 250 preguntas</strong> y{" "}
+              <strong className={estilos.cifra}>más de 400 errores típicos</strong> catalogados a partir de parciales de semestres
+              anteriores.
             </p>
-          </section>
+          </div>
+        </section>
 
-          <section className={estilos.seccion} aria-labelledby="preguntas-frecuentes">
+        <section className={`${estilos.contenedor} ${estilos.seccion}`} aria-labelledby="preguntas-frecuentes">
+          <div className={estilos.partido}>
             <h2 id="preguntas-frecuentes" className={estilos.tituloSeccion}>
               Preguntas frecuentes
             </h2>
@@ -166,23 +141,33 @@ export function Portada({ parametros }: { parametros: ParametrosNegocio | null }
               <Pregunta titulo="¿Y si tengo que cancelar?">{respuestaDeCancelar(parametros)}</Pregunta>
               <Pregunta titulo="¿Necesito crear una cuenta?">{respuestaDeCuenta(parametros)}</Pregunta>
             </div>
-          </section>
+          </div>
+        </section>
 
-          <section className={estilos.cierre} aria-labelledby="cierre">
+        <section className={estilos.cierre} aria-labelledby="cierre">
+          <div className={estilos.contenedor}>
             <h2 id="cierre" className={estilos.tituloCierre}>
               Averigua qué te falla antes del próximo parcial.
             </h2>
             <CtaDelDiagnostico ubicacion="final" centrado />
-          </section>
-        </div>
+          </div>
+        </section>
+
+        {/* D-78 b: la otra cara del producto, después del CTA final y con borde, para no competir con el del estudiante. */}
+        <section className={estilos.franjaMonitores} aria-label="Para monitores">
+          <div className={`${estilos.contenedor} ${estilos.franjaMonitoresInterior}`}>
+            <p className={estilos.textoFranja}>
+              <strong className={estilos.fuerte}>¿Dominas una materia de ciclo básico?</strong>{" "}
+              <span className={estilos.cuerpoFranja}>Enséñala con Calibra: tú pones tus horarios y tu precio.</span>
+            </p>
+            <EnlaceConEvento href={RUTA_SER_MONITOR} evento={EVENTOS.clicSerMonitor} className={estilos.botonBorde}>
+              Quiero ser monitor
+            </EnlaceConEvento>
+          </div>
+        </section>
       </main>
 
-      <footer className={estilos.pie}>
-        <p className={estilos.nombrePie}>Calibra</p>
-        <Link href={RUTA_AVISO} className={estilos.enlacePie}>
-          Aviso de privacidad
-        </Link>
-      </footer>
+      <PieDeLaPortada />
 
       <div className={estilos.barraMovil}>
         <EnlaceConEvento
@@ -211,28 +196,6 @@ function CtaDelDiagnostico({ ubicacion, centrado = false }: { ubicacion: Ubicaci
       </EnlaceConEvento>
       <p className={estilos.notaCta}>Sin crear cuenta.</p>
     </div>
-  );
-}
-
-function Beneficio({ titulo, children }: { titulo: string; children: ReactNode }) {
-  return (
-    <li className={estilos.beneficio}>
-      <svg className={estilos.chulo} viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 12.5l5 5L20 6.5" />
-      </svg>
-      <p className={estilos.parrafo}>
-        <strong className={estilos.fuerte}>{titulo}</strong> {children}
-      </p>
-    </li>
-  );
-}
-
-function Pregunta({ titulo, children }: { titulo: string; children: ReactNode }) {
-  return (
-    <details className={estilos.pregunta}>
-      <summary className={estilos.resumen}>{titulo}</summary>
-      <p className={estilos.respuesta}>{children}</p>
-    </details>
   );
 }
 

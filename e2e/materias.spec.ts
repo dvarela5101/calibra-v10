@@ -598,7 +598,7 @@ test.describe("Criterios 12 a 16 · borrar una materia o una evaluación", () =>
     await expect(page.getByLabel("Materia", { exact: true }).locator("option").first()).toBeAttached(ESPERA);
     await expect(page.getByLabel("Materia", { exact: true }).locator("option", { hasText: codigo })).toHaveCount(0);
     await page.goto("/quiero-ser-monitor");
-    await expect(page.getByRole("heading", { level: 1, name: "Quiero ser monitor" })).toBeVisible(ESPERA);
+    await expect(page.getByRole("heading", { level: 2, name: "Quiero ser monitor" })).toBeVisible(ESPERA);
     await expect(page.getByRole("checkbox").first()).toBeVisible(ESPERA);
     await expect(page.getByRole("checkbox", { name: nombre, exact: true })).toHaveCount(0);
 

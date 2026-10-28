@@ -14,6 +14,7 @@ import {
   type ClaveDeOpcion,
 } from "@/lib/portada/pregunta-de-muestra";
 import { EnlaceConEvento } from "./EnlaceConEvento";
+import { Trazo } from "./Trazo";
 import estilos from "./portada.module.css";
 
 /**
@@ -45,11 +46,7 @@ export function PreguntaDeMuestra() {
             >
               <span className={estilos.formula}>
                 <TextoDelBanco texto={TEXTOS_DE_OPCION[clave]} />
-                {marcada && clave !== CORRECTA && (
-                  <svg className={estilos.trazo} viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true">
-                    <ellipse cx="100" cy="30" rx="96" ry="26" transform="rotate(-3 100 30)" />
-                  </svg>
-                )}
+                {marcada && clave !== CORRECTA && <Trazo />}
               </span>
               {marcada && clave === CORRECTA && (
                 <svg className={estilos.marca} viewBox="0 0 24 24" aria-hidden="true">
