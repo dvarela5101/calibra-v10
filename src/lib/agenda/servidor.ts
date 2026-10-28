@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { leerVistaDelMonitor, type VistaDelMonitor } from "@/lib/diagnostico/vista-del-monitor";
 import type { Database } from "@/lib/supabase/tipos";
-import { esEstadoPago, esResultadoDeFinalizar, type MonitoriaDeAgenda, type ResultadoDeFinalizar } from "./reglas";
+import { esEstadoPago, esResultadoDeFinalizar, type LugarDeMonitoria, type MonitoriaDeAgenda, type ResultadoDeFinalizar } from "./reglas";
 
 /**
  * La agenda del monitor de la sesión (HU-021). Con su propia sesión: `public.mi_agenda()` solo devuelve sus
@@ -55,4 +55,26 @@ export async function cargarDiagnosticoDeLaCita(cliente: Pick<SupabaseClient<Dat
   const { data, error } = await cliente.rpc("diagnostico_de_mi_monitoria", { p_id_monitoria: idMonitoria });
   if (error) throw new Error(`No se pudo leer el diagnóstico de la cita (código ${error.code || "sin código"}): ${error.message}`);
   return leerVistaDelMonitor(data);
+}
+
+/** D-76 (HU-107): el dato de las monitorías del monitor de la sesión que ya lo tienen, por id. */
+export async function cargarLugares(cliente: Pick<SupabaseClient<Database>, "rpc">): Promise<Map<string, LugarDeMonitoria>> {
+  const { data, error } = await cliente.rpc("lugares_de_mi_agenda");
+  if (error) throw new Error(`No se pudieron leer los lugares de la agenda: ${error.message}`);
+  return new Map((data ?? []).map((f) => [f.id_monitoria, { lugar: f.lugar, enlace: f.enlace }]));
+}
+
+/**
+ * D-76: el monitor de la sesión pone o cambia el lugar o el enlace de una monitoría suya. La base decide si se puede y si el dato
+ * sirve; sus mensajes (P0001) son para la persona. Cualquier otro error lanza.
+ */
+export async function ponerLugar(
+  cliente: Pick<SupabaseClient<Database>, "rpc">,
+  idMonitoria: string,
+  valor: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await cliente.rpc("poner_lugar_de_mi_monitoria", { p_id_monitoria: idMonitoria, p_valor: valor });
+  if (!error) return { ok: true };
+  if (error.code === "P0001") return { ok: false, error: error.message };
+  throw new Error(`No se pudo guardar el lugar (código ${error.code || "sin código"}): ${error.message}`);
 }

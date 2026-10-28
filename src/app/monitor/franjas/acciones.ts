@@ -14,7 +14,7 @@ import { crearClienteServidor } from "@/lib/supabase/servidor";
  */
 export type EstadoFranja = { error: string | null; exito: string | null; valores: Record<string, string> };
 
-const CAMPOS = ["dia", "hora", "duracion_min", "precio", "modalidad", "lugar", "enlace", "cerrada_desde"] as const;
+const CAMPOS = ["dia", "hora", "duracion_min", "precio", "modalidad", "cerrada_desde"] as const;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NO_ENCONTRADA = "No encontramos esa franja entre las tuyas.";
 const valoresDe = (datos: FormData) => Object.fromEntries(CAMPOS.map((c) => [c, String(datos.get(c) ?? "")]));
@@ -25,8 +25,9 @@ const columnas = (d: DatosDeFranja) => ({
   presencial: d.presencial,
   precio: d.precio,
   duracion_min: d.duracionMin,
-  lugar: d.lugar,
-  enlace: d.enlace,
+  // D-76: el lugar y el enlace son de cada monitoría. Se vacían los de una franja vieja para que cambiar su modalidad no choque.
+  lugar: null,
+  enlace: null,
 });
 
 export async function abrirFranja(_anterior: EstadoFranja, datos: FormData): Promise<EstadoFranja> {

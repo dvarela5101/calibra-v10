@@ -150,20 +150,20 @@ test.describe("Criterios 1 y 2 · abrir una franja y cambiar su precio", () => {
     await expect(page.getByRole("heading", { level: 2, name: "Abiertas (0)" })).toBeVisible();
     await expect(page.getByText("Todavía no tienes franjas abiertas.")).toBeVisible();
 
-    // El formulario: día, hora, duración, precio con separador de miles, modalidad y lugar.
+    // El formulario: día, hora, duración, precio con separador de miles y modalidad. Sin lugar (D-76: es de cada monitoría).
     await page.getByLabel("Día de la semana").selectOption({ label: "Martes" });
     await page.getByLabel("Hora de inicio").fill("14:00");
     await page.getByLabel("Duración (minutos)").fill("90");
     await page.getByLabel("Precio por persona (pesos)").fill("25.000");
     await page.getByRole("radio", { name: "Presencial" }).check();
-    await page.getByLabel("Lugar", { exact: true }).fill("Edificio ML, salón 101");
+    await expect(page.getByLabel("Lugar", { exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Abrir franja" }).click();
 
     await expect(estado(page, "Abriste la franja. Ya aparece en tu lista.")).toBeVisible(ESPERA);
     await expect(page.getByRole("heading", { level: 2, name: "Abiertas (1)" })).toBeVisible(ESPERA);
     const tarjeta = page.getByRole("link", { name: /Martes, 14:00 a 15:30/ });
     await expect(tarjeta).toBeVisible();
-    await expect(tarjeta).toContainText("Presencial · Edificio ML, salón 101");
+    await expect(tarjeta).toContainText("Presencial");
     await expect(tarjeta).toContainText(/\$\s25\.000/);
 
     const { data: abiertas } = await cuentas.cliente.from("franja").select("*").eq("id_monitor", monitor.id);
@@ -174,7 +174,7 @@ test.describe("Criterios 1 y 2 · abrir una franja y cambiar su precio", () => {
       duracion_min: 90,
       precio: 25_000,
       presencial: true,
-      lugar: "Edificio ML, salón 101",
+      lugar: null,
       enlace: null,
       cerrada_desde: null,
       abierta_desde: hoy(),
@@ -200,7 +200,7 @@ test.describe("Criterios 1 y 2 · abrir una franja y cambiar su precio", () => {
     await expect(page.getByRole("link", { name: /Martes, 14:00 a 15:30/ })).toContainText(/\$\s30\.000/, ESPERA);
   });
 
-  test("una franja virtual pide el enlace de la videollamada y solo lo acepta por https", async ({ page, cuentas, escenario }) => {
+  test("D-76: una franja virtual no pide el enlace de la videollamada; se pone en cada monitoría", async ({ page, cuentas, escenario }) => {
     const monitor = await escenario.monitorCertificado();
     await entrar(page, "/monitor/franjas", monitor);
     // La modalidad es un campo controlado por React: hay que esperar a que la página termine de hidratarse.
@@ -212,16 +212,8 @@ test.describe("Criterios 1 y 2 · abrir una franja y cambiar su precio", () => {
     await page.getByLabel("Precio por persona (pesos)").fill("30.000");
     await page.getByRole("radio", { name: "Virtual" }).check();
     await expect(page.getByLabel("Lugar", { exact: true })).toHaveCount(0);
-
-    await page.getByLabel("Enlace de la videollamada").fill("http://meet.example.com/abc");
-    await page.getByRole("button", { name: "Abrir franja" }).click();
-    await expect(alerta(page, "Escribe el enlace de la videollamada completo, que empiece por https://.")).toBeVisible(ESPERA);
-    const { data: sinFranjas } = await cuentas.cliente.from("franja").select("id").eq("id_monitor", monitor.id);
-    expect(sinFranjas).toEqual([]);
-
-    // Se conserva lo escrito: solo hay que corregir el enlace.
-    await expect(page.getByLabel("Hora de inicio")).toHaveValue("18:00");
-    await page.getByLabel("Enlace de la videollamada").fill("https://meet.example.com/abc-defg");
+    await expect(page.getByLabel("Enlace de la videollamada")).toHaveCount(0);
+    await expect(page.getByText("El enlace de la videollamada lo pones en cada monitoría desde tu agenda, cuando te la agenden.")).toBeVisible();
     await page.getByRole("button", { name: "Abrir franja" }).click();
 
     await expect(estado(page, "Abriste la franja. Ya aparece en tu lista.")).toBeVisible(ESPERA);
@@ -230,7 +222,7 @@ test.describe("Criterios 1 y 2 · abrir una franja y cambiar su precio", () => {
     await expect(tarjeta).toContainText("Virtual");
     await expect(tarjeta).toContainText(/\$\s30\.000/);
     const { data } = await cuentas.cliente.from("franja").select("presencial, enlace, lugar").eq("id_monitor", monitor.id).single();
-    expect(data).toEqual({ presencial: false, enlace: "https://meet.example.com/abc-defg", lugar: null });
+    expect(data).toEqual({ presencial: false, enlace: null, lugar: null });
   });
 });
 

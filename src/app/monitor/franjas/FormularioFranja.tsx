@@ -12,11 +12,9 @@ export type ValoresDeFranja = {
   duracion_min: string;
   precio: string;
   modalidad: "presencial" | "virtual";
-  lugar: string;
-  enlace: string;
 };
 
-const VACIA: ValoresDeFranja = { dia: "1", hora: "", duracion_min: "60", precio: "", modalidad: "presencial", lugar: "", enlace: "" };
+const VACIA: ValoresDeFranja = { dia: "1", hora: "", duracion_min: "60", precio: "", modalidad: "presencial" };
 
 type Props =
   | { modo: "abrir" }
@@ -136,40 +134,10 @@ export function FormularioFranja(props: Props) {
         {modalidadFija && (
           <p className={formulario.ayuda}>Tiene monitorías agendadas: la modalidad no cambia hasta que pasen.</p>
         )}
+        <p className={formulario.ayuda}>
+          {modalidad === "presencial" ? "El lugar" : "El enlace de la videollamada"} lo pones en cada monitoría desde tu agenda, cuando te la agenden.
+        </p>
       </fieldset>
-
-      {modalidad === "presencial" ? (
-        <div className={formulario.campo}>
-          <label htmlFor="lugar" className={formulario.etiqueta}>
-            Lugar
-          </label>
-          <input
-            id="lugar"
-            name="lugar"
-            type="text"
-            placeholder="Edificio y salón"
-            defaultValue={valor("lugar")}
-            required
-            className={formulario.entrada}
-          />
-        </div>
-      ) : (
-        <div className={formulario.campo}>
-          <label htmlFor="enlace" className={formulario.etiqueta}>
-            Enlace de la videollamada
-          </label>
-          <input
-            id="enlace"
-            name="enlace"
-            type="url"
-            inputMode="url"
-            placeholder="https://"
-            defaultValue={valor("enlace")}
-            required
-            className={formulario.entrada}
-          />
-        </div>
-      )}
 
       {estado.error && (
         <p role="alert" className={formulario.error}>

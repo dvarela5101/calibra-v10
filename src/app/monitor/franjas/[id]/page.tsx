@@ -29,23 +29,20 @@ export default async function EditarFranja({ params }: PageProps<"/monitor/franj
   if (!UUID.test(id)) notFound();
 
   const supabase = await crearClienteServidor();
-  // El lugar y el enlace no se leen de la tabla (P-31): los da acceso_a_mis_franjas(), solo de las propias.
-  const [franjaLeida, accesoLeido, monitoriasLeidas] = await Promise.all([
+  const [franjaLeida, monitoriasLeidas] = await Promise.all([
     supabase!
       .from("franja")
       .select("id, dia, hora, duracion_min, presencial, precio, cerrada_desde")
       .eq("id", id)
       .eq("id_monitor", sesion.idUsuario)
       .maybeSingle(),
-    supabase!.rpc("acceso_a_mis_franjas").eq("id_franja", id).maybeSingle(),
     supabase!.from("monitoria").select("fecha").eq("id_franja", id).neq("estado", "cancelada"),
   ]);
   // Un error de la base no es "no existe": que lo muestre la página de error en vez de un 404.
-  const fallo = franjaLeida.error ?? accesoLeido.error ?? monitoriasLeidas.error;
+  const fallo = franjaLeida.error ?? monitoriasLeidas.error;
   if (fallo) throw new Error(`No se pudo leer la franja: ${fallo.message}`);
   const franja = franjaLeida.data;
   if (!franja) notFound();
-  const acceso = accesoLeido.data;
   const monitorias = monitoriasLeidas.data;
 
   const hoy = diaDelNegocio(new Date());
@@ -87,8 +84,6 @@ export default async function EditarFranja({ params }: PageProps<"/monitor/franj
                 duracion_min: String(franja.duracion_min),
                 precio: String(franja.precio),
                 modalidad: franja.presencial ? "presencial" : "virtual",
-                lugar: acceso?.lugar ?? "",
-                enlace: acceso?.enlace ?? "",
               }}
             />
           </section>
