@@ -730,19 +730,16 @@ async function expectCifras(page: Page, respondidas: number, aciertos: number): 
 // 1. Inicio
 // ===============================================================================================================
 
-test("Inicio · «Hacer el diagnóstico» lleva a /diagnostico y la página ya no dice «subtema» ni «Estamos preparando»", async ({ page }) => {
+test("Inicio · «Hacer mi diagnóstico gratis» lleva a /diagnostico y la página ya no dice «subtema» ni «Estamos preparando»", async ({ page }) => {
   await sinSesionAnonima(page);
   await page.goto("/");
 
-  await expect(titulo(page, "Descubre en qué tema fallas antes de tu monitoría")).toBeVisible();
-  await expect(page.getByText("Nueva versión en construcción", { exact: true })).toBeVisible();
-  await expect(
-    page.getByText("Calibra conecta a estudiantes de ciclo básico con monitores certificados. Una prueba corta muestra en qué habilidad está el error, y el monitor llega a la sesión sabiendo por dónde empezar."),
-  ).toBeVisible();
-  const acceso = page.getByRole("link", { name: "Hacer el diagnóstico", exact: true });
+  // HU-108: la landing; el resto de lo suyo lo prueba e2e/portada.spec.ts.
+  await expect(titulo(page, "Monitorías de ciclo básico que empiezan por tu error.")).toBeVisible();
+  const acceso = page.getByRole("link", { name: "Hacer mi diagnóstico gratis", exact: true }).first();
   await expect(acceso).toBeVisible();
   await expect(acceso).toHaveAttribute("href", "/diagnostico");
-  await expect(page.getByRole("link", { name: "Ver monitores certificados", exact: true })).toBeVisible();
+  await expect(page.getByText("Nueva versión en construcción", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Estamos preparando esta versión")).toHaveCount(0);
   // Ningún texto de la página, ni la descripción de la pestaña, dice «subtema».
   expect((await page.content()).toLowerCase()).not.toContain("subtema");

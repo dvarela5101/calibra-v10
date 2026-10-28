@@ -680,13 +680,14 @@ test.describe("Criterio 4 · el mismo navegador con el que agendó", () => {
 // D-24 · «Mis citas» en el pie de todas las páginas
 // ---------------------------------------------------------------------------
 test.describe("D-24 · Mis citas en el pie", () => {
-  test("el pie lo trae en el inicio y en una página del enlace, visible para todos, y lleva a /cita", async ({ page }) => {
+  // La landing de la portada lleva su propio pie, con solo el aviso (D-77 b); la portada con el último diagnóstico sí lo trae.
+  test("el pie lo trae en las páginas del visitante y en una del enlace, visible para todos, y lleva a /cita", async ({ page }) => {
     await sinAltaAnonima(page);
-    for (const ruta of ["/", "/privacidad", "/cita?token=" + randomBytes(32).toString("hex")]) {
+    for (const ruta of ["/privacidad", "/monitores", "/cita?token=" + randomBytes(32).toString("hex")]) {
       await page.goto(ruta);
       await expect(page.getByRole("contentinfo").getByRole("link", { name: "Mis citas" }), ruta).toBeVisible(ESPERA);
     }
-    await page.goto("/");
+    await page.goto("/privacidad");
     await page.getByRole("contentinfo").getByRole("link", { name: "Mis citas" }).click();
     await expect(page).toHaveURL(/\/cita$/, ESPERA);
     await expect(titulo(page, "Mis citas")).toBeVisible(ESPERA);

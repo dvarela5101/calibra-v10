@@ -1,6 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { EVENTOS } from "@/lib/analitica/eventos";
+import { registrarEventoDelServidor } from "@/lib/analitica/servidor";
 import { esUuid } from "@/lib/diagnostico/reglas";
 import { procesarContacto, type EstadoContacto } from "@/lib/leads/dejar-contacto";
 
@@ -14,6 +16,10 @@ const SIGUIENTE_DE_VERIFICACION = "/agendar";
 export async function dejarContactoDelDiagnostico(_anterior: EstadoContacto, datos: FormData): Promise<EstadoContacto> {
   const idDiagnostico = String(datos.get("id_diagnostico") ?? "");
   const estado = await procesarContacto(datos, { siguienteDeVerificacion: SIGUIENTE_DE_VERIFICACION });
-  if ("listo" in estado) redirect(esUuid(idDiagnostico) ? `/diagnostico/resultado/${idDiagnostico}` : SIGUIENTE_DE_VERIFICACION);
+  if ("listo" in estado) {
+    // HU-108: el último paso del embudo de la portada. Sin datos de la persona.
+    await registrarEventoDelServidor(EVENTOS.contactoDejado, { desde: "diagnostico" });
+    redirect(esUuid(idDiagnostico) ? `/diagnostico/resultado/${idDiagnostico}` : SIGUIENTE_DE_VERIFICACION);
+  }
   return estado;
 }

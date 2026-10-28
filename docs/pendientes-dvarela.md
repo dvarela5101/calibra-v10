@@ -500,6 +500,10 @@ Todavía no. Se hace una sola vez, cuando el flujo principal esté listo, y lo g
 - [ ] **Dirección** (D-72 f): el dominio del prototipo en Vercel pasa al proyecto de v10 cuando todo esté probado en la dirección `*.vercel.app` de v10. Los previews usan la misma base de producción (D-72 e).
 - [x] **Asesoría** (D-72 c): *cambiada por D-73 b (18-oct-2026)*: aprobaste tú los textos de P-13, D-54 c y D-71 b tal como están. Asesoría puede revisarlos después del corte. Falta solo definir `PROVEEDOR_NOMBRE` y `PROVEEDOR_DOCUMENTO` al cargarlos en Vercel (arriba, «Pago por Llave»).
 - [ ] **Publicar** en el repo real de Calibra y archivar el repo temporal. Ya tienes acceso de escritura a `Juzou04/Calibra` (18-oct).
+- [ ] **Analítica de la landing (HU-108, D-77 g).** En el proyecto de Vercel, **Analytics**, **Enable** (Web Analytics, sin cookies ni banner) y vuelve a desplegar. La app ya trae el componente: solo se activa en Vercel (variable `VERCEL`, que pone Vercel), así que en local y en las pruebas no envía nada. Nada en `.env.example`.
+  - Revisa si los **eventos personalizados** (`clic_cta_diagnostico` con su `ubicacion`, `clic_iniciar_sesion`, `diagnostico_terminado` con la `materia` y `contacto_dejado`) están en tu plan de Vercel: en el plan gratuito pueden no estar. Sin ellos se cuentan las visitas, pero no la conversión.
+  - La tasa de conversión de la portada es `clic_cta_diagnostico` ÷ visitantes únicos de `/`, en **Analytics**, **Events**.
+  - Antes de mandar tráfico, revisa a mano las cifras del banco de la landing contra lo activo en producción (D-77 d): «8 materias, más de 250 preguntas y más de 400 errores típicos» (el 28-oct, el banco de `main` tenía 263 preguntas y 445 errores revisados).
 
 ---
 

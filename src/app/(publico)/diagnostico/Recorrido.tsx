@@ -1,8 +1,10 @@
 "use client";
 
+import { track } from "@vercel/analytics";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { Pantalla } from "@/components/Pantalla";
+import { EVENTOS } from "@/lib/analitica/eventos";
 import type { Letra } from "@/lib/diagnostico/motor";
 import {
   llamarSinCaerse,
@@ -77,7 +79,7 @@ export function Recorrido({ inicial, materias, acceso }: Props) {
     });
   }
 
-  function responder(enCurso: { idDiagnostico: string; paso: number }, letra: Letra) {
+  function responder(enCurso: { idDiagnostico: string; paso: number; materia: { nombre: string } }, letra: Letra) {
     if (llamando.current) return;
     llamando.current = true;
     aplicar({ tipo: "llamando" });
@@ -87,6 +89,8 @@ export function Recorrido({ inicial, materias, acceso }: Props) {
         TEXTOS.errorAlResponder,
       );
       if (respuesta.tipo === "terminado") {
+        // HU-108: un paso del embudo de la portada; solo la materia, nada de la persona.
+        track(EVENTOS.diagnosticoTerminado, { materia: enCurso.materia.nombre });
         // `llamando` queda en alto a propósito: no se responde otra vez mientras se navega.
         setNavegando(true);
         router.push(respuesta.ruta);

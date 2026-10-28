@@ -1,0 +1,692 @@
+/*
+ * HU-108: la landing de la portada (docs/diseno/2026-10-27-landing.dc.html). Colores solo de tokens.css (lo que no está es una
+ * mezcla de tokens); el azul es solo del CTA (D-77). Una columna desde el hero; el hero, dos en pantallas anchas.
+ */
+
+.portada {
+  /* Texto de cuerpo: más oscuro que --muted (que queda para notas) y siempre por encima de AA sobre --bg y --surface. */
+  --cuerpo: color-mix(in srgb, var(--text) 82%, var(--bg));
+  --ancho-hero: 1200px;
+  --ancho-columna: 720px;
+  --lado: clamp(16px, 4vw, 48px);
+  --radio-grande: 16px;
+  --sombra-flotante: 0 1px 1px color-mix(in srgb, var(--text) 4%, transparent), 0 10px 30px color-mix(in srgb, var(--text) 7%, transparent);
+}
+
+/* Cabecera: solo la marca y el acceso (D-77 a), sin menú. */
+
+.cabecera {
+  border-block-end: 1px solid var(--border);
+}
+
+.cabeceraInterior {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  max-inline-size: var(--ancho-hero);
+  margin-inline: auto;
+  padding: var(--e3) var(--lado);
+}
+
+.enlaceMarca {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-block-size: var(--toque-min);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.nombreMarca {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.acceso {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--toque-min);
+  padding-inline: var(--e4);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-chico);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .acceso:hover {
+    border-color: var(--muted);
+  }
+}
+
+/* Hero: propuesta de valor, CTA y la pregunta de muestra, sin hacer scroll. */
+
+.hero {
+  background-color: var(--bg);
+  background-image: var(--papel-cuadriculado);
+  background-position: -1px -1px;
+  border-block-end: 1px solid var(--border);
+}
+
+.heroInterior {
+  display: flex;
+  flex-wrap: wrap;
+  /* Arriba y no al centro: si no, el titular baja cuando la pregunta muestra el resultado y la tarjeta crece. */
+  align-items: flex-start;
+  gap: clamp(36px, 6vw, 88px);
+  max-inline-size: var(--ancho-hero);
+  margin-inline: auto;
+  padding: clamp(36px, 7vw, 96px) var(--lado) clamp(44px, 7vw, 104px);
+}
+
+.propuesta {
+  flex: 1 1 420px;
+  min-inline-size: 0;
+  max-inline-size: 560px;
+  margin-block-start: clamp(0px, 4vw, 56px);
+}
+
+.titular {
+  font-size: clamp(38px, 5.6vw, 72px);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  font-weight: 800;
+  text-wrap: balance;
+}
+
+.bajada {
+  margin-block-start: var(--e4);
+  max-inline-size: 34em;
+  font-size: clamp(17px, 1.5vw, 20px);
+  line-height: 1.55;
+  color: var(--cuerpo);
+}
+
+.cta,
+.ctaCentrado {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e3);
+  margin-block-start: 32px;
+}
+
+.ctaCentrado {
+  align-items: center;
+}
+
+.botonCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 56px;
+  padding-inline: 28px;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: filter var(--transicion);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .botonCta:hover,
+  .ctaBarra:hover {
+    filter: brightness(0.9);
+  }
+}
+
+.notaCta {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* La pregunta de muestra. */
+
+.tarjetaPregunta {
+  flex: 1 1 400px;
+  min-inline-size: 0;
+  max-inline-size: 500px;
+  padding: clamp(20px, 3vw, 32px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radio-grande);
+  box-shadow: var(--sombra-flotante);
+}
+
+.contexto {
+  font-size: var(--texto-min);
+  color: var(--muted);
+}
+
+.enunciado {
+  margin-block-start: 10px;
+  font-size: 21px;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-block-start: var(--e4);
+}
+
+.opcion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  inline-size: 100%;
+  min-block-size: 52px;
+  padding: 10px 18px;
+  text-align: start;
+  font-size: 18px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-chico);
+  cursor: pointer;
+  transition:
+    border-color var(--transicion),
+    background-color var(--transicion);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .opcion:hover {
+    border-color: var(--muted);
+  }
+}
+
+.opcionEquivocada,
+.opcionEquivocada:hover {
+  border-color: var(--alert-text);
+  background: color-mix(in srgb, var(--alert) 7%, var(--surface));
+}
+
+.opcionCorrecta,
+.opcionCorrecta:hover {
+  border-color: var(--success-text);
+  background: color-mix(in srgb, var(--success) 8%, var(--surface));
+}
+
+/* El trazo rojo, como en un parcial corregido: rodea la fórmula, mida lo que mida. */
+.formula {
+  position: relative;
+  display: inline-block;
+  /* contenido.css deja que la caja de cada <math> se asome 0,15 em por los lados (relleno con margen negativo); este
+     relleno la contiene, para que la fórmula no se salga de su caja. */
+  padding-inline: 0.15em;
+}
+
+.trazo {
+  position: absolute;
+  inset: -12px -18px;
+  inline-size: calc(100% + 36px);
+  max-inline-size: none; /* globals.css limita todo svg al 100 % de su caja; este se sale a propósito */
+  block-size: calc(100% + 24px);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.trazo ellipse {
+  fill: none;
+  stroke: var(--alert-text);
+  stroke-width: 3;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 700;
+  stroke-dashoffset: 700;
+  animation: trazar 520ms cubic-bezier(0.6, 0.05, 0.3, 1) forwards;
+}
+
+@keyframes trazar {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.marca {
+  flex: none;
+  inline-size: 22px;
+  block-size: 22px;
+  fill: none;
+  stroke: var(--success-text);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.resultado {
+  margin-block-start: var(--e4);
+  min-block-size: 150px;
+}
+
+.invitacion,
+.conError,
+.conAcierto {
+  padding-block-start: var(--e4);
+  border-block-start: 1px dashed var(--border);
+}
+
+.invitacion {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.conError {
+  border-block-start-color: color-mix(in srgb, var(--alert) 35%, var(--surface));
+}
+
+.conAcierto {
+  border-block-start-color: color-mix(in srgb, var(--success) 35%, var(--surface));
+}
+
+.tituloError,
+.tituloAcierto {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.tituloError {
+  color: var(--alert-text);
+}
+
+.tituloAcierto {
+  color: var(--success-text);
+}
+
+.textoResultado {
+  margin-block-start: 6px;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.notaResultado {
+  margin-block-start: 10px;
+  font-size: var(--texto-min);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.accionesResultado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e1) var(--e4);
+  margin-block-start: var(--e2);
+}
+
+.enlaceCta {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--toque-min);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary);
+  text-underline-offset: 4px;
+}
+
+.otraRespuesta {
+  min-block-size: var(--toque-min);
+  padding: 0;
+  font-size: 15px;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* Desde aquí, una sola columna. */
+
+.columna {
+  max-inline-size: var(--ancho-columna);
+  margin-inline: auto;
+  padding-inline: var(--lado);
+}
+
+.seccion {
+  padding-block-start: clamp(72px, 10vw, 120px);
+}
+
+.tituloSeccion {
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+.parrafo {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--cuerpo);
+}
+
+.problemas {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-block-start: 36px;
+}
+
+.afirmacion {
+  margin-block-end: 6px;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.pasos {
+  list-style: none;
+  margin-block-start: 36px;
+}
+
+.paso {
+  display: flex;
+  gap: var(--e4);
+  padding-block: 22px;
+  border-block-start: 1px solid var(--border);
+}
+
+.paso:last-child {
+  border-block-end: 1px solid var(--border);
+}
+
+.numeroPaso {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 40px;
+  block-size: 40px;
+  border: 1.5px solid var(--text);
+  border-radius: 50%;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.tituloPaso {
+  margin-block-end: 6px;
+  font-size: 20px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.beneficios {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-block-start: 32px;
+  list-style: none;
+}
+
+.beneficio {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.chulo {
+  flex: none;
+  inline-size: 22px;
+  block-size: 22px;
+  margin-block-start: 3px;
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.fuerte {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* La vista del monitor. */
+
+.figura {
+  margin-block-start: 40px;
+}
+
+.vista {
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radio-grande);
+  box-shadow: var(--sombra-flotante);
+}
+
+.vistaCabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px var(--e4);
+  padding: 18px 22px;
+  border-block-end: 1px solid var(--border);
+}
+
+.vistaTitulo {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.vistaContexto,
+.vistaVeces,
+.leyenda {
+  font-size: var(--texto-min);
+  color: var(--muted);
+}
+
+.vistaHabilidades {
+  list-style: none;
+  padding: 6px 22px;
+}
+
+.vistaHabilidad {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e4);
+  padding-block: 13px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.vistaHabilidad + .vistaHabilidad {
+  border-block-start: 1px solid var(--border);
+}
+
+.vistaHabilidad > :last-child {
+  flex: none;
+  align-self: center;
+}
+
+.vistaErrores {
+  padding: 18px 22px 22px;
+  background: var(--bg);
+  border-block-start: 1px solid var(--border);
+}
+
+.vistaErrores .parrafo {
+  font-size: 15px;
+  color: var(--text);
+}
+
+.prefijoError {
+  font-weight: 600;
+  color: var(--alert-text);
+}
+
+.vistaVeces {
+  margin-block-start: var(--e1);
+}
+
+.leyenda {
+  margin-block-start: var(--e3);
+}
+
+.cifras {
+  margin-block-start: var(--e4);
+  font-size: 19px;
+  line-height: 1.55;
+  color: var(--cuerpo);
+}
+
+/* Preguntas frecuentes. */
+
+.faq {
+  margin-block-start: 28px;
+  border-block-start: 1px solid var(--border);
+}
+
+.pregunta {
+  border-block-end: 1px solid var(--border);
+}
+
+.resumen {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e4);
+  min-block-size: 60px;
+  padding-block: 14px;
+  font-size: 18px;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+
+.resumen::-webkit-details-marker {
+  display: none;
+}
+
+.resumen::after {
+  content: "+";
+  flex: none;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.pregunta[open] > .resumen::after {
+  content: "\2212";
+}
+
+.respuesta {
+  padding-block-end: var(--e4);
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--cuerpo);
+}
+
+/* El cierre: el mismo CTA de arriba. */
+
+.cierre {
+  padding-block: clamp(80px, 11vw, 136px) clamp(72px, 10vw, 120px);
+  text-align: center;
+}
+
+.tituloCierre {
+  max-inline-size: 14em;
+  margin-inline: auto;
+  font-size: clamp(32px, 4.6vw, 52px);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+  text-wrap: balance;
+}
+
+/* El pie de la landing: solo el aviso de privacidad (D-77 b). */
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2) var(--e4);
+  max-inline-size: var(--ancho-hero);
+  margin-inline: auto;
+  padding: var(--e4) var(--lado) 28px;
+  border-block-start: 1px solid var(--border);
+}
+
+.nombrePie {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.enlacePie {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--toque-min);
+  font-size: var(--texto-min);
+  color: var(--muted);
+  text-underline-offset: 4px;
+}
+
+/* En el teléfono, el CTA queda siempre al alcance del pulgar. */
+
+.barraMovil {
+  display: none;
+}
+
+@media (max-width: 719px) {
+  /* Fija y no sticky: globals.css pone overflow-x: hidden en html y body, y con eso sticky no se pega. El relleno de abajo
+     de la portada le deja su espacio para que no tape el pie. */
+  .portada {
+    padding-block-end: calc(52px + 2 * var(--e3) + env(safe-area-inset-bottom));
+  }
+
+  .barraMovil {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 1;
+    display: block;
+    padding: var(--e3) var(--e4) max(var(--e3), env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--bg) 96%, transparent);
+    border-block-start: 1px solid var(--border);
+  }
+
+  .ctaBarra {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 52px;
+    border-radius: 12px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .botonCta {
+    inline-size: 100%;
+  }
+
+  .cta {
+    align-items: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trazo ellipse {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}

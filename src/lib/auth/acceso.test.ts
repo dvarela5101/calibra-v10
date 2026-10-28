@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { enlacesDeAcceso } from "./acceso";
+import { enlacesDeAcceso, enlacesDeAccesoDeLaPortada } from "./acceso";
 
 // D-75 a: el acceso de la cabecera.
 
@@ -20,5 +20,20 @@ describe("enlacesDeAcceso", () => {
     expect(resumen("admin")).toEqual([["Mi panel", "/admin"]]);
     expect(resumen("monitor")).toEqual([["Mi panel", "/monitor"]]);
     expect(resumen("estudiante")).toEqual([["Mis citas", "/cita"]]);
+  });
+});
+
+// D-77 a: la landing de la portada.
+describe("enlacesDeAccesoDeLaPortada", () => {
+  it("sin cuenta, solo «Iniciar sesión»", () => {
+    for (const rol of [null, "anonimo"] as const) {
+      expect(enlacesDeAccesoDeLaPortada(rol), String(rol)).toEqual([{ texto: "Iniciar sesión", href: "/ingresar", principal: false }]);
+    }
+  });
+
+  it("con cuenta, lo mismo que en las demás pantallas", () => {
+    for (const rol of ["admin", "monitor", "estudiante"] as const) {
+      expect(enlacesDeAccesoDeLaPortada(rol)).toEqual(enlacesDeAcceso(rol));
+    }
   });
 });

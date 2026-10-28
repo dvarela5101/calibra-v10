@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { PieDePagina } from "@/components/PieDePagina";
@@ -47,6 +48,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body>
         {children}
         <PieDePagina />
+        {/* HU-108 (D-77 g): Vercel Web Analytics, sin cookies. Solo en Vercel: fuera de ahí su script no existe (404) y no
+            hay nada que medir. */}
+        {process.env.VERCEL && <Analytics />}
       </body>
     </html>
   );

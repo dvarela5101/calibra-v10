@@ -165,7 +165,7 @@ test("del diagnóstico en la portada al monitor que lo abre desde su agenda, con
     await page.goto("/");
     await page.waitForLoadState("networkidle");
     await expectReglasDelProducto(page, "inicio");
-    await page.getByRole("link", { name: "Hacer el diagnóstico", exact: true }).click();
+    await page.getByRole("link", { name: "Hacer mi diagnóstico gratis", exact: true }).first().click();
     await expect(page).toHaveURL("/diagnostico", ESPERA);
     await expect(titulo(page, "Elige tu materia")).toBeVisible(ESPERA);
     await page.waitForLoadState("networkidle");

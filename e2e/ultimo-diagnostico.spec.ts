@@ -39,7 +39,7 @@ import { correoUnico, enviarCredenciales, esperarSesion, expect, test as base, u
 const ESPERA = { timeout: 20_000 };
 const LARGA = { timeout: 45_000 };
 
-const H1_NORMAL = "Descubre en qué tema fallas antes de tu monitoría";
+const H1_NORMAL = "Monitorías de ciclo básico que empiezan por tu error.";
 const H1_DE_LA_PORTADA = "Tu último diagnóstico";
 const SIN_MONITORES = "Todavía no hay monitores certificados en esta materia. Vuelve pronto o elige otra.";
 const NIVELES = ["Lo dominas", "En proceso", "No lo dominas", "Sin medir"] as const;
@@ -314,11 +314,10 @@ async function expectSinRastro(page: Page, respuesta: Response | null, ajenos: s
 
 const titulo = (page: Page, nombre: string) => page.getByRole("heading", { level: 1, name: nombre, exact: true });
 
-/** El inicio de siempre: el h1, «Hacer el diagnóstico» a /diagnostico, «Ver monitores certificados» a /monitores y nada de la portada con resultado. */
+/** La landing (HU-108): el h1, «Hacer mi diagnóstico gratis» a /diagnostico y nada de la portada con resultado. */
 async function expectInicioNormal(page: Page, quien: string): Promise<void> {
-  await expect(titulo(page, H1_NORMAL), `${quien}: el h1 del inicio`).toBeVisible(ESPERA);
-  await expect(page.getByRole("link", { name: "Hacer el diagnóstico", exact: true }), quien).toHaveAttribute("href", "/diagnostico");
-  await expect(page.getByRole("link", { name: "Ver monitores certificados", exact: true }), quien).toHaveAttribute("href", "/monitores");
+  await expect(titulo(page, H1_NORMAL), `${quien}: el h1 de la landing`).toBeVisible(ESPERA);
+  await expect(page.getByRole("link", { name: "Hacer mi diagnóstico gratis", exact: true }).first(), quien).toHaveAttribute("href", "/diagnostico");
   await expect(titulo(page, H1_DE_LA_PORTADA), `${quien}: nada de la portada con resultado`).toHaveCount(0);
   await expect(page.getByText("Puntaje global"), quien).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Tomar otro diagnóstico", exact: true }), quien).toHaveCount(0);
@@ -546,8 +545,7 @@ test("Vuelve · desde el mismo navegador ve su último diagnóstico con las cifr
   exigirSinCachePublico(respuesta, "la portada con sesión");
   await expectResultadoDeEjemplo(page, materia, evaluacion);
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
-  await expect(page.getByRole("link", { name: "Hacer el diagnóstico", exact: true }), "no pinta el inicio normal debajo").toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Ver monitores certificados", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Hacer mi diagnóstico gratis", exact: true }), "no pinta la landing debajo").toHaveCount(0);
   await expectLasSalidas(page, materia);
 
   // Lo que recibió el navegador: las páginas y los payloads de Next. Ni lo de adentro de la fila ni las copias de las preguntas.

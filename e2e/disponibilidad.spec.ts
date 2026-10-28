@@ -218,9 +218,8 @@ test.describe("Criterio 3 · sin materia en el enlace, el visitante la elige (D-
     await escenario.certificar(monitor.id, materia.id);
     await escenario.franja(monitor.id, sumarDias(hoy(), 3));
 
-    await page.goto("/");
-    await page.getByRole("link", { name: "Ver monitores certificados" }).click();
-    await expect(page).toHaveURL("/monitores", ESPERA);
+    // La landing de la portada ya no enlaza la lista (HU-108: una sola acción); se llega directo.
+    await page.goto("/monitores");
     await expect(page.getByRole("heading", { level: 1, name: "Elige tu materia" })).toBeVisible();
     await expect(page.getByRole("link", { name: new RegExp(vacia.nombre) })).toHaveCount(0);
 

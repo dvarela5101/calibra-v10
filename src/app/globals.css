@@ -49,6 +49,12 @@ textarea {
   display: none !important;
 }
 
+/* D-77 b (HU-108): la landing de la portada lleva su propio pie, con solo el aviso de privacidad. La portada con el último
+   diagnóstico (HU-011) no es la landing y conserva el pie de siempre, con «Mis citas». */
+body:has([data-landing]) [data-pie-global] {
+  display: none;
+}
+
 :focus-visible {
   outline: 3px solid var(--primary);
   outline-offset: 2px;

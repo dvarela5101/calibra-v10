@@ -100,7 +100,8 @@ test.describe("Criterios 1 a 3 · el aspirante deja sus datos", () => {
     const errores: string[] = [];
     page.on("pageerror", (error) => errores.push(error.message));
 
-    await page.goto("/");
+    // Desde el pie de una página del visitante: la landing de la portada no lo lleva (D-77 b).
+    await page.goto("/privacidad");
     await page.waitForLoadState("networkidle");
     await page.getByRole("contentinfo").getByRole("link", { name: "Quiero ser monitor" }).click();
     await expect(page).toHaveURL(/\/quiero-ser-monitor$/, ESPERA);
