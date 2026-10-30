@@ -1112,13 +1112,13 @@ isOneToOne: true
                   ]
                 },"solicitud_monitor": {
                   Row: {
-                    "abierta": boolean | null,"acepta_tratamiento_datos": boolean,"actualizada_en": string,"correo": string,"creada_en": string,"estado": Database["public"]['Enums']["estado_solicitud_monitor"],"fecha_consentimiento": string,"id": string,"id_admin_actualizo": string | null,"nombre": string,"numero_telefono": string
+                    "abierta": boolean | null,"acepta_tratamiento_datos": boolean,"actualizada_en": string,"correo": string,"creada_en": string,"estado": Database["public"]['Enums']["estado_solicitud_monitor"],"fecha_consentimiento": string,"id": string,"id_admin_actualizo": string | null,"nombre": string,"numero_telefono": string,"otra_materia": string | null
                   }
                   Insert: {
-                    "abierta"?: never,"acepta_tratamiento_datos": boolean,"actualizada_en"?: string,"correo": string,"creada_en"?: string,"estado"?: Database["public"]['Enums']["estado_solicitud_monitor"],"fecha_consentimiento": string,"id"?: string,"id_admin_actualizo"?: string | null,"nombre": string,"numero_telefono": string
+                    "abierta"?: never,"acepta_tratamiento_datos": boolean,"actualizada_en"?: string,"correo": string,"creada_en"?: string,"estado"?: Database["public"]['Enums']["estado_solicitud_monitor"],"fecha_consentimiento": string,"id"?: string,"id_admin_actualizo"?: string | null,"nombre": string,"numero_telefono": string,"otra_materia"?: string | null
                   }
                   Update: {
-                    "abierta"?: never,"acepta_tratamiento_datos"?: boolean,"actualizada_en"?: string,"correo"?: string,"creada_en"?: string,"estado"?: Database["public"]['Enums']["estado_solicitud_monitor"],"fecha_consentimiento"?: string,"id"?: string,"id_admin_actualizo"?: string | null,"nombre"?: string,"numero_telefono"?: string
+                    "abierta"?: never,"acepta_tratamiento_datos"?: boolean,"actualizada_en"?: string,"correo"?: string,"creada_en"?: string,"estado"?: Database["public"]['Enums']["estado_solicitud_monitor"],"fecha_consentimiento"?: string,"id"?: string,"id_admin_actualizo"?: string | null,"nombre"?: string,"numero_telefono"?: string,"otra_materia"?: string | null
                   }
                   Relationships: [
                     {
@@ -1346,7 +1346,7 @@ isOneToOne: false
             }[]
                            },
 "crear_solicitud_monitor":
-{ Args: { "p_correo": string,"p_fecha_consentimiento": string,"p_materias": (string)[],"p_nombre": string,"p_numero_telefono": string }; Returns: string
+{ Args: { "p_correo": string,"p_fecha_consentimiento": string,"p_materias": (string)[],"p_nombre": string,"p_numero_telefono": string,"p_otra_materia"?: string }; Returns: string
                            },
 "crear_verificacion_lead":
 { Args: { "p_correo": string,"p_maximo_por_hora": number,"p_siguiente": string,"p_token_hash": string }; Returns: {
@@ -1575,7 +1575,7 @@ isOneToOne: false
                            },
 "parametros_negocio":
 { Args: Record<PropertyKey, never>; Returns: {
-              "antelacion_grupal_min": number,"antelacion_individual_min": number,"cancelacion_grupal_min": number,"cancelacion_individual_min": number,"desembolso_min": number,"diferencia_min": number,"pago_integrantes_min": number,"reporte_inasistencia_min": number,"resena_grupal_min": number,"reserva_min": number,"revision_min": number
+              "antelacion_grupal_min": number,"antelacion_individual_min": number,"cancelacion_grupal_min": number,"cancelacion_individual_min": number,"cierre_automatico_min": number,"desembolso_min": number,"diferencia_min": number,"pago_integrantes_min": number,"reporte_inasistencia_min": number,"resena_grupal_min": number,"reserva_min": number,"revision_min": number
             }[]
                            },
 "parametros_reembolso":
@@ -1610,8 +1610,6 @@ isOneToOne: false
 { Args: { "p_correo": string,"p_id_usuario": string,"p_nombre": string,"p_token_hash": string }; Returns: boolean
                            },
 "registrar_lead":
-{ Args: { "p_acepta_contacto": boolean,"p_correo": string,"p_fecha_consentimiento": string,"p_id_sesion": string,"p_nombre": string,"p_numero_telefono": string,"p_origen": string }; Returns: string
-                           } |
 { Args: { "p_acepta_contacto": boolean,"p_correo": string,"p_fecha_consentimiento": string,"p_id_sesion": string,"p_nombre": string,"p_numero_telefono": string,"p_origen": string,"p_version_autorizacion"?: string }; Returns: string
                            },
 "registrar_monitor":

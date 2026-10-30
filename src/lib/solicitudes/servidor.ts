@@ -23,6 +23,7 @@ export async function crearSolicitudMonitor(
     p_numero_telefono: datos.numeroTelefono,
     p_materias: datos.materias,
     p_fecha_consentimiento: fechaConsentimiento,
+    ...(datos.otraMateria !== null && { p_otra_materia: datos.otraMateria }),
   });
   if (!error && data) return { ok: true, id: data };
   // 23503: una materia que ya no existe (la borraron mientras la persona llenaba el formulario).

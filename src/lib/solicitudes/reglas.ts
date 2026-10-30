@@ -17,15 +17,23 @@ export type DatosDeSolicitud = {
   numeroTelefono: string;
   /** Ids de las materias, sin repetir. */
   materias: string[];
+  /** HU-111 (D-80): la materia que escribió porque no estaba en la lista, o `null`. */
+  otraMateria: string | null;
 };
 
 export type Lectura<T> = { ok: true; datos: T } | { ok: false; error: string };
 
 export const LARGO_MAXIMO_NOMBRE = 120;
 export const MAXIMO_DE_MATERIAS = 20;
+/** D-80 a: lo más largo que puede ser la otra materia. La base exige lo mismo (`solicitud_monitor_otra_materia`). */
+export const LARGO_MAXIMO_OTRA_MATERIA = 120;
 
 /** El nombre del campo de materias en el formulario: una casilla por materia, con su id como valor. */
 export const CAMPO_MATERIAS = "materias";
+
+/** HU-111 (D-80): la casilla «Otra» y el campo donde se escribe esa materia. Sin la casilla, el texto no cuenta. */
+export const CAMPO_OTRA = "otra";
+export const CAMPO_OTRA_MATERIA = "otra_materia";
 
 /** Lo que ve el aspirante si envía sin marcar la autorización de datos (RN-13). */
 export const ERROR_SIN_AUTORIZACION_ASPIRANTE = "Para enviar tu solicitud necesitamos tu autorización para tratar tus datos.";
@@ -59,10 +67,18 @@ export function leerSolicitud(formulario: FormData): Lectura<DatosDeSolicitud> {
   const elegidas = formulario.getAll(CAMPO_MATERIAS).map((valor) => String(valor).trim().toLowerCase());
   if (elegidas.some((id) => !UUID.test(id))) return { ok: false, error: "Alguna materia no es válida. Recarga la página." };
   const materias = [...new Set(elegidas)];
-  if (materias.length === 0) return { ok: false, error: "Elige al menos una materia." };
   if (materias.length > MAXIMO_DE_MATERIAS) return { ok: false, error: `Elige como máximo ${MAXIMO_DE_MATERIAS} materias.` };
 
-  return { ok: true, datos: { nombre, correo, numeroTelefono, materias } };
+  // D-80: una sola otra materia, en una línea y sin caracteres de control, que puede ser la única elección.
+  let otraMateria: string | null = null;
+  if (formulario.get(CAMPO_OTRA) !== null) {
+    otraMateria = linea(String(formulario.get(CAMPO_OTRA_MATERIA) ?? "").replace(/\p{Cc}/gu, " "));
+    if (!otraMateria) return { ok: false, error: "Escribe qué otra materia quieres." };
+    if (otraMateria.length > LARGO_MAXIMO_OTRA_MATERIA) return { ok: false, error: "El nombre de la otra materia es demasiado largo." };
+  }
+  if (materias.length === 0 && otraMateria === null) return { ok: false, error: "Elige al menos una materia o escribe otra." };
+
+  return { ok: true, datos: { nombre, correo, numeroTelefono, materias, otraMateria } };
 }
 
 /** ¿Llenó un programa el campo trampa? Una persona no lo ve ni lo alcanza con el teclado. */

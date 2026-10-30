@@ -4,7 +4,14 @@ import { EVENTOS } from "@/lib/analitica/eventos";
 import { registrarEventoDelServidor } from "@/lib/analitica/servidor";
 import { leerConsentimiento } from "@/lib/privacidad/consentimiento";
 import { CASILLA_TRATAMIENTO, MARCADA } from "@/lib/privacidad/consentimiento";
-import { CAMPO_MATERIAS, ERROR_SIN_AUTORIZACION_ASPIRANTE, cayoEnLaTrampa, leerSolicitud } from "@/lib/solicitudes/reglas";
+import {
+  CAMPO_MATERIAS,
+  CAMPO_OTRA,
+  CAMPO_OTRA_MATERIA,
+  ERROR_SIN_AUTORIZACION_ASPIRANTE,
+  cayoEnLaTrampa,
+  leerSolicitud,
+} from "@/lib/solicitudes/reglas";
 import { crearSolicitudMonitor } from "@/lib/solicitudes/servidor";
 
 /**
@@ -12,8 +19,16 @@ import { crearSolicitudMonitor } from "@/lib/solicitudes/servidor";
  * `valores` devuelve lo escrito para no vaciar el formulario tras un error; con `enviada` la página
  * cambia el formulario por la confirmación.
  */
-/** Lo escrito, para no vaciar el formulario tras un error; `autorizado` mantiene marcada la casilla. */
-export type ValoresDeSolicitud = { nombre: string; correo: string; numero_telefono: string; materias: string[]; autorizado: boolean };
+/** Lo escrito, para no vaciar el formulario tras un error; `autorizado` y `otra` mantienen marcadas sus casillas. */
+export type ValoresDeSolicitud = {
+  nombre: string;
+  correo: string;
+  numero_telefono: string;
+  materias: string[];
+  otra: boolean;
+  otra_materia: string;
+  autorizado: boolean;
+};
 export type EstadoSolicitud = { error: string | null; enviada: boolean; valores: ValoresDeSolicitud };
 
 const valoresDe = (datos: FormData): ValoresDeSolicitud => ({
@@ -21,10 +36,12 @@ const valoresDe = (datos: FormData): ValoresDeSolicitud => ({
   correo: String(datos.get("correo") ?? ""),
   numero_telefono: String(datos.get("numero_telefono") ?? ""),
   materias: datos.getAll(CAMPO_MATERIAS).map(String),
+  otra: datos.get(CAMPO_OTRA) !== null,
+  otra_materia: String(datos.get(CAMPO_OTRA_MATERIA) ?? ""),
   autorizado: datos.get(CASILLA_TRATAMIENTO) === MARCADA,
 });
 
-const VACIOS: ValoresDeSolicitud = { nombre: "", correo: "", numero_telefono: "", materias: [], autorizado: false };
+const VACIOS: ValoresDeSolicitud = { nombre: "", correo: "", numero_telefono: "", materias: [], otra: false, otra_materia: "", autorizado: false };
 
 export async function enviarSolicitud(_anterior: EstadoSolicitud, datos: FormData): Promise<EstadoSolicitud> {
   const valores = valoresDe(datos);

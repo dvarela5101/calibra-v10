@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   ACCION_DEL_ESTADO,
   CAMPO_MATERIAS,
+  CAMPO_OTRA,
+  CAMPO_OTRA_MATERIA,
   CAMPO_TRAMPA,
+  LARGO_MAXIMO_OTRA_MATERIA,
   ESTADOS_DE_SOLICITUD,
   ESTADOS_QUE_MARCA_EL_ADMIN,
   MAXIMO_DE_MATERIAS,
@@ -33,7 +36,7 @@ describe("leerSolicitud: lo que deja el aspirante (HU-062)", () => {
   it("lee nombre, correo, teléfono con indicativo y materias", () => {
     expect(leerSolicitud(formulario({ ...BASE, [CAMPO_MATERIAS]: [M1, M2] }))).toEqual({
       ok: true,
-      datos: { nombre: "Ana Pérez", correo: "ana@uniandes.edu.co", numeroTelefono: "+573001234567", materias: [M1, M2] },
+      datos: { nombre: "Ana Pérez", correo: "ana@uniandes.edu.co", numeroTelefono: "+573001234567", materias: [M1, M2], otraMateria: null },
     });
   });
 
@@ -59,7 +62,13 @@ describe("leerSolicitud: lo que deja el aspirante (HU-062)", () => {
     ["sin teléfono (es obligatorio para agendar la evaluación)", { numero_telefono: "" }, "Escribe tu teléfono: lo necesitamos para agendar tu evaluación."],
     ["con un teléfono que no es teléfono", { numero_telefono: "llámame" }, "Escribe el teléfono con su indicativo, por ejemplo +57 300 123 4567."],
     ["con un teléfono demasiado corto", { numero_telefono: "123" }, "Escribe el teléfono con su indicativo, por ejemplo +57 300 123 4567."],
-    ["sin materias", { [CAMPO_MATERIAS]: [] }, "Elige al menos una materia."],
+    ["sin materias ni otra", { [CAMPO_MATERIAS]: [] }, "Elige al menos una materia o escribe otra."],
+    ["con «Otra» marcada y sin escribirla", { [CAMPO_OTRA]: "si", [CAMPO_OTRA_MATERIA]: "   " }, "Escribe qué otra materia quieres."],
+    [
+      "con una otra materia demasiado larga",
+      { [CAMPO_OTRA]: "si", [CAMPO_OTRA_MATERIA]: "a".repeat(121) },
+      "El nombre de la otra materia es demasiado largo.",
+    ],
     ["con una materia que no es un id", { [CAMPO_MATERIAS]: ["calculo"] }, "Alguna materia no es válida. Recarga la página."],
   ])("rechaza un formulario %s", (_nombre, cambio, error) => {
     expect(leerSolicitud(formulario({ ...BASE, ...cambio }))).toEqual({ ok: false, error });
@@ -72,6 +81,29 @@ describe("leerSolicitud: lo que deja el aspirante (HU-062)", () => {
       ok: false,
       error: "Elige como máximo 20 materias.",
     });
+  });
+
+  it("HU-111 (D-80): «Otra» sola basta, en una línea y sin espacios de sobra", () => {
+    expect(
+      leerSolicitud(formulario({ ...BASE, [CAMPO_MATERIAS]: [], [CAMPO_OTRA]: "si", [CAMPO_OTRA_MATERIA]: "  Química\n\u0000orgánica  " })),
+    ).toMatchObject({ ok: true, datos: { materias: [], otraMateria: "Química orgánica" } });
+  });
+
+  it("HU-111: con materias de la lista y «Otra», se leen las dos; sin la casilla, el texto no cuenta", () => {
+    expect(leerSolicitud(formulario({ ...BASE, [CAMPO_OTRA]: "si", [CAMPO_OTRA_MATERIA]: "Estadística" }))).toMatchObject({
+      ok: true,
+      datos: { materias: [M1], otraMateria: "Estadística" },
+    });
+    expect(leerSolicitud(formulario({ ...BASE, [CAMPO_OTRA_MATERIA]: "Estadística" }))).toMatchObject({ ok: true, datos: { otraMateria: null } });
+    expect(leerSolicitud(formulario({ ...BASE, [CAMPO_MATERIAS]: [], [CAMPO_OTRA_MATERIA]: "Estadística" }))).toEqual({
+      ok: false,
+      error: "Elige al menos una materia o escribe otra.",
+    });
+  });
+
+  it(`HU-111: acepta una otra materia de ${LARGO_MAXIMO_OTRA_MATERIA} caracteres, el mismo largo que exige la base`, () => {
+    expect(LARGO_MAXIMO_OTRA_MATERIA).toBe(120);
+    expect(leerSolicitud(formulario({ ...BASE, [CAMPO_OTRA]: "si", [CAMPO_OTRA_MATERIA]: "a".repeat(120) })).ok).toBe(true);
   });
 
   it("el máximo es el mismo que exige la base (20)", () => {

@@ -20,6 +20,8 @@ type Escenario = {
   solicitud(datos: { nombre: string; correo: string; telefono: string; materias: string[] }): Promise<string>;
   /** Lo que la base guardó con ese correo. */
   guardadas(correo: string): Promise<{ estado: string; numero_telefono: string; id_admin_actualizo: string | null }[]>;
+  /** HU-111: la otra materia que guardó la base con ese correo, una por solicitud. */
+  otrasMaterias(correo: string): Promise<(string | null)[]>;
 };
 
 const test = base.extend<{ escenario: Escenario }>({
@@ -60,6 +62,11 @@ const test = base.extend<{ escenario: Escenario }>({
         const { data, error } = await cliente.from("solicitud_monitor").select("estado, numero_telefono, id_admin_actualizo").eq("correo", correo);
         if (error) throw new Error(`leer solicitudes: ${error.message}`);
         return data ?? [];
+      },
+      async otrasMaterias(correo) {
+        const { data, error } = await cliente.from("solicitud_monitor").select("otra_materia").eq("correo", correo);
+        if (error) throw new Error(`leer otras materias: ${error.message}`);
+        return (data ?? []).map((fila) => fila.otra_materia);
       },
     });
 
@@ -230,6 +237,59 @@ test.describe("Criterio 4 · el admin ve las solicitudes y las marca", () => {
     await page.getByRole("link", { name: "Solicitudes para ser monitor" }).click();
     await expect(page).toHaveURL(LISTA, ESPERA);
     await expect(page.getByRole("heading", { level: 1, name: "Solicitudes para ser monitor" })).toBeVisible();
+  });
+});
+
+test.describe("HU-111 (D-80) · una materia que no está en la lista", () => {
+  test("«Otra» sola se guarda con lo escrito y el admin la ve en la tarjeta", async ({ page, browser, cuentas, escenario }) => {
+    const materia = await escenario.materia();
+    const correo = escenario.correo();
+    const telefono = escenario.telefono();
+    const nombre = `Aspirante otra e2e ${randomUUID().slice(0, 6)}`;
+    const otra = `Química orgánica e2e ${randomUUID().slice(0, 6)}`;
+
+    await page.goto("/quiero-ser-monitor");
+    await page.waitForLoadState("networkidle");
+    await page.getByLabel("Tu nombre").fill(nombre);
+    await page.getByLabel("Tu teléfono").fill(telefono.escrito);
+    await page.getByLabel("Tu correo").fill(correo);
+    await page.getByRole("checkbox", { name: /Autorizo a Calibra a tratar mis datos personales para contactarme/ }).check();
+
+    // Sin ninguna materia ni «Otra», no se guarda nada.
+    await page.getByRole("button", { name: "Enviar solicitud" }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "Elige al menos una materia o escribe otra." })).toBeVisible(ESPERA);
+    expect(await escenario.guardadas(correo)).toEqual([]);
+
+    // El campo sale solo con «Otra» marcada; vacío, tampoco se guarda y «Otra» sigue marcada.
+    const campo = page.getByRole("textbox", { name: "¿Qué materia?" });
+    await expect(campo).toHaveCount(0);
+    await page.getByRole("checkbox", { name: "Otra", exact: true }).check();
+    await expect(campo).toBeVisible();
+    await expect(campo).toHaveAttribute("maxlength", "120");
+    await page.getByRole("button", { name: "Enviar solicitud" }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "Escribe qué otra materia quieres." })).toBeVisible(ESPERA);
+    expect(await escenario.guardadas(correo)).toEqual([]);
+    await expect(page.getByRole("checkbox", { name: "Otra", exact: true })).toBeChecked();
+    await expect(page.getByRole("checkbox", { name: materia.nombre })).not.toBeChecked();
+
+    // Con lo escrito, «Otra» sola basta (D-80 c).
+    await campo.fill(`  ${otra}  `);
+    await page.getByRole("button", { name: "Enviar solicitud" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Recibimos tu solicitud" })).toBeVisible(ESPERA);
+    expect(await escenario.otrasMaterias(correo)).toEqual([otra]);
+
+    // El admin la ve en la tarjeta, sin la línea de materias de la lista (D-80 d).
+    const contexto = await browser.newContext();
+    const pagina = await contexto.newPage();
+    try {
+      await entrar(pagina, "/admin/solicitudes", await cuentas.crearAdmin(), LISTA);
+      const tarjeta = pagina.getByRole("listitem").filter({ has: pagina.getByRole("heading", { name: nombre }) });
+      await expect(tarjeta).toBeVisible(ESPERA);
+      await expect(tarjeta.getByText(`Otra materia: ${otra}`)).toBeVisible();
+      await expect(tarjeta.getByText(/^Materias?: /)).toHaveCount(0);
+    } finally {
+      await contexto.close();
+    }
   });
 });
 
