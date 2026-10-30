@@ -590,7 +590,8 @@ test.describe("Un Lead que autorizó con el texto viejo", () => {
       await expect(preguntas).toContainText(HU.noAutorizo);
       await expect(preguntas.locator("li")).toHaveCount(0);
       await expect(page.getByRole("status")).toHaveCount(1);
-      await expect(page.getByRole("heading", { level: 3 })).toHaveCount(0);
+      // Ninguna pregunta: el único h3 de la página es el de «Qué trabajar en la monitoría», dentro del resumen (HU-110).
+      await expect(preguntas.getByRole("heading", { level: 3 })).toHaveCount(0);
     });
 
     await test.step("sin la nota de repetido", async () => {

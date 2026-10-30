@@ -18,7 +18,7 @@ import {
 } from "../pruebas/expectativas-del-resultado";
 import { cuerpoDe } from "../pruebas/cuerpo-de-respuesta";
 import { CAMPOS_SIN_CENTINELA, centinelasDeLasRespuestas, respuestasConCentinelas } from "../pruebas/respuestas-con-centinelas";
-import { correoUnico, enviarCredenciales, esperarSesion, expect, test as base, usarTurnstileDePrueba } from "./utilidades";
+import { abrirElDetalleDelResultado, correoUnico, enviarCredenciales, esperarSesion, expect, test as base, usarTurnstileDePrueba } from "./utilidades";
 
 // HU-011: la portada con el último diagnóstico de la sesión, medida en un navegador a 390×844 (`movil`) y a 1280×800 (`escritorio`).
 // La lógica está en los Vitest (`ultimo.test.ts`, `page.test.ts`) y en pgTAP (`ultimo_diagnostico.test.sql`); aquí se prueba lo que
@@ -319,7 +319,7 @@ async function expectInicioNormal(page: Page, quien: string): Promise<void> {
   await expect(titulo(page, H1_NORMAL), `${quien}: el h1 de la landing`).toBeVisible(ESPERA);
   await expect(page.getByRole("link", { name: "Hacer mi diagnóstico gratis", exact: true }).first(), quien).toHaveAttribute("href", "/diagnostico");
   await expect(titulo(page, H1_DE_LA_PORTADA), `${quien}: nada de la portada con resultado`).toHaveCount(0);
-  await expect(page.getByText("Puntaje global"), quien).toHaveCount(0);
+  await expect(page.getByText("Ver el detalle por habilidad"), quien).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Tomar otro diagnóstico", exact: true }), quien).toHaveCount(0);
 }
 
@@ -347,8 +347,10 @@ async function expectResultadoDeEjemplo(page: Page, materia: Materia, evaluacion
   await expect(principal).toContainText("Fecha: 4 de octubre de 2026");
   await expect(principal.locator("time")).toHaveAttribute("datetime", FECHA_DEL_EJEMPLO);
   await expect(principal).toContainText("Respondiste 8 preguntas");
-  await expect(principal).toContainText("Puntaje global: 63 %");
+  await expect(principal).toContainText("63 %");
+  await expect(principal).toContainText("5 de 8 correctas");
 
+  await abrirElDetalleDelResultado(page);
   const habilidades = page.getByRole("region", { name: "Habilidades", exact: true }).getByRole("listitem");
   const guardadas = GUARDADO_DE_EJEMPLO.habilidades;
   await expect(habilidades).toHaveCount(guardadas.length);
@@ -402,6 +404,7 @@ async function expectResultadoDeEjemplo(page: Page, materia: Materia, evaluacion
   );
   expect(encabezados, "h1, y debajo los h2 del resultado").toEqual([
     [1, H1_DE_LA_PORTADA],
+    [2, "Qué trabajar primero"],
     [2, "Habilidades"],
     [2, "Errores"],
     [2, "Conviene repasar antes"],

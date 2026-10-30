@@ -4,7 +4,6 @@ import {
   agruparHabilidades,
   etiquetaDeNivelParaElMonitor,
   TEXTOS,
-  textoDeCorrectas,
   textoDeLasDominadas,
   textoDeRespuestas,
   type HabilidadParaElMonitor,
@@ -15,12 +14,13 @@ import estilos from "./diagnostico-del-monitor.module.css";
 import { PreguntasDelDiagnostico } from "./PreguntasDelDiagnostico";
 import { ErroresDetectados, NivelEscrito, RepasarAntes } from "./ResultadoDelDiagnostico";
 import resultado from "./resultado.module.css";
+import { ResumenDelDiagnostico } from "./ResumenDelDiagnostico";
 
 /**
  * El diagnóstico de una cita, para el monitor (HU-022). Recibe la vista ya leída y validada en el servidor y no lee datos ni usa
- * hooks. Reutiliza las piezas del resultado de la persona (HU-009: el nivel escrito, los errores y los prerrequisitos) y trae su
- * encabezado, el orden por nivel y las preguntas. Todo texto del banco pasa por `TextoDelBanco`. Orden: la nota de repetido, el
- * resumen, las habilidades, los errores, los prerrequisitos y las preguntas. Una sola `role="status"` en toda la pantalla: la de
+ * hooks. Reutiliza las piezas del resultado de la persona (HU-009: el resumen de HU-110, el nivel escrito, los errores y los
+ * prerrequisitos) y trae el orden por nivel y las preguntas. Todo texto del banco pasa por `TextoDelBanco`. Orden: la nota de
+ * repetido, el resumen, las habilidades, los errores, los prerrequisitos y las preguntas. Una sola `role="status"` en toda la pantalla: la de
  * «sin diagnóstico» o la de «no autorizó compartir sus respuestas», nunca las dos.
  */
 
@@ -65,15 +65,22 @@ export function DiagnosticoDelMonitor({ vista }: { vista: VistaDelMonitor }) {
         <h2 id={ID_RESUMEN} className={resultado.titulo}>
           {TEXTOS.resumen}
         </h2>
-        <div className={resultado.encabezado}>
-          <p className={resultado.materia}>{`${TEXTOS.evaluacion} ${diagnostico.nombreEvaluacion}`}</p>
-          <p className={resultado.dato}>
+        <ResumenDelDiagnostico
+          aciertos={diagnostico.aciertos}
+          respondidas={diagnostico.respondidas}
+          habilidades={diagnostico.habilidades}
+          errores={diagnostico.errores.length}
+          para="monitor"
+          idBase={ID_BASE}
+          nivelDeTitulos={3}
+        >
+          <span className={resultado.materia}>{`${TEXTOS.evaluacion} ${diagnostico.nombreEvaluacion}`}</span>
+          <span>
             {`${TEXTOS.fecha} `}
             {/* La hora del negocio, no la del servidor ni la del navegador: un diagnóstico de las 04:30 UTC es del día anterior en Bogotá. */}
             <time dateTime={diagnostico.fechaRealizacion}>{formatearFechaHora(new Date(diagnostico.fechaRealizacion))}</time>
-          </p>
-          <p className={resultado.puntaje}>{textoDeCorrectas(diagnostico.aciertos, diagnostico.respondidas)}</p>
-        </div>
+          </span>
+        </ResumenDelDiagnostico>
       </section>
 
       <section aria-labelledby={ID_HABILIDADES} className={resultado.seccion}>

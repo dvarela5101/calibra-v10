@@ -1,4 +1,5 @@
-/* El resultado de un diagnóstico (HU-009): encabezado con el puntaje global, habilidades, errores y qué repasar antes. */
+/* El resultado de un diagnóstico (HU-009): el resumen (resumen.module.css, HU-110), las acciones y el detalle plegado con las
+ * habilidades, los errores y qué repasar antes. */
 
 .resultado {
   display: flex;
@@ -6,33 +7,33 @@
   gap: var(--e5);
 }
 
-.encabezado {
+/* En la línea secundaria del resumen: la materia y la Evaluación, un poco más marcadas que la fecha. */
+.materia {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* D-79 a: el detalle, cerrado por defecto. list-item conserva el triángulo que dice si está abierto; 44 px de alto. */
+.plegable {
   display: flex;
   flex-direction: column;
-  gap: var(--e1);
-  padding: var(--e3) var(--e4);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  box-shadow: var(--sombra-carta);
 }
 
-.materia {
-  font-size: 17px;
+.resumenDelPlegable {
+  display: list-item;
+  min-block-size: var(--toque-min);
+  padding-block: var(--e2);
+  font-size: 16px;
   font-weight: 600;
-  overflow-wrap: anywhere;
+  color: var(--primary);
+  cursor: pointer;
 }
 
-.dato {
-  font-size: 15px;
-  color: var(--muted);
-}
-
-/* La cifra y el % no se separan en dos renglones. */
-.puntaje {
-  font-size: 20px;
-  font-weight: 700;
-  white-space: nowrap;
+.contenidoDelPlegable {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+  padding-block-start: var(--e3);
 }
 
 .seccion {

@@ -31,6 +31,7 @@ export const TEXTOS = {
   resumen: "Resumen del diagnóstico",
   evaluacion: "Evaluación:",
   fecha: "Fecha:",
+  queTrabajarEnLaMonitoria: "Qué trabajar en la monitoría",
   // Habilidades
   habilidades: "Habilidades",
   noSeMidio: "No se midió",

@@ -66,7 +66,7 @@ describe("/diagnostico/resultado/[id]: la página", () => {
     const html = await abrir(ID);
     expect(falsos.leer).toHaveBeenCalledExactlyOnceWith(falsos.cliente, ID);
     expect(html).toContain("Tu resultado");
-    expect(html).toContain("Puntaje global: 63 %");
+    expect(html).toContain("5 de 8 correctas");
     expect(html).toContain("Respondiste 8 preguntas");
     expect(html).toContain("Física II");
   });
@@ -78,7 +78,7 @@ describe("/diagnostico/resultado/[id]: la página", () => {
     expect(html).toContain("Guardar mis datos");
     expect(html).toContain(`name="id_diagnostico" value="${ID}"`);
     // P-34: el formulario va después del resultado, no lo tapa.
-    expect(html.indexOf("Puntaje global")).toBeLessThan(html.indexOf("<form"));
+    expect(html.indexOf("5 de 8 correctas")).toBeLessThan(html.indexOf("<form"));
     expect(html).not.toContain("Ya tenemos tu contacto");
   });
 
@@ -94,7 +94,7 @@ describe("/diagnostico/resultado/[id]: la página", () => {
   it("HU-010 (P-34): si no se sabe si es Lead, el resultado sale completo y sin el bloque; el error queda en el log", async () => {
     falsos.lead.mockRejectedValue(new Error("caída"));
     const html = await abrir(ID);
-    expect(html).toContain("Puntaje global: 63 %");
+    expect(html).toContain("5 de 8 correctas");
     expect(html).not.toContain("<form");
     expect(html).not.toContain("Ya tenemos tu contacto");
     expect(console.error).toHaveBeenCalled();
@@ -136,7 +136,7 @@ describe("/diagnostico/resultado/[id]: si falla la carga, el mensaje de error y 
     const html = await abrir(ID);
     expect(html).toContain(MENSAJE_DE_ERROR);
     expect(html).toMatch(/<p role="alert"[^>]*>No pudimos cargar tu resultado/);
-    expect(html).not.toContain("Puntaje global");
+    expect(html).not.toContain("Ver el detalle por habilidad");
   });
 
   it("el resultado guardado está corrupto", async () => {

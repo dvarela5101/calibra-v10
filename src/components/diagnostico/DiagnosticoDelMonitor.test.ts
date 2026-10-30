@@ -21,7 +21,11 @@ const textoVisible = (html: string) => textoDe(leerHtml(html));
 
 /** La sección cuyo título (h2) dice eso. */
 function seccion(arbol: Nodo, titulo: string): Nodo {
-  const encontrada = porEtiqueta(arbol, "section").find((s) => textoDe(porEtiqueta(s, "h2")[0]) === titulo);
+  // Una sección sin h2 (la de «Qué trabajar en la monitoría», dentro del resumen) no es de las de primer nivel.
+  const encontrada = porEtiqueta(arbol, "section").find((s) => {
+    const h2 = porEtiqueta(s, "h2")[0];
+    return h2 !== undefined && textoDe(h2) === titulo;
+  });
   if (!encontrada) throw new Error(`No hay una sección «${titulo}».`);
   return encontrada;
 }
@@ -43,13 +47,14 @@ describe("el orden de las secciones", () => {
   it("cada sección está nombrada por su título", () => {
     const arbol = arbolDe();
     const secciones = porEtiqueta(arbol, "section");
-    expect(secciones).toHaveLength(5);
+    // Las cinco de primer nivel y, dentro del resumen, «Qué trabajar en la monitoría» (h3).
+    expect(secciones).toHaveLength(6);
     for (const s of secciones) {
-      const titulo = porEtiqueta(s, "h2")[0];
+      const titulo = porEtiqueta(s, "h2")[0] ?? porEtiqueta(s, "h3")[0];
       expect(s.atributos["aria-labelledby"]).toBe(titulo.atributos.id);
       expect(titulo.atributos.id).toBeTruthy();
     }
-    const ids = porEtiqueta(arbol, "h2").map((h) => h.atributos.id);
+    const ids = [...porEtiqueta(arbol, "h2"), ...porEtiqueta(arbol, "h3")].map((h) => h.atributos.id).filter(Boolean);
     expect(new Set(ids).size).toBe(ids.length);
   });
 });
@@ -71,6 +76,17 @@ describe("resumen (criterio 3)", () => {
     expect(resumen).not.toContain("5 de octubre");
     const tiempo = porEtiqueta(arbol, "time")[0];
     expect(tiempo.atributos.datetime).toBe("2026-10-05T04:30:00.000Z");
+  });
+
+  it("el mismo resumen visual que la persona, con las etiquetas del monitor (HU-110, D-79)", () => {
+    const html = pintar();
+    expect(html.match(/role="img"/g)).toHaveLength(2);
+    expect(html).toContain('aria-label="63 % de respuestas correctas (5 de 8)"');
+    expect(resumen).toContain("63 %");
+    expect(resumen).toContain("Qué trabajar en la monitoría");
+    expect(resumen).not.toContain("Qué trabajar primero");
+    expect(resumen).not.toContain("Lo dominas");
+    expect(resumen).not.toContain("Puntaje global");
   });
 
   it("la fecha lleva la hora de Bogotá con el «p. m.» unido por espacios duros", () => {

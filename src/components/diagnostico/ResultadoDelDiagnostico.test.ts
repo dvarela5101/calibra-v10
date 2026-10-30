@@ -26,17 +26,18 @@ const texto = (html: string) =>
 const con = (cambios: Partial<typeof GUARDADO_DE_EJEMPLO>, fila = {}) =>
   proyectarResultado({ ...FILA_DE_EJEMPLO, ...fila, resultado: { ...GUARDADO_DE_EJEMPLO, ...cambios } });
 
-describe("encabezado (criterio 10)", () => {
+describe("resumen (criterio 10, HU-110)", () => {
   const html = pintar();
   const t = texto(html);
 
-  it("la materia, la Evaluación, la fecha en hora de Bogotá, cuántas respondió y el puntaje global", () => {
+  it("la materia, la Evaluación, la fecha en hora de Bogotá, cuántas respondió y el porcentaje, sin «Puntaje global» (D-79 c)", () => {
     expect(t).toContain("Física II · Parcial 1");
     // 03:30 UTC del día 5 es el día 4 en Bogotá.
     expect(t).toContain("Fecha: 4 de octubre de 2026");
     expect(html).toContain('<time dateTime="2026-10-05T03:30:00.000Z">4 de octubre de 2026</time>');
     expect(t).toContain("Respondiste 8 preguntas");
-    expect(t).toContain("Puntaje global: 63 %");
+    expect(t).toContain("63 % 5 de 8 correctas");
+    expect(t).not.toContain("Puntaje global");
   });
 
   it("con una sola pregunta, «Respondiste 1 pregunta»", () => {
@@ -45,12 +46,13 @@ describe("encabezado (criterio 10)", () => {
 
   it("el puntaje sale de aciertos y respondidas, no de la suma por habilidad", () => {
     // Las habilidades suman 5 aciertos de 7 respuestas, pero se acertaron 4 de 8 preguntas: 50 %.
-    expect(texto(pintar(proyectarResultado({ ...FILA_DE_EJEMPLO, aciertos: 4 })))).toContain("Puntaje global: 50 %");
+    expect(texto(pintar(proyectarResultado({ ...FILA_DE_EJEMPLO, aciertos: 4 })))).toContain("50 % 4 de 8 correctas");
   });
 });
 
 describe("habilidades (criterio 10)", () => {
-  const html = pintar();
+  // Las del detalle: el resumen también nombra algunas en «Qué trabajar primero».
+  const html = pintar().slice(pintar().indexOf("<details"));
   const t = texto(html);
 
   it("están todas, en el orden guardado, con su descripción", () => {
@@ -235,6 +237,54 @@ describe("todo texto del banco pasa por TextoDelBanco (HU-083)", () => {
   });
 });
 
+describe("el resumen va primero y el detalle plegado (HU-110, D-79)", () => {
+  const html = pintar();
+  const t = texto(html);
+
+  it("el orden: resumen, acciones y, al final, el detalle cerrado con «Ver el detalle por habilidad»", () => {
+    expect(html).toMatch(/^<div class="[^"]*"><section aria-label="Resumen de tu resultado">/);
+    expect(html.indexOf("5 de 8 correctas")).toBeLessThan(html.indexOf("Ver monitores"));
+    expect(html.indexOf("Ver monitores")).toBeLessThan(html.indexOf("<details"));
+    expect(html).toMatch(/<details class="[^"]*"><summary class="[^"]*">Ver el detalle por habilidad<\/summary>/);
+    expect(html).not.toMatch(/<details[^>]* open/);
+    // Habilidades, errores y prerrequisitos van dentro del detalle.
+    const detalle = html.slice(html.indexOf("<details"));
+    for (const titulo of [">Habilidades<", ">Errores<", ">Conviene repasar antes<"]) expect(detalle, titulo).toContain(titulo);
+  });
+
+  it("dos barras con role=img que dicen lo mismo que el texto", () => {
+    expect(html.match(/role="img"/g)).toHaveLength(2);
+    expect(html).toContain('aria-label="63 % de respuestas correctas (5 de 8)"');
+    expect(html).toContain('aria-label="Habilidades por nivel: 1 Lo dominas, 1 En proceso, 2 No lo dominas y 1 Sin medir"');
+    expect(html).toContain('style="inline-size:63%"');
+  });
+
+  it("la leyenda escribe cada nivel con su número, en el orden de la barra", () => {
+    expect(t).toContain("1 Lo dominas 1 En proceso 2 No lo dominas 1 Sin medir");
+  });
+
+  it("qué trabajar primero: las que no domina y luego las en proceso, en el orden de la materia, y cuántos errores", () => {
+    const resumen = html.slice(0, html.indexOf("</section>", html.indexOf("Qué trabajar primero")));
+    const posiciones = ["interpreta gráficas", "lee un diagrama de fuerzas", "aplica la conservación de la energía"].map((d) => resumen.indexOf(d));
+    expect(posiciones.every((p) => p > 0)).toBe(true);
+    expect([...posiciones].sort((a, b) => a - b)).toEqual(posiciones);
+    expect(resumen).not.toContain("calcula la fuerza neta");
+    expect(resumen).not.toContain("resuelve problemas con rozamiento");
+    expect(texto(resumen)).toContain("3 errores detectados");
+  });
+
+  it("sin habilidades por reforzar ni errores, lo dice y no cuenta errores", () => {
+    const todo = con({
+      habilidades: GUARDADO_DE_EJEMPLO.habilidades.map((h) => ({ ...h, nivel: "lo_domina" as const })),
+      errores: [],
+    });
+    const otro = texto(pintar(todo));
+    expect(otro).toContain("No encontramos habilidades por reforzar en esta prueba.");
+    expect(otro).not.toContain("detectado");
+    expect(otro).toContain("5 Lo dominas");
+  });
+});
+
 describe("después del resultado (criterio 14)", () => {
   it("«Ver monitores de {materia}» lleva a la lista de esa materia y «Tomar otro diagnóstico» al selector", () => {
     const html = pintar();
@@ -257,10 +307,11 @@ describe("después del resultado (criterio 14)", () => {
     expect(html).not.toContain("Tomar otro diagnóstico");
   });
 
-  it("la ranura va debajo de todo, en un contenedor propio", () => {
+  it("la ranura va después de las acciones y antes del detalle, en un contenedor propio", () => {
     const html = pintar(RESULTADO, { ranura: createElement("form", { id: "formulario-de-contacto" }, "Déjanos tus datos") });
     expect(html).toContain('<form id="formulario-de-contacto">Déjanos tus datos</form>');
     expect(html.indexOf("formulario-de-contacto")).toBeGreaterThan(html.indexOf("Tomar otro diagnóstico"));
+    expect(html.indexOf("formulario-de-contacto")).toBeLessThan(html.indexOf("<details"));
   });
 
   it("sin ranura no sobra un contenedor vacío (M21)", () => {
@@ -268,27 +319,27 @@ describe("después del resultado (criterio 14)", () => {
     expect(pintar(RESULTADO, { ranura: null })).toBe(sin);
     expect(pintar(RESULTADO, { ranura: undefined })).toBe(sin);
     expect(pintar(RESULTADO, { ranura: false })).toBe(sin);
-    // El último elemento del resultado es el de las acciones.
-    expect(sin.endsWith("</a></div></div>")).toBe(true);
+    // Entre las acciones y el detalle no queda nada.
+    expect(sin).toContain("</a></div><details");
   });
 });
 
 describe("niveles de los títulos", () => {
-  it("por defecto las secciones son h2", () => {
+  it("por defecto las secciones son h2 («Qué trabajar primero» y las tres del detalle)", () => {
     const html = pintar();
-    expect(html.match(/<h2 /g)).toHaveLength(3);
+    expect(html.match(/<h2 /g)).toHaveLength(4);
     expect(html).not.toContain("<h3");
   });
 
   it("debajo de un h2 (el mensaje de D-51) son h3", () => {
     const html = pintar(RESULTADO, { nivelDeTitulos: 3 });
-    expect(html.match(/<h3 /g)).toHaveLength(3);
+    expect(html.match(/<h3 /g)).toHaveLength(4);
     expect(html).not.toContain("<h2");
   });
 
   it("cada sección está nombrada por su título", () => {
     const html = pintar();
-    for (const id of [`habilidades-${RESULTADO.idDiagnostico}`, `errores-${RESULTADO.idDiagnostico}`, `repasar-${RESULTADO.idDiagnostico}`]) {
+    for (const id of [`que-trabajar-${RESULTADO.idDiagnostico}`, `habilidades-${RESULTADO.idDiagnostico}`, `errores-${RESULTADO.idDiagnostico}`, `repasar-${RESULTADO.idDiagnostico}`]) {
       expect(html).toContain(`aria-labelledby="${id}"`);
       expect(html).toContain(`id="${id}"`);
     }
