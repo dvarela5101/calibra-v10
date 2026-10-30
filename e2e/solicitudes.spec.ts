@@ -241,7 +241,7 @@ test.describe("Criterio 4 · el admin ve las solicitudes y las marca", () => {
 });
 
 test.describe("HU-111 (D-80) · una materia que no está en la lista", () => {
-  test("«Otra» sola se guarda con lo escrito y el admin la ve en la tarjeta", async ({ page, browser, cuentas, escenario }) => {
+  test("«Otra» sola se guarda con lo escrito y el admin la ve en la tarjeta", async ({ page, cuentas, escenario }) => {
     const materia = await escenario.materia();
     const correo = escenario.correo();
     const telefono = escenario.telefono();
@@ -278,18 +278,12 @@ test.describe("HU-111 (D-80) · una materia que no está en la lista", () => {
     await expect(page.getByRole("status").filter({ hasText: "Recibimos tu solicitud" })).toBeVisible(ESPERA);
     expect(await escenario.otrasMaterias(correo)).toEqual([otra]);
 
-    // El admin la ve en la tarjeta, sin la línea de materias de la lista (D-80 d).
-    const contexto = await browser.newContext();
-    const pagina = await contexto.newPage();
-    try {
-      await entrar(pagina, "/admin/solicitudes", await cuentas.crearAdmin(), LISTA);
-      const tarjeta = pagina.getByRole("listitem").filter({ has: pagina.getByRole("heading", { name: nombre }) });
-      await expect(tarjeta).toBeVisible(ESPERA);
-      await expect(tarjeta.getByText(`Otra materia: ${otra}`)).toBeVisible();
-      await expect(tarjeta.getByText(/^Materias?: /)).toHaveCount(0);
-    } finally {
-      await contexto.close();
-    }
+    // El admin la ve en la tarjeta, sin la línea de materias de la lista (D-80 d). La solicitud no deja sesión: se entra en la misma página.
+    await entrar(page, "/admin/solicitudes", await cuentas.crearAdmin(), LISTA);
+    const tarjeta = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: nombre }) });
+    await expect(tarjeta).toBeVisible(ESPERA);
+    await expect(tarjeta.getByText(`Otra materia: ${otra}`)).toBeVisible();
+    await expect(tarjeta.getByText(/^Materias?: /)).toHaveCount(0);
   });
 });
 
