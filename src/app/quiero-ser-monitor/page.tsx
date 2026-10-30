@@ -23,6 +23,7 @@ async function cargarMaterias(): Promise<MateriaParaElegir[] | null> {
 /**
  * HU-062 (P-19): quien quiere ser monitor deja sus datos para que lo contacten y agenden su evaluación. HU-109 (D-78 a): la página
  * es la landing de monitores, con el formulario al final; las mismas materias de la base nombran la sección de materias.
+ * HU-111 (D-80 c): el formulario sale aunque la base no tenga materias: la persona escribe la suya en «Otra».
  */
 export default async function QuieroSerMonitor() {
   const [materias, parametros] = await Promise.all([cargarMaterias(), parametrosParaLaPortada()]);
@@ -36,9 +37,8 @@ export default async function QuieroSerMonitor() {
           <p role="alert" className={estilos.aviso}>
             No pudimos cargar las materias. Recarga la página en unos minutos.
           </p>
-        ) : materias.length === 0 ? (
-          <p className={estilos.aviso}>Todavía no hay materias abiertas para certificarse. Vuelve pronto.</p>
         ) : (
+          // HU-111 (D-80 c): sin materias en la base, el formulario sale igual, con solo «Otra».
           <FormularioSolicitud materias={materias} />
         )
       }
