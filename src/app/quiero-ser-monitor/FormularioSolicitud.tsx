@@ -1,10 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { CasillasConsentimiento } from "@/components/CasillasConsentimiento";
 import casillas from "@/components/casillas.module.css";
 import formulario from "@/components/formulario.module.css";
-import { CAMPO_MATERIAS, CAMPO_TRAMPA } from "@/lib/solicitudes/reglas";
+import { CAMPO_MATERIAS, CAMPO_OTRA, CAMPO_OTRA_MATERIA, CAMPO_TRAMPA, LARGO_MAXIMO_OTRA_MATERIA } from "@/lib/solicitudes/reglas";
 import { enviarSolicitud, type EstadoSolicitud } from "./acciones";
 import estilos from "./solicitud.module.css";
 
@@ -13,10 +13,10 @@ export type MateriaParaElegir = { id: string; nombre: string };
 const estadoInicial: EstadoSolicitud = {
   error: null,
   enviada: false,
-  valores: { nombre: "", correo: "", numero_telefono: "", materias: [], autorizado: false },
+  valores: { nombre: "", correo: "", numero_telefono: "", materias: [], otra: false, otra_materia: "", autorizado: false },
 };
 
-/** HU-062: nombre, teléfono, correo y una o varias materias, con la autorización de datos (RN-13). */
+/** HU-062: nombre, teléfono, correo y una o varias materias, con la autorización de datos (RN-13). HU-111: o una «Otra» escrita. */
 export function FormularioSolicitud({ materias }: { materias: MateriaParaElegir[] }) {
   const [estado, accion, enviando] = useActionState(enviarSolicitud, estadoInicial);
   const { valores } = estado;
@@ -97,6 +97,7 @@ export function FormularioSolicitud({ materias }: { materias: MateriaParaElegir[
             </label>
           </div>
         ))}
+        <OtraMateria marcada={valores.otra} texto={valores.otra_materia} />
       </fieldset>
 
       <CasillasConsentimiento variante="aspirante" tratamientoMarcado={valores.autorizado} />
@@ -117,5 +118,51 @@ export function FormularioSolicitud({ materias }: { materias: MateriaParaElegir[
         {enviando ? "Enviando…" : "Enviar solicitud"}
       </button>
     </form>
+  );
+}
+
+/**
+ * HU-111 (D-80): la casilla «Otra» y, al marcarla, el campo para escribir esa materia. Desmarcada, el campo no está
+ * y no se envía. Vive dentro del formulario, así que se remonta con él y arranca con lo que la persona ya había escrito.
+ */
+function OtraMateria({ marcada, texto }: { marcada: boolean; texto: string }) {
+  const [otra, setOtra] = useState(marcada);
+  return (
+    <>
+      <div className={casillas.casilla}>
+        <input
+          id={CAMPO_OTRA}
+          name={CAMPO_OTRA}
+          type="checkbox"
+          value="si"
+          checked={otra}
+          onChange={(evento) => setOtra(evento.target.checked)}
+          aria-controls={otra ? CAMPO_OTRA_MATERIA : undefined}
+          className={casillas.control}
+        />
+        <label htmlFor={CAMPO_OTRA} className={casillas.texto}>
+          Otra
+        </label>
+      </div>
+      {otra && (
+        <div className={formulario.campo}>
+          <label htmlFor={CAMPO_OTRA_MATERIA} className={formulario.etiqueta}>
+            ¿Qué materia?
+          </label>
+          <p id="otra-materia-ayuda" className={formulario.ayuda}>
+            Escribe el nombre como lo conoces en tu universidad.
+          </p>
+          <input
+            id={CAMPO_OTRA_MATERIA}
+            name={CAMPO_OTRA_MATERIA}
+            defaultValue={texto}
+            maxLength={LARGO_MAXIMO_OTRA_MATERIA}
+            aria-describedby="otra-materia-ayuda"
+            required
+            className={formulario.entrada}
+          />
+        </div>
+      )}
+    </>
   );
 }

@@ -20,6 +20,8 @@ export type DatosDeTarjeta = {
   /** La fecha de envío, ya escrita para leer. */
   enviada: string;
   materias: string[];
+  /** HU-111 (D-80 d): la materia que escribió porque no estaba en la lista, o `null`. */
+  otraMateria: string | null;
   /** D-75 c: si el correo ya tiene cuenta de monitor o una invitación vigente (con su vencimiento escrito). `null` si no se pudo leer. */
   invitacion: { tipo: "sin_invitar" } | { tipo: "invitado"; vence: string } | { tipo: "monitor" } | null;
 };
@@ -44,10 +46,13 @@ export function TarjetaDeSolicitud({ solicitud: s }: { solicitud: DatosDeTarjeta
         </span>
       </div>
       <p className={estilos.dato}>Enviada el {s.enviada}</p>
-      <p className={estilos.dato}>
-        {s.materias.length === 1 ? "Materia: " : "Materias: "}
-        {s.materias.join(", ")}
-      </p>
+      {s.materias.length > 0 && (
+        <p className={estilos.dato}>
+          {s.materias.length === 1 ? "Materia: " : "Materias: "}
+          {s.materias.join(", ")}
+        </p>
+      )}
+      {s.otraMateria && <p className={estilos.dato}>Otra materia: {s.otraMateria}</p>}
       <p className={estilos.contacto}>
         <a href={`tel:${s.numeroTelefono}`} className={estilos.enlace}>
           {s.numeroTelefono}

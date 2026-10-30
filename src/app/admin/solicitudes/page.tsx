@@ -131,6 +131,7 @@ function ListaDeSolicitudes({
                 estado: s.estado,
                 enviada: formatearFechaHora(s.creadaEn),
                 materias: s.materias,
+                otraMateria: s.otraMateria,
                 invitacion: paraLaTarjeta(invitaciones?.get(s.correo)),
               }}
             />

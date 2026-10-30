@@ -45,9 +45,9 @@ select ok(
   'Con su sesión solo se cambia el estado y quién lo cambió');
 
 select ok(
-  has_function_privilege('service_role', 'public.crear_solicitud_monitor(text, text, text, uuid[], timestamptz)', 'execute')
-  and not has_function_privilege('authenticated', 'public.crear_solicitud_monitor(text, text, text, uuid[], timestamptz)', 'execute')
-  and not has_function_privilege('anon', 'public.crear_solicitud_monitor(text, text, text, uuid[], timestamptz)', 'execute'),
+  has_function_privilege('service_role', 'public.crear_solicitud_monitor(text, text, text, uuid[], timestamptz, text)', 'execute')
+  and not has_function_privilege('authenticated', 'public.crear_solicitud_monitor(text, text, text, uuid[], timestamptz, text)', 'execute')
+  and not has_function_privilege('anon', 'public.crear_solicitud_monitor(text, text, text, uuid[], timestamptz, text)', 'execute'),
   'crear_solicitud_monitor(): solo el servidor (service_role)');
 
 -- ---------------------------------------------------------------------------
@@ -119,7 +119,7 @@ select is(
 
 select throws_ok(
   $$select public.crear_solicitud_monitor('Beto', 'beto-0621@example.com', '+570621000009', '{}'::uuid[], now())$$,
-  '23514', 'Elige al menos una materia.', 'Sin materias no se guarda');
+  '23514', 'Elige al menos una materia o escribe otra.', 'Sin materias ni otra no se guarda');
 select throws_ok(
   $$select public.crear_solicitud_monitor('Beto', 'beto-0621@example.com', '+570621000009',
       array['10000000-0000-0000-0000-000000000621', '99999999-9999-9999-9999-999999999999']::uuid[], now())$$,

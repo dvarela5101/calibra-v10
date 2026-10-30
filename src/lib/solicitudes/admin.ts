@@ -15,6 +15,8 @@ export type SolicitudParaAdmin = {
   actualizadaEn: Date;
   /** Nombres de las materias, en orden alfabético. */
   materias: string[];
+  /** HU-111 (D-80 d): la materia que escribió porque no estaba en la lista, tal cual, o `null`. */
+  otraMateria: string | null;
 };
 
 export type PaginaDeSolicitudes = {
@@ -41,7 +43,7 @@ export async function listarSolicitudes(
   const [{ data, error, count }, abiertas] = await Promise.all([
     cliente
       .from("solicitud_monitor")
-      .select("id, nombre, correo, numero_telefono, estado, creada_en, actualizada_en, solicitud_monitor_materia(materia(nombre))", {
+      .select("id, nombre, correo, numero_telefono, estado, creada_en, actualizada_en, otra_materia, solicitud_monitor_materia(materia(nombre))", {
         count: "exact",
       })
       .order("creada_en", { ascending: true })
@@ -65,6 +67,7 @@ export async function listarSolicitudes(
       .map((m) => m.materia?.nombre)
       .filter((nombre): nombre is string => Boolean(nombre))
       .sort((a, b) => a.localeCompare(b, "es")),
+    otraMateria: fila.otra_materia,
   }));
   return { solicitudes, total: count ?? solicitudes.length, abiertas, pagina, porPagina };
 }

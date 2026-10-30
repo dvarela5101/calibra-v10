@@ -2,7 +2,7 @@ import { randomInt, randomUUID } from "node:crypto";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { enviarSolicitud, type EstadoSolicitud } from "@/app/quiero-ser-monitor/acciones";
 import { cambiarEstadoDeSolicitud, listarSolicitudes, paginaDeLaPrimeraAbierta } from "@/lib/solicitudes/admin";
-import { CAMPO_MATERIAS, CAMPO_TRAMPA, ERROR_SIN_AUTORIZACION_ASPIRANTE } from "@/lib/solicitudes/reglas";
+import { CAMPO_MATERIAS, CAMPO_OTRA, CAMPO_OTRA_MATERIA, CAMPO_TRAMPA, ERROR_SIN_AUTORIZACION_ASPIRANTE } from "@/lib/solicitudes/reglas";
 import { crearSolicitudMonitor } from "@/lib/solicitudes/servidor";
 import { exigirSupabaseLocal, Fixtures } from "./utilidades";
 
@@ -58,7 +58,7 @@ async function solicitudesDe(correo: string) {
 }
 
 async function crear(correo: string, idsMaterias: string[], nombre = correo) {
-  const r = await crearSolicitudMonitor({ nombre, correo, numeroTelefono: telefonoNuevo().guardado, materias: idsMaterias }, new Date().toISOString(), fx.admin);
+  const r = await crearSolicitudMonitor({ nombre, correo, numeroTelefono: telefonoNuevo().guardado, materias: idsMaterias, otraMateria: null }, new Date().toISOString(), fx.admin);
   if (!r.ok) throw new Error(r.error);
   return r.id;
 }
@@ -72,7 +72,7 @@ function formulario(campos: Record<string, string | string[]>): FormData {
 const INICIAL: EstadoSolicitud = {
   error: null,
   enviada: false,
-  valores: { nombre: "", correo: "", numero_telefono: "", materias: [], autorizado: false },
+  valores: { nombre: "", correo: "", numero_telefono: "", materias: [], otra: false, otra_materia: "", autorizado: false },
 };
 
 describe("criterios 1 y 3: el aspirante deja sus datos y la solicitud queda nueva", () => {
@@ -127,6 +127,58 @@ describe("criterios 1 y 3: el aspirante deja sus datos y la solicitud queda nuev
   });
 });
 
+describe("HU-111 (D-80): una materia que no está en la lista", () => {
+  it("con solo «Otra» queda guardada con lo escrito, y el admin la lee en la lista", async () => {
+    await materia();
+    const correo = correoNuevo();
+
+    const estado = await enviarSolicitud(
+      INICIAL,
+      formulario({
+        nombre: "Olga Otra",
+        correo,
+        numero_telefono: telefonoNuevo().escrito,
+        [CAMPO_OTRA]: "si",
+        [CAMPO_OTRA_MATERIA]: "  Química   orgánica, Bioquímica ",
+        acepta_tratamiento_datos: "si",
+      }),
+    );
+
+    expect(estado).toMatchObject({ error: null, enviada: true });
+    const { data } = await fx.admin.from("solicitud_monitor").select("otra_materia, solicitud_monitor_materia(id_materia)").eq("correo", correo);
+    expect(data).toEqual([{ otra_materia: "Química orgánica, Bioquímica", solicitud_monitor_materia: [] }]);
+
+    const admin = await fx.iniciarSesion(await fx.crearAdmin());
+    const todas = [];
+    for (let pagina = 1; ; pagina++) {
+      const resultado = await listarSolicitudes(admin, { pagina, porPagina: 1000 });
+      todas.push(...resultado.solicitudes);
+      if (todas.length >= resultado.total) break;
+    }
+    expect(todas.find((s) => s.correo === correo)).toMatchObject({ materias: [], otraMateria: "Química orgánica, Bioquímica" });
+  });
+
+  it("con «Otra» marcada y vacía no se guarda nada, y vuelve marcada con lo escrito", async () => {
+    const calculo = await materia();
+    const correo = correoNuevo();
+    const estado = await enviarSolicitud(
+      INICIAL,
+      formulario({
+        nombre: "Olga Vacía",
+        correo,
+        numero_telefono: telefonoNuevo().escrito,
+        [CAMPO_MATERIAS]: [calculo.id],
+        [CAMPO_OTRA]: "si",
+        [CAMPO_OTRA_MATERIA]: "   ",
+        acepta_tratamiento_datos: "si",
+      }),
+    );
+    expect(estado).toMatchObject({ error: "Escribe qué otra materia quieres.", enviada: false });
+    expect(estado.valores).toMatchObject({ otra: true, otra_materia: "   ", materias: [calculo.id] });
+    expect(await solicitudesDe(correo)).toEqual([]);
+  });
+});
+
 describe("criterio 2: con un dato que falta o no sirve, no se guarda nada", () => {
   it.each([
     ["sin autorización de datos", {}, ERROR_SIN_AUTORIZACION_ASPIRANTE],
@@ -134,7 +186,7 @@ describe("criterio 2: con un dato que falta o no sirve, no se guarda nada", () =
     ["con un correo inválido", { correo: "no-es-correo" }, "Escribe un correo válido, por ejemplo ana@uniandes.edu.co."],
     ["con parámetros de mailto en el correo", { correo: "ana@calibra.test?bcc=otro@calibra.test" }, "Escribe un correo válido, por ejemplo ana@uniandes.edu.co."],
     ["sin teléfono", { numero_telefono: "" }, "Escribe tu teléfono: lo necesitamos para agendar tu evaluación."],
-    ["sin materias", { [CAMPO_MATERIAS]: [] }, "Elige al menos una materia."],
+    ["sin materias ni otra", { [CAMPO_MATERIAS]: [] }, "Elige al menos una materia o escribe otra."],
   ])("%s", async (_nombre, cambio, error) => {
     const calculo = await materia();
     const correo = correoNuevo();
@@ -163,7 +215,7 @@ describe("criterio 2: con un dato que falta o no sirve, no se guarda nada", () =
     const calculo = await materia();
     const correo = correoNuevo();
     const resultado = await crearSolicitudMonitor(
-      { nombre: "Carla", correo, numeroTelefono: telefonoNuevo().guardado, materias: [calculo.id, randomUUID()] },
+      { nombre: "Carla", correo, numeroTelefono: telefonoNuevo().guardado, materias: [calculo.id, randomUUID()], otraMateria: null },
       new Date().toISOString(),
       fx.admin,
     );
@@ -177,7 +229,7 @@ describe("criterio 2: con un dato que falta o no sirve, no se guarda nada", () =
     const correo = correoNuevo();
     const telefono = telefonoNuevo().guardado;
     const resultado = await crearSolicitudMonitor(
-      { nombre: "Dani", correo, numeroTelefono: telefono, materias: [calculo.id] },
+      { nombre: "Dani", correo, numeroTelefono: telefono, materias: [calculo.id], otraMateria: null },
       new Date().toISOString(),
       cliente,
     );
