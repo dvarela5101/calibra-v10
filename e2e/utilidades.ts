@@ -1,6 +1,7 @@
 import { randomBytes, randomInt, randomUUID } from "node:crypto";
 import { test as base, expect, type BrowserContext, type Cookie, type Page } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { TEXTOS as TEXTOS_DEL_DIAGNOSTICO } from "../src/lib/diagnostico/presentacion";
 
 /**
  * Utilidades de las pruebas de punta a punta que tocan Auth. Todo corre contra el
@@ -318,5 +319,20 @@ export const test = base.extend<{ cuentas: Cuentas }>({
     if (fallos.length > 0) throw new Error(`No se pudo limpiar lo que creó la prueba:\n${fallos.join("\n")}`);
   },
 });
+
+// ---------------------------------------------------------------------------
+// Resultado del diagnóstico
+// ---------------------------------------------------------------------------
+
+/**
+ * HU-110 (D-79 a): el detalle del resultado de la persona (habilidades, errores y prerrequisitos) va en un desplegable cerrado. Las
+ * pruebas que lo leen lo abren antes; si ya está abierto, no lo cierran.
+ */
+export async function abrirElDetalleDelResultado(page: Page): Promise<void> {
+  const resumen = page.locator("summary", { hasText: TEXTOS_DEL_DIAGNOSTICO.verDetalle });
+  await expect(resumen).toBeVisible();
+  if (!(await resumen.evaluate((s) => (s.parentElement as HTMLDetailsElement).open))) await resumen.click();
+  await expect(page.getByRole("region", { name: TEXTOS_DEL_DIAGNOSTICO.habilidades, exact: true })).toBeVisible();
+}
 
 export { expect };

@@ -107,7 +107,7 @@ describe("/ sin resultado: la landing (HU-108)", () => {
 
   it("no trae nada del resultado ni del inicio de antes", async () => {
     const t = texto(await pintar());
-    for (const ajeno of ["Tu último diagnóstico", "Puntaje global", "Respondiste", "Tomar otro diagnóstico", "Nueva versión en construcción", "Ver monitores certificados"]) {
+    for (const ajeno of ["Tu último diagnóstico", "Ver el detalle por habilidad", "Respondiste", "Tomar otro diagnóstico", "Nueva versión en construcción", "Ver monitores certificados"]) {
       expect(t).not.toContain(ajeno);
     }
   });
@@ -163,9 +163,9 @@ describe("/ con el último diagnóstico", () => {
     expect(html.match(/href="\/diagnostico"/g)).toHaveLength(1);
   });
 
-  it("muestra las cifras de D-53 c y no habla de repetido", async () => {
+  it("muestra las cifras del resumen (D-79 c) y no habla de repetido", async () => {
     const html = await pintar();
-    expect(html).toContain("Puntaje global: 63 %");
+    expect(html).toContain("5 de 8 correctas");
     expect(html).toContain("Respondiste 8 preguntas");
     expect(html.toLowerCase()).not.toContain("repetid");
   });

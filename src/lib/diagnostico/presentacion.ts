@@ -48,6 +48,11 @@ export const TEXTOS = {
 
   // Resultado (D-53 c)
   tituloDelResultado: "Tu resultado",
+  // Resumen (D-79)
+  resumen: "Resumen de tu resultado",
+  queTrabajarPrimero: "Qué trabajar primero",
+  sinQueTrabajar: "No encontramos habilidades por reforzar en esta prueba.",
+  verDetalle: "Ver el detalle por habilidad",
   fecha: "Fecha:",
   habilidades: "Habilidades",
   sinMedir: "No medimos esta habilidad en esta prueba.",
@@ -85,9 +90,9 @@ export function puntajeGlobal(aciertos: number, respondidas: number): number {
   return Math.round((aciertos * 100) / respondidas);
 }
 
-/** `Puntaje global: 63 %`, con un espacio normal entre la cifra y el `%`. */
-export function textoDePuntaje(aciertos: number, respondidas: number): string {
-  return `Puntaje global: ${puntajeGlobal(aciertos, respondidas)} %`;
+/** `63 %`, con un espacio normal entre la cifra y el `%` (D-79 c: sin «Puntaje global»). */
+export function textoDePorcentaje(aciertos: number, respondidas: number): string {
+  return `${puntajeGlobal(aciertos, respondidas)} %`;
 }
 
 export function textoDeRespondidas(respondidas: number): string {
@@ -127,6 +132,47 @@ export function cifrasDeHabilidad(h: { nivel: NivelHabilidad; respuestas: number
     cifra: h.respuestas > 0 ? textoDeAciertos(h.aciertos, h.respuestas) : null,
     sinMedir: h.nivel === "sin_medir" ? TEXTOS.sinMedir : null,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Resumen (D-79)
+// ---------------------------------------------------------------------------
+
+/** El orden de los tramos de la barra y de la leyenda: de lo dominado a lo que no se midió. */
+const ORDEN_DE_NIVELES: readonly NivelHabilidad[] = ["lo_domina", "en_proceso", "no_lo_domina", "sin_medir"];
+
+export type TramoDeNivel = { nivel: NivelHabilidad; cantidad: number };
+
+/** Cuántas habilidades hay en cada nivel, en el orden de la barra y sin los niveles en cero. */
+export function tramosDeNiveles(habilidades: readonly { nivel: NivelHabilidad }[]): TramoDeNivel[] {
+  return ORDEN_DE_NIVELES.map((nivel) => ({ nivel, cantidad: habilidades.filter((h) => h.nivel === nivel).length })).filter(
+    (tramo) => tramo.cantidad > 0,
+  );
+}
+
+/** `4 Lo dominas`: un renglón de la leyenda. La etiqueta es la de quien mira (la persona o el monitor). */
+export function textoDeTramo(tramo: TramoDeNivel, etiqueta: (nivel: NivelHabilidad) => string): string {
+  return `${tramo.cantidad} ${etiqueta(tramo.nivel)}`;
+}
+
+/** Lo que dice la barra de niveles a un lector de pantalla: lo mismo que la leyenda. */
+export function descripcionDeNiveles(tramos: readonly TramoDeNivel[], etiqueta: (nivel: NivelHabilidad) => string): string {
+  return `Habilidades por nivel: ${LISTA_EN_ESPANOL.format(tramos.map((tramo) => textoDeTramo(tramo, etiqueta)))}`;
+}
+
+/** Lo que dice la barra del puntaje a un lector de pantalla: `63 % de respuestas correctas (5 de 8)`. */
+export function descripcionDelPorcentaje(aciertos: number, respondidas: number): string {
+  return `${textoDePorcentaje(aciertos, respondidas)} de respuestas correctas (${aciertos} de ${respondidas})`;
+}
+
+/** Hasta `maximo` habilidades para trabajar: primero las que no domina y luego las en proceso, cada grupo en el orden de la materia. */
+export function queTrabajar<T extends { nivel: NivelHabilidad }>(habilidades: readonly T[], maximo = 3): T[] {
+  return [...habilidades.filter((h) => h.nivel === "no_lo_domina"), ...habilidades.filter((h) => h.nivel === "en_proceso")].slice(0, maximo);
+}
+
+/** `1 error detectado` / `3 errores detectados`: los confirmados y los posibles, todos. */
+export function textoDeErroresDetectados(cantidad: number): string {
+  return cantidad === 1 ? "1 error detectado" : `${cantidad} errores detectados`;
 }
 
 export type EstadoDeError = "confirmada" | "sospecha";

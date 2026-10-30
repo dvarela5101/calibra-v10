@@ -49,7 +49,7 @@ describe("SinPreguntasNuevas (criterio 16)", () => {
 
   it("la pregunta y el último resultado son títulos h2, y las secciones del resultado, h3", () => {
     expect(html.match(/<h2 /g)).toHaveLength(2);
-    expect(html.match(/<h3 /g)).toHaveLength(3);
+    expect(html.match(/<h3 /g)).toHaveLength(4);
     expect(html).not.toContain("<h1");
   });
 
@@ -60,7 +60,7 @@ describe("SinPreguntasNuevas (criterio 16)", () => {
   });
 
   it("el último resultado trae la fecha, las cifras y no la marca de repetido", () => {
-    expect(texto(html)).toContain("Puntaje global: 63 %");
+    expect(texto(html)).toContain("5 de 8 correctas");
     expect(texto(html).toLowerCase()).not.toContain("repetid");
   });
 
@@ -81,7 +81,7 @@ describe("SinPreguntasNuevas: sin último resultado", () => {
 
   it("no hay encabezado de resultado ni resultado", () => {
     expect(html).not.toContain("Tu último resultado");
-    expect(html).not.toContain("Puntaje global");
+    expect(html).not.toContain("Ver el detalle por habilidad");
     expect(html).not.toContain("<h3");
     expect(html.match(/<h2 /g)).toHaveLength(1);
   });

@@ -16,7 +16,17 @@ import {
   type BancoCargado,
 } from "./banco-del-proyecto";
 import { COOKIE_ORIGEN } from "../src/lib/leads/origen";
-import { crearClienteAdmin, enviarCredenciales, esperarSesion, expect, leerSesion, test as base, usarTurnstileDePrueba, variable } from "./utilidades";
+import {
+  abrirElDetalleDelResultado,
+  crearClienteAdmin,
+  enviarCredenciales,
+  esperarSesion,
+  expect,
+  leerSesion,
+  test as base,
+  usarTurnstileDePrueba,
+  variable,
+} from "./utilidades";
 
 // HU-009: tomar el diagnóstico sin iniciar sesión, de /diagnostico al resultado, medido en un navegador a 390×844 (`movil`) y a
 // 1280×800 (`escritorio`). La lógica está en src/lib/diagnostico/*.test.ts y en los Vitest de las pantallas; aquí se prueba lo
@@ -678,6 +688,7 @@ async function expectResultadoGuardado(page: Page, banco: BancoCargado, idDiagno
   expect(rows, "el diagnóstico está guardado").toHaveLength(1);
   const guardado = rows[0].resultado;
 
+  await abrirElDetalleDelResultado(page);
   const habilidades = page.getByRole("region", { name: "Habilidades", exact: true }).getByRole("listitem");
   await expect(habilidades).toHaveCount(guardado.habilidades.length);
   for (const [i, h] of guardado.habilidades.entries()) {
@@ -719,11 +730,27 @@ async function expectResultadoGuardado(page: Page, banco: BancoCargado, idDiagno
   }
 }
 
-/** Lo que dice el encabezado del resultado: «Respondiste N preguntas» y «Puntaje global: P %» (D-53 c). */
+/** Lo que dice el resumen del resultado: «P %», «A de R correctas» y «Respondiste N preguntas» (D-79 c, sin «Puntaje global»). */
 async function expectCifras(page: Page, respondidas: number, aciertos: number): Promise<void> {
-  const principal = page.locator("main");
-  await expect(principal).toContainText(respondidas === 1 ? /Respondiste 1 pregunta(?!s)/ : `Respondiste ${respondidas} preguntas`);
-  await expect(principal).toContainText(`Puntaje global: ${Math.round((aciertos * 100) / respondidas)} %`);
+  const resumen = page.getByRole("region", { name: "Resumen de tu resultado", exact: true });
+  await expect(resumen).toContainText(respondidas === 1 ? /Respondiste 1 pregunta(?!s)/ : `Respondiste ${respondidas} preguntas`);
+  await expect(resumen).toContainText(`${Math.round((aciertos * 100) / respondidas)} %`);
+  await expect(resumen).toContainText(`${aciertos} de ${respondidas} ${respondidas === 1 ? "correcta" : "correctas"}`);
+  await expect(resumen.getByRole("img")).toHaveCount(2);
+  await expect(page.locator("main")).not.toContainText("Puntaje global");
+}
+
+/** HU-110: en un teléfono de 375×812, el porcentaje, las dos barras y la leyenda se ven sin hacer scroll al llegar al resultado. */
+async function expectResumenSinScroll(page: Page): Promise<void> {
+  const original = page.viewportSize();
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const resumen = page.getByRole("region", { name: "Resumen de tu resultado", exact: true });
+  await expect(resumen.getByText(/^\d+ %$/), "el porcentaje").toBeInViewport({ ratio: 1 });
+  await expect(resumen.getByRole("img").first(), "la barra del puntaje").toBeInViewport({ ratio: 1 });
+  await expect(resumen.getByRole("img").nth(1), "la barra de niveles").toBeInViewport({ ratio: 1 });
+  await expect(resumen.getByRole("list").first(), "la leyenda").toBeInViewport({ ratio: 1 });
+  if (original) await page.setViewportSize(original);
 }
 
 // ===============================================================================================================
@@ -998,6 +1025,7 @@ test("Recorrido · empezar, responder con el teclado y con doble clic, llegar al
   const aciertos = pasos.filter((p) => p.correcta).length;
   await expect(page.getByText(`${banco.nombreA} · Parcial 1`, { exact: true }).first()).toBeVisible();
   await expectCifras(page, pasos.length, aciertos);
+  await expectResumenSinScroll(page);
   await expectResultadoGuardado(page, banco, idDelPrimero);
   await expectReglasDelProducto(page, "el resultado");
   expect(await enCursoDe(banco, sesion.id), "al terminar ya no hay diagnóstico en curso").toBeNull();
@@ -1520,7 +1548,7 @@ test("Resultado · un diagnóstico con los cuatro niveles, errores y prerrequisi
   expect(formatearDia("2026-10-04")).not.toBe(formatearDia("2026-10-05"));
   await expect(principal.locator("time")).toHaveAttribute("datetime", "2026-10-05T03:30:00.000Z");
   await expectCifras(page, 8, 5);
-  await expect(principal).toContainText("Puntaje global: 63 %");
+  await abrirElDetalleDelResultado(page);
 
   // Habilidades, en el orden guardado
   const habilidades = page.getByRole("region", { name: "Habilidades", exact: true }).getByRole("listitem");
@@ -1602,7 +1630,7 @@ test("Dueño · otra persona, un monitor con una cita que apunta al diagnóstico
   limpieza.anotar(duena.id);
   const sembrado = await sembrarDiagnostico(banco.bd, { idSesionAnonima: duena.id, idEvaluacion: banco.idParcial1 });
   const ruta = `/diagnostico/resultado/${sembrado.id}`;
-  const centinelas = [banco.nombreA, "Puntaje global", "Respondiste 8 preguntas", "calcula la fuerza neta", "confundes energía con potencia", "Conviene repasar antes"];
+  const centinelas = [banco.nombreA, "5 de 8 correctas", "Respondiste 8 preguntas", "calcula la fuerza neta", "confundes energía con potencia", "Conviene repasar antes"];
 
   /** 404 con el aviso del segmento y ni un dato del resultado, en el HTML ni en la pantalla. */
   async function expectNoEncontrado(pagina: Page, respuesta: Response | null, quien: string): Promise<void> {
@@ -1788,7 +1816,7 @@ test("HU-010 · criterios 1, 2, 4, 5, 6 y 7: debajo del resultado deja su contac
     await page.waitForLoadState("networkidle");
 
     await test.step("criterio 4 (P-34): el resultado sale completo y el contacto va después, como paso siguiente", async () => {
-      const puntaje = page.getByText("Puntaje global");
+      const puntaje = page.getByText("5 de 8 correctas", { exact: true });
       await expect(puntaje).toBeVisible();
       const bloque = page.getByRole("region", { name: TITULO_DEL_CONTACTO });
       await expect(bloque).toBeVisible();

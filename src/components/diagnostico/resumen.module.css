@@ -1,0 +1,165 @@
+/*
+ * El resumen del diagnóstico (HU-110, D-79): el porcentaje con su barra, las habilidades por nivel y qué trabajar primero. Es la
+ * misma tarjeta que el encabezado de resultado.module.css. --success, --warn y --alert son solo relleno: el nivel siempre va escrito
+ * en la leyenda, en --text.
+ */
+
+.resumen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  padding: var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+.puntaje {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--e1) var(--e3);
+}
+
+/* La cifra y el % no se separan en dos renglones. */
+.porcentaje {
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.correctas {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.barra {
+  display: flex;
+  block-size: 14px;
+  margin-block-start: calc(-1 * var(--e2));
+  overflow: hidden;
+  background: var(--border);
+  border-radius: var(--r-chico);
+}
+
+.relleno {
+  background: var(--primary);
+}
+
+.niveles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+/* Un tramo por nivel; los 2 px de separación dejan ver el borde entre dos tramos aunque el color se parezca. */
+.barraDeNiveles {
+  display: flex;
+  gap: 2px;
+  block-size: 14px;
+  overflow: hidden;
+  border-radius: var(--r-chico);
+}
+
+.tramo {
+  flex-basis: 0;
+}
+
+.leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2) var(--e4);
+  list-style: none;
+}
+
+.renglonDeLeyenda {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.muestra {
+  flex: none;
+  inline-size: 12px;
+  block-size: 12px;
+  border-radius: 3px;
+}
+
+.lo_domina {
+  background: var(--success);
+}
+
+.en_proceso {
+  background: var(--warn);
+}
+
+.no_lo_domina {
+  background: var(--alert);
+}
+
+/* Sin medir: el gris de los bordes, con un borde más oscuro para que la muestra no se pierda sobre el blanco. */
+.sin_medir {
+  background: var(--border);
+  box-shadow: inset 0 0 0 1px var(--muted);
+}
+
+.queTrabajar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  padding-block-start: var(--e3);
+  border-block-start: 1px solid var(--border);
+}
+
+.titulo {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.habilidades {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  list-style: none;
+}
+
+.habilidad {
+  display: flex;
+  align-items: baseline;
+  gap: var(--e2);
+  min-inline-size: 0;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.habilidad > .muestra {
+  transform: translateY(1px);
+}
+
+.nivel {
+  font-size: 15px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.nota {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* La línea secundaria: materia, Evaluación, fecha y cuántas respondió. */
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e1) var(--e3);
+  padding-block-start: var(--e3);
+  font-size: 15px;
+  color: var(--muted);
+  border-block-start: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}

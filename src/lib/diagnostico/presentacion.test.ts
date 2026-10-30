@@ -6,15 +6,21 @@ import {
   TEXTOS,
   avisoDeCambioDeMateria,
   cifrasDeHabilidad,
+  descripcionDeNiveles,
+  descripcionDelPorcentaje,
   etiquetaDeNivel,
   ordenarErrores,
   prefijoDeError,
   puntajeGlobal,
+  queTrabajar,
   textoDeAciertos,
   textoDeAvance,
-  textoDePuntaje,
+  textoDeErroresDetectados,
+  textoDePorcentaje,
   textoDeRespondidas,
   textoDeTemas,
+  textoDeTramo,
+  tramosDeNiveles,
   textoDeVerMonitores,
 } from "./presentacion";
 
@@ -69,9 +75,9 @@ describe("puntajeGlobal (D-53 c)", () => {
 });
 
 describe("textos del encabezado", () => {
-  it("el puntaje lleva un espacio normal entre la cifra y el %", () => {
-    expect(textoDePuntaje(5, 8)).toBe("Puntaje global: 63 %");
-    expect(textoDePuntaje(5, 8)).not.toMatch(/ /);
+  it("el porcentaje lleva un espacio normal entre la cifra y el %, sin «Puntaje global» (D-79 c)", () => {
+    expect(textoDePorcentaje(5, 8)).toBe("63 %");
+    expect(textoDePorcentaje(5, 8)).not.toMatch(/ /);
   });
 
   it("«Respondiste» va en singular con una pregunta y en plural con las demás", () => {
@@ -84,6 +90,57 @@ describe("textos del encabezado", () => {
   it("«Acertaste A de R»", () => {
     expect(textoDeAciertos(2, 3)).toBe("Acertaste 2 de 3");
     expect(textoDeAciertos(0, 1)).toBe("Acertaste 0 de 1");
+  });
+});
+
+describe("resumen (D-79)", () => {
+  const habilidad = (nivel: NivelHabilidad, descripcion: string = nivel) => ({ nivel, descripcion });
+
+  it("tramosDeNiveles cuenta cada nivel en el orden de la barra y omite los niveles en cero", () => {
+    const habilidades = [
+      habilidad("no_lo_domina"),
+      habilidad("lo_domina"),
+      habilidad("sin_medir"),
+      habilidad("lo_domina"),
+      habilidad("no_lo_domina"),
+    ];
+    expect(tramosDeNiveles(habilidades)).toEqual([
+      { nivel: "lo_domina", cantidad: 2 },
+      { nivel: "no_lo_domina", cantidad: 2 },
+      { nivel: "sin_medir", cantidad: 1 },
+    ]);
+    expect(tramosDeNiveles([])).toEqual([]);
+  });
+
+  it("la leyenda y la descripción de la barra dicen lo mismo, con la etiqueta de quien mira", () => {
+    const tramos = tramosDeNiveles([habilidad("lo_domina"), habilidad("en_proceso"), habilidad("en_proceso"), habilidad("no_lo_domina")]);
+    expect(tramos.map((tramo) => textoDeTramo(tramo, etiquetaDeNivel))).toEqual(["1 Lo dominas", "2 En proceso", "1 No lo dominas"]);
+    expect(descripcionDeNiveles(tramos, etiquetaDeNivel)).toBe("Habilidades por nivel: 1 Lo dominas, 2 En proceso y 1 No lo dominas");
+    expect(textoDeTramo({ nivel: "lo_domina", cantidad: 3 }, () => "Lo domina")).toBe("3 Lo domina");
+  });
+
+  it("la descripción del puntaje lleva el porcentaje y las cifras", () => {
+    expect(descripcionDelPorcentaje(13, 20)).toBe("65 % de respuestas correctas (13 de 20)");
+    expect(() => descripcionDelPorcentaje(21, 20)).toThrow(RangeError);
+  });
+
+  it("queTrabajar pone primero las que no domina y luego las en proceso, en el orden de la materia, hasta 3", () => {
+    const habilidades = [
+      habilidad("en_proceso", "a"),
+      habilidad("lo_domina", "b"),
+      habilidad("no_lo_domina", "c"),
+      habilidad("sin_medir", "d"),
+      habilidad("en_proceso", "e"),
+      habilidad("no_lo_domina", "f"),
+    ];
+    expect(queTrabajar(habilidades).map((h) => h.descripcion)).toEqual(["c", "f", "a"]);
+    expect(queTrabajar(habilidades, 5).map((h) => h.descripcion)).toEqual(["c", "f", "a", "e"]);
+    expect(queTrabajar([habilidad("lo_domina"), habilidad("sin_medir")])).toEqual([]);
+  });
+
+  it("los errores detectados van en singular o plural", () => {
+    expect(textoDeErroresDetectados(1)).toBe("1 error detectado");
+    expect(textoDeErroresDetectados(3)).toBe("3 errores detectados");
   });
 });
 
@@ -194,6 +251,12 @@ describe("TEXTOS", () => {
     expect(TEXTOS.sinErrores).toBe("No detectamos errores concretos en esta prueba.");
     expect(TEXTOS.repasarAntes).toBe("Conviene repasar antes");
     expect(TEXTOS.tituloNoEncontrado).toBe("No encontramos ese resultado");
+  });
+
+  it("los del resumen de HU-110, tal cual", () => {
+    expect(TEXTOS.queTrabajarPrimero).toBe("Qué trabajar primero");
+    expect(TEXTOS.sinQueTrabajar).toBe("No encontramos habilidades por reforzar en esta prueba.");
+    expect(TEXTOS.verDetalle).toBe("Ver el detalle por habilidad");
   });
 
   it("el botón que no está en la HU y que la e2e busca por su nombre (supuesto, A2)", () => {

@@ -11,7 +11,6 @@ import {
   etiquetaDeNivel,
   ordenarErrores,
   prefijoDeError,
-  textoDePuntaje,
   textoDeRespondidas,
   textoDeVerMonitores,
 } from "@/lib/diagnostico/presentacion";
@@ -19,9 +18,11 @@ import { rutaDeDiagnostico } from "@/lib/diagnostico/rutas";
 import { textoDeVeces } from "@/lib/diagnostico/vista-del-monitor";
 import { diaDelNegocio, formatearDia } from "@/lib/fechas";
 import estilos from "./resultado.module.css";
+import { ResumenDelDiagnostico } from "./ResumenDelDiagnostico";
 
 /**
- * El resultado de un diagnóstico (HU-009). Recibe la proyección ya hecha en el servidor (`ResultadoParaMostrar`) y no lee
+ * El resultado de un diagnóstico (HU-009). Primero el resumen (HU-110, D-79), luego las acciones y la ranura del contacto, y al
+ * final el detalle (habilidades, errores y prerrequisitos) en un desplegable cerrado. Recibe la proyección ya hecha en el servidor (`ResultadoParaMostrar`) y no lee
  * datos ni usa hooks: sirve desde un componente de servidor (la página del resultado) y de cliente (el mensaje de D-51), y lo
  * reutilizan HU-011 y, con otro encabezado, HU-022. Todo texto del banco (descripciones, títulos de error, detalles y
  * prerrequisitos) pasa por `TextoDelBanco`; el componente no repasa las preguntas una por una.
@@ -146,40 +147,24 @@ export function ResultadoDelDiagnostico({ resultado, acciones = "completas", niv
   const idHabilidades = `habilidades-${idBase}`;
   return (
     <div className={estilos.resultado}>
-      <div className={estilos.encabezado}>
-        <p className={estilos.materia}>{`${resultado.materia.nombre} · ${resultado.evaluacion.nombre}`}</p>
-        <p className={estilos.dato}>
-          {`${TEXTOS.fecha} `}
-          {/* La hora del negocio, no la del servidor ni la del navegador: un diagnóstico de las 03:30 UTC es del día anterior en Bogotá. */}
-          <time dateTime={resultado.fecha}>{formatearDia(diaDelNegocio(new Date(resultado.fecha)))}</time>
-        </p>
-        <p className={estilos.dato}>{textoDeRespondidas(resultado.respondidas)}</p>
-        <p className={estilos.puntaje}>{textoDePuntaje(resultado.aciertos, resultado.respondidas)}</p>
-      </div>
-
-      <section aria-labelledby={idHabilidades} className={estilos.seccion}>
-        <TituloDeSeccion nivel={nivelDeTitulos} id={idHabilidades}>
-          {TEXTOS.habilidades}
-        </TituloDeSeccion>
-        <ul className={estilos.lista}>
-          {resultado.habilidades.map((habilidad, posicion) => {
-            const { cifra, sinMedir } = cifrasDeHabilidad(habilidad);
-            return (
-              <li key={posicion} className={estilos.tarjeta}>
-                <p className={estilos.descripcion}>
-                  <TextoDelBanco texto={habilidad.descripcion} />
-                </p>
-                <NivelEscrito nivel={habilidad.nivel} />
-                {cifra !== null && <p className={formulario.ayuda}>{cifra}</p>}
-                {sinMedir !== null && <p className={formulario.ayuda}>{sinMedir}</p>}
-              </li>
-            );
-          })}
-        </ul>
+      <section aria-label={TEXTOS.resumen}>
+        <ResumenDelDiagnostico
+          aciertos={resultado.aciertos}
+          respondidas={resultado.respondidas}
+          habilidades={resultado.habilidades}
+          errores={resultado.errores.length}
+          idBase={idBase}
+          nivelDeTitulos={nivelDeTitulos}
+        >
+          <span className={estilos.materia}>{`${resultado.materia.nombre} · ${resultado.evaluacion.nombre}`}</span>
+          <span>
+            {`${TEXTOS.fecha} `}
+            {/* La hora del negocio, no la del servidor ni la del navegador: un diagnóstico de las 03:30 UTC es del día anterior en Bogotá. */}
+            <time dateTime={resultado.fecha}>{formatearDia(diaDelNegocio(new Date(resultado.fecha)))}</time>
+          </span>
+          <span>{textoDeRespondidas(resultado.respondidas)}</span>
+        </ResumenDelDiagnostico>
       </section>
-
-      <ErroresDetectados errores={resultado.errores} idBase={idBase} nivelDeTitulos={nivelDeTitulos} />
-      <RepasarAntes prerrequisitos={resultado.prerrequisitos} idBase={idBase} nivelDeTitulos={nivelDeTitulos} />
 
       {acciones === "completas" && (
         <div className={estilos.acciones}>
@@ -193,6 +178,36 @@ export function ResultadoDelDiagnostico({ resultado, acciones = "completas", niv
       )}
 
       {ranura ? <div className={estilos.ranura}>{ranura}</div> : null}
+
+      {/* D-79 a: el detalle es opcional y va cerrado; el resumen ya dice qué trabajar. */}
+      <details className={estilos.plegable}>
+        <summary className={estilos.resumenDelPlegable}>{TEXTOS.verDetalle}</summary>
+        <div className={estilos.contenidoDelPlegable}>
+          <section aria-labelledby={idHabilidades} className={estilos.seccion}>
+            <TituloDeSeccion nivel={nivelDeTitulos} id={idHabilidades}>
+              {TEXTOS.habilidades}
+            </TituloDeSeccion>
+            <ul className={estilos.lista}>
+              {resultado.habilidades.map((habilidad, posicion) => {
+                const { cifra, sinMedir } = cifrasDeHabilidad(habilidad);
+                return (
+                  <li key={posicion} className={estilos.tarjeta}>
+                    <p className={estilos.descripcion}>
+                      <TextoDelBanco texto={habilidad.descripcion} />
+                    </p>
+                    <NivelEscrito nivel={habilidad.nivel} />
+                    {cifra !== null && <p className={formulario.ayuda}>{cifra}</p>}
+                    {sinMedir !== null && <p className={formulario.ayuda}>{sinMedir}</p>}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+
+          <ErroresDetectados errores={resultado.errores} idBase={idBase} nivelDeTitulos={nivelDeTitulos} />
+          <RepasarAntes prerrequisitos={resultado.prerrequisitos} idBase={idBase} nivelDeTitulos={nivelDeTitulos} />
+        </div>
+      </details>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import type { Banco, Pregunta } from "../../scripts/contenido/modelo.mts";
 import { dibujarTexto } from "../../src/components/contenido/dibujar";
 import { TEXTOS } from "../../src/lib/diagnostico/vista-del-monitor";
 import { borrarBancoDelProyecto, cargarBancoDelProyecto, type BancoCargado } from "../banco-del-proyecto";
-import { esperarSesion } from "../utilidades";
+import { abrirElDetalleDelResultado, esperarSesion } from "../utilidades";
 import { abrirLaFecha, apartarYPagar, ESPERA, expect, expectReglasDelProducto, test as base, titulo } from "./escenario";
 
 // HU-084 (F1, pasos 1 a 3): un visitante hace el diagnóstico desde la portada, deja su contacto debajo del resultado, vuelve a
@@ -193,13 +193,15 @@ test("del diagnóstico en la portada al monitor que lo abre desde su agenda, con
     const principal = page.locator("main");
     const aciertos = pasos.filter((p) => p.acerto).length;
     await expect(principal).toContainText(`Respondiste ${pasos.length} preguntas`);
-    await expect(principal).toContainText(`Puntaje global: ${Math.round((aciertos * 100) / pasos.length)} %`);
+    await expect(principal).toContainText(`${Math.round((aciertos * 100) / pasos.length)} %`);
+    await expect(principal).toContainText(`${aciertos} de ${pasos.length} correctas`);
 
     const { data, error } = await r.cliente.from("diagnostico").select("resultado_por_habilidad").eq("id", idDiagnostico).single();
     if (error) throw new Error(`leer el diagnóstico: ${error.message}`);
     const guardado = (data as { resultado_por_habilidad: Guardado }).resultado_por_habilidad;
     const sabidas = cifrasDeUnaSolaHabilidad(pasos);
 
+    await abrirElDetalleDelResultado(page);
     const tarjetas = page.getByRole("region", { name: "Habilidades", exact: true }).getByRole("listitem");
     await expect(tarjetas).toHaveCount(guardado.habilidades.length);
     for (const h of guardado.habilidades) {

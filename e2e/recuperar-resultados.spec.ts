@@ -6,7 +6,17 @@ import { sembrarDiagnostico, CLAVES_INTERNAS_DE_EJEMPLO, type DiagnosticoSembrad
 import { desescaparComillas } from "../pruebas/flujo-recibido";
 import { formatearDia } from "../src/lib/fechas";
 import { abrirConexion } from "./banco-del-proyecto";
-import { correoUnico, crearClienteAdmin, esperarCorreo, esperarSesion, expect, leerSesion, test as base, variable } from "./utilidades";
+import {
+  abrirElDetalleDelResultado,
+  correoUnico,
+  crearClienteAdmin,
+  esperarCorreo,
+  esperarSesion,
+  expect,
+  leerSesion,
+  test as base,
+  variable,
+} from "./utilidades";
 
 // HU-031: recuperar los resultados del diagnóstico desde otro dispositivo, con el enlace `/resultados?token=` del correo. Se corre
 // en el movil (390×844) y en el escritorio (1280×800) contra el Supabase local y Mailpit. La lógica del token, del reconstructor y de
@@ -234,6 +244,7 @@ async function htmlVisible(page: Page): Promise<string> {
 }
 
 async function textosDeRegiones(page: Page): Promise<string[]> {
+  await abrirElDetalleDelResultado(page);
   return Promise.all(REGIONES.map((nombre) => page.getByRole("region", { name: nombre, exact: true }).innerText()));
 }
 
@@ -255,6 +266,7 @@ async function expectResultado(page: Page, escenario: Escenario, donde: string):
   await expect(principal, `${donde}: la materia y la Evaluación`).toContainText(`${materia.nombre} · ${NOMBRE_DE_LA_EVALUACION}`);
   await expect(principal, `${donde}: la fecha en hora de Bogotá`).toContainText(`Fecha: ${formatearDia(DIA_EN_BOGOTA)}`);
   await expect(principal, `${donde}: las respondidas`).toContainText("Respondiste 8 preguntas");
+  await abrirElDetalleDelResultado(page);
   for (const nombre of REGIONES) await expect(page.getByRole("region", { name: nombre, exact: true }), `${donde}: ${nombre}`).toBeVisible();
   await expect(page.getByRole("region", { name: "Habilidades", exact: true }).getByRole("listitem")).toHaveCount(5);
   await expect(principal, `${donde}: los niveles escritos`).toContainText("Lo dominas");
