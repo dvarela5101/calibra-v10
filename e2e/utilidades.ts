@@ -325,14 +325,17 @@ export const test = base.extend<{ cuentas: Cuentas }>({
 // ---------------------------------------------------------------------------
 
 /**
- * HU-110 (D-79 a): el detalle del resultado de la persona (habilidades, errores y prerrequisitos) va en un desplegable cerrado. Las
- * pruebas que lo leen lo abren antes; si ya está abierto, no lo cierran.
+ * HU-110 (D-79 a): el detalle del resultado de la persona (habilidades y prerrequisitos) va en un desplegable cerrado, y desde
+ * HU-112 (D-81 a) los errores en otro, dentro del resumen. Las pruebas que los leen los abren antes; si ya están abiertos, no los
+ * cierran. Sin errores, el resumen no tiene ese desplegable.
  */
 export async function abrirElDetalleDelResultado(page: Page): Promise<void> {
   const resumen = page.locator("summary", { hasText: TEXTOS_DEL_DIAGNOSTICO.verDetalle });
   await expect(resumen).toBeVisible();
   if (!(await resumen.evaluate((s) => (s.parentElement as HTMLDetailsElement).open))) await resumen.click();
   await expect(page.getByRole("region", { name: TEXTOS_DEL_DIAGNOSTICO.habilidades, exact: true })).toBeVisible();
+  const errores = page.locator("summary", { hasText: /^Ver (el error detectado|los \d+ errores detectados)$/ });
+  if ((await errores.count()) > 0 && !(await errores.evaluate((s) => (s.parentElement as HTMLDetailsElement).open))) await errores.click();
 }
 
 export { expect };

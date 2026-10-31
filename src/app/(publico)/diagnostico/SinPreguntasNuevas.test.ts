@@ -49,7 +49,7 @@ describe("SinPreguntasNuevas (criterio 16)", () => {
 
   it("la pregunta y el último resultado son títulos h2, y las secciones del resultado, h3", () => {
     expect(html.match(/<h2 /g)).toHaveLength(2);
-    expect(html.match(/<h3 /g)).toHaveLength(4);
+    expect(html.match(/<h3 /g)).toHaveLength(3); // «Qué trabajar primero», «Habilidades» y «Conviene repasar antes»: los errores van sin título (HU-112)
     expect(html).not.toContain("<h1");
   });
 

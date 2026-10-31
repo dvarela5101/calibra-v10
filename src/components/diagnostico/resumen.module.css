@@ -152,6 +152,23 @@
   color: var(--muted);
 }
 
+/* HU-112 (D-81 a): los errores, cerrados por defecto. list-item conserva el triángulo que dice si está abierto; 44 px de alto. */
+.errores {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.verErrores {
+  display: list-item;
+  min-block-size: var(--toque-min);
+  padding-block: var(--e2);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+}
+
 /* La línea secundaria: materia, Evaluación, fecha y cuántas respondió. */
 .pie {
   display: flex;

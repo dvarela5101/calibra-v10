@@ -703,7 +703,9 @@ async function expectResultadoGuardado(page: Page, banco: BancoCargado, idDiagno
 
   const errores = page.getByRole("region", { name: "Errores", exact: true });
   if (guardado.errores.length === 0) {
-    await expect(errores).toContainText("No detectamos errores concretos en esta prueba.");
+    // HU-112 (D-81 c): sin errores no hay región, y el resumen lo dice debajo de «Qué trabajar primero».
+    await expect(errores).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "Qué trabajar primero", exact: true })).toContainText("No detectamos errores concretos en esta prueba.");
   } else {
     const lista = errores.getByRole("listitem");
     await expect(lista).toHaveCount(guardado.errores.length);
