@@ -279,15 +279,33 @@ class Cajero extends Thread {
 solución: cada Cajero construye su propia Cuenta, así que los dos threads trabajan sobre objetos distintos: no hay dato compartido y, por tanto, no hay condición de carrera, aunque ejecuten el mismo código. Cada thread suma sus 1000 consignaciones sobre su cuenta y la imprime: 1000 y 1000 en cualquier orden. Compartir el código (A) o ser un programa con threads (B) no crea la carrera, y saldo++ solo es un problema cuando dos threads tocan el mismo saldo (D); además, consignar ya es synchronized. Respuesta: C.
 
 ### P101 · dificultad 1 · kc: conceptos-concurrencia · borrador · origen: ia (sonnet-5.5)
-Un proceso tiene tres threads. ¿Cuál afirmación sobre lo que es propio de cada thread y lo que comparten es correcta?
+Un juego guarda el marcador en un campo `static` y cada partida usa una variable local para contar rondas. El hilo `a` termina por completo (con `join`) antes de que empiece `b`.
 
-- A) Los tres threads comparten la pila, así que cada uno ve las variables locales de los otros; lo único propio de cada uno son los registros · [conc-pila-compartida]
-- B) Cada thread tiene su propia copia de los datos globales del proceso, y solo el código es común a los tres · [conc-thread-memoria-propia] crees que cada thread tiene su propia copia de los datos, cuando los datos del proceso son comunes a todos sus threads
-- C) Cada thread tiene sus propios registros, su contador de programa y su pila; los tres comparten el código, los datos y los archivos abiertos · CORRECTA
-- D) Nada se comparte: cada thread tiene su propia memoria completa y sus propios archivos, como si fuera un proceso aparte · [conc-thread-memoria-propia]
+```
+public class Partida {
+    static int puntaje = 0;
+    static void jugar(int turnos) {
+        int rondas = 0;
+        for (int i = 0; i < turnos; i++) rondas++;
+        System.out.println(rondas + " " + puntaje);
+    }
+    public static void main(String[] args) throws InterruptedException {
+        Thread a = new Thread(() -> { puntaje = 50; jugar(3); });
+        Thread b = new Thread(() -> jugar(5));
+        a.start(); a.join();
+        b.start();
+    }
+}
+```
 
-solución: un thread es un flujo de control dentro de un proceso. Para ser un flujo propio necesita sus registros, su contador de programa (EIP, la próxima instrucción que va a ejecutar) y su pila (las llamadas y las variables locales). Lo demás pertenece al proceso y es común: el código, los datos y los archivos abiertos. Por eso un thread puede ver lo que otro escribió en un dato global, pero no ve las variables locales de otro. A es falsa: si compartieran la pila no podrían estar en funciones distintas a la vez. B y D les dan memoria propia, como a un proceso aparte, y eso no ocurre en un thread. Respuesta: C.
+El hilo `a` imprime `3 50`. ¿Qué imprime el hilo `b`?
 
+- A) `5 0`: cada thread tiene su propia copia de los datos, así que `b` no ve el 50 que escribió `a` · [conc-thread-memoria-propia] crees que cada thread tiene su propia copia de los datos, cuando los datos del proceso son comunes a todos sus threads
+- B) `8 50`: la variable local `rondas` está en una pila compartida, así que `b` sigue contando desde las 3 rondas de `a` · [conc-pila-compartida] crees que los threads comparten la pila, cuando cada thread tiene la suya y sus variables locales no se mezclan
+- C) `5 50`: `rondas` vive en la pila propia de `b` y empieza en 0, mientras que `puntaje` está en los datos del proceso y `b` ve el 50 que dejó `a` · CORRECTA
+- D) Un error: `b` no puede leer `puntaje` porque el valor lo escribió otro thread y esa memoria es privada de `a` · [conc-thread-memoria-propia] crees que lo que escribe un thread es privado de ese thread, cuando los datos del proceso son comunes a todos
+
+solución: un `static` está en los datos del proceso, que todos los threads comparten. Como `a` ya terminó, el 50 está escrito y `b` lo lee: `puntaje` vale 50 (A y D suponen una memoria propia por thread). Una variable local vive en la pila del thread que ejecuta el método, y cada thread tiene su pila. Por eso `rondas` de `b` empieza en 0 y cuenta 5 vueltas, sin rastro de las 3 de `a` (B supone una pila compartida). Se imprime `5 50`. Respuesta: C.
 ### P102 · dificultad 2 · kc: conceptos-concurrencia · borrador · origen: ia (sonnet-5.5)
 Un procesador tiene 6 núcleos físicos, todos con SMT de dos vías: 2 son núcleos de rendimiento y 4 son núcleos de eficiencia. Se va a ejecutar un programa que descarga y guarda archivos, y que pasa casi todo el tiempo esperando la red y el disco, con muy poco cálculo. ¿Cuántos núcleos lógicos ve el sistema operativo y en qué tipo de núcleo conviene más ejecutarlo?
 

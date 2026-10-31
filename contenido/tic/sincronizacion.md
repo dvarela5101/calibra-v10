@@ -133,25 +133,23 @@ solución: `wait()` solo puede llamarse cuando el thread es dueño del monitor d
 solución: synchronized toma el monitor del objeto sobre el que se llama el método. Dos threads que usan el mismo objeto se excluyen entre sí, y cada thread con otro objeto tiene otro monitor, por lo que A es falsa. B es falsa porque el thread espera por el monitor, no por una condición; para eso existe `wait()`. C es falsa: `wait()` y `notify()` exigen estar dentro de código synchronized sobre el mismo objeto. Respuesta: D.
 
 ### P26 · dificultad 1 · kc: espera-pasiva · borrador · origen: ia (sonnet-5.5)
-Un método synchronized de un buffer debe esperar mientras no haya espacio, es decir, mientras `cupos == 0`. ¿Cuál es la forma correcta de esperar con `wait()`?
+Un buffer lleva la cuenta de `cupos` libres. `depositar()` debe esperar mientras `cupos == 0` y luego ocupar un cupo; `retirar()` libera un cupo y debe avisar a los que esperan. Varios threads usan el mismo buffer. ¿Cuál par de métodos está bien escrito?
 
-- A) `while (cupos == 0) { wait(); }` dentro del método synchronized · CORRECTA
-- B) `if (cupos == 0) { wait(); }` dentro del método synchronized · [pasiva-if-en-vez-de-while]
-- C) `while (cupos == 0) { wait(); }` en un método que no es synchronized · [monitor-wait-fuera-de-synchronized]
-- D) No escribir ninguna espera: marcar el método como synchronized basta para que el thread aguarde hasta que haya cupos · [monitor-synchronized-espera-sola]
+- A) `public synchronized void depositar() throws InterruptedException { while (cupos == 0) wait(); cupos--; }` y `public synchronized void retirar() { cupos++; notifyAll(); }` · CORRECTA
+- B) `public synchronized void depositar() throws InterruptedException { if (cupos == 0) wait(); cupos--; }` y `public synchronized void retirar() { cupos++; notifyAll(); }` · [pasiva-if-en-vez-de-while]
+- C) `public synchronized void depositar() throws InterruptedException { while (cupos == 0) wait(); cupos--; }` y `public synchronized void retirar() { cupos++; }` · [pasiva-sin-notify]
+- D) `public void depositar() throws InterruptedException { while (cupos == 0) wait(); cupos--; }` y `public synchronized void retirar() { cupos++; notifyAll(); }` · [pasiva-wait-retiene-el-monitor] crees que un thread dormido en wait sigue siendo dueño del monitor y por eso quitas synchronized a depositar para que retirar pueda entrar
 
-solución: la espera pasiva se escribe como un while que repite la pregunta, con `wait()` dentro, en un método synchronized. El while hace que el thread vuelva a revisar `cupos == 0` cada vez que despierta (puede despertar y encontrar la condición otra vez falsa). El if revisa una sola vez. Sin synchronized, `wait()` lanza IllegalMonitorStateException. Y synchronized solo da exclusión mutua, no espera por una condición. Respuesta: A.
-
+solución: la espera pasiva necesita tres cosas: un while que repite la pregunta, `wait()` dentro de un método synchronized y un aviso cuando la condición cambia. A las cumple todas. En B el if revisa `cupos == 0` una sola vez: si el thread despierta y otro ya se llevó el cupo, sigue con `cupos--` y queda en -1. En C nadie despierta a los dormidos: `retirar()` cambia `cupos` pero sin `notify()` ni `notifyAll()` los threads de `depositar()` siguen dormidos. En D, `wait()` exige ser dueño del monitor y lanza IllegalMonitorStateException si `depositar()` no es synchronized; además es innecesario, porque `wait()` suelta el monitor mientras el thread duerme, así que `retirar()` sí puede entrar. Respuesta: A.
 ### P27 · dificultad 2 · kc: espera-pasiva · borrador · origen: ia (sonnet-5.5)
 ¿Cuál afirmación sobre `notify()` es correcta?
 
 - A) Despierta a todos los threads dormidos en `wait()` sobre ese objeto · [pasiva-notify-despierta-a-todos]
 - B) Si en ese momento ningún thread espera, el aviso queda guardado y despierta al primero que llegue a `wait()` más tarde · [pasiva-notify-se-guarda]
-- C) Puede llamarse desde cualquier método de la clase, sin ser dueño del monitor · [monitor-wait-fuera-de-synchronized]
+- C) Es opcional: un thread dormido en `wait()` se entera solo cuando cambia la variable que esperaba, aunque nadie llame a `notify()` · [pasiva-sin-notify]
 - D) Despierta como máximo a un thread dormido en `wait()` sobre ese objeto; si no hay ninguno, no hace nada · CORRECTA
 
-solución: `notify()` elige a un solo thread entre los dormidos en ese monitor (el que decide la JVM). El que despierta debe esperar a recuperar el monitor y vuelve a evaluar su condición. Para despertar a todos se usa `notifyAll()`. Si nadie espera, el aviso se pierde: no se guarda. Y como `wait()`, `notify()` exige que el thread esté dentro de código synchronized del objeto. Respuesta: D.
-
+solución: `notify()` elige a un solo thread entre los dormidos en ese monitor (el que decide la JVM). El que despierta debe esperar a recuperar el monitor y vuelve a evaluar su condición. Para despertar a todos se usa `notifyAll()` (A). Si nadie espera, el aviso se pierde: no se guarda (B). Y un thread dormido no se entera solo de que cambió una variable: sin un `notify()` o `notifyAll()` sigue dormido (C). Respuesta: D.
 ### P28 · dificultad 2 · kc: espera-pasiva · borrador · origen: ia (sonnet-5.5)
 Este método de un buffer con varios consumidores a veces deja `cantidad` en -1.
 
@@ -271,11 +269,10 @@ imp.tomar();
 
 - A) Cambiar `yield()` por `sleep(1000)`, para que la espera sea pasiva · [espera-sleep-es-pasiva]
 - B) Reunir ambos pasos en un método synchronized `tomarSiHay()` que revisa, descuenta y devuelve true o false, y repetir `yield()` mientras devuelva false · CORRECTA
-- C) Ninguno: `hayLibre()` y `tomar()` ya son synchronized, así que el par es seguro · [monitor-pregunta-y-toma-separados]
+- C) Ninguno: `yield()` duerme al thread hasta que lo despierten, así que nunca habrá dos threads consultando `hayLibre()` a la vez · [espera-yield-duerme]
 - D) Escribir `hayLibre()` como `libres > 1`, para dejar un margen y que nunca se pase de las 3 · [espera-condicion-disponibilidad-mal]
 
-solución: el fallo ocurre porque dos threads pueden recibir true de `hayLibre()` antes de que alguno ejecute `tomar()`. En la espera semiactiva, preguntar y tomar deben ser una sola operación atómica: un método synchronized que, si hay impresora, la descuenta y devuelve true, y si no devuelve false. El ciclo queda `while (!imp.tomarSiHay()) Thread.yield();`. A cambia el tipo de espera pero no la atomicidad. C ignora el hueco entre las dos llamadas. D deja una impresora sin usar y tampoco elimina el hueco. Respuesta: B.
-
+solución: el fallo ocurre porque dos threads pueden recibir true de `hayLibre()` antes de que alguno ejecute `tomar()`. En la espera semiactiva, preguntar y tomar deben ser una sola operación atómica: un método synchronized que, si hay impresora, la descuenta y devuelve true, y si no devuelve false. El ciclo queda `while (!imp.tomarSiHay()) Thread.yield();`. A cambia el tipo de espera pero no la atomicidad. C supone que `yield()` duerme al thread, pero solo cede el turno: el thread sigue listo y varios pueden consultar a la vez, así que el hueco entre las dos llamadas sigue ahí. D deja una impresora sin usar y tampoco elimina el hueco. Respuesta: B.
 ### P34 · dificultad 3 · kc: estados-y-esperas · borrador · origen: ia (sonnet-5.5)
 Cuatro camiones ejecutan este código sobre el mismo Muelle. Ninguno sale del muelle mientras los otros van llegando.
 
@@ -481,34 +478,34 @@ Una sala de urgencias tiene 8 camas. Cuando queda una libre se atiende primero a
 solución: para ceder el paso, el regular necesita saber cuántos prioritarios están esperando: el contador sube al llegar el prioritario y baja cuando este consigue cama. En A nadie mira a los prioritarios, así que un regular puede quedarse con la cama antes que ellos. En C se cuentan los prioritarios que ya están atendidos y no los que esperan, de modo que el regular pasa aunque haya fila de prioritarios. En D el contador nunca baja: tras el primer prioritario, los regulares esperan para siempre. Respuesta: B.
 
 ### P48 · dificultad 2 · kc: prioridad-y-turnos · borrador · origen: ia (sonnet-5.5)
-Un laboratorio tiene 4 licencias de un programa de simulación y da prioridad a las solicitudes de los investigadores sobre las de los estudiantes. Su monitor tiene estos métodos; `devolver()` solo hace `enUso--` y notifyAll.
+Un estudio de grabación tiene 2 cabinas y quiere que las reservas pasen antes que quienes llegan sin reserva. Este es su monitor; `salir()` suma 1 a `libres` y llama a `notifyAll()`.
 
 ```
-class Licencias {
-    private int enUso = 0;
-    private int investigadoresEsperando = 0;
+class Estudio {
+    private int libres = 2;
+    private int reservasPendientes = 0;
 
-    public synchronized void pedirInvestigador() throws InterruptedException {
-        investigadoresEsperando++;
-        while (enUso >= 4) wait();
-        enUso++;
+    public synchronized void entrarConReserva() throws InterruptedException {
+        reservasPendientes++;
+        reservasPendientes--;
+        while (libres == 0) wait();
+        libres--;
     }
-    public synchronized void pedirEstudiante() throws InterruptedException {
-        while (enUso >= 4 || investigadoresEsperando > 0) wait();
-        enUso++;
+    public synchronized void entrarSinReserva() throws InterruptedException {
+        while (libres == 0 || reservasPendientes > 0) wait();
+        libres--;
     }
 }
 ```
 
-Desde que llega el primer investigador, ningún estudiante vuelve a conseguir licencia, aunque casi todas estén libres y ningún investigador esté esperando. ¿Qué cambio lo corrige sin quitar la prioridad?
+Las 2 cabinas están ocupadas. Llega el thread R y llama a `entrarConReserva()`: queda esperando. Después llega el thread S y llama a `entrarSinReserva()`: también queda esperando. Entonces un tercer thread sale de una cabina y ejecuta `salir()`. ¿Qué afirmación sobre lo que puede pasar es correcta?
 
-- A) Quitar `|| investigadoresEsperando > 0` de la condición de `pedirEstudiante` · [turno-normal-pasa-con-vip]
-- B) Cambiar la condición del estudiante para que mire cuántos investigadores ya tienen una licencia en uso · [turno-sin-contar-vip-esperando]
-- C) Poner `investigadoresEsperando = 0` dentro de `devolver()`, para que los estudiantes pasen cada vez que alguien libera una licencia · [turno-normal-pasa-con-vip]
-- D) Restar 1 a `investigadoresEsperando` en `pedirInvestigador`, justo después del while y antes de `enUso++` · CORRECTA
+- A) Nada garantiza que R entre antes que S: si S toma el monitor primero, ve `reservasPendientes` en 0 y se queda con la cabina mientras R sigue esperando · CORRECTA
+- B) S puede entrar, pero solo después de que R consiga cabina, porque mientras R espera `reservasPendientes` vale 1 y la condición de S lo bloquea · [turno-sin-contar-vip-esperando] crees que el contador sigue marcando a la reserva que espera, pero ya lo restaste antes del while y no lleva la cuenta de las que esperan
+- C) S no podrá entrar después aunque queden cabinas libres, porque `reservasPendientes` solo sube y nunca baja, y su condición siempre se cumple · [turno-contador-vip-no-baja] crees que el contador de reservas nunca se resta, pero aquí se resta antes del while
+- D) Si R y S compiten por la cabina gana S, porque quien llega sin reserva solo necesita que `libres` sea mayor que 0, y R no la consigue · [turno-normal-pasa-con-vip]
 
-solución: `investigadoresEsperando` sube cuando llega un investigador, pero nunca baja; apenas vale 1 o más, la condición del estudiante siempre se cumple y este espera sin fin. Cuando el investigador sale del while ya consiguió licencia y deja de estar esperando, así que debe restar 1 antes de ocuparla. Quitar la condición (A) o poner el contador en 0 cada vez que se libera una licencia (C) deja pasar estudiantes mientras hay investigadores esperando. Contar a los investigadores que ya usan licencia (B) tampoco detecta a los que esperan. Respuesta: D.
-
+solución: en `entrarConReserva()` el contador sube y baja antes del `while`, así que mientras R duerme `reservasPendientes` vale 0 y nadie con prioridad figura como esperando. Al ejecutar `salir()`, `libres` pasa a 1 y `notifyAll()` despierta a R y a S; cada uno vuelve a evaluar su condición cuando le toca el monitor. Si entra primero S, ve `libres == 1` y `reservasPendientes == 0`, toma la cabina, y R vuelve a dormir: la prioridad se rompió. Por eso B es falsa: el contador no marca a R, así que S no queda bloqueado por él. C es falsa: el contador vale 0, no se queda subido, y S sí puede entrar cuando haya cabina libre. D es falsa por exceso: S no gana siempre, porque si entra primero R, la toma R y S sigue esperando; el orden lo decide el planificador, no el tipo de thread. Lo correcto es lo de A: no hay garantía de que R pase antes. Respuesta: A.
 ### P49 · dificultad 3 · kc: prioridad-y-turnos · borrador · origen: ia (sonnet-5.5)
 Una vía compartida usa esta regla. Un tren entra solo si la vía está libre y se cumple una de dos cosas: es el turno de su lado, o el otro lado no tiene trenes esperando. Al salir un tren, el turno pasa al otro lado si ese lado tiene trenes esperando; si no, el turno se queda en el mismo lado. Al salir también se hace notifyAll. Un tren acaba de salir y la vía quedó libre; el turno es del lado A, esperan 3 trenes en A y 1 en B, no llegan trenes nuevos y cada tren sale apenas entra. ¿En qué orden entran?
 
