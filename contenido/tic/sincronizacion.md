@@ -43,6 +43,10 @@ mc: turno-contador-vip-no-baja · prioridad-y-turnos · sumas al contador de VIP
 mc: turno-sin-variable-de-turno · prioridad-y-turnos · alternas el paso sin una variable de turno y esperas que la alternancia salga sola
 mc: turno-lado-entra-siempre · prioridad-y-turnos · dejas que un lado entre mientras tenga trenes esperando, y el otro lado nunca llega a pasar
 mc: turno-cede-a-lado-vacio · prioridad-y-turnos · cedes el turno aunque el otro lado no tenga a nadie esperando, y el tren de este lado espera para siempre
+mc: espera-sleep-libera-candado · estados-y-esperas · crees que sleep() libera el candado del monitor mientras el thread duerme, como lo hace wait()
+mc: espera-wait-retiene-candado · estados-y-esperas · crees que wait() deja al thread bloqueado pero dueño del candado, de modo que nadie más puede entrar al monitor
+mc: espera-cambio-copia-todo · estados-y-esperas · crees que en el cambio de contexto el sistema operativo copia todo el proceso, cuando solo guarda y restaura el estado del thread (registros y contador de programa) en su TCB
+mc: espera-quantum-bloquea · estados-y-esperas · confundes el quantum con una causa de bloqueo: crees que agotarlo deja al thread bloqueado, o que un thread dormido vuelve a listo cuando termina el quantum de otro
 
 ## Preguntas
 
@@ -477,26 +481,33 @@ Una sala de urgencias tiene 8 camas. Cuando queda una libre se atiende primero a
 solución: para ceder el paso, el regular necesita saber cuántos prioritarios están esperando: el contador sube al llegar el prioritario y baja cuando este consigue cama. En A nadie mira a los prioritarios, así que un regular puede quedarse con la cama antes que ellos. En C se cuentan los prioritarios que ya están atendidos y no los que esperan, de modo que el regular pasa aunque haya fila de prioritarios. En D el contador nunca baja: tras el primer prioritario, los regulares esperan para siempre. Respuesta: B.
 
 ### P48 · dificultad 2 · kc: prioridad-y-turnos · borrador · origen: ia (sonnet-5.5)
-Una terminal de buses tiene 6 andenes y da prioridad a los buses expreso. Su monitor tiene este método de llegada; el método `salir()` solo hace `ocupados--` y notifyAll.
+Un laboratorio tiene 4 licencias de un programa de simulación y da prioridad a las solicitudes de los investigadores sobre las de los estudiantes. Su monitor tiene estos métodos; `devolver()` solo hace `enUso--` y notifyAll.
 
 ```
-public synchronized void llegar(boolean expreso) throws InterruptedException {
-    if (expreso) expresosEnCola++;
-    while (ocupados == 6 || (!expreso && expresosEnCola > 0)) {
-        wait();
+class Licencias {
+    private int enUso = 0;
+    private int investigadoresEsperando = 0;
+
+    public synchronized void pedirInvestigador() throws InterruptedException {
+        investigadoresEsperando++;
+        while (enUso >= 4) wait();
+        enUso++;
     }
-    ocupados++;
+    public synchronized void pedirEstudiante() throws InterruptedException {
+        while (enUso >= 4 || investigadoresEsperando > 0) wait();
+        enUso++;
+    }
 }
 ```
 
-Desde que entra el primer bus expreso, ningún bus regular vuelve a ocupar andén, aunque la terminal esté casi vacía y no haya expresos en cola. ¿Qué cambio lo corrige sin quitar la prioridad?
+Desde que llega el primer investigador, ningún estudiante vuelve a conseguir licencia, aunque casi todas estén libres y ningún investigador esté esperando. ¿Qué cambio lo corrige sin quitar la prioridad?
 
-- A) Quitar la parte `!expreso && expresosEnCola > 0` de la condición del while · [turno-normal-pasa-con-vip]
-- B) Cambiar la condición del regular para que mire cuántos expresos están ya en un andén · [turno-sin-contar-vip-esperando]
-- C) Poner `expresosEnCola = 0` dentro de `salir()`, para que los regulares pasen cuando algún bus se va · [turno-normal-pasa-con-vip]
-- D) Restar con `if (expreso) expresosEnCola--;` justo después del while y antes de `ocupados++` · CORRECTA
+- A) Quitar `|| investigadoresEsperando > 0` de la condición de `pedirEstudiante` · [turno-normal-pasa-con-vip]
+- B) Cambiar la condición del estudiante para que mire cuántos investigadores ya tienen una licencia en uso · [turno-sin-contar-vip-esperando]
+- C) Poner `investigadoresEsperando = 0` dentro de `devolver()`, para que los estudiantes pasen cada vez que alguien libera una licencia · [turno-normal-pasa-con-vip]
+- D) Restar 1 a `investigadoresEsperando` en `pedirInvestigador`, justo después del while y antes de `enUso++` · CORRECTA
 
-solución: `expresosEnCola` sube cuando llega un expreso, pero nunca baja; una vez que vale 1 o más, la condición del regular siempre se cumple y este espera. Cuando el expreso sale del while ya consiguió andén y deja de estar en cola, así que debe restar 1 antes de ocuparlo. Quitar la condición (A) o poner el contador en 0 cada vez que un bus sale (C) deja pasar regulares mientras hay expresos esperando. Contar los expresos que ya ocupan andén (B) tampoco detecta a los que esperan. Respuesta: D.
+solución: `investigadoresEsperando` sube cuando llega un investigador, pero nunca baja; apenas vale 1 o más, la condición del estudiante siempre se cumple y este espera sin fin. Cuando el investigador sale del while ya consiguió licencia y deja de estar esperando, así que debe restar 1 antes de ocuparla. Quitar la condición (A) o poner el contador en 0 cada vez que se libera una licencia (C) deja pasar estudiantes mientras hay investigadores esperando. Contar a los investigadores que ya usan licencia (B) tampoco detecta a los que esperan. Respuesta: D.
 
 ### P49 · dificultad 3 · kc: prioridad-y-turnos · borrador · origen: ia (sonnet-5.5)
 Una vía compartida usa esta regla. Un tren entra solo si la vía está libre y se cumple una de dos cosas: es el turno de su lado, o el otro lado no tiene trenes esperando. Al salir un tren, el turno pasa al otro lado si ese lado tiene trenes esperando; si no, el turno se queda en el mismo lado. Al salir también se hace notifyAll. Un tren acaba de salir y la vía quedó libre; el turno es del lado A, esperan 3 trenes en A y 1 en B, no llegan trenes nuevos y cada tren sale apenas entra. ¿En qué orden entran?
@@ -517,3 +528,47 @@ El monitor de una pista de aterrizaje da prioridad a los aviones en emergencia s
 - D) Para nada necesario: como la pista solo admite un avión a la vez, las emergencias ya pasan primero · [turno-normal-pasa-con-vip]
 
 solución: la prioridad depende de quién espera, no de quién ya usa la pista. El contador debe subir cuando una emergencia llega a esperar y bajar cuando entra; un avión comercial espera mientras valga más que 0. Si cuenta las emergencias que ya están en la pista (C), no detecta la fila. Si nunca baja (B), los comerciales quedan bloqueados para siempre. Que la pista admita un solo avión (D) no distingue tipos de avión y no da ninguna prioridad. Respuesta: A.
+
+### P104 · dificultad 1 · kc: estados-y-esperas · borrador · origen: ia (sonnet-5.5)
+En un computador con un solo núcleo ocurren dos eventos distintos: (i) a un thread que está ejecutando se le acaba el quantum; (ii) otro thread llama a wait() dentro de un método synchronized. ¿Cuál afirmación es correcta?
+
+- A) En (i) el thread pasa a bloqueado hasta que el sistema operativo lo reactive; en (ii) queda bloqueado y libera el candado · [espera-quantum-bloquea]
+- B) En (i) una interrupción del sistema operativo lo deja en listo y su estado se guarda en su TCB; en (ii) queda bloqueado y libera el candado · CORRECTA
+- C) En (i) el sistema operativo copia toda la memoria del proceso para dar el procesador al siguiente thread; en (ii) queda bloqueado y libera el candado · [espera-cambio-copia-todo]
+- D) En (i) una interrupción del sistema operativo lo deja en listo y su estado se guarda en su TCB; en (ii) queda bloqueado pero sigue siendo dueño del candado · [espera-wait-retiene-candado]
+
+solución: cuando se acaba el quantum, el sistema operativo recibe una interrupción, saca al thread del procesador y guarda su estado en su TCB; el thread no espera ningún evento, solo su turno, así que queda listo (A lo confunde con un bloqueo, y C inventa una copia de todo el proceso: solo se guarda y se restaura el estado). Con wait() el thread queda bloqueado hasta que otro lo avise con notify o notifyAll, y suelta el candado del monitor para que otros puedan entrar; si lo conservara, nadie podría cambiar la condición que espera (D). Respuesta: B.
+
+### P105 · dificultad 2 · kc: estados-y-esperas · borrador · origen: ia (sonnet-5.5)
+Un objeto tiene varios métodos synchronized. El thread T1 llama a uno de ellos en el instante 0 y lo ejecuta con una de estas tres versiones del cuerpo; a los 100 ms, el thread T2 llama a otro método synchronized del mismo objeto. Nadie llama notify ni notifyAll.
+
+```
+// versión X
+Thread.sleep(500);
+
+// versión Y
+wait(500);
+
+// versión Z
+long fin = System.currentTimeMillis() + 500;
+while (System.currentTimeMillis() < fin) Thread.yield();
+```
+
+¿En cuál de las versiones puede T2 entrar al método antes de que pasen los 500 ms?
+
+- A) En X y en Y, porque en ambas T1 queda bloqueado por un tiempo y suelta el candado mientras tanto · [espera-sleep-libera-candado]
+- B) En Y y en Z, porque yield() deja al thread bloqueado y por eso suelta el candado · [espera-yield-duerme] crees que yield() deja al thread bloqueado, cuando solo cede el turno y sigue listo con el candado
+- C) Solo en Y, porque wait() libera el candado, mientras que sleep() y yield() mantienen el candado de T1 · CORRECTA
+- D) En ninguna, porque wait() conserva el candado hasta que alguien llame notify · [espera-wait-retiene-candado]
+
+solución: T2 solo puede entrar cuando T1 no tiene el candado del objeto. En X, sleep deja a T1 bloqueado por 500 ms pero con el candado en su poder, así que T2 espera hasta que T1 salga del método. En Z, T1 sigue listo y ejecutando: yield() solo cede el turno, no suelta el candado, y el ciclo dura 500 ms. En Y, wait(500) deja a T1 bloqueado y libera el candado, así que T2 entra a los 100 ms; T1 vuelve a listo al cumplirse el tiempo y espera a recuperar el candado. La opción D falla porque wait suelta el candado apenas se ejecuta, sin necesidad de notify. Respuesta: C.
+
+### P106 · dificultad 3 · kc: estados-y-esperas · borrador · origen: ia (sonnet-5.5)
+Un solo núcleo ejecuta los threads A y B del mismo proceso, con un quantum de 30 ms. A entra a un método synchronized de un objeto compartido y, a los 10 ms de su turno, llama a Thread.sleep(100) dentro del método. B está en la cola de listos y también quiere llamar a ese método en cuanto corra. No hay otros threads. ¿Cuál descripción es correcta?
+
+- A) A pasa a bloqueado sin soltar el candado y el sistema operativo guarda su estado en el TCB de A y restaura el de B; B corre, intenta entrar al método y queda bloqueado esperando el candado. A vuelve a listo 110 ms después de empezar su turno, y B solo entra cuando A salga del método · CORRECTA
+- B) A suelta el candado al dormirse; B, ya restaurado, entra al método y lo ejecuta mientras A duerme · [espera-sleep-libera-candado]
+- C) Para dar el procesador a B, el sistema operativo copia toda la memoria del proceso a un lugar aparte y carga la de B; A mantiene el candado mientras duerme · [espera-cambio-copia-todo]
+- D) A queda bloqueado hasta que termina el quantum de B, momento en que vuelve a listo, sin importar cuánto dormía; B entra al método mientras tanto · [espera-quantum-bloquea]
+
+solución: A llama a sleep(100) a los 10 ms, así que queda bloqueado hasta los 110 ms y no suelta el candado del objeto. El cambio de contexto solo guarda el estado de A (registros y contador de programa) en el TCB de A y restaura el TCB de B (C inventa una copia de toda la memoria, que además es la misma para ambos threads). B corre, llama al método y queda bloqueado por el candado, así que durante un rato no hay nadie listo. A vuelve a listo cuando se cumple su tiempo, no cuando acaba el quantum de otro thread (D), recupera el procesador, termina el método y suelta el candado; solo entonces B pasa a listo y puede entrar. La opción B supone que sleep libera el candado, y eso solo lo hace wait. Respuesta: A.

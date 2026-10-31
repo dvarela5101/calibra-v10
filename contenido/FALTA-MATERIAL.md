@@ -63,7 +63,7 @@ Alcance de la corrida de HU-102 (Parcial 2 de Cálculo Integral): las 18 habilid
 | `app-arco` | 3 (1 de dificultad 2, 2 de dificultad 3) | 1 pregunta más, de dificultad 2 |
 | `app-area` | 3 (2 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
 
-Alcance de la corrida de HU-113 (Parciales 3 y 4 de TIC, materia nueva): las 20 habilidades llegan a la meta con 5 borradores cada una, así que no hay filas. Material: programa de 2026-1, talleres de los cuatro módulos (solo el de concurrencia trae soluciones) y los Parciales 2, 3 y 4 de 2026-1 con claves y comentarios. Falta:
+Alcance de la corrida de HU-113 (Parciales 3 y 4 de TIC, materia nueva): las 20 habilidades llegan a la meta con 5 borradores o más cada una, así que no hay filas. Material: programa de 2026-1, talleres de los cuatro módulos (solo los de concurrencia traen soluciones), los Parciales 2, 3 y 4 de 2026-1 con claves y comentarios y, para concurrencia, un Parcial 3 anterior con solución, un simulacro, las diapositivas del módulo y ejemplos de código. Falta:
 
 - **Parciales 1 y 2 de TIC:** las 20 habilidades tienen mapa y catálogo de errores, pero ninguna pregunta. Hace falta otra corrida, y para el Parcial 1 algún parcial anterior (no hay ninguno en el material).
 - **Semanas de las Evaluaciones de TIC:** 5, 8, 13 y 18 son aproximadas. Salen de las fechas de los parciales de 2026-1; la del Parcial 1 es un estimado. Hace falta el cronograma del curso.

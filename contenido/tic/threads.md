@@ -26,6 +26,9 @@ mc: carr-total-exacto · condicion-carrera · ves una suma compartida sin protec
 mc: carr-incremento-atomico · condicion-carrera · crees que x++ es una sola operación que ningún otro thread puede interrumpir
 mc: carr-pausa-arregla · condicion-carrera · crees que una pausa con sleep entre accesos elimina la condición de carrera
 mc: carr-join-es-exclusion · condicion-carrera · crees que join() hace que los threads accedan por turnos al dato compartido, cuando solo espera a que un thread termine
+mc: conc-pila-compartida · conceptos-concurrencia · crees que los threads de un proceso comparten la pila o el contador de programa, cuando cada uno necesita los suyos para estar en un punto distinto del programa
+mc: conc-smt-logicos-mal · conceptos-concurrencia · cuentas mal los núcleos lógicos de un procesador con SMT, ya sea ignorando el SMT o contando más de dos por núcleo físico
+mc: conc-nucleo-tipo-invertido · conceptos-concurrencia · asignas el tipo de núcleo al revés: núcleos de eficiencia para el cálculo intensivo o núcleos de rendimiento para el trabajo que casi solo espera entrada y salida
 
 ## Preguntas
 
@@ -191,7 +194,7 @@ solución: cada start() lanza un thread que imprime tres veces su letra, y main 
 ### P11 · dificultad 1 · kc: condicion-carrera · borrador · origen: ia (sonnet-5.5)
 ¿En cuál de estas situaciones NO hay condición de carrera?
 
-- A) Dos threads hacen cada uno 1000 veces total++ sobre el mismo campo, porque ++ es una instrucción que nadie puede interrumpir · [carr-incremento-atomico]
+- A) Tres threads hacen cada uno 700 veces conteo++ sobre el mismo campo, porque ++ es una instrucción que nadie puede interrumpir · [carr-incremento-atomico]
 - B) Dos threads suman al mismo saldo, pero cada uno espera Thread.sleep(1) entre suma y suma, y así nunca coinciden · [carr-pausa-arregla]
 - C) Cuatro threads suman su parte en un acumulador compartido sin protección, y el total siempre sale exacto · [carr-total-exacto]
 - D) Cuatro threads suman su parte en una variable local de su propio run() y cada uno imprime la suya · CORRECTA
@@ -209,42 +212,43 @@ Tres threads leen el mismo arreglo de temperaturas para calcular, cada uno, un p
 solución: la carrera aparece cuando alguien modifica un dato compartido. Si todos solo leen y los resultados van a variables locales, los accesos concurrentes no se estorban y no se necesita sincronización. Compartir un dato (B) o compartir el código (C) no basta, y una pausa (D) no resuelve una carrera que además no existe. Respuesta: A.
 
 ### P13 · dificultad 2 · kc: condicion-carrera · borrador · origen: ia (sonnet-5.5)
-Dos threads de tipo Suma comparten un mismo objeto Total y cada uno incrementa su campo 1000 veces. El main (declarado con throws InterruptedException) los arranca y espera su fin antes de imprimir:
+Tres threads de tipo Empacador comparten una misma Bodega. Cada uno repite 500 veces la orden de sumar 2 unidades al campo de la bodega. El main (declarado con throws InterruptedException) los arranca y espera su fin antes de imprimir:
 
 ```
-class Total { int suma = 0; }
-class Suma extends Thread {
-    private Total total;
-    Suma(Total total) { this.total = total; }
+class Bodega { int unidades = 0; }
+class Empacador extends Thread {
+    private Bodega bodega;
+    Empacador(Bodega bodega) { this.bodega = bodega; }
     public void run() {
-        for (int k = 0; k < 1000; k++) total.suma++;
+        for (int k = 0; k < 500; k++) bodega.unidades += 2;
     }
 }
 // main:
-Total t = new Total();
-Suma a = new Suma(t), b = new Suma(t);
-a.start(); b.start(); a.join(); b.join();
-System.out.println(t.suma);
+Bodega b = new Bodega();
+Empacador[] e = { new Empacador(b), new Empacador(b), new Empacador(b) };
+for (Empacador x : e) x.start();
+for (Empacador x : e) x.join();
+System.out.println(b.unidades);
 ```
 
 ¿Qué se puede afirmar del valor impreso?
 
-- A) Imprime siempre 2000, porque join() hace que los threads accedan a suma por turnos · [carr-join-es-exclusion]
-- B) Imprime siempre 2000, porque cada thread suma 1000 veces y 1000 + 1000 = 2000 · [carr-total-exacto]
-- C) Puede imprimir menos de 2000, porque suma++ lee, suma y escribe en pasos separados que se pueden intercalar entre los dos threads · CORRECTA
-- D) Imprime siempre 2000, porque total.suma++ es una sola operación que nadie puede interrumpir · [carr-incremento-atomico]
+- A) Imprime siempre 3000, porque join() obliga a que los threads modifiquen unidades uno después de otro · [carr-join-es-exclusion]
+- B) Imprime siempre 3000, porque 3 threads por 500 repeticiones por 2 unidades da exactamente 3000 · [carr-total-exacto]
+- C) Puede imprimir menos de 3000, porque unidades += 2 lee, suma y escribe en pasos separados que se pueden intercalar entre los threads · CORRECTA
+- D) Imprime siempre 3000, porque bodega.unidades += 2 es una sola operación indivisible · [carr-incremento-atomico]
 
-solución: el campo suma es un dato compartido que ambos modifican sin exclusión mutua. total.suma++ equivale a leer el valor, sumarle uno y escribirlo; si los dos threads leen el mismo valor antes de que cualquiera lo escriba, una suma se pierde. El resultado puede ser menor que 2000 (nunca mayor, y a veces justo 2000 por suerte). join() solo espera el fin de cada thread, no hace que se turnen durante la suma (A). Respuesta: C.
+solución: unidades es un dato compartido que los tres threads modifican sin exclusión mutua. La instrucción += 2 equivale a leer el valor, sumarle 2 y escribirlo; si dos threads leen el mismo valor antes de que alguno lo escriba, una suma se pierde. La cuenta ideal es 3 · 500 · 2 = 3000, pero el valor impreso puede quedar por debajo (nunca por encima, y a veces justo en 3000 por suerte). join() solo espera a que cada thread termine, no los hace turnarse mientras suman (A). Respuesta: C.
 
 ### P14 · dificultad 2 · kc: condicion-carrera · borrador · origen: ia (sonnet-5.5)
-Dos threads de tipo Suma comparten un objeto Total y ambos hacen total.suma++ mil veces. Se quiere que el resultado sea siempre 2000 sin dejar de usar los dos threads. ¿Qué cambio lo logra?
+Cuatro threads de tipo Llenador comparten un objeto Tanque. Cada uno ejecuta 300 veces tanque.litros += 5 sobre el campo litros, y main espera con join() a que los cuatro terminen antes de imprimir; se espera que haya 6000. Hoy el resultado a veces sale menor. Se quiere que sea siempre 6000 sin dejar de usar los cuatro threads. ¿Qué cambio lo logra?
 
-- A) Declarar el método run() de Suma como synchronized, porque ambos threads ejecutan el mismo código · [carr-codigo-compartido]
-- B) Mover el incremento a un método synchronized de Total, de modo que los dos threads se turnen sobre el mismo objeto · CORRECTA
-- C) Agregar Thread.sleep(1) dentro del ciclo para que los threads no coincidan · [carr-pausa-arregla]
-- D) Llamar a join() sobre los dos threads antes de imprimir, para que accedan al contador por turnos · [carr-join-es-exclusion]
+- A) Declarar el método run() de Llenador como synchronized, porque los cuatro threads ejecutan el mismo código · [carr-codigo-compartido]
+- B) Mover la suma a un método synchronized de Tanque, de modo que los cuatro threads se turnen sobre el mismo objeto · CORRECTA
+- C) Agregar Thread.sleep(1) dentro del ciclo para que los threads casi nunca coincidan · [carr-pausa-arregla]
+- D) Agregar un segundo join() sobre cada thread antes de imprimir, para que modifiquen litros por turnos · [carr-join-es-exclusion]
 
-solución: el problema se corrige con exclusión mutua sobre el dato compartido, y en Java se logra con un monitor: un método synchronized en la clase del objeto que ambos comparten (Total). En A, el candado de un run() synchronized es el de cada objeto Suma, que son dos objetos distintos, así que no se excluyen. Una pausa (C) solo reduce la probabilidad del choque, y join() (D) solo espera a que los threads terminen. Respuesta: B.
+solución: el problema se corrige con exclusión mutua sobre el dato compartido, y en Java se logra con un monitor: un método synchronized en la clase del objeto que todos comparten (Tanque). Así cada += 5 se completa antes de que otro thread lo empiece, y el total es 4 · 300 · 5 = 6000. En A, el candado de un run() synchronized es el de cada objeto Llenador, que son cuatro objetos distintos, así que no se excluyen. Una pausa (C) solo reduce la probabilidad del choque, y join() (D) solo espera a que los threads terminen, algo que main ya hace. Respuesta: B.
 
 ### P15 · dificultad 3 · kc: condicion-carrera · borrador · origen: ia (sonnet-5.5)
 Cada Cajero crea su propia Cuenta. Se arrancan dos cajeros:
@@ -273,3 +277,33 @@ class Cajero extends Thread {
 - D) Puede imprimir menos de 1000, porque saldo++ no es una sola operación y las consignaciones de los dos cajeros se pisan · [carr-incremento-atomico]
 
 solución: cada Cajero construye su propia Cuenta, así que los dos threads trabajan sobre objetos distintos: no hay dato compartido y, por tanto, no hay condición de carrera, aunque ejecuten el mismo código. Cada thread suma sus 1000 consignaciones sobre su cuenta y la imprime: 1000 y 1000 en cualquier orden. Compartir el código (A) o ser un programa con threads (B) no crea la carrera, y saldo++ solo es un problema cuando dos threads tocan el mismo saldo (D); además, consignar ya es synchronized. Respuesta: C.
+
+### P101 · dificultad 1 · kc: conceptos-concurrencia · borrador · origen: ia (sonnet-5.5)
+Un proceso tiene tres threads. ¿Cuál afirmación sobre lo que es propio de cada thread y lo que comparten es correcta?
+
+- A) Los tres threads comparten la pila, así que cada uno ve las variables locales de los otros; lo único propio de cada uno son los registros · [conc-pila-compartida]
+- B) Cada thread tiene su propia copia de los datos globales del proceso, y solo el código es común a los tres · [conc-thread-memoria-propia] crees que cada thread tiene su propia copia de los datos, cuando los datos del proceso son comunes a todos sus threads
+- C) Cada thread tiene sus propios registros, su contador de programa y su pila; los tres comparten el código, los datos y los archivos abiertos · CORRECTA
+- D) Nada se comparte: cada thread tiene su propia memoria completa y sus propios archivos, como si fuera un proceso aparte · [conc-thread-memoria-propia]
+
+solución: un thread es un flujo de control dentro de un proceso. Para ser un flujo propio necesita sus registros, su contador de programa (EIP, la próxima instrucción que va a ejecutar) y su pila (las llamadas y las variables locales). Lo demás pertenece al proceso y es común: el código, los datos y los archivos abiertos. Por eso un thread puede ver lo que otro escribió en un dato global, pero no ve las variables locales de otro. A es falsa: si compartieran la pila no podrían estar en funciones distintas a la vez. B y D les dan memoria propia, como a un proceso aparte, y eso no ocurre en un thread. Respuesta: C.
+
+### P102 · dificultad 2 · kc: conceptos-concurrencia · borrador · origen: ia (sonnet-5.5)
+Un procesador tiene 6 núcleos físicos, todos con SMT de dos vías: 2 son núcleos de rendimiento y 4 son núcleos de eficiencia. Se va a ejecutar un programa que descarga y guarda archivos, y que pasa casi todo el tiempo esperando la red y el disco, con muy poco cálculo. ¿Cuántos núcleos lógicos ve el sistema operativo y en qué tipo de núcleo conviene más ejecutarlo?
+
+- A) 12 núcleos lógicos; en los núcleos de eficiencia, porque el programa casi no usa la unidad aritmética y uno de rendimiento gastaría más energía sin aprovecharse · CORRECTA
+- B) 6 núcleos lógicos, uno por núcleo físico; en los núcleos de eficiencia · [conc-smt-logicos-mal] crees que el SMT no agrega núcleos lógicos y cuentas solo los físicos
+- C) 12 núcleos lógicos; en los núcleos de rendimiento, porque son más rápidos y el programa terminará antes · [conc-nucleo-tipo-invertido] crees que a la espera de red y disco le sirve un núcleo más rápido, cuando se pasa esperando y gasta más energía sin ganar tiempo
+- D) 24 núcleos lógicos, cuatro por núcleo físico; en los núcleos de eficiencia · [conc-smt-logicos-mal] crees que el SMT de dos vías da cuatro núcleos lógicos por núcleo físico
+
+solución: con SMT de dos vías, cada núcleo físico se presenta al sistema operativo como dos núcleos lógicos: 6 × 2 = 12 (B cuenta solo los físicos y D cuenta cuatro por núcleo). Para un programa que casi solo espera entrada y salida, la velocidad del reloj importa poco, porque el procesador está ocioso la mayor parte del tiempo; un núcleo de eficiencia basta y gasta menos energía. Un núcleo de rendimiento tendría un consumo mayor con muy poca utilización (C). Respuesta: A.
+
+### P103 · dificultad 3 · kc: conceptos-concurrencia · borrador · origen: ia (sonnet-5.5)
+Un proceso de simulación lanza 4 threads de cálculo intensivo. Los cuatro leen un mismo arreglo grande, que nadie modifica, y cada uno acumula su suma parcial en una variable local de su método run(). El procesador tiene 4 núcleos de rendimiento, con SMT de dos vías, y 8 núcleos de eficiencia, sin SMT. ¿Cuál descripción es correcta?
+
+- A) Los threads comparten la pila, así que los cuatro suman en la misma variable local; el sistema operativo ve 16 núcleos lógicos y el cálculo conviene a los núcleos de rendimiento · [conc-pila-compartida]
+- B) Hay un solo arreglo y cada thread suma en su propia variable local; el sistema operativo ve 12 núcleos lógicos, uno por núcleo físico, y el cálculo conviene a los núcleos de rendimiento · [conc-smt-logicos-mal]
+- C) Hay un solo arreglo y cada thread suma en su propia variable local; el sistema operativo ve 16 núcleos lógicos y el cálculo conviene a los núcleos de eficiencia, porque gastan menos energía · [conc-nucleo-tipo-invertido]
+- D) Hay un solo arreglo, común a los cuatro threads, y cada uno suma en su propia variable local, guardada en su propia pila; el sistema operativo ve 16 núcleos lógicos (4 × 2 + 8) y el cálculo conviene a los núcleos de rendimiento · CORRECTA
+
+solución: el arreglo vive en los datos del proceso, que los threads comparten; como solo se lee, no hay condición de carrera. La variable local de run() vive en la pila del thread, y cada thread tiene la suya, así que las sumas parciales no se mezclan (A es falsa). Núcleos lógicos: los 4 de rendimiento con SMT de dos vías aportan 4 × 2 = 8 y los 8 de eficiencia, sin SMT, aportan 8: en total 16. Contar solo los físicos da 12 (B). Un cálculo intensivo aprovecha el reloj más alto de los núcleos de rendimiento; en los de eficiencia ahorraría energía pero tardaría más (C). Respuesta: D.

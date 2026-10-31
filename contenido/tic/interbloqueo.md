@@ -35,24 +35,24 @@ Tres threads necesitan dos candados cada uno: T1 usa A y B (pide A primero), T2 
 solución: la espera circular se rompe si todos piden los recursos en un mismo orden global. Con el orden A, B, C: T1 pide A y B, T2 pide B y C, y T3 pide A y luego C. Así nadie puede retener un candado de mayor orden mientras espera uno de menor orden, y no se cierra el círculo. Quitar la exclusión mutua (B) deja sin protección los datos y causa condiciones de carrera. Una pausa (C) no cambia el orden de petición. Seguir la misma regla de «primero el propio» (D) es justamente el patrón que forma el círculo. Respuesta: A.
 
 ### P18 · dificultad 2 · kc: interbloqueo · borrador · origen: ia (sonnet-5.5)
-En la cena de los filósofos hay cinco filósofos y cinco palillos, uno entre cada par de vecinos. Para comer, un filósofo necesita los dos palillos que tiene a los lados. Cada uno toma primero el de su izquierda, luego el de su derecha, y no suelta el primero hasta haber comido. ¿Cuál afirmación es correcta?
+Cuatro brazos robóticos están montados en círculo alrededor de una mesa de ensamble. Entre cada par de brazos vecinos hay una herramienta, así que hay cuatro herramientas en total. Para armar una pieza, un brazo necesita las dos herramientas que tiene a sus lados. Cada brazo toma primero la herramienta que queda en el sentido de las agujas del reloj, luego la otra, y no suelta la primera hasta terminar su pieza. ¿Cuál afirmación es correcta?
 
-- A) No puede haber interbloqueo, porque en algún momento alguien termina de comer y suelta sus palillos · [inter-espera-normal]
-- B) Se evita si cada filósofo hace una pausa corta entre tomar el palillo izquierdo y pedir el derecho · [inter-pausas-lo-evitan]
-- C) Hay interbloqueo en toda ejecución, porque los palillos son de uso exclusivo y eso ya basta · [inter-basta-una-condicion]
-- D) Puede haber interbloqueo: si los cinco toman su palillo izquierdo antes de que alguno tome el derecho, cada uno retiene uno y espera el de su vecino · CORRECTA
+- A) No puede haber interbloqueo, porque en algún momento un brazo termina su pieza y devuelve sus herramientas · [inter-espera-normal]
+- B) Se evita si cada brazo hace una pausa corta entre tomar la primera herramienta y pedir la segunda · [inter-pausas-lo-evitan]
+- C) Hay interbloqueo en toda ejecución, porque las herramientas se usan de a un brazo y esa condición ya basta · [inter-basta-una-condicion]
+- D) Puede haber interbloqueo: si los cuatro toman su primera herramienta antes de que alguno pida la segunda, cada uno retiene una y espera la del brazo vecino · CORRECTA
 
-solución: se cumplen las cuatro condiciones: los palillos son de uso exclusivo, cada filósofo retiene uno mientras espera otro, nadie se los puede quitar y, si los cinco toman el izquierdo, se forma una cadena circular de esperas. Ya nadie puede comer ni soltar, porque soltar exige haber comido. Pero eso solo pasa en algunas intercalaciones, no en toda ejecución (C). Que alguien termine y suelte (A) no ocurre cuando todos están esperando, y una pausa (B) no cambia la estructura. Respuesta: D.
+solución: se cumplen las cuatro condiciones: cada herramienta la usa un solo brazo a la vez, cada brazo retiene una mientras pide otra, nadie se la puede arrebatar a otro y, si los cuatro toman la primera, queda un círculo de esperas. Ningún brazo puede avanzar ni devolver nada, porque devolver exige haber terminado la pieza. Pero eso ocurre solo en algunas intercalaciones, no en toda ejecución (C). Que alguien termine y devuelva (A) no sucede cuando todos están esperando, y una pausa (B) no cambia la estructura. Respuesta: D.
 
 ### P19 · dificultad 3 · kc: interbloqueo · borrador · origen: ia (sonnet-5.5)
-Cinco filósofos se sientan en círculo con cinco palillos numerados del 0 al 4, uno entre cada par de vecinos. Cada filósofo necesita los dos palillos que tiene a sus lados y hoy toma primero el de su izquierda. ¿Cuál modificación evita el interbloqueo?
+Seis técnicos trabajan en una mesa circular de un taller. Entre cada par de técnicos vecinos hay una llave de torque, y las seis llaves están numeradas del 1 al 6. Para apretar una pieza, cada técnico necesita las dos llaves que tiene a sus lados y por costumbre toma primero la que queda a su izquierda. ¿Cuál modificación, que se pueda aplicar en el taller, evita el interbloqueo?
 
-- A) No hay modificación posible mientras los palillos sean de uso exclusivo, porque esa condición ya basta para que haya interbloqueo · [inter-basta-una-condicion]
-- B) Que los cinco cambien a tomar primero el palillo derecho y luego el izquierdo, igual para todos, con lo que el ciclo desaparece · [inter-patron-igual-rompe-ciclo]
-- C) Que cada filósofo tome siempre primero el palillo de número menor de los dos que necesita y luego el mayor · CORRECTA
-- D) Quitar la exclusión mutua para que dos filósofos puedan sujetar el mismo palillo a la vez · [inter-quitar-exclusion]
+- A) No hay modificación posible mientras las llaves sean de uso exclusivo, porque esa condición ya basta para que haya interbloqueo · [inter-basta-una-condicion]
+- B) Que los seis cambien a tomar primero la llave de la derecha y luego la de la izquierda, igual para todos, con lo que el ciclo desaparece · [inter-patron-igual-rompe-ciclo]
+- C) Que cada técnico tome siempre primero la llave de número menor de las dos que necesita y luego la de número mayor · CORRECTA
+- D) Quitar la exclusión mutua para que dos técnicos puedan sostener la misma llave a la vez · [inter-quitar-exclusion]
 
-solución: para evitar el interbloqueo basta eliminar una de las cuatro condiciones. Con la regla del número menor primero se elimina la espera circular: el filósofo que tiene a sus lados los palillos 4 y 0 toma primero el 0, y así nadie puede retener un palillo de número mayor esperando uno menor, de modo que el círculo no se cierra. Cambiar a todos de izquierda a derecha (B) sigue siendo un patrón igual para todos y deja el mismo círculo. Una sola condición no basta para producir el interbloqueo, y por eso evitarlo sí es posible (A). Quitar la exclusión mutua (D) haría que dos filósofos usaran el mismo palillo a la vez, algo que no se puede permitir. Respuesta: C.
+solución: para evitar el interbloqueo basta eliminar una de las cuatro condiciones. Con la regla de la llave menor primero se elimina la espera circular: el técnico que tiene a sus lados las llaves 6 y 1 toma primero la 1, y así nadie puede retener una llave de número mayor esperando una de número menor, de modo que el círculo no se cierra. Cambiar a todos de izquierda a derecha (B) sigue siendo un patrón igual para todos y deja el mismo círculo. Una sola condición no basta para producir el interbloqueo, y por eso evitarlo sí es posible (A). Quitar la exclusión mutua (D) haría que dos técnicos usaran la misma llave a la vez, algo que no se puede permitir. Respuesta: C.
 
 ### P20 · dificultad 1 · kc: interbloqueo · borrador · origen: ia (sonnet-5.5)
 Dos threads comparten un solo candado. T1 lo toma, hace Thread.sleep(500) y lo suelta; mientras tanto T2 lo pide y espera. T1 no necesita ningún otro recurso. ¿Hay interbloqueo?

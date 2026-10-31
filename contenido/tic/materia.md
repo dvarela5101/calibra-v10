@@ -3,7 +3,7 @@ codigo: ISIS-1311
 nombre: Tecnología e Infraestructura de Cómputo
 ---
 
-Mapa de habilidades, catálogo de errores y preguntas hechos con IA (HU-113, proceso de `contenido/PROCESO.md`). Se usó el programa del curso del primer semestre de 2026, talleres de los cuatro módulos (uno con soluciones) y tres parciales de ese semestre con sus claves y comentarios.
+Mapa de habilidades, catálogo de errores y preguntas hechos con IA (HU-113, proceso de `contenido/PROCESO.md`). Se usó el programa del curso del primer semestre de 2026, talleres de los cuatro módulos (dos con soluciones), tres parciales de ese semestre con sus claves y comentarios y, para concurrencia, un parcial anterior con su solución, un simulacro, las diapositivas del módulo y ejemplos de código.
 
 El programa no dice qué cubre cada parcial ni en qué semana cae. Los temas siguen su orden (arquitectura, virtualización, concurrencia y planeación de capacidad) y los parciales de 2026-1 lo confirmaron. Las semanas salen de las fechas de esos parciales, contadas desde mediados de enero y sin Semana Santa: son aproximadas. Ninguna Evaluación es acumulativa.
 
