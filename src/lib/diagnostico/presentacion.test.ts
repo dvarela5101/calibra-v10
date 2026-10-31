@@ -16,6 +16,7 @@ import {
   textoDeAciertos,
   textoDeAvance,
   textoDeErroresDetectados,
+  textoDeVerErrores,
   textoDePorcentaje,
   textoDeRespondidas,
   textoDeTemas,
@@ -141,6 +142,11 @@ describe("resumen (D-79)", () => {
   it("los errores detectados van en singular o plural", () => {
     expect(textoDeErroresDetectados(1)).toBe("1 error detectado");
     expect(textoDeErroresDetectados(3)).toBe("3 errores detectados");
+  });
+
+  it("el desplegable de los errores también (HU-112)", () => {
+    expect(textoDeVerErrores(1)).toBe("Ver el error detectado");
+    expect(textoDeVerErrores(13)).toBe("Ver los 13 errores detectados");
   });
 });
 

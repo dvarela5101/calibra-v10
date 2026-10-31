@@ -406,7 +406,6 @@ async function expectResultadoDeEjemplo(page: Page, materia: Materia, evaluacion
     [1, H1_DE_LA_PORTADA],
     [2, "Qué trabajar primero"],
     [2, "Habilidades"],
-    [2, "Errores"],
     [2, "Conviene repasar antes"],
   ]);
 }
