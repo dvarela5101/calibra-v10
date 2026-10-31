@@ -175,6 +175,11 @@ export function textoDeErroresDetectados(cantidad: number): string {
   return cantidad === 1 ? "1 error detectado" : `${cantidad} errores detectados`;
 }
 
+/** El desplegable de los errores en el resumen (HU-112, D-81 a): `Ver el error detectado` / `Ver los 3 errores detectados`. */
+export function textoDeVerErrores(cantidad: number): string {
+  return cantidad === 1 ? "Ver el error detectado" : `Ver los ${cantidad} errores detectados`;
+}
+
 export type EstadoDeError = "confirmada" | "sospecha";
 
 export function prefijoDeError(estado: EstadoDeError): string {

@@ -11,6 +11,7 @@ import {
   textoDeErroresDetectados,
   textoDePorcentaje,
   textoDeTramo,
+  textoDeVerErrores,
   tramosDeNiveles,
 } from "@/lib/diagnostico/presentacion";
 import { TEXTOS as TEXTOS_DEL_MONITOR, etiquetaDeNivelParaElMonitor, textoDeCorrectas } from "@/lib/diagnostico/vista-del-monitor";
@@ -20,7 +21,8 @@ import estilos from "./resumen.module.css";
  * El resumen del diagnóstico (HU-110, D-79): lo primero que se ve del resultado, para la persona (HU-009) y para el monitor (HU-022).
  * El porcentaje de acertadas con su barra, las habilidades por nivel en una barra apilada con su leyenda escrita y qué trabajar
  * primero. Las barras no dicen nada que no diga el texto: cada una lleva `role="img"` con la misma frase. Como el resultado, no lee
- * datos ni usa hooks, y sirve en componentes de servidor y de cliente (el mensaje de D-51).
+ * datos ni usa hooks, y sirve en componentes de servidor y de cliente (el mensaje de D-51). Con `listaDeErrores` (HU-112, D-81),
+ * la cuenta de errores se abre ahí mismo; el monitor no la pasa porque ve los errores abiertos debajo del resumen.
  */
 
 type Props = {
@@ -30,6 +32,8 @@ type Props = {
   habilidades: readonly { descripcion: string; nivel: NivelHabilidad }[];
   /** Cuántos errores se detectaron, confirmados y posibles. */
   errores: number;
+  /** Los errores, para abrirlos desde el resumen en un desplegable cerrado (D-81 a); sin ella, la cuenta es solo texto. */
+  listaDeErrores?: ReactNode;
   /** Quién mira: cambia las etiquetas de nivel («Lo dominas» o «Lo domina») y el título de qué trabajar. */
   para?: "persona" | "monitor";
   /** Distingue el `id` del título si hay más de un resumen en la página. */
@@ -40,7 +44,17 @@ type Props = {
   children?: ReactNode;
 };
 
-export function ResumenDelDiagnostico({ aciertos, respondidas, habilidades, errores, para = "persona", idBase, nivelDeTitulos = 2, children }: Props) {
+export function ResumenDelDiagnostico({
+  aciertos,
+  respondidas,
+  habilidades,
+  errores,
+  listaDeErrores,
+  para = "persona",
+  idBase,
+  nivelDeTitulos = 2,
+  children,
+}: Props) {
   const etiqueta = para === "monitor" ? etiquetaDeNivelParaElMonitor : etiquetaDeNivel;
   const tituloDeQueTrabajar = para === "monitor" ? TEXTOS_DEL_MONITOR.queTrabajarEnLaMonitoria : TEXTOS.queTrabajarPrimero;
   const tramos = tramosDeNiveles(habilidades);
@@ -94,7 +108,17 @@ export function ResumenDelDiagnostico({ aciertos, respondidas, habilidades, erro
             ))}
           </ul>
         )}
-        {errores > 0 && <p className={estilos.nota}>{textoDeErroresDetectados(errores)}</p>}
+        {listaDeErrores === undefined ? (
+          errores > 0 && <p className={estilos.nota}>{textoDeErroresDetectados(errores)}</p>
+        ) : errores > 0 ? (
+          <details className={estilos.errores}>
+            <summary className={estilos.verErrores}>{textoDeVerErrores(errores)}</summary>
+            {listaDeErrores}
+          </details>
+        ) : (
+          // D-81 c: sin errores lo dice aquí, porque el detalle del final ya no los trae.
+          <p className={estilos.nota}>{TEXTOS.sinErrores}</p>
+        )}
       </section>
 
       {children ? <div className={estilos.pie}>{children}</div> : null}

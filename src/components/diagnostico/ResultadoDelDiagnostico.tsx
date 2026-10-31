@@ -21,8 +21,8 @@ import estilos from "./resultado.module.css";
 import { ResumenDelDiagnostico } from "./ResumenDelDiagnostico";
 
 /**
- * El resultado de un diagnóstico (HU-009). Primero el resumen (HU-110, D-79), luego las acciones y la ranura del contacto, y al
- * final el detalle (habilidades, errores y prerrequisitos) en un desplegable cerrado. Recibe la proyección ya hecha en el servidor (`ResultadoParaMostrar`) y no lee
+ * El resultado de un diagnóstico (HU-009). Primero el resumen (HU-110, D-79), que abre ahí mismo los errores (HU-112, D-81), luego
+ * las acciones y la ranura del contacto, y al final el detalle (habilidades y prerrequisitos) en un desplegable cerrado. Recibe la proyección ya hecha en el servidor (`ResultadoParaMostrar`) y no lee
  * datos ni usa hooks: sirve desde un componente de servidor (la página del resultado) y de cliente (el mensaje de D-51), y lo
  * reutilizan HU-011 y, con otro encabezado, HU-022. Todo texto del banco (descripciones, títulos de error, detalles y
  * prerrequisitos) pasa por `TextoDelBanco`; el componente no repasa las preguntas una por una.
@@ -57,46 +57,47 @@ type PropsDeSeccion = {
   nivelDeTitulos?: NivelDeTitulos;
 };
 
+type ErrorParaMostrar = ResultadoParaMostrar["errores"][number] & { veces?: number };
+
 /**
- * «Error detectado» o «Posible error», los confirmados primero. Sin errores, dice que no hubo. El monitor (HU-022) agrega `veces`
- * a cada error, y entonces se imprime «Lo eligió N veces»; la persona no lo trae y no lo ve.
+ * «Error detectado» o «Posible error», los confirmados primero. El monitor (HU-022) agrega `veces` a cada error, y entonces se
+ * imprime «Lo eligió N veces»; la persona no lo trae y no lo ve. Va sin título: la persona la abre desde el resumen (HU-112).
  */
-export function ErroresDetectados({
-  errores,
-  idBase,
-  nivelDeTitulos = 2,
-}: PropsDeSeccion & { errores: (ResultadoParaMostrar["errores"][number] & { veces?: number })[] }) {
+export function ListaDeErrores({ errores }: { errores: ErrorParaMostrar[] }) {
+  return (
+    <ul className={estilos.lista}>
+      {ordenarErrores(errores).map((error, posicion) => (
+        <li key={posicion} className={estilos.tarjeta}>
+          <p className={estilos.textoDelError}>
+            <span className={estilos.prefijo}>{prefijoDeError(error.estado)}</span> <TextoDelBanco texto={error.titulo} />
+          </p>
+          {error.veces !== undefined && <p className={estilos.detalle}>{textoDeVeces(error.veces)}</p>}
+          {error.descripcionDeLaHabilidad !== null && (
+            <p className={estilos.detalle}>
+              {`${TEXTOS.habilidadDelError} `}
+              <TextoDelBanco texto={error.descripcionDeLaHabilidad} />
+            </p>
+          )}
+          {error.detalles.map((detalle, lugar) => (
+            <p key={lugar} className={estilos.detalle}>
+              <TextoDelBanco texto={detalle} />
+            </p>
+          ))}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Los errores en una sección con su título, como los ve el monitor (HU-022). Sin errores, dice que no hubo. */
+export function ErroresDetectados({ errores, idBase, nivelDeTitulos = 2 }: PropsDeSeccion & { errores: ErrorParaMostrar[] }) {
   const idTitulo = `errores-${idBase}`;
   return (
     <section aria-labelledby={idTitulo} className={estilos.seccion}>
       <TituloDeSeccion nivel={nivelDeTitulos} id={idTitulo}>
         {TEXTOS.errores}
       </TituloDeSeccion>
-      {errores.length === 0 ? (
-        <p className={formulario.ayuda}>{TEXTOS.sinErrores}</p>
-      ) : (
-        <ul className={estilos.lista}>
-          {ordenarErrores(errores).map((error, posicion) => (
-            <li key={posicion} className={estilos.tarjeta}>
-              <p className={estilos.textoDelError}>
-                <span className={estilos.prefijo}>{prefijoDeError(error.estado)}</span> <TextoDelBanco texto={error.titulo} />
-              </p>
-              {error.veces !== undefined && <p className={estilos.detalle}>{textoDeVeces(error.veces)}</p>}
-              {error.descripcionDeLaHabilidad !== null && (
-                <p className={estilos.detalle}>
-                  {`${TEXTOS.habilidadDelError} `}
-                  <TextoDelBanco texto={error.descripcionDeLaHabilidad} />
-                </p>
-              )}
-              {error.detalles.map((detalle, lugar) => (
-                <p key={lugar} className={estilos.detalle}>
-                  <TextoDelBanco texto={detalle} />
-                </p>
-              ))}
-            </li>
-          ))}
-        </ul>
-      )}
+      {errores.length === 0 ? <p className={formulario.ayuda}>{TEXTOS.sinErrores}</p> : <ListaDeErrores errores={errores} />}
     </section>
   );
 }
@@ -153,6 +154,12 @@ export function ResultadoDelDiagnostico({ resultado, acciones = "completas", niv
           respondidas={resultado.respondidas}
           habilidades={resultado.habilidades}
           errores={resultado.errores.length}
+          listaDeErrores={
+            // Sin título visible (el desplegable ya dice cuántos son), pero es la región «Errores» para quien navega por regiones.
+            <section aria-label={TEXTOS.errores}>
+              <ListaDeErrores errores={resultado.errores} />
+            </section>
+          }
           idBase={idBase}
           nivelDeTitulos={nivelDeTitulos}
         >
@@ -204,7 +211,6 @@ export function ResultadoDelDiagnostico({ resultado, acciones = "completas", niv
             </ul>
           </section>
 
-          <ErroresDetectados errores={resultado.errores} idBase={idBase} nivelDeTitulos={nivelDeTitulos} />
           <RepasarAntes prerrequisitos={resultado.prerrequisitos} idBase={idBase} nivelDeTitulos={nivelDeTitulos} />
         </div>
       </details>

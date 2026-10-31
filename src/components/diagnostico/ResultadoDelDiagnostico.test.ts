@@ -22,6 +22,9 @@ const texto = (html: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
+/** Desde el desplegable del final («Ver el detalle por habilidad»): el resumen también tiene uno, el de los errores (HU-112). */
+const delDetalle = (html: string) => html.slice(html.indexOf(">Ver el detalle por habilidad<"));
+
 /** El resultado con el JSON guardado cambiado. */
 const con = (cambios: Partial<typeof GUARDADO_DE_EJEMPLO>, fila = {}) =>
   proyectarResultado({ ...FILA_DE_EJEMPLO, ...fila, resultado: { ...GUARDADO_DE_EJEMPLO, ...cambios } });
@@ -51,8 +54,8 @@ describe("resumen (criterio 10, HU-110)", () => {
 });
 
 describe("habilidades (criterio 10)", () => {
-  // Las del detalle: el resumen también nombra algunas en «Qué trabajar primero».
-  const html = pintar().slice(pintar().indexOf("<details"));
+  // Las del detalle: el resumen también nombra algunas en «Qué trabajar primero» y en los errores.
+  const html = delDetalle(pintar());
   const t = texto(html);
 
   it("están todas, en el orden guardado, con su descripción", () => {
@@ -184,11 +187,13 @@ describe("todo texto del banco pasa por TextoDelBanco (HU-083)", () => {
   // texto de error de una opción, que sale como detalle). Los sitios se miran uno por uno: con solo contar `<math` en todo el
   // resultado, una fórmula que sí se dibuja taparía a la que no.
   const html = pintar();
-  const iErrores = html.indexOf('aria-labelledby="errores-');
+  // Los errores van en el resumen (HU-112) y las habilidades y los prerrequisitos en el detalle del final.
+  const iErrores = html.indexOf('<section aria-label="Errores">');
+  const iHabilidades = html.indexOf('aria-labelledby="habilidades-');
   const iRepasar = html.indexOf('aria-labelledby="repasar-');
   const secciones = {
-    habilidades: html.slice(html.indexOf('aria-labelledby="habilidades-'), iErrores),
-    errores: html.slice(iErrores, iRepasar),
+    habilidades: html.slice(iHabilidades, iRepasar),
+    errores: html.slice(iErrores, html.indexOf("</section>", iErrores)),
     repasar: html.slice(iRepasar),
   };
   // El primer párrafo de la sección cuyo texto, sin etiquetas, contiene `contiene` ("" si no hay ninguno).
@@ -197,7 +202,8 @@ describe("todo texto del banco pasa por TextoDelBanco (HU-083)", () => {
 
   it("la fixture trae una fórmula en cada sitio, y las secciones se separan bien", () => {
     expect(iErrores).toBeGreaterThan(0);
-    expect(iRepasar).toBeGreaterThan(iErrores);
+    expect(iHabilidades).toBeGreaterThan(iErrores);
+    expect(iRepasar).toBeGreaterThan(iHabilidades);
     expect(secciones.habilidades).toContain("calcula la fuerza neta");
     expect(secciones.errores).toContain("Posible error:");
     expect(secciones.repasar).toContain("Conviene repasar antes");
@@ -244,12 +250,13 @@ describe("el resumen va primero y el detalle plegado (HU-110, D-79)", () => {
   it("el orden: resumen, acciones y, al final, el detalle cerrado con «Ver el detalle por habilidad»", () => {
     expect(html).toMatch(/^<div class="[^"]*"><section aria-label="Resumen de tu resultado">/);
     expect(html.indexOf("5 de 8 correctas")).toBeLessThan(html.indexOf("Ver monitores"));
-    expect(html.indexOf("Ver monitores")).toBeLessThan(html.indexOf("<details"));
+    expect(html.indexOf("Ver monitores")).toBeLessThan(html.indexOf("Ver el detalle por habilidad"));
     expect(html).toMatch(/<details class="[^"]*"><summary class="[^"]*">Ver el detalle por habilidad<\/summary>/);
     expect(html).not.toMatch(/<details[^>]* open/);
-    // Habilidades, errores y prerrequisitos van dentro del detalle.
-    const detalle = html.slice(html.indexOf("<details"));
-    for (const titulo of [">Habilidades<", ">Errores<", ">Conviene repasar antes<"]) expect(detalle, titulo).toContain(titulo);
+    // Habilidades y prerrequisitos van dentro del detalle; los errores, en el resumen (HU-112).
+    const detalle = delDetalle(html);
+    for (const titulo of [">Habilidades<", ">Conviene repasar antes<"]) expect(detalle, titulo).toContain(titulo);
+    expect(detalle).not.toContain("Error detectado");
   });
 
   it("dos barras con role=img que dicen lo mismo que el texto", () => {
@@ -285,6 +292,37 @@ describe("el resumen va primero y el detalle plegado (HU-110, D-79)", () => {
   });
 });
 
+describe("los errores se abren desde el resumen (HU-112, D-81)", () => {
+  const html = pintar();
+  const queTrabajar = html.slice(html.indexOf("Qué trabajar primero"), html.indexOf("</section>", html.indexOf('<section aria-label="Errores">')) + 1);
+
+  it("debajo de «Qué trabajar primero», un desplegable cerrado «Ver los N errores detectados» con los errores, antes de las acciones", () => {
+    expect(queTrabajar).toMatch(/<details class="[^"]*"><summary class="[^"]*">Ver los 3 errores detectados<\/summary><section aria-label="Errores"><ul /);
+    expect(html.indexOf("Ver los 3 errores detectados")).toBeLessThan(html.indexOf("Ver monitores"));
+    expect(texto(queTrabajar)).toContain("Error detectado: inviertes la relación");
+    expect(queTrabajar.match(/Posible error:/g)).toHaveLength(2);
+    // La cuenta ya no va sola: está en el desplegable.
+    expect(texto(html).match(/3 errores detectados/g)).toHaveLength(1);
+  });
+
+  it("con un solo error, «Ver el error detectado»", () => {
+    const uno = pintar(con({ errores: GUARDADO_DE_EJEMPLO.errores.slice(0, 1) }));
+    expect(uno).toContain(">Ver el error detectado</summary>");
+  });
+
+  it("sin errores, el resumen lo dice y no hay desplegable ni región de errores (D-81 c)", () => {
+    const sin = pintar(con({ errores: [] }));
+    const resumen = sin.slice(0, sin.indexOf("Ver monitores"));
+    expect(texto(resumen)).toContain("No detectamos errores concretos en esta prueba.");
+    expect(sin).not.toContain("errores detectados");
+    expect(sin).not.toContain('aria-label="Errores"');
+  });
+
+  it("el mensaje de D-51 (sin acciones) también los abre desde el resumen", () => {
+    expect(pintar(RESULTADO, { acciones: "ninguna", nivelDeTitulos: 3 })).toContain(">Ver los 3 errores detectados</summary>");
+  });
+});
+
 describe("después del resultado (criterio 14)", () => {
   it("«Ver monitores de {materia}» lleva a la lista de esa materia y «Tomar otro diagnóstico» al selector", () => {
     const html = pintar();
@@ -311,7 +349,7 @@ describe("después del resultado (criterio 14)", () => {
     const html = pintar(RESULTADO, { ranura: createElement("form", { id: "formulario-de-contacto" }, "Déjanos tus datos") });
     expect(html).toContain('<form id="formulario-de-contacto">Déjanos tus datos</form>');
     expect(html.indexOf("formulario-de-contacto")).toBeGreaterThan(html.indexOf("Tomar otro diagnóstico"));
-    expect(html.indexOf("formulario-de-contacto")).toBeLessThan(html.indexOf("<details"));
+    expect(html.indexOf("formulario-de-contacto")).toBeLessThan(html.indexOf("Ver el detalle por habilidad"));
   });
 
   it("sin ranura no sobra un contenedor vacío (M21)", () => {
@@ -325,24 +363,26 @@ describe("después del resultado (criterio 14)", () => {
 });
 
 describe("niveles de los títulos", () => {
-  it("por defecto las secciones son h2 («Qué trabajar primero» y las tres del detalle)", () => {
+  it("por defecto las secciones son h2 («Qué trabajar primero» y las dos del detalle)", () => {
     const html = pintar();
-    expect(html.match(/<h2 /g)).toHaveLength(4);
+    expect(html.match(/<h2 /g)).toHaveLength(3);
     expect(html).not.toContain("<h3");
   });
 
   it("debajo de un h2 (el mensaje de D-51) son h3", () => {
     const html = pintar(RESULTADO, { nivelDeTitulos: 3 });
-    expect(html.match(/<h3 /g)).toHaveLength(4);
+    expect(html.match(/<h3 /g)).toHaveLength(3);
     expect(html).not.toContain("<h2");
   });
 
   it("cada sección está nombrada por su título", () => {
     const html = pintar();
-    for (const id of [`que-trabajar-${RESULTADO.idDiagnostico}`, `habilidades-${RESULTADO.idDiagnostico}`, `errores-${RESULTADO.idDiagnostico}`, `repasar-${RESULTADO.idDiagnostico}`]) {
+    for (const id of [`que-trabajar-${RESULTADO.idDiagnostico}`, `habilidades-${RESULTADO.idDiagnostico}`, `repasar-${RESULTADO.idDiagnostico}`]) {
       expect(html).toContain(`aria-labelledby="${id}"`);
       expect(html).toContain(`id="${id}"`);
     }
+    // La de los errores no tiene título visible: el desplegable ya dice cuántos son.
+    expect(html).toContain('<section aria-label="Errores">');
   });
 });
 

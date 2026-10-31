@@ -49,14 +49,15 @@ function pintar(guardado: ResultadoGuardado): string {
   return renderToStaticMarkup(createElement(ResultadoDelDiagnostico, { resultado: proyectarResultado({ ...FILA_DE_EJEMPLO, resultado: guardado }) }));
 }
 
-/** Los `<li>` de una sección del resultado. Las secciones salen en este orden y los `<li>` no se anidan. */
+/**
+ * Los `<li>` de una sección del resultado, hasta su `</section>`: ninguna lleva otra sección dentro y los `<li>` no se anidan. Los
+ * errores van en el resumen, en una sección sin título visible (HU-112).
+ */
 function renglones(html: string, seccion: "habilidades" | "errores" | "repasar"): string[] {
-  const orden = ["habilidades", "errores", "repasar"] as const;
-  const desde = html.indexOf(`aria-labelledby="${seccion}-`);
+  const marca = seccion === "errores" ? 'aria-label="Errores"' : `aria-labelledby="${seccion}-`;
+  const desde = html.indexOf(marca);
   expect(desde, `la sección ${seccion} está`).toBeGreaterThanOrEqual(0);
-  const siguiente = orden[orden.indexOf(seccion) + 1];
-  const hasta = siguiente ? html.indexOf(`aria-labelledby="${siguiente}-`) : -1;
-  return html.slice(desde, hasta === -1 ? undefined : hasta).match(/<li[\s>][\s\S]*?<\/li>/g) ?? [];
+  return html.slice(desde, html.indexOf("</section>", desde)).match(/<li[\s>][\s\S]*?<\/li>/g) ?? [];
 }
 
 const cuantasFormulas = (li: string) => (li.match(/<math[\s>]/g) ?? []).length;
