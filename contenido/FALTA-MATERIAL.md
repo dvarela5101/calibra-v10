@@ -2,7 +2,7 @@
 
 Este documento lista las materias y las habilidades del banco a las que les falta material, para saber qué hay que conseguir. Lo crea y lo mantiene [HU-061](../backlog/HU-061.md) (D-49 c). [PROCESO.md](PROCESO.md#falta-de-material) dice cuándo se actualiza. No lleva nombres de archivos del material.
 
-Última actualización: después de las revisiones de HU-099, HU-100 y HU-101, 19-oct-2026.
+Última actualización: corrida de HU-113 (TIC), 31-oct-2026.
 
 ## 1. Habilidades sin preguntas sin ver o con una sola respuesta
 
@@ -63,6 +63,12 @@ Alcance de la corrida de HU-102 (Parcial 2 de Cálculo Integral): las 18 habilid
 | `app-arco` | 3 (1 de dificultad 2, 2 de dificultad 3) | 1 pregunta más, de dificultad 2 |
 | `app-area` | 3 (2 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
 
+Alcance de la corrida de HU-113 (Parciales 3 y 4 de TIC, materia nueva): las 20 habilidades llegan a la meta con 5 borradores o más cada una, así que no hay filas. Material: programa de 2026-1, talleres de los cuatro módulos (solo los de concurrencia traen soluciones), los Parciales 2, 3 y 4 de 2026-1 con claves y comentarios y, para concurrencia, un Parcial 3 anterior con solución, un simulacro, las diapositivas del módulo y ejemplos de código. Falta:
+
+- **Parciales 1 y 2 de TIC:** las 20 habilidades tienen mapa y catálogo de errores, pero ninguna pregunta. Hace falta otra corrida, y para el Parcial 1 algún parcial anterior (no hay ninguno en el material).
+- **Semanas de las Evaluaciones de TIC:** 5, 8, 13 y 18 son aproximadas. Salen de las fechas de los parciales de 2026-1; la del Parcial 1 es un estimado. Hace falta el cronograma del curso.
+- **Temas de TIC sin material:** entrada/salida, diseño de clusters más allá del balanceo, Java frente a Python y los pasos de Unix para abrir un archivo (este último quedó fuera para no pasar de 10 habilidades en el Parcial 2).
+
 ### De las marcas de HU-060
 
 Todavía no hay marcas. Al 5-oct-2026 el motor del diagnóstico (HU-060) está en progreso y el guardado de la marca (HU-081) tiene estado Lista, y esta corrida no usa la base de datos. Cuando haya diagnósticos guardados, aquí van las habilidades marcadas `sin_preguntas_sin_ver` o `tope_una_respuesta`, con su materia.
@@ -71,4 +77,4 @@ Todavía no hay marcas. Al 5-oct-2026 el motor del diagnóstico (HU-060) está e
 
 D-13 pide 3 preguntas revisadas en 2 dificultades por habilidad. Esta sección sale del reporte de `npm run contenido:validar` (cobertura por habilidad), que cuenta solo preguntas revisadas.
 
-Desde el 19-oct-2026 todas las habilidades de las 8 materias cumplen D-13 y las 10 Evaluaciones están activas, así que no hay filas. Las revisiones que las activaron son HU-099 (Álgebra Lineal, Cálculo Vectorial, Física I y Probabilidad y Estadística), HU-100 y HU-101 (Cálculo Diferencial) y HU-102 (Cálculo Integral).
+Desde el 19-oct-2026 todas las habilidades de las 8 materias de entonces cumplen D-13 y sus 10 Evaluaciones están activas. TIC entró el 31-oct-2026 (HU-113) sin preguntas revisadas: sus 40 habilidades no cumplen D-13 y sus 4 Evaluaciones están inactivas. Las de los Parciales 3 y 4 se activan cuando un desarrollador revise sus 100 borradores; las de los Parciales 1 y 2 esperan preguntas. Las revisiones que las activaron son HU-099 (Álgebra Lineal, Cálculo Vectorial, Física I y Probabilidad y Estadística), HU-100 y HU-101 (Cálculo Diferencial) y HU-102 (Cálculo Integral).

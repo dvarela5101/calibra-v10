@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-31 07:32. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-10-31 12:58. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -23,7 +23,6 @@ _Generado automaticamente: 2026-10-31 07:32. No editar a mano; usa `scripts/back
 | [HU-085](backlog/HU-085.md) | [Sistema] Borrar o anonimizar los datos de un Lead o aspirante que retiró su autorización o lleva 24 meses sin actividad | Lista | P2 | L | HU-056, HU-006, HU-062, HU-068 |
 | [HU-092](backlog/HU-092.md) | [Monitor] Marcar en mi perfil los temas en los que soy fuerte | Lista | P2 | M | HU-049 |
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | En progreso | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056, HU-084, HU-089, HU-095, HU-096, HU-097, HU-091, HU-103 |
-| [HU-113](backlog/HU-113.md) | Contenido: TIC (ISIS-1311), materia nueva con mapa completo y preguntas de los Parciales 3 y 4 | En progreso | P1 | L |  |
 | [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
 | [HU-105](backlog/HU-105.md) | Selector del diagnóstico como el prototipo: tarjetas sin radio, elegir siempre la Evaluación y botón «Ver monitores sin hacer la prueba» | En revision | P0 | S | HU-009 |
 | [HU-106](backlog/HU-106.md) | Acceso visible en la cabecera (Iniciar sesión / Registrarse) e invitar a un monitor desde su solicitud | En revision | P0 | M |  |
@@ -36,6 +35,7 @@ _Generado automaticamente: 2026-10-31 07:32. No editar a mano; usa `scripts/back
 | [HU-108](backlog/HU-108.md) | Landing de la portada: pregunta de muestra, una sola acción y medición de conversión | En revision | P1 | L | HU-011, HU-106 |
 | [HU-109](backlog/HU-109.md) | Landing en dos columnas y landing de monitores en /quiero-ser-monitor | En revision | P1 | L | HU-062, HU-108 |
 | [HU-110](backlog/HU-110.md) | El resultado del diagnóstico empieza con un resumen visual, para el estudiante y para el monitor | En revision | P1 | M | HU-009, HU-022 |
+| [HU-113](backlog/HU-113.md) | Contenido: TIC (ISIS-1311), materia nueva con mapa completo y preguntas de los Parciales 3 y 4 | En revision | P1 | L |  |
 | [HU-111](backlog/HU-111.md) | La solicitud para ser monitor deja escribir una materia que no está en la lista, y el admin la ve | En revision | P2 | XS | HU-062 |
 | [HU-112](backlog/HU-112.md) | El resumen del resultado deja abrir ahí mismo los errores detectados | En revision | P2 | XS | HU-110 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
