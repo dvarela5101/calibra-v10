@@ -1,10 +1,11 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-10-31 20:00. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-11-01 15:46. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
 | [HU-086](backlog/HU-086.md) | [Estudiante] Ligar a mi cita un diagnóstico hecho después de agendar | Backlog | P1 | M | HU-022, HU-019 |
+| [HU-115](backlog/HU-115.md) | Diagnóstico más corto (tope de 10) y opción «No sé» (primero en TIC) | Backlog | P1 | L |  |
 | [HU-088](backlog/HU-088.md) | [Estudiante] Ver la calificación y las reseñas del monitor en su tarjeta | Backlog | P2 | M | HU-049, HU-035 |
 | [HU-090](backlog/HU-090.md) | [Admin] Registrar desde la gestión de leads el retiro de la autorización de datos | Backlog | P2 | S | HU-053, HU-085 |
 | [HU-033](backlog/HU-033.md) | [Estudiante] Gestionar mis citas y diagnósticos desde mi cuenta | Lista | P1 | M | HU-032, HU-019, HU-024, HU-029, HU-009, HU-081 |
