@@ -10,9 +10,11 @@ import { intentarAnalizar, partirMate } from "@/lib/contenido/mate";
 import { formula } from "./mathml";
 
 /**
- * Los trozos de una línea de prosa, en línea: texto y `<math>`. Una fórmula que no se entiende, o un $ sin cerrar, se queda
- * como texto tal cual (con su `$`), sin marca: la marca del prototipo era una ayuda para quien escribe el banco y el
- * visitante no sabría qué significa. De las erratas se encarga banco.test.ts.
+ * Los trozos de una línea de prosa, en línea: texto, `<code>` y `<math>`. Lo que va entre acentos graves simples (`` `x` ``) es
+ * código y sale literal en un `<code>`: nada dentro se interpreta, ni $ ni \. Un acento grave sin cerrar queda como texto. Lo de
+ * afuera sigue por `partirMate`. Una fórmula que no se entiende, o un $ sin cerrar, se queda como texto tal cual (con su `$`),
+ * sin marca: la marca del prototipo era una ayuda para quien escribe el banco y el visitante no sabría qué significa. De las
+ * erratas se encarga banco.test.ts.
  */
 function enLinea(prosa: string): ReactNode[] {
   const nodos: ReactNode[] = [];
@@ -22,22 +24,33 @@ function enLinea(prosa: string): ReactNode[] {
     if (typeof nodo === "string" && typeof nodos[ultimo] === "string") nodos[ultimo] += nodo;
     else nodos.push(nodo);
   };
-  for (const trozo of partirMate(prosa)) {
-    if (!trozo.mate) {
-      anexar(trozo.texto);
-      continue;
-    }
-    const analisis = trozo.abierto ? null : intentarAnalizar(trozo.texto);
-    let dibujo: ReactNode = null;
-    if (analisis?.ok) {
-      try {
-        dibujo = formula(analisis.arbol);
-      } catch {
-        dibujo = null;
+  const mate = (texto: string) => {
+    for (const trozo of partirMate(texto)) {
+      if (!trozo.mate) {
+        anexar(trozo.texto);
+        continue;
       }
+      const analisis = trozo.abierto ? null : intentarAnalizar(trozo.texto);
+      let dibujo: ReactNode = null;
+      if (analisis?.ok) {
+        try {
+          dibujo = formula(analisis.arbol);
+        } catch {
+          dibujo = null;
+        }
+      }
+      anexar(dibujo ?? `$${trozo.texto}${trozo.abierto ? "" : "$"}`);
     }
-    anexar(dibujo ?? `$${trozo.texto}${trozo.abierto ? "" : "$"}`);
+  };
+  // Un acento grave cerrado en la misma línea y con algo dentro; el resto se ve como texto.
+  const codigo = /`([^`]+)`/g;
+  let desde = 0;
+  for (const coincidencia of prosa.matchAll(codigo)) {
+    mate(prosa.slice(desde, coincidencia.index));
+    nodos.push(createElement("code", { className: "texto-banco-en-linea", key: `c${coincidencia.index}` }, coincidencia[1]));
+    desde = coincidencia.index + coincidencia[0].length;
   }
+  mate(prosa.slice(desde));
   return nodos;
 }
 
