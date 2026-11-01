@@ -2,7 +2,7 @@
 
 Este documento lista las materias y las habilidades del banco a las que les falta material, para saber qué hay que conseguir. Lo crea y lo mantiene [HU-061](../backlog/HU-061.md) (D-49 c). [PROCESO.md](PROCESO.md#falta-de-material) dice cuándo se actualiza. No lleva nombres de archivos del material.
 
-Última actualización: corrida de HU-113 (TIC), 31-oct-2026.
+Última actualización: corrida de HU-117 (Introducción a la Programación, nivel 3), 1-nov-2026.
 
 ## 1. Habilidades sin preguntas sin ver o con una sola respuesta
 
@@ -68,6 +68,12 @@ Alcance de la corrida de HU-113 (Parciales 3 y 4 de TIC, materia nueva): las 20 
 - **Parciales 1 y 2 de TIC:** las 20 habilidades tienen mapa y catálogo de errores, pero ninguna pregunta. Hace falta otra corrida, y para el Parcial 1 algún parcial anterior (no hay ninguno en el material).
 - **Semanas de las Evaluaciones de TIC:** 5, 8, 13 y 18 son aproximadas. Salen de las fechas de los parciales de 2026-1; la del Parcial 1 es un estimado. Hace falta el cronograma del curso.
 - **Temas de TIC sin material:** entrada/salida, diseño de clusters más allá del balanceo, Java frente a Python y los pasos de Unix para abrir un archivo (este último quedó fuera para no pasar de 10 habilidades en el Parcial 2).
+
+Alcance de la corrida de HU-117 (examen de nivel 3 de Introducción a la Programación): las 10 habilidades llegan a la meta con 5 borradores o más cada una, así que no hay filas. Material: diapositivas del nivel 3, una hoja de actividades y tres laboratorios con esqueletos en Python y sus datos, todo sin solución. Falta:
+
+- **Semana del examen de nivel 3:** 14 es un estimado sacado del calendario público de una sección de 2026-1. Hace falta el cronograma del curso.
+- **Soluciones o exámenes de nivel 3:** el catálogo de errores sale del material (lo que advierte o provoca) y del criterio del modelo. Unos exámenes resueltos o notas de monitores permitirían confirmarlo.
+- **Trampas:** 10 de las 62 misconcepciones del nivel 3 salen como trampa en una sola pregunta (la meta es 2).
 
 ### De las marcas de HU-060
 
