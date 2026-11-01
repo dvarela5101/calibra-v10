@@ -1,4 +1,4 @@
-import { esLetra } from "./reglas";
+import { esRespuesta } from "./reglas";
 import type { Letra } from "./motor";
 
 /**
@@ -20,7 +20,8 @@ export type PedidoLeidoDeResponder = {
   idDiagnostico: unknown;
   /** Sin validar: el módulo del servidor devuelve el estado actual si no es un entero no negativo. */
   paso: unknown;
-  letra: Letra;
+  /** Null: «No sé» (D-83 c). */
+  letra: Letra | null;
 };
 
 const comoObjeto = (pedido: unknown): Record<string, unknown> | null =>
@@ -33,11 +34,11 @@ export function leerPedidoDeEmpezar(pedido: unknown): PedidoLeidoDeEmpezar {
 }
 
 /**
- * `null` si el pedido no es un objeto o si la letra no es de la A a la D. Un id o un paso malo no es `null`: el módulo ya los
- * valida y no aplica nada.
+ * `null` si el pedido no es un objeto o si la letra no es de la A a la D ni `null` («No sé», D-83 c): sin `letra` tampoco vale.
+ * Un id o un paso malo no es `null`: el módulo ya los valida y no aplica nada.
  */
 export function leerPedidoDeResponder(pedido: unknown): PedidoLeidoDeResponder | null {
   const objeto = comoObjeto(pedido);
-  if (!objeto || !esLetra(objeto.letra)) return null;
+  if (!objeto || !esRespuesta(objeto.letra)) return null;
   return { idDiagnostico: objeto.idDiagnostico, paso: objeto.paso, letra: objeto.letra };
 }

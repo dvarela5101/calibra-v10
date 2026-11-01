@@ -96,7 +96,7 @@ describe("armarResultadoGuardado", () => {
     const guardado = armarResultadoGuardado(resultado, DESCRIPCIONES);
 
     expect(cumpleElCheckDeLaBase(guardado)).toBe(true);
-    expect(Object.keys(guardado).sort()).toEqual(["errores", "habilidades", "prerrequisitos"]);
+    expect(Object.keys(guardado).sort()).toEqual(["errores", "habilidades", "noSe", "prerrequisitos"]);
     expect(guardado.habilidades.map((h) => h.habilidad)).toEqual(["h1", "h2"]);
     expect(guardado.habilidades[0]).toEqual({
       habilidad: "h1",
@@ -204,6 +204,7 @@ describe("armarResultadoGuardado", () => {
       })),
       prerrequisitos: [],
       puntaje: 0,
+      noSe: 0,
     };
     const guardado = armarResultadoGuardado(resultado, {});
     expect(guardado.errores.map((e) => e.descripcionHabilidad)).toEqual(["constructor", "__proto__", "toString"]);
@@ -243,7 +244,7 @@ describe("faltaMaterialDe", () => {
   });
 
   it("conserva los dos motivos, también tope_una_respuesta, y no recalcula nada", () => {
-    // El motor solo llega a `tope_una_respuesta` con 20 preguntas: aquí se arma el resultado a mano.
+    // El motor solo llega a `tope_una_respuesta` con 10 preguntas (el tope, D-83 a): aquí se arma el resultado a mano.
     const habilidad = (clave: string, faltaMaterial: ResultadoDiagnostico["habilidades"][number]["faltaMaterial"]) => ({
       habilidad: clave,
       descripcion: clave,
@@ -257,6 +258,7 @@ describe("faltaMaterialDe", () => {
       errores: [],
       prerrequisitos: [],
       puntaje: 0,
+      noSe: 0,
     };
     const falta = faltaMaterialDe(resultado);
     expect(falta).toEqual([

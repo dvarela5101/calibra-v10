@@ -58,6 +58,7 @@ describe("proyectarResultado", () => {
         { materia: null, descripcion: "despeja una incógnita en $ax + b = c$" },
         { materia: "Cálculo Diferencial", descripcion: "deriva polinomios" },
       ],
+      noSe: 0,
     });
   });
 
@@ -212,5 +213,21 @@ describe("leerResultadoGuardado", () => {
     ["un prerrequisito sin descripción", (r: ResultadoGuardado) => void ((r.prerrequisitos[1] as { descripcion: unknown }).descripcion = undefined)],
   ])("lanza con %s", (_nombre, cambiar) => {
     expect(() => leerResultadoGuardado(con(cambiar))).toThrow(ErrorDeResultadoGuardado);
+  });
+});
+
+describe("«No sé» en el resultado guardado (HU-115, D-83 d)", () => {
+  it("un resultado de antes de HU-115, sin la cuenta, se lee con 0", () => {
+    const { noSe: _quitado, ...viejo } = GUARDADO_DE_EJEMPLO;
+    void _quitado;
+    expect(proyectarResultado(fila({ resultado: viejo })).noSe).toBe(0);
+  });
+
+  it("la cuenta guardada llega a lo que se muestra", () => {
+    expect(proyectarResultado(conResultado({ noSe: 2 })).noSe).toBe(2);
+  });
+
+  it.each([[-1], [1.5], ["2"], [null], [4]])("una cuenta %j no cuadra (con 8 respondidas y 5 aciertos, a lo más 3)", (noSe) => {
+    expect(() => proyectarResultado(conResultado({ noSe }))).toThrow(ErrorDeResultadoGuardado);
   });
 });

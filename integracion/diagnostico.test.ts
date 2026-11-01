@@ -457,6 +457,7 @@ function resultadoEsperado(resultado: ReturnType<typeof calificar>, descripcionD
       detalles: e.detalles,
     })),
     prerrequisitos: resultado.prerrequisitos.map((p) => ({ materia: p.materia, habilidad: p.habilidad, descripcion: p.descripcion })),
+    noSe: resultado.noSe,
   };
 }
 
@@ -970,7 +971,6 @@ describe("criterio 3: una respuesta se aplica una sola vez; la repetida o la vie
       { letra: "AB" },
       { letra: "" },
       { letra: 1 },
-      { letra: null },
       { letra: undefined },
       { letra: { toString: () => "A" } },
       { idDiagnostico: "xyz" },
@@ -2679,7 +2679,7 @@ describe("criterios 4, 7 y 11 con sesiones de verdad", () => {
       const texto = JSON.stringify(lectura.data);
       expect(texto, actor).not.toMatch(/faltaMaterial|falta_material|sin_preguntas_sin_ver|tope_una_respuesta/);
       expect(lectura.data![0].resultado_por_habilidad, actor).toEqual(guardado.resultado_por_habilidad);
-      expect(Object.keys(lectura.data![0].resultado_por_habilidad as object).sort(), actor).toEqual(["errores", "habilidades", "prerrequisitos"]);
+      expect(Object.keys(lectura.data![0].resultado_por_habilidad as object).sort(), actor).toEqual(["errores", "habilidades", "noSe", "prerrequisitos"]);
       const pedida = await cliente.from("diagnostico").select("id, falta_material").eq("id", dos.fin.idDiagnostico);
       expect(pedida.error?.code, `${actor}: falta_material`).toBe("42501");
     }

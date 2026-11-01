@@ -448,3 +448,13 @@ describe("las claves de la vista", () => {
     }
   });
 });
+
+describe("«No sé» en la vista del monitor (HU-115, D-83 c)", () => {
+  it("una pregunta sin letra elegida se lee como null y se marca «No sé», no «Falló»", () => {
+    const preguntas = preguntasDeEjemplo();
+    const d = leer(filaDeEjemplo({ preguntas: [{ ...preguntas[0], letraElegida: null }, ...preguntas.slice(1)] }))!.diagnostico!;
+    expect(d.preguntas![0].letraElegida).toBeNull();
+    expect(marcaDeLaPregunta(d.preguntas![0])).toBe("No sé");
+    expect(TEXTOS.noSe).toBe("No sé");
+  });
+});

@@ -9,6 +9,7 @@ import {
   puntajeGlobal,
   queTrabajar,
   textoDeErroresDetectados,
+  textoDeNoSe,
   textoDePorcentaje,
   textoDeTramo,
   textoDeVerErrores,
@@ -32,6 +33,8 @@ type Props = {
   habilidades: readonly { descripcion: string; nivel: NivelHabilidad }[];
   /** Cuántos errores se detectaron, confirmados y posibles. */
   errores: number;
+  /** Cuántas veces dijo «No sé» (D-83 d): se dice aparte, no como error. Sin ella o en 0, no se dice nada. */
+  noSe?: number;
   /** Los errores, para abrirlos desde el resumen en un desplegable cerrado (D-81 a); sin ella, la cuenta es solo texto. */
   listaDeErrores?: ReactNode;
   /** Quién mira: cambia las etiquetas de nivel («Lo dominas» o «Lo domina») y el título de qué trabajar. */
@@ -49,6 +52,7 @@ export function ResumenDelDiagnostico({
   respondidas,
   habilidades,
   errores,
+  noSe = 0,
   listaDeErrores,
   para = "persona",
   idBase,
@@ -67,6 +71,7 @@ export function ResumenDelDiagnostico({
       <div className={estilos.puntaje}>
         <p className={estilos.porcentaje}>{textoDePorcentaje(aciertos, respondidas)}</p>
         <p className={estilos.correctas}>{textoDeCorrectas(aciertos, respondidas)}</p>
+        {noSe > 0 && <p className={estilos.correctas}>{textoDeNoSe(noSe)}</p>}
       </div>
       <div role="img" aria-label={descripcionDelPorcentaje(aciertos, respondidas)} className={estilos.barra}>
         <span className={estilos.relleno} style={{ inlineSize: `${puntajeGlobal(aciertos, respondidas)}%` }} />

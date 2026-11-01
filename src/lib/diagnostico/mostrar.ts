@@ -51,6 +51,8 @@ export type ResultadoParaMostrar = {
   }[];
   /** `materia` es el nombre de la otra materia, o null si es la misma. */
   prerrequisitos: { materia: string | null; descripcion: string }[];
+  /** Preguntas en las que dijo «No sé» (D-83 d); 0 en los diagnósticos de antes de HU-115. */
+  noSe: number;
 };
 
 /**
@@ -76,6 +78,7 @@ export const CLAVES_DEL_RESULTADO: readonly string[] = [
   "descripcionDeLaHabilidad",
   "detalles",
   "prerrequisitos",
+  "noSe",
 ];
 
 // ---------------------------------------------------------------------------
@@ -127,7 +130,11 @@ export function leerResultadoGuardado(json: unknown): ResultadoGuardado {
     return { materia: materia as string | null, habilidad, descripcion };
   });
 
-  return { habilidades, errores, prerrequisitos };
+  // D-83 d: los diagnósticos de antes de HU-115 no traen la cuenta.
+  const noSe = json.noSe === undefined ? 0 : json.noSe;
+  if (!esEnteroNoNegativo(noSe)) throw new ErrorDeResultadoGuardado();
+
+  return { habilidades, errores, prerrequisitos, noSe };
 }
 
 // ---------------------------------------------------------------------------
@@ -151,6 +158,8 @@ export function proyectarResultado(fila: FilaDeMiDiagnostico): ResultadoParaMost
   if (Number.isNaN(instante.getTime())) throw new ErrorDeResultadoGuardado();
 
   const guardado = leerResultadoGuardado(fila.resultado);
+  // Un «No sé» es una respondida no acertada (D-83 d).
+  if (guardado.noSe > respondidas - aciertos) throw new ErrorDeResultadoGuardado();
 
   // Se compara con las claves ANTES de soltarlas: la habilidad de un error solo se muestra si es una del resultado.
   const descripcionPorHabilidad = new Map(guardado.habilidades.map((h) => [h.habilidad, h.descripcion]));
@@ -180,5 +189,6 @@ export function proyectarResultado(fila: FilaDeMiDiagnostico): ResultadoParaMost
       detalles: [...e.detalles],
     })),
     prerrequisitos,
+    noSe: guardado.noSe,
   };
 }

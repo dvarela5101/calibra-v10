@@ -6,8 +6,8 @@ import type { Json } from "@/lib/supabase/tipos";
 import { candidataDe, entradaDeLaFila, leerFotoDelBanco, type EntradaDeLaFila } from "./entrada";
 import { calificar, maximoDePreguntas, paraNavegador, siguientePregunta, type CopiaDePaso, type EntradaMotor, type Letra } from "./motor";
 import {
-  esLetra,
   esPasoValido,
+  esRespuesta,
   esUuid,
   proyectarEnCurso,
   proyectarNinguno,
@@ -59,7 +59,7 @@ export type PedidoDeResponder = {
   idDiagnostico: unknown;
   /** El `paso` que mostró la pantalla: las preguntas ya respondidas, desde 0. */
   paso: unknown;
-  /** La letra que vio la persona, de la A a la D (la posición, no la letra del banco). */
+  /** La letra que vio la persona, de la A a la D (la posición, no la letra del banco), o `null` si dijo «No sé» (D-83 c). */
   letra: unknown;
 };
 
@@ -278,7 +278,7 @@ export async function responderDiagnostico(
   if (
     idDiagnostico !== null &&
     esPasoValido(pedido.paso) &&
-    esLetra(pedido.letra) &&
+    esRespuesta(pedido.letra) &&
     leido !== null &&
     leido.fila.id === idDiagnostico &&
     leido.fila.paso === pedido.paso
@@ -296,7 +296,7 @@ async function aplicarRespuesta(
   cliente: ClienteDelDiagnostico,
   idUsuario: string,
   leido: EntradaDeLaFila,
-  letraElegida: Letra,
+  letraElegida: Letra | null,
 ): Promise<EnCurso | Terminado | null> {
   const { fila, contexto, entrada, pasos } = leido;
   const pendiente = delMotor(() => siguientePregunta(entrada, pasos));

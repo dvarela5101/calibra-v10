@@ -79,7 +79,8 @@ export function Recorrido({ inicial, materias, acceso }: Props) {
     });
   }
 
-  function responder(enCurso: { idDiagnostico: string; paso: number; materia: { nombre: string } }, letra: Letra) {
+  /** `letra` null es «No sé» (D-83 c). */
+  function responder(enCurso: { idDiagnostico: string; paso: number; materia: { nombre: string } }, letra: Letra | null) {
     if (llamando.current) return;
     llamando.current = true;
     aplicar({ tipo: "llamando" });

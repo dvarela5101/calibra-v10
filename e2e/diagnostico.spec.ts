@@ -984,7 +984,7 @@ test("Recorrido · empezar, responder con el teclado y con doble clic, llegar al
   await expect(page.getByRole("radiogroup")).toHaveCount(1);
   await expect(page.locator(ENUNCIADO), "al llegar la primera pregunta por una transición el foco queda en el enunciado").toBeFocused();
   // Sin acierto a la vista y sin volver atrás: solo se puede responder o cambiar de materia.
-  await expect(page.locator("main button")).toHaveText(["Responder", "Cambiar de materia"]);
+  await expect(page.locator("main button")).toHaveText(["No sé", "Responder", "Cambiar de materia"]);
   await expect(principal).not.toContainText(/Correcta|Incorrecta|Acertaste|Anterior/i);
   await expect(regionDeAvance(page)).toHaveAttribute("aria-atomic", "true");
   const regionAntes = await regionDeAvance(page).elementHandle();
@@ -1253,6 +1253,8 @@ test("Fallos con el teclado · «Empezar» y «Responder» siguen enfocados tras
   const letra = indice.reconocer(vista).letraDeLaCorrecta;
   await elegirConTeclado(page, letra);
   await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "No sé", exact: true }), "Tab desde las opciones llega a «No sé» (D-83 e)").toBeFocused();
+  await page.keyboard.press("Tab");
   await expect(botonResponder(page), "Tab desde las opciones llega a «Responder»").toBeFocused();
 
   fallando = true;
@@ -1513,6 +1515,49 @@ test("Pregunta con código · el enunciado va en un div con su bloque enfocable,
     await expectResultadoGuardado(page, banco, URL_RESULTADO.exec(page.url())![1]);
     await expectReglasDelProducto(page, "el resultado de una pregunta");
   });
+});
+
+test("«No sé» (HU-115, D-83) · responde en un toque sin elegir opción, el diagnóstico es de 10 o menos y el resultado lo cuenta aparte", async ({
+  page,
+  context,
+  banco,
+  limpieza,
+}) => {
+  const indice = new Indice(banco.banco);
+  await empezarPrueba(page, banco.nombreA);
+  const sesion = await esperarSesion(context);
+  limpieza.anotar(sesion.id);
+
+  const primera = await leerPregunta(page);
+  expect(Number(/hasta (\d+)/.exec(primera.avance)![1]), "D-83 a: el máximo es de 10 o menos").toBeLessThanOrEqual(10);
+  const noSe = page.getByRole("button", { name: "No sé", exact: true });
+  await expect(noSe).toBeVisible();
+  await expectReglas(page, "la pregunta con «No sé»");
+  // Sin elegir ninguna opción: un toque responde y pasa a la siguiente (o al resultado).
+  await expect(page.locator('input[name="opcion"]:checked')).toHaveCount(0);
+  await noSe.click();
+  await expect(alerta(page, ELIGE_UNA_OPCION)).toHaveCount(0);
+  const destino = await esperarSiguiente(page, primera.avance);
+  const pasos = destino === "resultado" ? [] : await recorrerHastaElResultado(page, indice, () => "correcta");
+  if (destino === "resultado") await expect(titulo(page, TITULO_DEL_RESULTADO)).toBeVisible(LARGA);
+  const respondidas = pasos.length + 1;
+  expect(respondidas, "D-83 a: termina en 10 o menos").toBeLessThanOrEqual(10);
+
+  // D-83 d: el «No sé» cuenta como no acertada y se dice aparte, no como error.
+  await expectCifras(page, respondidas, respondidas - 1);
+  const resumen = page.getByRole("region", { name: "Resumen de tu resultado", exact: true });
+  await expect(resumen).toContainText("Dijiste «No sé» en 1 pregunta");
+
+  const idDiagnostico = URL_RESULTADO.exec(page.url())![1];
+  const { rows } = await banco.bd.query<{ elegida: unknown; no_se: unknown; errores: unknown[] }>(
+    "select respuestas -> 0 -> 'letraElegida' as elegida, resultado_por_habilidad -> 'noSe' as no_se, resultado_por_habilidad -> 'errores' as errores from public.diagnostico where id = $1",
+    [idDiagnostico],
+  );
+  expect(rows, "el diagnóstico está guardado").toHaveLength(1);
+  expect(rows[0].elegida, "la copia del primer paso no tiene letra").toBeNull();
+  expect(rows[0].no_se).toBe(1);
+  expect(rows[0].errores, "el «No sé» no crea ningún error, y las demás fueron correctas").toEqual([]);
+  await expectResultadoGuardado(page, banco, idDiagnostico);
 });
 
 // ===============================================================================================================

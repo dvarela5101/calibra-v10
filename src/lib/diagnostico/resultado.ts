@@ -29,6 +29,8 @@ export type ResultadoGuardado = {
   }[];
   /** `materia` es el nombre de la otra materia, o null si es la misma. */
   prerrequisitos: { materia: string | null; habilidad: string; descripcion: string }[];
+  /** Preguntas en las que dijo «No sé» (D-83 d). Los diagnósticos de antes de HU-115 no la traen: se leen como 0. */
+  noSe: number;
 };
 
 /** Lo que guarda `diagnostico.falta_material`: solo las habilidades con marca (regla 12 de HU-060, D-49 c). */
@@ -65,6 +67,7 @@ export function armarResultadoGuardado(
       detalles: [...e.detalles],
     })),
     prerrequisitos: resultado.prerrequisitos.map((p) => ({ materia: p.materia, habilidad: p.habilidad, descripcion: p.descripcion })),
+    noSe: resultado.noSe,
   };
 }
 
@@ -77,8 +80,8 @@ export function faltaMaterialDe(resultado: ResultadoDiagnostico): FaltaMaterialG
 
 /**
  * Las preguntas acertadas. Una pregunta que mide varias habilidades cuenta una vez, así que no sale de sumar los aciertos de
- * `habilidades`. Es el mismo conteo con el que el motor saca el puntaje.
+ * `habilidades`. Es el mismo conteo con el que el motor saca el puntaje: un «No sé» no es un acierto (D-83 d).
  */
 export function aciertosDe(pasos: readonly CopiaDePaso[]): number {
-  return pasos.filter((paso) => opcionElegida(paso).correcta).length;
+  return pasos.filter((paso) => opcionElegida(paso)?.correcta === true).length;
 }

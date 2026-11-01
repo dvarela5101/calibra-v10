@@ -2,7 +2,8 @@
  * Motor del diagnóstico adaptativo (HU-060): funciones puras que eligen la siguiente pregunta, califican por
  * habilidad y preparan lo que ve el navegador. Las reglas con número ("regla 4") son las de `backlog/HU-060.md`; el
  * porqué está en `docs/diseno/2026-09-29-banco-por-habilidades.md`. D-49 (nunca se repite una pregunta) y D-51 (el
- * servidor pasa las vistas antes vacías al volver a tomar un diagnóstico) no cambian este archivo.
+ * servidor pasa las vistas antes vacías al volver a tomar un diagnóstico) no cambian este archivo. D-83 (HU-115) sí: el tope
+ * baja a 10, un único acierto en dificultad 2 basta cuando el tope no deja preguntar más, y el estudiante puede decir «No sé».
  *
  * No importa Supabase, Next ni `server-only`, y no usa `Math.random` ni la hora: todo entra por parámetros
  * (`EntradaMotor` y los pasos ya respondidos), así que las mismas entradas dan siempre la misma salida. La base, el
@@ -14,8 +15,8 @@
  * misconcepciones y de las habilidades.
  */
 
-/** Preguntas máximas de un diagnóstico (regla 7). La Evaluación no tiene campo de tope. */
-export const TOPE_DIAGNOSTICO = 20;
+/** Preguntas máximas de un diagnóstico (regla 7), para todas las materias (D-83 a). La Evaluación no tiene campo de tope. */
+export const TOPE_DIAGNOSTICO = 10;
 
 /** Dificultad a la que apunta la primera pregunta de cada habilidad (regla 4). */
 const DIFICULTAD_RONDA_1 = 2;
@@ -115,7 +116,8 @@ export type OrdenDeOpciones = readonly Letra[];
  */
 export interface CopiaDePaso extends PreguntaCandidata {
   orden: OrdenDeOpciones;
-  letraElegida: Letra;
+  /** Null: dijo «No sé» (D-83 c). Los diagnósticos de antes de HU-115 siempre traen una letra. */
+  letraElegida: Letra | null;
   /** Instante de la respuesta, en ISO 8601. El motor no lo lee: no usa la hora. */
   fecha: string;
 }
@@ -173,8 +175,10 @@ export interface ResultadoDiagnostico {
   /** Primero las confirmadas, luego por orden de aparición. */
   errores: ErrorDetectado[];
   prerrequisitos: PrerrequisitoDeResultado[];
-  /** Aciertos sobre preguntas respondidas, de 0 a 100 con dos decimales. */
+  /** Aciertos sobre preguntas respondidas, de 0 a 100 con dos decimales. Un «No sé» cuenta como no acertada (D-83 d). */
   puntaje: number;
+  /** Preguntas en las que dijo «No sé» (D-83 d). */
+  noSe: number;
 }
 
 /** Lo único que recibe el navegador de una pregunta: sin clave, dificultad, correcta, misconcepción ni solución. */
@@ -288,9 +292,9 @@ export function opcionDeLetra(orden: OrdenDeOpciones, letra: Letra): Letra {
   return orden[posicionDeLetra(letra)];
 }
 
-/** La opción que eligió el estudiante en un paso, tal como estaba en el banco. */
-export function opcionElegida(paso: Pick<CopiaDePaso, "opciones" | "orden" | "letraElegida">): OpcionDeCopia {
-  return paso.opciones[posicionDeLetra(opcionDeLetra(paso.orden, paso.letraElegida))];
+/** La opción que eligió el estudiante en un paso, tal como estaba en el banco, o null si dijo «No sé» (D-83 c). */
+export function opcionElegida(paso: Pick<CopiaDePaso, "opciones" | "orden" | "letraElegida">): OpcionDeCopia | null {
+  return paso.letraElegida === null ? null : paso.opciones[posicionDeLetra(opcionDeLetra(paso.orden, paso.letraElegida))];
 }
 
 /**
@@ -324,7 +328,8 @@ function trampasDe(opciones: readonly OpcionDeCopia[]): string[] {
  * Recorre los pasos en orden, como `evidenciaKc` del prototipo (index.html:5458-5491):
  * - si eligió X, sube `veces`: con 2 o más X queda confirmada; si no, en sospecha;
  * - si X estaba en sospecha, la pregunta la ofrecía y no la eligió, sube `sondeos`; si además acertó, X queda descartada;
- * - una descartada que vuelve a elegir llega a 2 veces y queda confirmada; una confirmada no cambia.
+ * - una descartada que vuelve a elegir llega a 2 veces y queda confirmada; una confirmada no cambia;
+ * - un «No sé» no dice nada de ninguna misconcepción: no crea ni sondea ninguna (D-83 c).
  */
 export function estadosDeMisconcepciones(pasos: readonly CopiaDePaso[]): Map<string, EstadoDeMisconcepcion> {
   const estados = new Map<string, EstadoDeMisconcepcion>();
@@ -335,6 +340,7 @@ export function estadosDeMisconcepciones(pasos: readonly CopiaDePaso[]): Map<str
 /** Un paso de `estadosDeMisconcepciones`: `recorrer` lo aplica uno a uno para saber qué sabía el motor antes de cada paso. */
 function aplicarPasoAEstados(estados: Map<string, EstadoDeMisconcepcion>, paso: CopiaDePaso, indice: number): void {
   const elegida = opcionElegida(paso);
+  if (elegida === null) return;
   const acierto = elegida.correcta;
   const elegidaMisconcepcion = acierto ? null : elegida.misconcepcion;
 
@@ -371,6 +377,8 @@ interface DatosDePaso {
   acierto: boolean;
   /** La misconcepción de la opción incorrecta elegida. */
   misconcepcion: string | null;
+  /** Dijo «No sé» (D-83 c): no acertó y no eligió ninguna misconcepción. */
+  noSe: boolean;
 }
 
 interface Recorrido {
@@ -384,6 +392,8 @@ interface Recorrido {
   respuestasDe: Map<string, RespuestaContada[]>;
   /** Por habilidad de la Evaluación: ¿tiene una misconcepción suya confirmada? */
   confirmadaDe: Map<string, boolean>;
+  /** Por habilidad de la Evaluación: ¿dijo «No sé» en una pregunta que la mide? (D-83 c) */
+  noSeDe: Map<string, boolean>;
   /**
    * Por habilidad de la Evaluación: cuántas preguntas eligió el motor para ella (regla 6). No se guarda en los pasos:
    * `recorrer` lo reproduce, porque el motor es determinista y sabe a quién atendía antes de cada paso.
@@ -426,11 +436,15 @@ function recorrer(entrada: EntradaMotor, pasos: readonly CopiaDePaso[]): Recorri
   const datos: DatosDePaso[] = pasos.map((paso) => {
     exigirPregunta(paso);
     const elegida = opcionElegida(paso);
+    if (elegida === null) {
+      exigirOrden(paso.orden);
+      return { acierto: false, misconcepcion: null, noSe: true };
+    }
     const misconcepcion = elegida.correcta ? null : elegida.misconcepcion;
     if (misconcepcion !== null && !habilidadDeMisconcepcion.has(misconcepcion)) {
       throw new RangeError(`La misconcepción ${misconcepcion} de la pregunta ${paso.clave} no está en la entrada.`);
     }
-    return { acierto: elegida.correcta, misconcepcion };
+    return { acierto: elegida.correcta, misconcepcion, noSe: false };
   });
 
   const recorrido: Recorrido = {
@@ -441,6 +455,7 @@ function recorrer(entrada: EntradaMotor, pasos: readonly CopiaDePaso[]): Recorri
     preguntasDe: porHabilidad<number[]>(() => []),
     respuestasDe: porHabilidad<RespuestaContada[]>(() => []),
     confirmadaDe: porHabilidad(() => false),
+    noSeDe: porHabilidad(() => false),
     elegidasPara: porHabilidad(() => 0),
     ordenRonda1: barajar(claves, flujoDelOrden(entrada.semilla)),
     habilidadDeMisconcepcion,
@@ -458,7 +473,7 @@ function recorrer(entrada: EntradaMotor, pasos: readonly CopiaDePaso[]): Recorri
   const mostradas = new Set<string>();
 
   pasos.forEach((paso, indice) => {
-    const { acierto, misconcepcion } = datos[indice];
+    const { acierto, misconcepcion, noSe } = datos[indice];
 
     // La pregunta cuenta como elegida para la habilidad que el motor atendía en este paso, si la pregunta la mide. Una
     // historia armada a mano puede traer pasos que el motor no habría elegido: esos no cuentan para nadie.
@@ -469,9 +484,11 @@ function recorrer(entrada: EntradaMotor, pasos: readonly CopiaDePaso[]): Recorri
 
     const medidas = [...new Set(paso.habilidades)].filter((habilidad) => enEvaluacion.has(habilidad));
     for (const habilidad of medidas) recorrido.preguntasDe.get(habilidad)?.push(indice);
+    if (noSe) for (const habilidad of medidas) recorrido.noSeDe.set(habilidad, true);
 
     // Regla 8. Un acierto suma a todas las habilidades de la Evaluación que mide la pregunta. Un fallo con la
-    // misconcepción de una habilidad que la pregunta mide es un fallo solo para esa; si no la mide, para todas.
+    // misconcepción de una habilidad que la pregunta mide es un fallo solo para esa; si no la mide, para todas. Un «No sé»
+    // no trae misconcepción: es un fallo para todas.
     const habilidadDelError = misconcepcion === null ? null : (habilidadDeMisconcepcion.get(misconcepcion) ?? null);
     const acreditadas =
       acierto || habilidadDelError === null || !paso.habilidades.includes(habilidadDelError)
@@ -513,7 +530,8 @@ interface Duda {
 }
 
 /**
- * Regla 5: la habilidad tiene duda si alguna pregunta la cubrió, ninguna misconcepción suya está confirmada, tiene a lo
+ * Regla 5: la habilidad tiene duda si alguna pregunta la cubrió, ninguna misconcepción suya está confirmada, no dijo «No sé»
+ * en una pregunta que la mide (D-83 c: queda en no lo domina, sin pregunta de duda), tiene a lo
  * más una respuesta que le cuenta la regla 8 y esa respuesta no fue un acierto en dificultad 3. Se cuentan las respuestas
  * que le acreditó la regla 8 y no las preguntas que la miden: una pregunta de varias habilidades cuyo fallo se acredita a
  * otra la cubre sin darle respuesta, y sin esto la habilidad podía quedar sin medir con preguntas libres.
@@ -523,7 +541,7 @@ interface Duda {
  */
 function dudaDe(recorrido: Recorrido, habilidad: string): Duda | null {
   const preguntas = recorrido.preguntasDe.get(habilidad) ?? [];
-  if (preguntas.length === 0 || recorrido.confirmadaDe.get(habilidad)) return null;
+  if (preguntas.length === 0 || recorrido.confirmadaDe.get(habilidad) || recorrido.noSeDe.get(habilidad)) return null;
   const respuestas = recorrido.respuestasDe.get(habilidad) ?? [];
   if (respuestas.length === 0) return { paso: preguntas[preguntas.length - 1], fallo: true, propia: false };
   if (respuestas.length > 1) return null;
@@ -573,7 +591,7 @@ function elegirAtencion(recorrido: Recorrido): Atencion | null {
 // ---------------------------------------------------------------------------
 
 /**
- * El máximo que se informa al empezar (regla 7): el menor entre 20, el doble de las habilidades con candidatas libres y
+ * El máximo que se informa al empezar (regla 7): el menor entre el tope (10, D-83 a), el doble de las habilidades con candidatas libres y
  * el número de candidatas libres. Cuenta las libres y no todas para que, con las vistas antes (D-49 a), el estudiante no
  * vea "1 de 8" en un diagnóstico que solo puede tener 4. El diagnóstico puede terminar antes.
  */
@@ -638,13 +656,17 @@ export function siguientePregunta(entrada: EntradaMotor, pasos: readonly CopiaDe
 // Calificar (reglas 8 a 12)
 // ---------------------------------------------------------------------------
 
-/** Regla 10, en ese orden. */
-function nivelDe(respuestas: readonly RespuestaContada[], tieneConfirmada: boolean): NivelHabilidad {
+/**
+ * Regla 10, en ese orden. `cerrada`: tiene una misconcepción suya confirmada o dijo «No sé» en una pregunta que la mide
+ * (D-83 c). `topeAlcanzado`: el tope cortó el diagnóstico; entonces un único acierto en dificultad 2 también basta (D-83 b).
+ */
+function nivelDe(respuestas: readonly RespuestaContada[], cerrada: boolean, topeAlcanzado: boolean): NivelHabilidad {
   const aciertos = respuestas.filter((respuesta) => respuesta.acierto).length;
-  if (tieneConfirmada || (respuestas.length >= 2 && aciertos === 0)) return "no_lo_domina";
+  if (cerrada || (respuestas.length >= 2 && aciertos === 0)) return "no_lo_domina";
   if (respuestas.length === 0) return "sin_medir";
-  const unicoAciertoDificil = respuestas.length === 1 && aciertos === 1 && respuestas[0].dificultad === 3;
-  if ((respuestas.length >= 2 && aciertos === respuestas.length) || unicoAciertoDificil) return "lo_domina";
+  const dificultadQueBasta = topeAlcanzado ? 2 : 3;
+  const unicoAciertoQueBasta = respuestas.length === 1 && aciertos === 1 && respuestas[0].dificultad >= dificultadQueBasta;
+  if ((respuestas.length >= 2 && aciertos === respuestas.length) || unicoAciertoQueBasta) return "lo_domina";
   return "en_proceso";
 }
 
@@ -673,13 +695,18 @@ export function calificar(entrada: EntradaMotor, pasos: readonly CopiaDePaso[]):
   exigirEntrada(entrada);
   const recorrido = recorrer(entrada, pasos);
   const descripcionDeMisconcepcion = new Map(entrada.misconcepciones.map((m) => [m.clave, m]));
+  const topeAlcanzado = pasos.length >= TOPE_DIAGNOSTICO;
 
   const habilidades: ResultadoHabilidad[] = entrada.habilidades.map((habilidad) => {
     const respuestas = recorrido.respuestasDe.get(habilidad.clave) ?? [];
     return {
       habilidad: habilidad.clave,
       descripcion: habilidad.descripcion,
-      nivel: nivelDe(respuestas, recorrido.confirmadaDe.get(habilidad.clave) ?? false),
+      nivel: nivelDe(
+        respuestas,
+        (recorrido.confirmadaDe.get(habilidad.clave) ?? false) || (recorrido.noSeDe.get(habilidad.clave) ?? false),
+        topeAlcanzado,
+      ),
       respuestas: respuestas.length,
       aciertos: respuestas.filter((respuesta) => respuesta.acierto).length,
       faltaMaterial: faltaMaterialDe(recorrido, habilidad.clave),
@@ -717,9 +744,10 @@ export function calificar(entrada: EntradaMotor, pasos: readonly CopiaDePaso[]):
     }
   });
 
-  // Una pregunta cuenta una vez aunque mida varias habilidades.
+  // Una pregunta cuenta una vez aunque mida varias habilidades. Un «No sé» cuenta en el denominador (D-83 d).
   const aciertos = recorrido.datos.filter((dato) => dato.acierto).length;
   const puntaje = pasos.length === 0 ? 0 : Math.round((aciertos / pasos.length) * 10_000) / 100;
+  const noSe = recorrido.datos.filter((dato) => dato.noSe).length;
 
-  return { habilidades, errores, prerrequisitos, puntaje };
+  return { habilidades, errores, prerrequisitos, puntaje, noSe };
 }

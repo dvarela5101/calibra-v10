@@ -192,3 +192,20 @@ describe("las preguntas del ejemplo sembrado, sin pasar por el lector", () => {
     expect(html).not.toContain("p-secreta-1");
   });
 });
+
+describe("una pregunta con «No sé» (HU-115, D-83 c)", () => {
+  const conNoSe = [{ ...PREGUNTAS[0], letraElegida: null }, ...PREGUNTAS.slice(1)];
+  const [tarjeta] = tarjetasDe(pintar(conNoSe));
+
+  it("el encabezado dice «No sé», sin el color de acierto ni de fallo", () => {
+    expect(textoDe(porEtiqueta(tarjeta, "h3")[0])).toBe("Pregunta 1 No sé");
+    const marca = porClase(tarjeta, "marca")[0];
+    expect(marca.atributos.class).not.toMatch(/acerto|fallo/);
+  });
+
+  it("ninguna opción sale como elegida; la correcta sí se marca", () => {
+    const opciones = opcionesDe(tarjeta);
+    expect(opciones.flatMap(marcasDe)).toEqual([TEXTOS.correcta]);
+    expect(opciones.flatMap(clasesDe)).toEqual(["laCorrecta"]);
+  });
+});
