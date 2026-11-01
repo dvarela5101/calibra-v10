@@ -275,8 +275,8 @@ describe("opciones barajadas y lo que recibe el navegador (regla 2)", () => {
     expect(LETRAS.map((letra) => opcionDeLetra(orden, letra))).toEqual(["C", "A", "D", "B"]);
     const paso = pasoDe(candidata, CORRECTA, orden);
     expect(paso.letraElegida).toBe("B"); // la correcta del banco es la A y en este orden se ve segunda
-    expect(opcionElegida(paso).correcta).toBe(true);
-    expect(opcionElegida({ ...paso, letraElegida: "A" }).texto).toBe("Q1 h1.b"); // la C del banco
+    expect(opcionElegida(paso)?.correcta).toBe(true);
+    expect(opcionElegida({ ...paso, letraElegida: "A" })?.texto).toBe("Q1 h1.b"); // la C del banco
   });
 
   it("paraNavegador devuelve solo {enunciado, opciones: [{letra, texto}]} en el orden barajado", () => {
@@ -621,9 +621,9 @@ describe("la duda cuenta respuestas que le acreditó la regla 8, no preguntas qu
     }
   });
 
-  it("el tope de 20 sobre una habilidad con una respuesta propia y otra pregunta acreditada a otra la marca tope_una_respuesta", () => {
-    // h1: A1 falla con h1.x (su única respuesta) y M se acredita a h2; A2 sigue libre. Los otros 18 pasos son habilidades
-    // de una pregunta en dificultad 3, que se resuelven solas, así que el paso 20 llega con h1 todavía en duda.
+  it("el tope de 10 sobre una habilidad con una respuesta propia y otra pregunta acreditada a otra la marca tope_una_respuesta", () => {
+    // h1: A1 falla con h1.x (su única respuesta) y M se acredita a h2; A2 sigue libre. Los otros 8 pasos son habilidades
+    // de una pregunta en dificultad 3, que se resuelven solas, así que el paso 10 llega con h1 todavía en duda.
     const rellenos = Array.from({ length: TOPE_DIAGNOSTICO - 2 }, (_, i) => pregunta(`F${i + 1}`, 3, [`f${i + 1}`]));
     const a1 = pregunta("A1", 2, ["h1"], ["h1.x", "h1.y", "h1.z"]);
     const a2 = pregunta("A2", 2, ["h1"], ["h1.x", "h1.y", "h1.z"]);
@@ -652,22 +652,23 @@ describe("fin del diagnóstico (regla 7)", () => {
     expect(correr(entrada).pasos).toHaveLength(2); // dos aciertos en dificultad 3: nada queda en duda
   });
 
-  it("termina al mostrar 20 preguntas aunque quede duda", () => {
-    const habilidades = Array.from({ length: 22 }, (_, i) => `h${i + 1}`);
+  it("termina al mostrar 10 preguntas aunque quede duda", () => {
+    const habilidades = Array.from({ length: 12 }, (_, i) => `h${i + 1}`);
     const candidatas = habilidades.flatMap((h) => [pregunta(`${h}-a`, 2, [h]), pregunta(`${h}-b`, 3, [h])]);
     const entrada = entradaDe({ habilidades, candidatas });
     const { pasos, elegidas } = correr(entrada);
     expect(pasos).toHaveLength(TOPE_DIAGNOSTICO);
-    expect(elegidas.every((e) => e.ronda === 1)).toBe(true); // la ronda 1 se come los 20
+    expect(elegidas.every((e) => e.ronda === 1)).toBe(true); // la ronda 1 se come los 10
     expect(siguientePregunta(entrada, pasos)).toEqual({ terminado: true });
   });
 
-  it("el máximo que se informa es el menor entre 20, el doble de las habilidades y las candidatas", () => {
+  it("el máximo que se informa es el menor entre 10, el doble de las habilidades y las candidatas", () => {
     const una = (h: string, n: number) => Array.from({ length: n }, (_, i) => pregunta(`${h}-${i}`, 2, [h]));
     expect(maximoDePreguntas(entradaDe({ habilidades: ["h1", "h2"], candidatas: [...una("h1", 5), ...una("h2", 5)] }))).toBe(4);
     expect(maximoDePreguntas(entradaDe({ habilidades: ["h1", "h2"], candidatas: [...una("h1", 1), ...una("h2", 2)] }))).toBe(3);
     const muchas = Array.from({ length: 15 }, (_, i) => `g${i}`);
-    expect(maximoDePreguntas(entradaDe({ habilidades: muchas, candidatas: muchas.flatMap((h) => una(h, 3)) }))).toBe(20);
+    expect(maximoDePreguntas(entradaDe({ habilidades: muchas, candidatas: muchas.flatMap((h) => una(h, 3)) }))).toBe(10);
+    expect(maximoDePreguntas(entradaDe({ habilidades: ["h1", "h2", "h3", "h4"], candidatas: ["h1", "h2", "h3", "h4"].flatMap((h) => una(h, 3)) }))).toBe(8);
     // Una habilidad sin candidatas no suma al doble.
     expect(maximoDePreguntas(entradaDe({ habilidades: ["h1", "h2", "h3"], candidatas: [...una("h1", 4), ...una("h2", 4)] }))).toBe(4);
   });
@@ -1007,31 +1008,32 @@ describe("resultado del diagnóstico (regla 11)", () => {
 });
 
 describe("falta de material (regla 12, D-49 c)", () => {
-  it("el tope de 20 con habilidades de una sola respuesta las marca tope_una_respuesta y deja la lista vacía a las demás", () => {
-    // 21 habilidades con 2 preguntas libres cada una: el tope corta en 20 con 20 de una sola respuesta y 1 sin medir.
-    const habilidades = Array.from({ length: 21 }, (_, i) => `h${i + 1}`);
+  it("el tope de 10 con habilidades de una sola respuesta las marca tope_una_respuesta y deja la lista vacía a las demás", () => {
+    // 11 habilidades con 2 preguntas libres cada una: el tope corta en 10 con 10 de una sola respuesta y 1 sin medir. Los
+    // aciertos en dificultad 2 dan lo domina (D-83 b), pero la marca interna sigue: el tope cortó con una sola respuesta.
+    const habilidades = Array.from({ length: 11 }, (_, i) => `h${i + 1}`);
     const candidatas = habilidades.flatMap((h) => [pregunta(`${h}-a`, 2, [h]), pregunta(`${h}-b`, 3, [h])]);
     const entrada = entradaDe({ habilidades, candidatas });
     const { pasos } = correr(entrada);
     expect(pasos).toHaveLength(TOPE_DIAGNOSTICO);
     const resultado = calificar(entrada, pasos);
     const marcadas = resultado.habilidades.filter((h) => h.faltaMaterial.length > 0);
-    expect(marcadas).toHaveLength(20);
-    expect(marcadas.every((h) => h.faltaMaterial.join() === "tope_una_respuesta" && h.nivel === "en_proceso" && h.respuestas === 1)).toBe(true);
+    expect(marcadas).toHaveLength(10);
+    expect(marcadas.every((h) => h.faltaMaterial.join() === "tope_una_respuesta" && h.nivel === "lo_domina" && h.respuestas === 1)).toBe(true);
     const sinMedir = resultado.habilidades.filter((h) => h.nivel === "sin_medir");
     expect(sinMedir).toHaveLength(1);
     expect(sinMedir[0].faltaMaterial).toEqual([]); // no le faltó material: el tope no alcanzó
   });
 
   it("con el tope y una sola respuesta que falló, queda en proceso con el error en sospecha", () => {
-    const habilidades = Array.from({ length: 21 }, (_, i) => `h${i + 1}`);
+    const habilidades = Array.from({ length: 11 }, (_, i) => `h${i + 1}`);
     const candidatas = habilidades.flatMap((h) => [pregunta(`${h}-a`, 2, [h]), pregunta(`${h}-b`, 3, [h])]);
     const entrada = entradaDe({ habilidades, candidatas });
     // Cada habilidad tiene sus propias trampas: el estudiante elige la primera incorrecta de cada pregunta.
     const propios = correr(entrada, (candidata) => candidata.opciones[1].misconcepcion ?? CORRECTA);
     const resultado = calificar(entrada, propios.pasos);
-    expect(resultado.habilidades.filter((h) => h.nivel === "en_proceso" && h.faltaMaterial.join() === "tope_una_respuesta")).toHaveLength(20);
-    expect(resultado.errores).toHaveLength(20);
+    expect(resultado.habilidades.filter((h) => h.nivel === "en_proceso" && h.faltaMaterial.join() === "tope_una_respuesta")).toHaveLength(10);
+    expect(resultado.errores).toHaveLength(10);
     expect(resultado.errores.every((e) => e.estado === "sospecha" && e.veces === 1)).toBe(true);
   });
 
@@ -1055,7 +1057,7 @@ describe("falta de material (regla 12, D-49 c)", () => {
     ]);
   });
 
-  it("con un diagnóstico a medias no marca tope_una_respuesta: solo el tope de 20 la produce", () => {
+  it("con un diagnóstico a medias no marca tope_una_respuesta: solo el tope de 10 la produce", () => {
     const candidatas = [pregunta("a", 2, ["h1"]), pregunta("b", 3, ["h1"])];
     const entrada = entradaDe({ habilidades: ["h1"], candidatas });
     const aMedias = calificar(entrada, historia(candidatas, ["a", CORRECTA]));
@@ -1063,7 +1065,7 @@ describe("falta de material (regla 12, D-49 c)", () => {
   });
 
   it("no marca a la habilidad que se resolvió, aunque el tope haya cortado a otras", () => {
-    const habilidades = Array.from({ length: 21 }, (_, i) => `h${i + 1}`);
+    const habilidades = Array.from({ length: 11 }, (_, i) => `h${i + 1}`);
     const candidatas = habilidades.flatMap((h) => [pregunta(`${h}-a`, 3, [h]), pregunta(`${h}-b`, 3, [h])]);
     const entrada = entradaDe({ habilidades, candidatas });
     const { pasos } = correr(entrada); // todo correcto en dificultad 3: cada una queda en lo domina con una respuesta
@@ -1191,7 +1193,7 @@ describe("banco real: todas las Evaluaciones, semillas 1 a 1000 con respuestas a
     expect(problemas).toEqual([]);
   });
 
-  it("el largo no pasa del menor entre 20 y el doble de las habilidades, ni del máximo que se informa", () => {
+  it("el largo no pasa del menor entre 10 y el doble de las habilidades, ni del máximo que se informa", () => {
     const problemas: string[] = [];
     for (const caso of casos) {
       const maximo = maximoDePreguntas(caso.entrada);
@@ -1242,7 +1244,7 @@ describe("banco real: todas las Evaluaciones, semillas 1 a 1000 con respuestas a
         const donde = `${caso.nombre} semilla ${i + 1}`;
         const { pasos } = caso.corridas[i];
         if (resultado.habilidades.map((h) => h.habilidad).join() !== caso.entrada.habilidades.map((h) => h.clave).join()) problemas.push(`${donde}: orden`);
-        const aciertos = pasos.filter((p) => opcionElegida(p).correcta).length;
+        const aciertos = pasos.filter((p) => opcionElegida(p)?.correcta === true).length;
         if (resultado.puntaje !== (pasos.length === 0 ? 0 : Math.round((aciertos / pasos.length) * 10_000) / 100)) problemas.push(`${donde}: puntaje`);
         for (const h of resultado.habilidades) {
           if (h.aciertos > h.respuestas) problemas.push(`${donde}: ${h.habilidad} aciertos > respuestas`);
@@ -1257,7 +1259,7 @@ describe("banco real: todas las Evaluaciones, semillas 1 a 1000 con respuestas a
     expect(problemas).toEqual([]);
   });
 
-  it("Cálculo Integral con borradores corta en 20 y deja habilidades con una sola respuesta marcadas tope_una_respuesta", () => {
+  it("Cálculo Integral con borradores corta en 10 y deja habilidades con una sola respuesta marcadas tope_una_respuesta", () => {
     const caso = casos.find((c) => c.borradores);
     if (!caso) throw new Error("falta el caso de Cálculo Integral con borradores");
     const cortadas = caso.corridas.filter((c) => c.pasos.length === TOPE_DIAGNOSTICO).length;
@@ -1267,7 +1269,9 @@ describe("banco real: todas las Evaluaciones, semillas 1 a 1000 con respuestas a
     const problemas: string[] = [];
     for (const resultado of conTope) {
       for (const h of resultado.habilidades.filter((x) => x.faltaMaterial.includes("tope_una_respuesta"))) {
-        if (h.respuestas !== 1 || h.nivel !== "en_proceso") problemas.push(`${h.habilidad}: ${h.nivel} con ${h.respuestas} respuestas`);
+        // D-83 b: con el tope, un único acierto en dificultad 2 da lo domina; un fallo, en proceso.
+        const nivelEsperado = h.nivel === "en_proceso" || (h.nivel === "lo_domina" && h.aciertos === 1);
+        if (h.respuestas !== 1 || !nivelEsperado) problemas.push(`${h.habilidad}: ${h.nivel} con ${h.respuestas} respuestas`);
       }
     }
     expect(problemas).toEqual([]);
@@ -1313,5 +1317,139 @@ describe("banco real: todas las Evaluaciones, semillas 1 a 1000 con respuestas a
       }
     }
     expect(problemas).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Diagnóstico corto y «No sé» (HU-115, D-83)
+// ---------------------------------------------------------------------------
+
+/** El paso de responder «No sé» a `candidata`, con el orden en que la vio. */
+function pasoNoSe(candidata: PreguntaCandidata, orden: OrdenDeOpciones = LETRAS): CopiaDePaso {
+  return { ...candidata, orden, letraElegida: null, fecha: FECHA };
+}
+
+describe("D-83: el tope es 10 para todas las materias", () => {
+  it("el tope vale 10 y un diagnóstico de 10 habilidades con 2 preguntas cada una termina en 10, todas de la ronda 1", () => {
+    expect(TOPE_DIAGNOSTICO).toBe(10);
+    const habilidades = Array.from({ length: 10 }, (_, i) => `h${i + 1}`);
+    const candidatas = habilidades.flatMap((h) => [pregunta(`${h}-a`, 2, [h]), pregunta(`${h}-b`, 2, [h])]);
+    for (let semilla = 1; semilla <= 20; semilla++) {
+      const entrada = entradaDe({ habilidades, candidatas, semilla });
+      expect(maximoDePreguntas(entrada)).toBe(10);
+      const { pasos, elegidas } = correr(entrada, alAzar(semilla));
+      expect(pasos.length, `semilla ${semilla}`).toBeLessThanOrEqual(10);
+      expect(elegidas.slice(0, 10).every((e) => e.ronda === 1), `semilla ${semilla}`).toBe(true);
+      // Regla 4: cada habilidad recibe una antes de que alguna reciba la segunda.
+      expect(new Set(elegidas.map((e) => e.habilidad)).size, `semilla ${semilla}`).toBe(10);
+    }
+  });
+
+  it("con más habilidades que el tope, corta en 10 aunque queden habilidades sin preguntar", () => {
+    const habilidades = Array.from({ length: 15 }, (_, i) => `h${i + 1}`);
+    const candidatas = habilidades.map((h) => pregunta(`${h}-a`, 2, [h]));
+    const entrada = entradaDe({ habilidades, candidatas });
+    expect(maximoDePreguntas(entrada)).toBe(10);
+    const { pasos } = correr(entrada);
+    expect(pasos).toHaveLength(10);
+    expect(siguientePregunta(entrada, pasos)).toEqual({ terminado: true });
+  });
+});
+
+describe("D-83 b: un único acierto en dificultad 2 basta cuando el tope no deja preguntar más", () => {
+  const habilidades = Array.from({ length: 10 }, (_, i) => `h${i + 1}`);
+  const candidatas = habilidades.flatMap((h) => [pregunta(`${h}-a`, 2, [h]), pregunta(`${h}-b`, 1, [h])]);
+
+  it("con el tope alcanzado, el acierto en dificultad 2 da lo domina; el de dificultad 1 sigue en proceso", () => {
+    const entrada = entradaDe({ habilidades, candidatas });
+    const { pasos } = correr(entrada);
+    expect(pasos).toHaveLength(TOPE_DIAGNOSTICO);
+    expect(pasos.every((p) => p.dificultad === 2)).toBe(true);
+    expect(calificar(entrada, pasos).habilidades.every((h) => h.nivel === "lo_domina" && h.respuestas === 1)).toBe(true);
+
+    // La misma historia con una pregunta de dificultad 1 en vez de la de dificultad 2 para h1: queda en proceso.
+    const conFacil = pasos.map((p) => (p.clave === "h1-a" ? pasoDe(candidatas.find((c) => c.clave === "h1-b")!, CORRECTA) : p));
+    expect(calificar(entrada, conFacil).habilidades[0]).toMatchObject({ habilidad: "h1", nivel: "en_proceso" });
+  });
+
+  it("si cabe otra pregunta, el acierto en dificultad 2 deja duda y la ronda 2 sigue como antes", () => {
+    const entrada = entradaDe({ habilidades: ["h1", "h2"], candidatas: [pregunta("a", 2, ["h1"]), pregunta("b", 3, ["h1"]), pregunta("c", 3, ["h2"])] });
+    const pasos = historia(entrada.candidatas, ["a", CORRECTA]);
+    expect(calificar(entrada, pasos).habilidades[0].nivel).toBe("en_proceso");
+    const { pasos: todos } = correr(entrada);
+    expect(claves(todos).sort()).toEqual(["a", "b", "c"]); // h1 recibe la de dificultad 3 tras el acierto
+  });
+
+  it("con el tope alcanzado, un único fallo sigue en proceso", () => {
+    const entrada = entradaDe({ habilidades, candidatas });
+    const { pasos } = correr(entrada, (c) => c.opciones[1].misconcepcion ?? CORRECTA);
+    expect(pasos).toHaveLength(TOPE_DIAGNOSTICO);
+    expect(calificar(entrada, pasos).habilidades.every((h) => h.nivel === "en_proceso")).toBe(true);
+  });
+});
+
+describe("D-83 c y d: «No sé»", () => {
+  const candidatas = [pregunta("a", 2, ["h1"]), pregunta("b", 2, ["h1"]), pregunta("c", 2, ["h2"]), pregunta("d", 3, ["h2"])];
+  const entrada = entradaDe({ habilidades: ["h1", "h2"], candidatas });
+  const porClave = (clave: string) => candidatas.find((c) => c.clave === clave)!;
+
+  it("deja la habilidad en no lo domina sin misconcepción y sin pregunta de duda", () => {
+    const primera = elegidaDe(entrada, []);
+    const pasos = [pasoNoSe(porClave(primera.clave), primera.orden)];
+    expect(opcionElegida(pasos[0])).toBeNull();
+    // La siguiente es para la otra habilidad (ronda 1) y después no hay duda que atender para la del «No sé».
+    const conNoSe = [...pasos];
+    for (;;) {
+      const siguiente = siguientePregunta(entrada, conNoSe);
+      if ("terminado" in siguiente) break;
+      expect(siguiente.habilidad).not.toBe(primera.habilidad);
+      conNoSe.push(pasoDe(porClave(siguiente.clave), CORRECTA, siguiente.orden));
+    }
+    const resultado = calificar(entrada, conNoSe);
+    const delNoSe = resultado.habilidades.find((h) => h.habilidad === primera.habilidad)!;
+    expect(delNoSe).toMatchObject({ nivel: "no_lo_domina", respuestas: 1, aciertos: 0, faltaMaterial: [] });
+    expect(resultado.errores).toEqual([]);
+    expect(estadosDeMisconcepciones(conNoSe).size).toBe(0);
+  });
+
+  it("no sondea ni descarta una misconcepción en sospecha", () => {
+    const a = pregunta("a", 2, ["h1"], ["h1.x", "h1.y", "h1.z"]);
+    const b = pregunta("b", 2, ["h1"], ["h1.x", "h1.y", "h1.z"]);
+    const pasos = [pasoDe(a, "h1.x"), pasoNoSe(b)];
+    expect(estadosDeMisconcepciones(pasos).get("h1.x")).toMatchObject({ estado: "sospecha", veces: 1, sondeos: 0 });
+  });
+
+  it("después de un acierto, un «No sé» de la ronda 2 deja la habilidad en no lo domina", () => {
+    const pasos = [pasoDe(porClave("a"), CORRECTA), pasoNoSe(porClave("b"))];
+    expect(calificar(entrada, pasos).habilidades[0]).toMatchObject({ nivel: "no_lo_domina", respuestas: 2, aciertos: 1 });
+  });
+
+  it("una pregunta de varias habilidades con «No sé» deja en no lo domina a todas las de la Evaluación que mide", () => {
+    const m = pregunta("m", 2, ["h1", "h2", "otra"]);
+    const e = entradaDe({ habilidades: ["h1", "h2"], candidatas: [m] });
+    const resultado = calificar(e, [pasoNoSe(m)]);
+    expect(resultado.habilidades.map((h) => [h.habilidad, h.nivel, h.faltaMaterial])).toEqual([
+      ["h1", "no_lo_domina", []],
+      ["h2", "no_lo_domina", []],
+    ]);
+  });
+
+  it("cuenta como no acertada en el puntaje y se cuenta aparte, no como error", () => {
+    const pasos = [pasoDe(porClave("a"), CORRECTA), pasoNoSe(porClave("c")), pasoNoSe(porClave("d"))];
+    const resultado = calificar(entrada, pasos);
+    expect(resultado.puntaje).toBe(33.33);
+    expect(resultado.noSe).toBe(2);
+    expect(resultado.errores).toEqual([]);
+    expect(calificar(entrada, historia(candidatas, ["a", CORRECTA])).noSe).toBe(0);
+  });
+
+  it("no es falta de material: con preguntas libres o sin ellas, la habilidad del «No sé» no lleva marca", () => {
+    const sola = entradaDe({ habilidades: ["h1"], candidatas: [pregunta("a", 2, ["h1"])] });
+    expect(calificar(sola, [pasoNoSe(sola.candidatas[0])]).habilidades[0]).toMatchObject({ nivel: "no_lo_domina", faltaMaterial: [] });
+    expect(calificar(entrada, [pasoNoSe(porClave("a"))]).habilidades[0].faltaMaterial).toEqual([]);
+  });
+
+  it("un «No sé» con un orden que no es permutación lanza, como una letra", () => {
+    expect(() => calificar(entrada, [pasoNoSe(porClave("a"), ["A", "A", "B", "C"])])).toThrow(RangeError);
   });
 });

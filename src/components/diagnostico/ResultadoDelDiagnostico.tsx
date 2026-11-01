@@ -154,6 +154,7 @@ export function ResultadoDelDiagnostico({ resultado, acciones = "completas", niv
           respondidas={resultado.respondidas}
           habilidades={resultado.habilidades}
           errores={resultado.errores.length}
+          noSe={resultado.noSe}
           listaDeErrores={
             // Sin título visible (el desplegable ya dice cuántos son), pero es la región «Errores» para quien navega por regiones.
             <section aria-label={TEXTOS.errores}>

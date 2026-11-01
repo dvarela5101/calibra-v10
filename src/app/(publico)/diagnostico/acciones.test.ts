@@ -202,7 +202,12 @@ describe("responderPregunta: quién puede responder", () => {
 });
 
 describe("responderPregunta: lo que llega del navegador", () => {
-  it.each([["E"], [""], [null], [undefined], ["a"], [1], [["A"]]])("la letra %j no llega al módulo y devuelve «Elige una opción» (M25)", async (letra) => {
+  it("«No sé» (letra null, D-83 c) llega al módulo tal cual", async () => {
+    await responderPregunta({ idDiagnostico: ID_DIAGNOSTICO, paso: 0, letra: null });
+    expect(falsos.responder).toHaveBeenCalledExactlyOnceWith(PERSONA, { idDiagnostico: ID_DIAGNOSTICO, paso: 0, letra: null });
+  });
+
+  it.each([["E"], [""], [undefined], ["a"], [1], [["A"]]])("la letra %j no llega al módulo y devuelve «Elige una opción» (M25)", async (letra) => {
     const respuesta = await responderPregunta({ idDiagnostico: ID_DIAGNOSTICO, paso: 0, letra });
     expect(respuesta).toEqual({ tipo: "error", mensaje: "Elige una opción" });
     expect(falsos.responder).not.toHaveBeenCalled();

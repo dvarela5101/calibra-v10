@@ -91,7 +91,7 @@ describe("lo que el monitor debe ver coincide con el motor", () => {
         const copia = copias[i];
         const esperada = esperadas[i];
         const textoEn = (letra: Letra) => esperada.opciones.find((o) => o.letra === letra)!.texto;
-        expect(textoEn(esperada.letraElegida), `elegida de la pregunta ${p.numero}`).toBe(opcionElegida(copia).texto);
+        expect(textoEn(esperada.letraElegida!), `elegida de la pregunta ${p.numero}`).toBe(opcionElegida(copia)!.texto);
         expect(textoEn(esperada.letraCorrecta), `correcta de la pregunta ${p.numero}`).toBe(copia.opciones.find((o) => o.correcta)!.texto);
         expect(esperada.opciones, `opciones de la pregunta ${p.numero}`).toEqual(paraNavegador(copia, copia.orden).opciones);
         expect(esperada.letraElegida).toBe(copia.letraElegida);
@@ -129,7 +129,7 @@ describe("planDeEjemplo: ocho preguntas, tres falladas", () => {
 
   it("en la mayoría, la letra que vio no es la del banco: ignorar el orden o usar la inversa daría otra opción", () => {
     const copias = copiasDe(plan, MARCA);
-    const sinOrden = copias.filter((c) => c.opciones[LETRAS.indexOf(c.letraElegida)].texto !== opcionElegida(c).texto).length;
+    const sinOrden = copias.filter((c) => c.opciones[LETRAS.indexOf(c.letraElegida!)].texto !== opcionElegida(c)!.texto).length;
     expect(sinOrden).toBeGreaterThanOrEqual(5);
   });
 });
@@ -151,10 +151,10 @@ describe("planDeLas96: las 24 permutaciones por las 4 letras", () => {
   it("ignorar el orden cambia la opción elegida en 72 de los 96 casos y usar la permutación inversa, en 48 (hecho 24 del SPEC)", () => {
     const copias = copiasDe(plan, MARCA);
     const texto = (c: (typeof copias)[number], letraDelBanco: Letra) => c.opciones[LETRAS.indexOf(letraDelBanco)].texto;
-    const cambiaSinOrden = copias.filter((c) => texto(c, c.letraElegida) !== opcionElegida(c).texto).length;
+    const cambiaSinOrden = copias.filter((c) => texto(c, c.letraElegida!) !== opcionElegida(c)!.texto).length;
     const cambiaConLaInversa = copias.filter((c) => {
       const inversa = LETRAS.map((letra) => LETRAS[c.orden.indexOf(letra)]);
-      return texto(c, inversa[LETRAS.indexOf(c.letraElegida)]) !== opcionElegida(c).texto;
+      return texto(c, inversa[LETRAS.indexOf(c.letraElegida!)]) !== opcionElegida(c)!.texto;
     }).length;
     expect(cambiaSinOrden).toBe(72);
     expect(cambiaConLaInversa).toBe(48);

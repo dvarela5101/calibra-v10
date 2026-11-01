@@ -121,6 +121,19 @@ describe("Pregunta: botones y mensajes (criterios 5 y 6)", () => {
     expect(boton).not.toMatch(/\sdisabled(=|\s|>)/);
   });
 
+  it("«No sé» es un botón secundario bajo las opciones y antes de «Responder» (D-83 e)", () => {
+    const html = pintar();
+    expect(html).toMatch(/<button type="button"[^>]*>No sé<\/button>/);
+    expect(html.indexOf(">No sé<")).toBeGreaterThan(html.indexOf("radiogroup"));
+    expect(html.indexOf(">No sé<")).toBeLessThan(html.indexOf(">Responder<"));
+  });
+
+  it("ocupado, «No sé» queda inactivo con aria-disabled, sin perder el foco", () => {
+    const boton = pintar({ ocupado: true }).match(/<button type="button"[^>]*>No sé<\/button>/)?.[0] ?? "";
+    expect(boton).toContain('aria-disabled="true"');
+    expect(boton).not.toMatch(/\sdisabled(=|\s|>)/);
+  });
+
   it("fuera de una llamada los botones están habilitados", () => {
     const html = pintar();
     expect(html).not.toContain("disabled");

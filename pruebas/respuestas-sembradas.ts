@@ -268,6 +268,7 @@ export function resultadoGuardadoSembrado(marca: string, opciones: { habilidades
       // ...y otra clave con la misma descripción también.
       { materia: null, habilidad: `repasar-secreto-${marca}-3`, descripcion: "despeja una incógnita" },
     ],
+    noSe: 0,
   };
 }
 

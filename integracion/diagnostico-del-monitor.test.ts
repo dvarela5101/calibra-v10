@@ -436,7 +436,7 @@ describe("el motor real de punta a punta (criterios 1 a 5, 14)", () => {
       const pregunta = preguntas[i];
       const textoEn = (letra: Letra) => pregunta.opciones.find((o) => o.letra === letra)!.texto;
       expect(pregunta.enunciado).toBe(copia.enunciado);
-      expect(textoEn(pregunta.letraElegida), `opción elegida de la pregunta ${i + 1}`).toBe(opcionElegida(copia).texto);
+      expect(textoEn(pregunta.letraElegida!), `opción elegida de la pregunta ${i + 1}`).toBe(opcionElegida(copia)!.texto);
       expect(textoEn(pregunta.letraCorrecta), `opción correcta de la pregunta ${i + 1}`).toBe(copia.opciones.find((o) => o.correcta)!.texto);
       expect(pregunta.letraElegida).toBe(copia.letraElegida);
       expect(pregunta.opciones).toEqual(paraNavegador(copia, copia.orden).opciones);
@@ -474,7 +474,7 @@ describe("los 96 casos: las 24 permutaciones por las 4 letras vistas (criterio 1
       const textoEn = (letra: Letra) => pregunta.opciones.find((o) => o.letra === letra)!.texto;
       // Contra el motor (la referencia del mapeo)...
       expect(pregunta.opciones, `opciones del caso ${i + 1}`).toEqual(paraNavegador(copia, copia.orden).opciones);
-      expect(textoEn(pregunta.letraElegida), `elegida del caso ${i + 1}`).toBe(opcionElegida(copia).texto);
+      expect(textoEn(pregunta.letraElegida!), `elegida del caso ${i + 1}`).toBe(opcionElegida(copia)!.texto);
       expect(textoEn(pregunta.letraCorrecta), `correcta del caso ${i + 1}`).toBe(copia.opciones.find((o) => o.correcta)!.texto);
       expect(pregunta.letraElegida).toBe(copia.letraElegida);
       // ...y contra la cuenta por posiciones del fixture.
@@ -484,7 +484,7 @@ describe("los 96 casos: las 24 permutaciones por las 4 letras vistas (criterio 1
         letraCorrecta: esperadas[i].letraCorrecta,
         solucion: esperadas[i].solucion,
       });
-      if (copia.opciones[LETRAS.indexOf(copia.letraElegida)].texto !== opcionElegida(copia).texto) distintasDeLaDelBanco++;
+      if (copia.opciones[LETRAS.indexOf(copia.letraElegida!)].texto !== opcionElegida(copia)!.texto) distintasDeLaDelBanco++;
     });
     // El caso discrimina: con el mapeo mal hecho (sin orden) la opción sería otra en 72 de los 96.
     expect(distintasDeLaDelBanco).toBe(72);

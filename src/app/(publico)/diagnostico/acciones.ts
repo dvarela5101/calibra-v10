@@ -59,12 +59,12 @@ export async function empezarDiagnostico(pedido: unknown): Promise<ResultadoDeEm
   return traducirEmpezar(respuesta, ultimo);
 }
 
-/** `idDiagnostico`, `paso` y `letra` (de la A a la D) de la pregunta que vio la persona. */
+/** `idDiagnostico`, `paso` y `letra` (de la A a la D, o `null` si dijo «No sé», D-83 c) de la pregunta que vio la persona. */
 export async function responderPregunta(pedido: unknown): Promise<ResultadoDeResponder> {
   const { sesion, aviso } = await sesionDeLaPersona();
   if (!sesion) return error(aviso);
 
-  // Una letra que no es de la A a la D no la manda la interfaz: no llega al módulo.
+  // Una letra que no es de la A a la D ni «No sé» no la manda la interfaz: no llega al módulo.
   const leido = leerPedidoDeResponder(pedido);
   if (!leido) return error(TEXTOS.eligeUnaOpcion);
 
