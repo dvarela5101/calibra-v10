@@ -35,7 +35,7 @@ mc: speedup-unidades-mezcladas · speedup · divides dos tiempos o conviertes un
 
 ## Preguntas
 
-### P51 · dificultad 1 · kc: correlacion-regresion · borrador · origen: ia (sonnet-5.5)
+### P51 · dificultad 1 · kc: correlacion-regresion · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Durante 12 meses, un equipo de TI midió el uso promedio de RAM y el tiempo de respuesta de un servidor de pedidos, y obtuvo un coeficiente de correlación r = 0,05 entre ambos. ¿Qué se concluye?
 
 - A) Existe una relación lineal muy estrecha, porque un valor tan cercano a 0 indica datos muy regulares · [corr-cercana-a-cero-es-fuerte]
@@ -45,7 +45,7 @@ Durante 12 meses, un equipo de TI midió el uso promedio de RAM y el tiempo de r
 
 solución: el coeficiente r mide qué tan alineados están los puntos sobre una recta: ±1 es una relación lineal perfecta y 0 es ausencia de relación lineal. Con r = 0,05 la nube de puntos casi no tiene tendencia lineal, de modo que una recta de regresión con la RAM no permitiría proyectar el tiempo de respuesta. Un valor cercano a 0 no es una relación fuerte (A), una correlación no mide causalidad ni un efecto del 5 % (B) y r no es el porcentaje de meses que sigue la tendencia (D).
 
-### P52 · dificultad 2 · kc: correlacion-regresion · borrador · origen: ia (sonnet-5.5)
+### P52 · dificultad 2 · kc: correlacion-regresion · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 En un centro de datos se registraron 12 meses de datos. El número de tickets de soporte abiertos al mes y la CPU promedio del servidor de correo dan un coeficiente de correlación r = 0,95. Un analista debe sacar una conclusión. ¿Cuál es la válida?
 
 - A) Hay una asociación lineal fuerte y positiva, pero no prueba que una variable cause la otra: pueden depender de un factor común, como el número de usuarios · CORRECTA
@@ -55,7 +55,7 @@ En un centro de datos se registraron 12 meses de datos. El número de tickets de
 
 solución: r = 0,95 es cercano a 1, por lo que la relación lineal positiva es fuerte. Pero el coeficiente solo mide cuánto se mueven juntas las variables, no por qué. Los dos valores pueden crecer porque aumentan los usuarios, sin que uno cause el otro, así que ni B ni D son conclusiones válidas. Además r no es el porcentaje explicado: la variación explicada es r² = 0,95² ≈ 0,90, no 0,95 (C).
 
-### P53 · dificultad 2 · kc: correlacion-regresion · borrador · origen: ia (sonnet-5.5)
+### P53 · dificultad 2 · kc: correlacion-regresion · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Con los datos de los meses 1 a 8 se ajustó la recta T = 0,8 + 0,32·m, donde T es el tiempo de respuesta en segundos y m el número del mes. La gerencia fija 4 s como máximo aceptable. Estás al final del mes 8. ¿Cuántos meses más pasan hasta que la recta alcance el límite?
 
 - A) 10 meses · [corr-indice-por-meses-faltantes]
@@ -65,7 +65,7 @@ Con los datos de los meses 1 a 8 se ajustó la recta T = 0,8 + 0,32·m, donde T 
 
 solución: se despeja m en 4 = 0,8 + 0,32·m: m = (4 − 0,8)/0,32 = 3,2/0,32 = 10. La recta llega a 4 s en el mes 10; como ya van 8 meses, faltan 10 − 8 = 2. Si divides 4/0,32 = 12,5 sin restar el intercepto, faltarían 12,5 − 8 = 4,5 (B); si lo sumas, (4 + 0,8)/0,32 = 15 y faltarían 7 (C); y 10 es el número del mes, no los meses que faltan (A).
 
-### P54 · dificultad 3 · kc: correlacion-regresion · borrador · origen: ia (sonnet-5.5)
+### P54 · dificultad 3 · kc: correlacion-regresion · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Con 10 meses de datos se ajustaron dos modelos para el tiempo de respuesta T (en segundos). Con el uso de CPU: T = 0,5 + 0,05·CPU, con r = 0,96. Con el uso de RAM: r = 0,12. Hoy la CPU está en 58 % y sube 4 puntos porcentuales por mes. El límite de la gerencia es T = 4 s. ¿En cuántos meses desde hoy se alcanza el límite y qué variable conviene usar para proyectar?
 
 - A) 5,5 meses; usar la CPU, porque su r = 0,96 indica una relación lineal fuerte · [corr-despeje-sin-intercepto]
@@ -75,7 +75,7 @@ Con 10 meses de datos se ajustaron dos modelos para el tiempo de respuesta T (en
 
 solución: variable: la CPU tiene r = 0,96, cercano a 1, y la RAM r = 0,12, cercano a 0 (sin relación lineal apreciable), así que la CPU es la que sirve para proyectar. Uso de CPU en que T = 4: 4 = 0,5 + 0,05·CPU, CPU = (4 − 0,5)/0,05 = 70 %. Desde 58 % a 4 puntos por mes: (70 − 58)/4 = 3 meses. Sin restar el intercepto saldría CPU = 4/0,05 = 80 % y (80 − 58)/4 = 5,5 meses (A); sumándolo, (4 + 0,5)/0,05 = 90 % y (90 − 58)/4 = 8 meses (C). La RAM no sirve porque r cercano a 0 no es una relación fuerte (D).
 
-### P55 · dificultad 1 · kc: correlacion-regresion · borrador · origen: ia (sonnet-5.5)
+### P55 · dificultad 1 · kc: correlacion-regresion · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El espacio usado en un servidor de archivos sigue la recta Q = 40 + 10·m, con Q en GB y m el número del mes (el mes 1 es el primero con datos). La capacidad total es 100 GB. Estás en el mes 3. ¿Cuántos meses faltan para llenar el disco según la recta?
 
 - A) 6 meses · [corr-indice-por-meses-faltantes]
@@ -85,7 +85,7 @@ El espacio usado en un servidor de archivos sigue la recta Q = 40 + 10·m, con Q
 
 solución: se despeja m en 100 = 40 + 10·m: m = (100 − 40)/10 = 6. El disco se llena en el mes 6; como van 3 meses, faltan 6 − 3 = 3. Dividir 100/10 = 10 ignora el intercepto y daría 10 − 3 = 7 (B); sumarlo, (100 + 40)/10 = 14 y 14 − 3 = 11 (D). El 6 es el número del mes, no los meses que faltan (A).
 
-### P56 · dificultad 1 · kc: iops-latencia · borrador · origen: ia (sonnet-5.5)
+### P56 · dificultad 1 · kc: iops-latencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El disco de un sistema de inventarios atiende en promedio 180 lecturas por segundo y 120 escrituras por segundo. Cada transacción implica en promedio 3 IOPS. ¿Cuáles son los IOPS totales y las transacciones por segundo?
 
 - A) 180 IOPS y 60 transacciones por segundo · [iops-solo-lecturas]
@@ -95,7 +95,7 @@ El disco de un sistema de inventarios atiende en promedio 180 lecturas por segun
 
 solución: IOPS totales = lecturas + escrituras = 180 + 120 = 300. Cada transacción usa 3 IOPS, así que transacciones por segundo = 300 ÷ 3 = 100. Con solo las lecturas saldrían 180 y 60 (A); promediando, (180 + 120)/2 = 150 y 50 (C); multiplicar 300 × 3 = 900 invierte la conversión (D).
 
-### P57 · dificultad 2 · kc: iops-latencia · borrador · origen: ia (sonnet-5.5)
+### P57 · dificultad 2 · kc: iops-latencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un disco SATA tiene un tiempo de servicio de 8 ms por operación, así que atiende como máximo 1000/8 = 125 operaciones por segundo. Una aplicación genera 90 transacciones por segundo y cada transacción implica 3 IOPS. ¿Puede el disco atender esa carga?
 
 - A) Sí: 90 transacciones por segundo son menos que los 125 IOPS que ofrece el disco · [iops-transacciones-mal-convertidas] comparas transacciones con IOPS sin pasarlas a IOPS
@@ -105,7 +105,7 @@ Un disco SATA tiene un tiempo de servicio de 8 ms por operación, así que atien
 
 solución: la carga en IOPS = transacciones por segundo × IOPS por transacción = 90 × 3 = 270. La capacidad del disco = 1000 ms / 8 ms = 125 IOPS. Como 270 > 125, el disco no alcanza (necesitaría más de 2 discos como este o uno más rápido). Comparar 90 con 125 (A) o dividir 90 ÷ 3 (B) usa mal la conversión, y 8 × 1000 = 8.000 (C) multiplica en vez de dividir.
 
-### P58 · dificultad 2 · kc: iops-latencia · borrador · origen: ia (sonnet-5.5)
+### P58 · dificultad 2 · kc: iops-latencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Se midieron lecturas y escrituras por segundo de un disco en tres días: día 1, 240 lecturas y 90 escrituras; día 2, 150 lecturas y 210 escrituras; día 3, 200 lecturas y 150 escrituras. Cada transacción implica 3 IOPS. ¿Qué día tuvo más IOPS totales y a cuántas transacciones por segundo equivale?
 
 - A) Día 2, con 360 IOPS y 120 transacciones por segundo · CORRECTA
@@ -115,7 +115,7 @@ Se midieron lecturas y escrituras por segundo de un disco en tres días: día 1,
 
 solución: IOPS totales = lecturas + escrituras. Día 1: 240 + 90 = 330. Día 2: 150 + 210 = 360. Día 3: 200 + 150 = 350. El día 2 es el mayor y sus transacciones por segundo son 360 ÷ 3 = 120. Mirando solo lecturas parecería ganar el día 1 (B); multiplicar 360 × 3 da 1.080 (C); promediar da 180 y 60 (D).
 
-### P59 · dificultad 3 · kc: iops-latencia · borrador · origen: ia (sonnet-5.5)
+### P59 · dificultad 3 · kc: iops-latencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un disco tiene un tiempo de servicio de 5 ms por operación y recibe 150 IOPS. Con el criterio del curso (70 % de utilización como umbral de saturación de una controladora de disco), ¿qué porcentaje de su capacidad máxima usa y qué se espera del tiempo de respuesta?
 
 - A) Usa 3 % de su capacidad (150 de 5.000 IOPS), así que el tiempo de respuesta es casi el de servicio · [iops-capacidad-mal-convertida]
@@ -125,7 +125,7 @@ Un disco tiene un tiempo de servicio de 5 ms por operación y recibe 150 IOPS. C
 
 solución: capacidad máxima = 1000/5 = 200 IOPS. Uso = 150/200 = 0,75 = 75 %, por encima del umbral de 70 %. Con U = 0,75, el tiempo de respuesta es R = Rs/(1 − U) = 5/0,25 = 20 ms, cuatro veces el tiempo de servicio. La latencia no crece en proporción a la carga: cerca del límite se dispara (D). Un IOPS alto no es señal de buen desempeño si ya hay riesgo de saturación (B), y 5 × 1000 = 5.000 es una conversión al revés (A).
 
-### P60 · dificultad 1 · kc: iops-latencia · borrador · origen: ia (sonnet-5.5)
+### P60 · dificultad 1 · kc: iops-latencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un disco de un sistema de historias clínicas tiene un tiempo de servicio de 6 ms y hoy opera al 40 % de su capacidad de IOPS, con un tiempo de respuesta de 10 ms. Al abrir una nueva sede se espera que la carga se duplique (80 % de la capacidad), sobre todo con escrituras. ¿Qué tiempo de respuesta se espera?
 
 - A) Unos 20 ms, porque la latencia crece en proporción a la carga · [iops-latencia-proporcional]
@@ -135,7 +135,7 @@ Un disco de un sistema de historias clínicas tiene un tiempo de servicio de 6 m
 
 solución: con R = Rs/(1 − U), hoy R = 6/(1 − 0,4) = 10 ms, que coincide con lo medido. Al 80 %: R = 6/(1 − 0,8) = 6/0,2 = 30 ms, el triple. La carga se duplica pero la latencia se triplica, porque la cola crece más rápido que la carga (A supone una relación lineal y daría 20 ms). Que el disco atienda más IOPS solo indica actividad, no buen desempeño (B), y las lecturas y las escrituras cuentan igual en la carga del disco (D).
 
-### P61 · dificultad 1 · kc: leyes-operacionales · borrador · origen: ia (sonnet-5.5)
+### P61 · dificultad 1 · kc: leyes-operacionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un servidor de disco recibe a = 50 peticiones por segundo y su tiempo de servicio es Rs = 15 ms. Con el criterio del curso para la controladora de disco, ¿cuál es la utilización y está saturado?
 
 - A) U = 750 %, saturado · [leyes-ms-con-s]
@@ -145,7 +145,7 @@ Un servidor de disco recibe a = 50 peticiones por segundo y su tiempo de servici
 
 solución: se pasa Rs a segundos: 15 ms = 0,015 s. U = a·Rs = 50 × 0,015 = 0,75 = 75 %. El curso toma 70 % como umbral de saturación de la controladora, así que 75 % lo supera. Si se usa 15 sin convertir, 50 × 15 = 750 (A); si se corre la coma sale 7,5 % (C); y el umbral no es 80 % (D).
 
-### P62 · dificultad 2 · kc: leyes-operacionales · borrador · origen: ia (sonnet-5.5)
+### P62 · dificultad 2 · kc: leyes-operacionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un servidor recibe a = 60 peticiones por segundo y su tiempo de servicio es Rs = 8 ms. ¿Cuáles son el tiempo de respuesta R y el número de peticiones en el sistema N?
 
 - A) R ≈ 15,4 ms y N ≈ 0,92 peticiones · CORRECTA
@@ -155,7 +155,7 @@ Un servidor recibe a = 60 peticiones por segundo y su tiempo de servicio es Rs =
 
 solución: Rs = 0,008 s. U = a·Rs = 60 × 0,008 = 0,48. R = Rs/(1 − U) = 0,008/0,52 ≈ 0,01538 s ≈ 15,4 ms. Ley de Little: N = a·R = 60 × 0,01538 ≈ 0,92. Dividir Rs entre U (0,008/0,48 ≈ 16,7 ms) olvida el 1 − U (C); correr la coma da 154 ms (B); y 60/0,01538 ≈ 3.900 divide en vez de multiplicar (D).
 
-### P63 · dificultad 2 · kc: leyes-operacionales · borrador · origen: ia (sonnet-5.5)
+### P63 · dificultad 2 · kc: leyes-operacionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Dos nodos de almacenamiento de un servicio de facturación reciben la misma carga, a = 45 peticiones por segundo. El nodo A tiene un tiempo de servicio de 17 ms y el B de 13 ms. Con la ley de Little el equipo midió N ≈ 3,26 peticiones en A y N ≈ 1,41 en B. Con el criterio del curso (70 % de utilización como umbral de saturación), ¿cuál está más cerca de saturarse?
 
 - A) El B, porque A tiene mayor N y por eso le caben más peticiones antes de saturarse · [leyes-mayor-n-menos-riesgo]
@@ -165,7 +165,7 @@ Dos nodos de almacenamiento de un servicio de facturación reciben la misma carg
 
 solución: U_A = a·Rs = 45 × 0,017 = 0,765 y U_B = 45 × 0,013 = 0,585. El riesgo de saturación se mide con U: A supera el umbral de 70 % y B no. Un mayor N va de la mano de una mayor U (N = U/(1 − U): 0,765/0,235 ≈ 3,26 y 0,585/0,415 ≈ 1,41), así que el N de A es señal de más ocupación y no de más holgura (A). El umbral del curso es 70 % y no 80 % (B), y hay que pasar 17 ms a 0,017 s y 13 ms a 0,013 s antes de multiplicar (C).
 
-### P64 · dificultad 3 · kc: leyes-operacionales · borrador · origen: ia (sonnet-5.5)
+### P64 · dificultad 3 · kc: leyes-operacionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un disco con tiempo de servicio Rs = 7 ms recibe 90 peticiones por segundo, y se espera que la demanda crezca 20 %. Con la nueva tasa, ¿cuáles son la utilización y el tiempo de respuesta, y se supera el umbral de saturación del curso para la controladora de disco?
 
 - A) U = 75,6 % y R ≈ 287 ms; se supera el umbral · [leyes-coma-corrida]
@@ -175,7 +175,7 @@ Un disco con tiempo de servicio Rs = 7 ms recibe 90 peticiones por segundo, y se
 
 solución: la nueva tasa es a = 90 × 1,2 = 108 peticiones por segundo. U = 108 × 0,007 = 0,756 = 75,6 %. R = Rs/(1 − U) = 0,007/0,244 ≈ 0,0287 s ≈ 28,7 ms (antes, con U = 63 %, eran unos 18,9 ms). Como el umbral del curso es 70 %, 75,6 % lo supera. Dividir 7/0,756 ≈ 9,3 ms usa U en vez de 1 − U (B); correr la coma da 287 ms (A); y el umbral no es 80 % (C).
 
-### P65 · dificultad 1 · kc: leyes-operacionales · borrador · origen: ia (sonnet-5.5)
+### P65 · dificultad 1 · kc: leyes-operacionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Dos servidores reciben a = 60 peticiones por segundo. Con la ley de Little se calculó N = 3,0 peticiones en el sistema X y N = 1,1 en el Y. ¿Cuáles son los tiempos de respuesta y cuál servidor está más cerca de saturarse?
 
 - A) R_X = 500 ms y R_Y = 183 ms; el más cerca es X · [leyes-coma-corrida]
@@ -185,7 +185,7 @@ Dos servidores reciben a = 60 peticiones por segundo. Con la ley de Little se ca
 
 solución: de N = a·R se despeja R = N/a. X: R = 3,0/60 = 0,05 s = 50 ms. Y: R = 1,1/60 ≈ 0,0183 s ≈ 18,3 ms. Con la misma a, un mayor N significa mayor R y mayor utilización, así que X está más cerca de saturarse. Que haya más peticiones dentro del sistema no da más holgura (C); R = a/N (D) divide al revés, y 0,05 s no son 500 ms (A).
 
-### P66 · dificultad 1 · kc: speedup · borrador · origen: ia (sonnet-5.5)
+### P66 · dificultad 1 · kc: speedup · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una tarea de generación de reportes tarda 0,12 s en la configuración original y 40 ms en la nueva. ¿Cuál es el speedup de la nueva respecto a la original?
 
 - A) 0,33 · [speedup-invertido]
@@ -195,7 +195,7 @@ Una tarea de generación de reportes tarda 0,12 s en la configuración original 
 
 solución: se pasan los dos tiempos a la misma unidad: 40 ms = 0,04 s. Speedup = T_lento/T_rápido = 0,12/0,04 = 3: la nueva es 3 veces más rápida. Si se divide al revés sale 0,33 (A); si se divide 0,12 entre 40 sin convertir, 0,003 (B); y restar da 0,12 − 0,04 = 0,08 s, que es una diferencia de tiempo y no un speedup (D).
 
-### P67 · dificultad 2 · kc: speedup · borrador · origen: ia (sonnet-5.5)
+### P67 · dificultad 2 · kc: speedup · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una arquitectura A procesa una transacción en 72 ms y una arquitectura B en 30 ms. Si A, atendiendo varias transacciones a la vez, procesa 1.500 por minuto, ¿cuántas procesaría B suponiendo proporcionalidad directa con el speedup?
 
 - A) 3.600 transacciones por minuto · CORRECTA
@@ -205,7 +205,7 @@ Una arquitectura A procesa una transacción en 72 ms y una arquitectura B en 30 
 
 solución: speedup de B respecto a A = T_lento/T_rápido = 72/30 = 2,4. Nuevo throughput = 1.500 × 2,4 = 3.600 por minuto. Dividir 1.500/2,4 = 625 reduce el throughput (B); sumar 1.500 + 2,4 = 1.502,4 trata el speedup como si fueran transacciones (C); y usar la resta 72 − 30 = 42 como factor da 1.500 × 42 = 63.000 (D).
 
-### P68 · dificultad 2 · kc: speedup · borrador · origen: ia (sonnet-5.5)
+### P68 · dificultad 2 · kc: speedup · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un respaldo nocturno tarda 2,5 minutos con la configuración actual y 90 segundos con la nueva. ¿Cuál es el speedup de la nueva respecto a la actual?
 
 - A) 0,6 · [speedup-invertido]
@@ -215,7 +215,7 @@ Un respaldo nocturno tarda 2,5 minutos con la configuración actual y 90 segundo
 
 solución: 2,5 min = 150 s. Speedup = T_lento/T_rápido = 150/90 ≈ 1,67. Dividir 90/150 = 0,6 invierte el cociente (A); dividir 2,5/90 ≈ 0,03 mezcla minutos con segundos (B); y 150 − 90 = 60 s es una resta de tiempos, no el speedup (C).
 
-### P69 · dificultad 2 · kc: speedup · borrador · origen: ia (sonnet-5.5)
+### P69 · dificultad 2 · kc: speedup · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una configuración original procesa un lote en 50 ms y una propuesta nueva lo hace en 0,0625 s. El speedup se define como el tiempo de la original dividido por el tiempo de la nueva. ¿Cuánto vale y qué indica?
 
 - A) 1,25: la nueva es 1,25 veces más rápida · [speedup-invertido]
@@ -225,7 +225,7 @@ Una configuración original procesa un lote en 50 ms y una propuesta nueva lo ha
 
 solución: 0,0625 s = 62,5 ms. Speedup = T_original/T_nueva = 50/62,5 = 0,8. Un valor menor que 1 significa que la propuesta tarda más que la original, es decir, empeora. Dividir al revés da 1,25 (A); restar 62,5 − 50 = 12,5 da una diferencia de tiempo (C); y 50/0,0625 = 800 mezcla milisegundos con segundos (D).
 
-### P70 · dificultad 3 · kc: speedup · borrador · origen: ia (sonnet-5.5)
+### P70 · dificultad 3 · kc: speedup · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una configuración A tarda 80 ms por tarea y, atendiendo varias a la vez, procesa 1.800 tareas por minuto. Una configuración B tarda 32 ms por tarea. Suponiendo proporcionalidad directa con el speedup, ¿cuántas tareas por segundo procesará B?
 
 - A) 12 tareas por segundo · [speedup-throughput-dividido]

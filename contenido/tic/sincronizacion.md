@@ -50,7 +50,7 @@ mc: espera-quantum-bloquea · estados-y-esperas · confundes el quantum con una 
 
 ## Preguntas
 
-### P21 · dificultad 1 · kc: synchronized-monitor · borrador · origen: ia (sonnet-5.5)
+### P21 · dificultad 1 · kc: synchronized-monitor · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Cuatro threads Cajero comparten una sola Cuenta. Cada uno ejecuta 1000 veces `cuenta.consignar(10)`, que hace `saldo += monto`. Al final el saldo debe ser 40000. ¿Qué cambio garantiza ese resultado?
 
 - A) Declarar synchronized solo el método `getSaldo()`, que es el que lee el saldo · [monitor-solo-un-metodo]
@@ -60,7 +60,7 @@ Cuatro threads Cajero comparten una sola Cuenta. Cada uno ejecuta 1000 veces `cu
 
 solución: el problema es una condición de carrera sobre `saldo`: `saldo += monto` lee, suma y escribe, y los cuatro threads pueden intercalar esos pasos. La solución es que el método que modifica el dato sea synchronized en el objeto que todos comparten, así solo un cajero ejecuta `consignar` a la vez. A no protege la escritura. B lanza IllegalMonitorStateException, porque `wait()` exige estar dentro de un método synchronized. D crea cuatro monitores distintos, que no se coordinan entre sí (y además ya no habría una cuenta compartida). Respuesta: C.
 
-### P22 · dificultad 2 · kc: synchronized-monitor · borrador · origen: ia (sonnet-5.5)
+### P22 · dificultad 2 · kc: synchronized-monitor · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Dos carros ejecutan a la vez el siguiente código sobre el mismo Parqueadero, que empieza con un solo puesto libre.
 
 ```
@@ -84,7 +84,7 @@ if (parq.hayCupo()) {
 
 solución: cada método es atómico por separado, pero el par «preguntar y luego ocupar» no lo es. Orden posible: el carro 1 llama `hayCupo()` y recibe true; el carro 2 llama `hayCupo()` y también recibe true, porque libres sigue en 1; el carro 1 ejecuta `ocupar()` (libres = 0); el carro 2 ejecuta `ocupar()` (libres = -1). Por eso A es falsa. C es falsa: synchronized no hace esperar por una condición, solo por el monitor, y `ocupar()` no tiene ninguna condición. D es falsa: el monitor se suelta al terminar cada método, así que la siguiente llamada entra sin problema. Para arreglarlo, la pregunta y el descuento van en un solo método synchronized. Respuesta: B.
 
-### P23 · dificultad 2 · kc: synchronized-monitor · borrador · origen: ia (sonnet-5.5)
+### P23 · dificultad 2 · kc: synchronized-monitor · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una Taquilla guarda `private int disponibles = 3` y varios threads Cliente compiten por las entradas. Cada cliente debe revisar si queda alguna y, si queda, tomarla, de modo que dos clientes nunca se queden con la misma. ¿Qué diseño del monitor lo logra?
 
 - A) Un solo método synchronized `boolean reservar()` que revisa `disponibles > 0`, lo descuenta y devuelve true, o devuelve false si no quedaba nada · CORRECTA
@@ -94,7 +94,7 @@ Una Taquilla guarda `private int disponibles = 3` y varios threads Cliente compi
 
 solución: lo que debe ser atómico es el par «revisar y descontar». Eso se logra poniendo ambos pasos dentro del mismo método synchronized, que devuelve si logró reservar. B deja un hueco entre las dos llamadas: dos clientes pueden ver true antes de que alguno descuente. C deja la lectura sin proteger y tampoco cierra el hueco entre revisar y tomar. D es falso: el monitor de Java es reentrante, y además A ni siquiera llama a otro método. Respuesta: A.
 
-### P24 · dificultad 3 · kc: synchronized-monitor · borrador · origen: ia (sonnet-5.5)
+### P24 · dificultad 3 · kc: synchronized-monitor · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Dado este monitor, un thread consumidor llama `tomar()` sobre el Buzon compartido cuando `mensaje` todavía es null. ¿Qué ocurre en esa llamada?
 
 ```
@@ -122,7 +122,7 @@ class Buzon {
 
 solución: `wait()` solo puede llamarse cuando el thread es dueño del monitor del objeto, es decir, dentro de un método o bloque synchronized sobre ese objeto. `tomar()` no lo es. Como `mensaje` vale null, la condición del while es verdadera y el thread llega a `wait()`, que lanza IllegalMonitorStateException. A y D suponen que el thread espera: A porque cree que `wait()` funciona sin el monitor, D porque cree que el synchronized de otro método hace esperar. C ignora que quien lee también necesita el monitor para esperar con `wait()`. La corrección es declarar `tomar()` synchronized. Respuesta: B.
 
-### P25 · dificultad 1 · kc: synchronized-monitor · borrador · origen: ia (sonnet-5.5)
+### P25 · dificultad 1 · kc: synchronized-monitor · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué garantiza declarar synchronized un método de una clase?
 
 - A) Que ese método no se ejecute al mismo tiempo en dos threads, aunque cada thread use un objeto distinto de la clase · [monitor-objetos-distintos]
@@ -132,7 +132,7 @@ solución: `wait()` solo puede llamarse cuando el thread es dueño del monitor d
 
 solución: synchronized toma el monitor del objeto sobre el que se llama el método. Dos threads que usan el mismo objeto se excluyen entre sí, y cada thread con otro objeto tiene otro monitor, por lo que A es falsa. B es falsa porque el thread espera por el monitor, no por una condición; para eso existe `wait()`. C es falsa: `wait()` y `notify()` exigen estar dentro de código synchronized sobre el mismo objeto. Respuesta: D.
 
-### P26 · dificultad 1 · kc: espera-pasiva · borrador · origen: ia (sonnet-5.5)
+### P26 · dificultad 1 · kc: espera-pasiva · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un buffer lleva la cuenta de `cupos` libres. `depositar()` debe esperar mientras `cupos == 0` y luego ocupar un cupo; `retirar()` libera un cupo y debe avisar a los que esperan. Varios threads usan el mismo buffer. ¿Cuál par de métodos está bien escrito?
 
 - A) `public synchronized void depositar() throws InterruptedException { while (cupos == 0) wait(); cupos--; }` y `public synchronized void retirar() { cupos++; notifyAll(); }` · CORRECTA
@@ -141,7 +141,7 @@ Un buffer lleva la cuenta de `cupos` libres. `depositar()` debe esperar mientras
 - D) `public void depositar() throws InterruptedException { while (cupos == 0) wait(); cupos--; }` y `public synchronized void retirar() { cupos++; notifyAll(); }` · [pasiva-wait-retiene-el-monitor] crees que un thread dormido en wait sigue siendo dueño del monitor y por eso quitas synchronized a depositar para que retirar pueda entrar
 
 solución: la espera pasiva necesita tres cosas: un while que repite la pregunta, `wait()` dentro de un método synchronized y un aviso cuando la condición cambia. A las cumple todas. En B el if revisa `cupos == 0` una sola vez: si el thread despierta y otro ya se llevó el cupo, sigue con `cupos--` y queda en -1. En C nadie despierta a los dormidos: `retirar()` cambia `cupos` pero sin `notify()` ni `notifyAll()` los threads de `depositar()` siguen dormidos. En D, `wait()` exige ser dueño del monitor y lanza IllegalMonitorStateException si `depositar()` no es synchronized; además es innecesario, porque `wait()` suelta el monitor mientras el thread duerme, así que `retirar()` sí puede entrar. Respuesta: A.
-### P27 · dificultad 2 · kc: espera-pasiva · borrador · origen: ia (sonnet-5.5)
+### P27 · dificultad 2 · kc: espera-pasiva · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Cuál afirmación sobre `notify()` es correcta?
 
 - A) Despierta a todos los threads dormidos en `wait()` sobre ese objeto · [pasiva-notify-despierta-a-todos]
@@ -150,7 +150,7 @@ solución: la espera pasiva necesita tres cosas: un while que repite la pregunta
 - D) Despierta como máximo a un thread dormido en `wait()` sobre ese objeto; si no hay ninguno, no hace nada · CORRECTA
 
 solución: `notify()` elige a un solo thread entre los dormidos en ese monitor (el que decide la JVM). El que despierta debe esperar a recuperar el monitor y vuelve a evaluar su condición. Para despertar a todos se usa `notifyAll()` (A). Si nadie espera, el aviso se pierde: no se guarda (B). Y un thread dormido no se entera solo de que cambió una variable: sin un `notify()` o `notifyAll()` sigue dormido (C). Respuesta: D.
-### P28 · dificultad 2 · kc: espera-pasiva · borrador · origen: ia (sonnet-5.5)
+### P28 · dificultad 2 · kc: espera-pasiva · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Este método de un buffer con varios consumidores a veces deja `cantidad` en -1.
 
 ```
@@ -172,7 +172,7 @@ public synchronized int retirar() throws InterruptedException {
 
 solución: un thread que sale de `wait()` no sabe si la condición sigue siendo cierta: antes de recuperar el monitor, otro consumidor pudo entrar y retirar el elemento. Con if, el thread sigue de largo y hace `cantidad--` con cantidad en 0, dejándola en -1. Con while, vuelve a evaluar `cantidad == 0` y, si es verdadera, duerme otra vez. B es falso: `wait()` suelta el monitor mientras el thread duerme. D no explica el fallo: un `notify()` extra no impide que un thread despierte con la condición falsa. Respuesta: C.
 
-### P29 · dificultad 2 · kc: espera-pasiva · borrador · origen: ia (sonnet-5.5)
+### P29 · dificultad 2 · kc: espera-pasiva · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un buffer de capacidad MAX tiene este código. El buffer está vacío y un consumidor C ya está dormido en `retirar()`. Un productor P ejecuta `depositar(7)` y termina. Nadie más usa el buffer.
 
 ```
@@ -197,7 +197,7 @@ public synchronized int retirar() throws InterruptedException {
 
 solución: P entra a `depositar(7)` sin problema, porque C soltó el monitor al ejecutar `wait()` (D es falso). P agrega el elemento y sale sin llamar `notify` ni `notifyAll`. Un thread dormido en `wait()` solo se despierta con un aviso explícito; no revisa la condición por su cuenta (A es falso). El `notifyAll()` de `retirar()` no se ejecutó nunca, y un aviso no se guarda para después (C es falso). Entonces C sigue dormido con un elemento disponible. Se corrige agregando `notifyAll()` al final de `depositar()`. Respuesta: B.
 
-### P30 · dificultad 3 · kc: espera-pasiva · borrador · origen: ia (sonnet-5.5)
+### P30 · dificultad 3 · kc: espera-pasiva · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una Sala tiene el siguiente monitor. Ahora `libres` vale 0. Un grupo G llamó `entrar(2)` y un visitante solo S llamó `entrar(1)`, y ambos están dormidos. Otro visitante ejecuta `salir(1)`.
 
 ```
@@ -223,7 +223,7 @@ class Sala {
 
 solución: tras `salir(1)`, libres vale 1. `notify()` despierta a uno solo. Si despierta a S, entra (1 ≥ 1). Si despierta a G, G recupera el monitor, evalúa `libres < 2` (verdadero), vuelve a dormir, y S queda dormido aunque cabría: nadie volverá a avisar. B es falso porque despierta a uno solo (y el while impediría un valor negativo). C es falso: sin el while, G entraría con un solo puesto libre y `libres` quedaría en -1. D es falso: `entrar` reduce los puestos y no puede hacer que alguien más avance. La corrección es usar `notifyAll()` en `salir`, para que cada dormido revise su propia condición. Respuesta: A.
 
-### P31 · dificultad 1 · kc: estados-y-esperas · borrador · origen: ia (sonnet-5.5)
+### P31 · dificultad 1 · kc: estados-y-esperas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un thread debe esperar a que termine una descarga que puede tardar varios minutos. No debe gastar procesador mientras tanto y debe enterarse en cuanto la descarga acabe. ¿Qué espera conviene?
 
 - A) Espera activa: un while que repite la consulta, que gasta lo mismo de procesador que una espera pasiva · [espera-activa-igual-que-pasiva]
@@ -233,7 +233,7 @@ Un thread debe esperar a que termine una descarga que puede tardar varios minuto
 
 solución: la espera pasiva suspende al thread con `wait()`: no usa procesador y despierta cuando otro thread llama `notify` o `notifyAll`. La activa (un while que consulta sin parar) ocupa el procesador todo el tiempo, mucho más que una pasiva. `yield()` solo cede el turno: el thread sigue listo y vuelve a consultar. El ciclo con `sleep()` sigue consultando por su cuenta y puede enterarse tarde, hasta 100 ms después. Respuesta: D.
 
-### P32 · dificultad 2 · kc: estados-y-esperas · borrador · origen: ia (sonnet-5.5)
+### P32 · dificultad 2 · kc: estados-y-esperas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un thread espera un puesto con este ciclo:
 
 ```
@@ -251,7 +251,7 @@ Mientras `hayCupo()` devuelve false, ¿qué hace el thread?
 
 solución: `yield()` es una sugerencia al planificador para ceder el procesador; el thread no se duerme ni se bloquea, solo pasa al final de los listos y volverá a ejecutarse sin que nadie lo despierte. Eso es una espera semiactiva: gasta menos que una activa pura, pero más que una pasiva, porque nunca deja de competir por el procesador. Un thread dormido en `wait()` no gasta nada hasta que lo avisan. Respuesta: C.
 
-### P33 · dificultad 2 · kc: estados-y-esperas · borrador · origen: ia (sonnet-5.5)
+### P33 · dificultad 2 · kc: estados-y-esperas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Varios threads piden una impresora con una espera semiactiva sobre este monitor, que empieza con 3 impresoras libres. A veces `libres` termina en -1.
 
 ```
@@ -273,7 +273,7 @@ imp.tomar();
 - D) Escribir `hayLibre()` como `libres > 1`, para dejar un margen y que nunca se pase de las 3 · [espera-condicion-disponibilidad-mal]
 
 solución: el fallo ocurre porque dos threads pueden recibir true de `hayLibre()` antes de que alguno ejecute `tomar()`. En la espera semiactiva, preguntar y tomar deben ser una sola operación atómica: un método synchronized que, si hay impresora, la descuenta y devuelve true, y si no devuelve false. El ciclo queda `while (!imp.tomarSiHay()) Thread.yield();`. A cambia el tipo de espera pero no la atomicidad. C supone que `yield()` duerme al thread, pero solo cede el turno: el thread sigue listo y varios pueden consultar a la vez, así que el hueco entre las dos llamadas sigue ahí. D deja una impresora sin usar y tampoco elimina el hueco. Respuesta: B.
-### P34 · dificultad 3 · kc: estados-y-esperas · borrador · origen: ia (sonnet-5.5)
+### P34 · dificultad 3 · kc: estados-y-esperas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Cuatro camiones ejecutan este código sobre el mismo Muelle. Ninguno sale del muelle mientras los otros van llegando.
 
 ```
@@ -298,7 +298,7 @@ while (!muelle.entrarSiHay()) { Thread.yield(); }
 
 solución: con bahias = 4, el primer camión ve 4 > 1 y deja 3; el segundo ve 3 > 1 y deja 2; el tercero ve 2 > 1 y deja 1; el cuarto ve 1 > 1, que es falso, y recibe false. La condición debería ser `bahias > 0`: con `> 1` la última bahía nunca se puede ocupar. El cuarto camión queda en el ciclo: `yield()` solo cede el turno, no lo duerme ni lo saca de la competencia por el procesador, así que su espera es semiactiva y sigue gastando procesador, aunque menos que una activa pura. Respuesta: A.
 
-### P35 · dificultad 1 · kc: estados-y-esperas · borrador · origen: ia (sonnet-5.5)
+### P35 · dificultad 1 · kc: estados-y-esperas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un thread ejecuta `while (!listo) { }` con el cuerpo vacío, hasta que otro thread cambia `listo` (declarado `volatile`, para que el cambio se vea). ¿Qué tipo de espera es y cuánto procesador gasta?
 
 - A) Es espera pasiva y casi no gasta procesador · [espera-sleep-es-pasiva]
@@ -308,7 +308,7 @@ Un thread ejecuta `while (!listo) { }` con el cuerpo vacío, hasta que otro thre
 
 solución: el ciclo vacío consulta `listo` sin parar y sin ceder el turno, así que ocupa el procesador de forma continua: es una espera activa. La pasiva suspende al thread con `wait()` y no consume nada hasta que lo avisan. La semiactiva necesita una llamada como `yield()` dentro del ciclo, y aun así el thread no se duerme. Respuesta: C.
 
-### P36 · dificultad 1 · kc: productor-consumidor · borrador · origen: ia (sonnet-5.5)
+### P36 · dificultad 1 · kc: productor-consumidor · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un buffer de capacidad 5 es compartido por varios productores y varios consumidores, con sincronización pasiva. ¿Qué condiciones de espera debe tener?
 
 - A) El productor espera mientras el buffer esté vacío y el consumidor espera mientras esté lleno · [buffer-condicion-opuesta]
@@ -318,7 +318,7 @@ Un buffer de capacidad 5 es compartido por varios productores y varios consumido
 
 solución: el productor no puede depositar cuando size() == capacidad, así que espera mientras el buffer esté lleno. El consumidor no puede retirar cuando size() == 0, así que espera mientras esté vacío. La opción A invierte las dos condiciones. En C la lista de Java sí crece, pero el buffer es de tamaño limitado y el productor debe respetar ese límite. En D, retirar de una lista vacía falla o devuelve un dato inexistente.
 
-### P37 · dificultad 2 · kc: productor-consumidor · borrador · origen: ia (sonnet-5.5)
+### P37 · dificultad 2 · kc: productor-consumidor · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Se escribe este buffer y se crea con `new Buffer(3)`.
 
 ```
@@ -347,7 +347,7 @@ Un productor llama `depositar(7)` sobre el buffer recién creado. ¿Qué ocurre?
 
 solución: el campo `datos` es una referencia que vale null hasta que alguien le asigne `new ArrayList<>()`. El constructor solo guarda `capacidad`, así que `datos.size()` falla con NullPointerException en la primera llamada, antes de llegar al while. La corrección es crear la lista en el constructor. La opción B supone que declarar el campo crea el objeto. La C invierte la condición de espera del productor. La D ignora que el while sí debe frenar al productor con 3 elementos.
 
-### P38 · dificultad 2 · kc: productor-consumidor · borrador · origen: ia (sonnet-5.5)
+### P38 · dificultad 2 · kc: productor-consumidor · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 En una cocina, cada vez que le toca el turno, un mesero debe generar al azar entre 2 y 4 pedidos y dejarlos de a uno en la cola de la cocina; si la cola está llena, debe esperar con wait hasta que haya sitio. `azar` es un `java.util.Random` y `cola.depositar` ya espera con wait cuando no hay espacio. ¿Qué fragmento lo hace?
 
 - A) `int n = azar.nextInt(3); for (int i = 0; i < n; i++) cola.depositar(new Pedido());` · [buffer-nextint-rango] crees que nextInt(3) da de 2 a 4, cuando da de 0 a 2
@@ -357,7 +357,7 @@ En una cocina, cada vez que le toca el turno, un mesero debe generar al azar ent
 
 solución: `nextInt(k)` devuelve enteros de 0 a k − 1. Con `nextInt(3)` salen 0, 1 o 2; sumando 2 salen 2, 3 o 4, que es el rango pedido. A produce de 0 a 2 pedidos, así que puede no generar ninguno ni llegar a 4. C produce de 1 a 4: alcanza los cuatro pero también deja pasar un solo pedido. En D el rango es correcto, pero cuando la cola está llena el pedido se descarta en vez de esperar con wait. Respuesta: B.
 
-### P39 · dificultad 3 · kc: productor-consumidor · borrador · origen: ia (sonnet-5.5)
+### P39 · dificultad 3 · kc: productor-consumidor · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un buffer de capacidad 1 tiene depositar y retirar sincronizados. Cada uno espera con wait dentro de un while sobre su condición y termina con un único `notify()`. Hay dos productores (P1, P2) y dos consumidores (C1, C2). El programa se detiene: P2 y C2 están dormidos en wait, el buffer está vacío y los demás threads ya terminaron. ¿Cuál es una explicación posible?
 
 - A) No debería poder detenerse así: notify despierta siempre a un thread del tipo contrario, que es el que puede avanzar, así que la causa está en otra parte · [buffer-notify-despierta-equivocado]
@@ -367,7 +367,7 @@ Un buffer de capacidad 1 tiene depositar y retirar sincronizados. Cada uno esper
 
 solución: una traza posible. Buffer vacío; C1 y C2 esperan. P1 deposita y su notify despierta a C1. Antes de que C1 retome el monitor, P2 llama depositar, ve el buffer lleno y espera. C1 retira y su notify elige a uno de los dos dormidos (C2 y P2): si elige a C2, este ve el buffer vacío y vuelve a esperar. P2 queda dormido con espacio libre y nadie volverá a avisarle. Con notify no se controla a quién se despierta cuando esperan threads de dos tipos; notifyAll despierta a todos y cada uno revisa su propia condición. Las opciones B y C contradicen que cada método espera en un while sobre su condición, y A afirma lo contrario de lo que hace notify.
 
-### P40 · dificultad 3 · kc: productor-consumidor · borrador · origen: ia (sonnet-5.5)
+### P40 · dificultad 3 · kc: productor-consumidor · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Se revisan cuatro versiones del software de una línea de ensamble con 4 soldadores, 3 pintores y un contenedor de capacidad 6. En cada turno un soldador produce entre 2 y 3 piezas (con un `Random azar`) y las deja de a una en el contenedor; los pintores las retiran. En las cuatro versiones los métodos del contenedor son synchronized y esperan con wait dentro de un while. Solo una versión es correcta. ¿Cuál?
 
 - A) El constructor guarda la capacidad y crea la lista con `new ArrayList<>()`; depositar espera mientras size() == capacidad, retirar espera mientras size() == 0, ambos terminan con un único notify, porque así se despierta solo al thread que necesita el cambio · [buffer-notify-despierta-equivocado]
@@ -377,7 +377,7 @@ Se revisan cuatro versiones del software de una línea de ensamble con 4 soldado
 
 solución: cada versión falla en un solo punto. A termina con notify aunque pueden estar dormidos soldadores y pintores a la vez: puede despertar a uno del tipo equivocado, que revisa su condición y vuelve a dormir, mientras el que sí podía avanzar sigue dormido. B nunca crea la lista y lanza NullPointerException en la primera llamada. D genera 0, 1 o 2 piezas, porque `nextInt(3)` va de 0 a 2, y el enunciado pide 2 o 3. C crea la lista, espera mientras el contenedor está lleno o vacío según el lado, avisa con notifyAll y genera 2 o 3 piezas con `nextInt(2) + 2`. Respuesta: C.
 
-### P41 · dificultad 1 · kc: barreras · borrador · origen: ia (sonnet-5.5)
+### P41 · dificultad 1 · kc: barreras · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Cuatro threads comparten una barrera creada con `new CyclicBarrier(4)` y cada uno llama `barrera.await()`. ¿Qué afirmación es correcta?
 
 - A) El primer thread en llegar sigue de inmediato y los demás lo alcanzan después · [barrera-primero-sigue]
@@ -387,7 +387,7 @@ Cuatro threads comparten una barrera creada con `new CyclicBarrier(4)` y cada un
 
 solución: await bloquea a quien lo llama hasta que el número de partes (4) haya llegado. Ninguno pasa antes, ni siquiera el primero (A). No hay tiempos de espera fijos (C). Una CyclicBarrier, como dice su nombre, se reinicia sola al abrirse y se puede reutilizar (B es falsa).
 
-### P42 · dificultad 2 · kc: barreras · borrador · origen: ia (sonnet-5.5)
+### P42 · dificultad 2 · kc: barreras · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Se crea una `CyclicBarrier(3)`. Cuatro threads T1, T2, T3 y T4 llaman `await()` una sola vez, en ese orden, y no hay más threads en el programa. ¿Qué ocurre?
 
 - A) T1 y T2 quedan bloqueados hasta que llega T3, y entonces continúan los tres; T4 queda bloqueado para siempre porque nunca llegan dos más · CORRECTA
@@ -397,7 +397,7 @@ Se crea una `CyclicBarrier(3)`. Cuatro threads T1, T2, T3 y T4 llaman `await()` 
 
 solución: la barrera se abre cuando llegan 3 partes. T1 y T2 esperan; al llegar T3 se completa el grupo y los tres continúan. La barrera se reinicia y T4 empieza una ronda nueva: necesita otros dos threads que no existen, así que espera para siempre. B supone que cuenta a todos los threads del programa y no a las partes con que se creó. C deja pasar al primero sin esperar. D cree que, una vez abierta, ya no bloquea.
 
-### P43 · dificultad 2 · kc: barreras · borrador · origen: ia (sonnet-5.5)
+### P43 · dificultad 2 · kc: barreras · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Tres threads ejecutan este ciclo sobre la misma barrera, creada una sola vez con `new CyclicBarrier(3)`.
 
 ```
@@ -416,7 +416,7 @@ for (int ronda = 0; ronda < 4; ronda++) {
 
 solución: una CyclicBarrier se reinicia automáticamente cada vez que se abre, así que el mismo objeto sirve para las 4 rondas. En cada ronda los tres threads quedan bloqueados en await hasta que llega el último; recién entonces empieza la ronda siguiente. Ni el primero en terminar se adelanta (B), ni await deja de bloquear después de la primera ronda (A), ni hace falta adivinar tiempos de espera (D).
 
-### P44 · dificultad 3 · kc: barreras · borrador · origen: ia (sonnet-5.5)
+### P44 · dificultad 3 · kc: barreras · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una barrera hecha con un monitor:
 
 ```
@@ -447,7 +447,7 @@ Se crea `new Barrera(4)`. Cuatro threads llaman `esperar()` una vez cada uno, un
 
 solución: los tres primeros incrementan el contador (1, 2, 3) y entran en wait porque 3 < 4. El cuarto lo lleva a 4, entra por el else, lo reinicia a 0 y llama notify(), que despierta a un solo thread entre los tres dormidos. Los otros dos siguen en wait sin que nadie vuelva a avisarles. Hay que usar notifyAll(). El valor 4 es el correcto para cuatro threads (C), y un wait() sin argumentos no termina solo (D).
 
-### P45 · dificultad 1 · kc: barreras · borrador · origen: ia (sonnet-5.5)
+### P45 · dificultad 1 · kc: barreras · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una barrera hecha con un monitor cuenta los threads que llegan con una variable `llegaron`. ¿Qué debe hacer el último thread en llegar?
 
 - A) Poner `llegaron` en 0 y despertar a todos los que esperan con notifyAll, para que la barrera quede lista para la siguiente ronda · CORRECTA
@@ -457,7 +457,7 @@ Una barrera hecha con un monitor cuenta los threads que llegan con una variable 
 
 solución: el último en llegar completa el grupo y debe liberar a todos los demás, lo que exige notifyAll. Un notify despierta a uno solo (B) y los otros no despiertan en cadena. Reiniciar el contador a 0 permite que la misma barrera sirva en la ronda siguiente; si no se reinicia (C), la segunda ronda se rompe. Dormir no es necesario (D): los threads dormidos salen del wait en cuanto reciben el aviso y recuperan el monitor.
 
-### P46 · dificultad 1 · kc: prioridad-y-turnos · borrador · origen: ia (sonnet-5.5)
+### P46 · dificultad 1 · kc: prioridad-y-turnos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un puente de un solo carril une las orillas norte y sur, y solo cabe un carro a la vez. Se quiere que, cuando las dos orillas tienen carros esperando, se turnen para cruzar. ¿Qué necesita el monitor del puente?
 
 - A) Solo una bandera de puente ocupado: al terminar de cruzar, cada carro hace notifyAll y el reparto entre orillas se da solo · [turno-sin-variable-de-turno]
@@ -467,7 +467,7 @@ Un puente de un solo carril une las orillas norte y sur, y solo cabe un carro a 
 
 solución: para alternar hace falta recordar a quién le toca, es decir, una variable de turno; una bandera sola (A) da exclusión mutua pero ningún reparto. Además el turno solo debe frenar a un carro si la otra orilla de verdad tiene carros esperando; si no, el carro esperaría sin que nadie fuera a cruzar (B). En C, una orilla con tráfico continuo deja sin paso a la otra. D reúne las tres cosas: turno, cambio al terminar el cruce y turno ignorado si la otra orilla está vacía. Respuesta: D.
 
-### P47 · dificultad 2 · kc: prioridad-y-turnos · borrador · origen: ia (sonnet-5.5)
+### P47 · dificultad 2 · kc: prioridad-y-turnos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una sala de urgencias tiene 8 camas. Cuando queda una libre se atiende primero a los pacientes prioritarios, y un paciente regular solo ocupa cama si no hay ningún prioritario esperando. ¿Qué diseño del monitor lo cumple?
 
 - A) Un solo contador de camas ocupadas; todos esperan mientras no haya cama libre, y al liberarse una entra el primero que alcance a despertar · [turno-normal-pasa-con-vip]
@@ -477,7 +477,7 @@ Una sala de urgencias tiene 8 camas. Cuando queda una libre se atiende primero a
 
 solución: para ceder el paso, el regular necesita saber cuántos prioritarios están esperando: el contador sube al llegar el prioritario y baja cuando este consigue cama. En A nadie mira a los prioritarios, así que un regular puede quedarse con la cama antes que ellos. En C se cuentan los prioritarios que ya están atendidos y no los que esperan, de modo que el regular pasa aunque haya fila de prioritarios. En D el contador nunca baja: tras el primer prioritario, los regulares esperan para siempre. Respuesta: B.
 
-### P48 · dificultad 2 · kc: prioridad-y-turnos · borrador · origen: ia (sonnet-5.5)
+### P48 · dificultad 2 · kc: prioridad-y-turnos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un estudio de grabación tiene 2 cabinas y quiere que las reservas pasen antes que quienes llegan sin reserva. Este es su monitor; `salir()` suma 1 a `libres` y llama a `notifyAll()`.
 
 ```
@@ -506,7 +506,7 @@ Las 2 cabinas están ocupadas. Llega el thread R y llama a `entrarConReserva()`:
 - D) Si R y S compiten por la cabina gana S, porque quien llega sin reserva solo necesita que `libres` sea mayor que 0, y R no la consigue · [turno-normal-pasa-con-vip]
 
 solución: en `entrarConReserva()` el contador sube y baja antes del `while`, así que mientras R duerme `reservasPendientes` vale 0 y nadie con prioridad figura como esperando. Al ejecutar `salir()`, `libres` pasa a 1 y `notifyAll()` despierta a R y a S; cada uno vuelve a evaluar su condición cuando le toca el monitor. Si entra primero S, ve `libres == 1` y `reservasPendientes == 0`, toma la cabina, y R vuelve a dormir: la prioridad se rompió. Por eso B es falsa: el contador no marca a R, así que S no queda bloqueado por él. C es falsa: el contador vale 0, no se queda subido, y S sí puede entrar cuando haya cabina libre. D es falsa por exceso: S no gana siempre, porque si entra primero R, la toma R y S sigue esperando; el orden lo decide el planificador, no el tipo de thread. Lo correcto es lo de A: no hay garantía de que R pase antes. Respuesta: A.
-### P49 · dificultad 3 · kc: prioridad-y-turnos · borrador · origen: ia (sonnet-5.5)
+### P49 · dificultad 3 · kc: prioridad-y-turnos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una vía compartida usa esta regla. Un tren entra solo si la vía está libre y se cumple una de dos cosas: es el turno de su lado, o el otro lado no tiene trenes esperando. Al salir un tren, el turno pasa al otro lado si ese lado tiene trenes esperando; si no, el turno se queda en el mismo lado. Al salir también se hace notifyAll. Un tren acaba de salir y la vía quedó libre; el turno es del lado A, esperan 3 trenes en A y 1 en B, no llegan trenes nuevos y cada tren sale apenas entra. ¿En qué orden entran?
 
 - A) A, A, A, B · [turno-lado-entra-siempre]
@@ -516,7 +516,7 @@ Una vía compartida usa esta regla. Un tren entra solo si la vía está libre y 
 
 solución: entra el primer tren de A (turno de A). Al salir, B tiene 1 esperando, así que el turno pasa a B. Entra el tren de B. Al salir, A tiene 2 esperando, el turno vuelve a A y entra otro tren de A. Al salir, B ya no tiene trenes esperando, así que el turno se queda en A y entra el último tren de A. Orden: A, B, A, A. La opción A deja pasar a los tres trenes de A antes que al de B, aunque B tuviera el turno. En C se pierde el caso en que el otro lado está vacío y el turno no frena a nadie. En D la regla sí fija quién puede entrar en cada momento: notifyAll solo despierta a todos, y la condición decide.
 
-### P50 · dificultad 1 · kc: prioridad-y-turnos · borrador · origen: ia (sonnet-5.5)
+### P50 · dificultad 1 · kc: prioridad-y-turnos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El monitor de una pista de aterrizaje da prioridad a los aviones en emergencia sobre los comerciales y tiene un contador `emergenciasEsperando`. ¿Para qué sirve?
 
 - A) Para saber cuántos aviones en emergencia están esperando turno: sube cuando uno llega y baja cuando consigue la pista, y así un avión comercial sabe si debe cederles el paso · CORRECTA
@@ -526,7 +526,7 @@ El monitor de una pista de aterrizaje da prioridad a los aviones en emergencia s
 
 solución: la prioridad depende de quién espera, no de quién ya usa la pista. El contador debe subir cuando una emergencia llega a esperar y bajar cuando entra; un avión comercial espera mientras valga más que 0. Si cuenta las emergencias que ya están en la pista (C), no detecta la fila. Si nunca baja (B), los comerciales quedan bloqueados para siempre. Que la pista admita un solo avión (D) no distingue tipos de avión y no da ninguna prioridad. Respuesta: A.
 
-### P104 · dificultad 1 · kc: estados-y-esperas · borrador · origen: ia (sonnet-5.5)
+### P104 · dificultad 1 · kc: estados-y-esperas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 En un computador con un solo núcleo ocurren dos eventos distintos: (i) a un thread que está ejecutando se le acaba el quantum; (ii) otro thread llama a wait() dentro de un método synchronized. ¿Cuál afirmación es correcta?
 
 - A) En (i) el thread pasa a bloqueado hasta que el sistema operativo lo reactive; en (ii) queda bloqueado y libera el candado · [espera-quantum-bloquea]
@@ -536,7 +536,7 @@ En un computador con un solo núcleo ocurren dos eventos distintos: (i) a un thr
 
 solución: cuando se acaba el quantum, el sistema operativo recibe una interrupción, saca al thread del procesador y guarda su estado en su TCB; el thread no espera ningún evento, solo su turno, así que queda listo (A lo confunde con un bloqueo, y C inventa una copia de todo el proceso: solo se guarda y se restaura el estado). Con wait() el thread queda bloqueado hasta que otro lo avise con notify o notifyAll, y suelta el candado del monitor para que otros puedan entrar; si lo conservara, nadie podría cambiar la condición que espera (D). Respuesta: B.
 
-### P105 · dificultad 2 · kc: estados-y-esperas · borrador · origen: ia (sonnet-5.5)
+### P105 · dificultad 2 · kc: estados-y-esperas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un objeto tiene varios métodos synchronized. El thread T1 llama a uno de ellos en el instante 0 y lo ejecuta con una de estas tres versiones del cuerpo; a los 100 ms, el thread T2 llama a otro método synchronized del mismo objeto. Nadie llama notify ni notifyAll.
 
 ```
@@ -560,7 +560,7 @@ while (System.currentTimeMillis() < fin) Thread.yield();
 
 solución: T2 solo puede entrar cuando T1 no tiene el candado del objeto. En X, sleep deja a T1 bloqueado por 500 ms pero con el candado en su poder, así que T2 espera hasta que T1 salga del método. En Z, T1 sigue listo y ejecutando: yield() solo cede el turno, no suelta el candado, y el ciclo dura 500 ms. En Y, wait(500) deja a T1 bloqueado y libera el candado, así que T2 entra a los 100 ms; T1 vuelve a listo al cumplirse el tiempo y espera a recuperar el candado. La opción D falla porque wait suelta el candado apenas se ejecuta, sin necesidad de notify. Respuesta: C.
 
-### P106 · dificultad 3 · kc: estados-y-esperas · borrador · origen: ia (sonnet-5.5)
+### P106 · dificultad 3 · kc: estados-y-esperas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un solo núcleo ejecuta los threads A y B del mismo proceso, con un quantum de 30 ms. A entra a un método synchronized de un objeto compartido y, a los 10 ms de su turno, llama a Thread.sleep(100) dentro del método. B está en la cola de listos y también quiere llamar a ese método en cuanto corra. No hay otros threads. ¿Cuál descripción es correcta?
 
 - A) A pasa a bloqueado sin soltar el candado y el sistema operativo guarda su estado en el TCB de A y restaura el de B; B corre, intenta entrar al método y queda bloqueado esperando el candado. A vuelve a listo 110 ms después de empezar su turno, y B solo entra cuando A salga del método · CORRECTA
