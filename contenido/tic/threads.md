@@ -32,7 +32,7 @@ mc: conc-nucleo-tipo-invertido · conceptos-concurrencia · asignas el tipo de n
 
 ## Preguntas
 
-### P1 · dificultad 1 · kc: conceptos-concurrencia · borrador · origen: ia (sonnet-5.5)
+### P1 · dificultad 1 · kc: conceptos-concurrencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Cuál de las siguientes afirmaciones es correcta?
 
 - A) Un programa es un proceso en ejecución, y el archivo guardado en el disco es el proceso · [conc-programa-proceso-invertido]
@@ -42,7 +42,7 @@ mc: conc-nucleo-tipo-invertido · conceptos-concurrencia · asignas el tipo de n
 
 solución: el programa es el código guardado (por ejemplo, el ejecutable en el disco). Al ponerlo a correr, el sistema operativo crea un proceso: un programa en ejecución. La opción A invierte los términos. El quantum no se refiere a la memoria sino al máximo de tiempo seguido que un proceso usa el procesador antes de cederlo (opción C). Un thread es un flujo de control dentro de un proceso y comparte la memoria de ese proceso con sus hermanos (opción D). La correcta es B.
 
-### P2 · dificultad 1 · kc: conceptos-concurrencia · borrador · origen: ia (sonnet-5.5)
+### P2 · dificultad 1 · kc: conceptos-concurrencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un computador tiene un solo procesador con un solo núcleo. ¿Cuál de las siguientes afirmaciones es correcta?
 
 - A) Solo puede haber concurrencia si se agrega un segundo procesador · [conc-concurrencia-exige-paralelismo]
@@ -52,7 +52,7 @@ Un computador tiene un solo procesador con un solo núcleo. ¿Cuál de las sigui
 
 solución: concurrencia es que varias tareas progresen intercaladas en el tiempo; no exige que se ejecuten en el mismo instante. Con un solo núcleo el sistema operativo alterna los procesos por turnos y todos avanzan, así que hay concurrencia (D). Que se ejecuten realmente a la vez es paralelismo y necesita varios procesadores o núcleos (A y C confunden los dos conceptos). El procesamiento por lotes es solo una forma de usar el procesador, no la única posible (B).
 
-### P3 · dificultad 2 · kc: conceptos-concurrencia · borrador · origen: ia (sonnet-5.5)
+### P3 · dificultad 2 · kc: conceptos-concurrencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un servidor tiene un solo procesador de un solo núcleo. Da un turno corto a cada petición y pasa a la siguiente, de modo que todas las peticiones van avanzando. ¿Cómo se llama correctamente la capacidad de hacer progresar varias tareas de esta manera?
 
 - A) Concurrencia: las tareas se intercalan en el tiempo, aunque en cada instante solo una use el procesador · CORRECTA
@@ -62,7 +62,7 @@ Un servidor tiene un solo procesador de un solo núcleo. Da un turno corto a cad
 
 solución: las peticiones avanzan por turnos sobre un único procesador. Eso es concurrencia: progreso intercalado. El paralelismo (B) significa ejecución simultánea en varios procesadores o núcleos, que aquí no existen. Por lotes (C) sería terminar cada tarea antes de empezar otra, lo contrario de lo descrito. El multiprocesamiento (D) requiere hardware con varios procesadores. Respuesta: A.
 
-### P4 · dificultad 2 · kc: conceptos-concurrencia · borrador · origen: ia (sonnet-5.5)
+### P4 · dificultad 2 · kc: conceptos-concurrencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un navegador es un proceso que tiene tres threads, uno por pestaña. ¿Cuál afirmación es correcta?
 
 - A) Cada thread tiene su propia copia de la memoria del proceso, así que lo que uno escribe no lo ve el otro · [conc-thread-memoria-propia]
@@ -72,7 +72,7 @@ Un navegador es un proceso que tiene tres threads, uno por pestaña. ¿Cuál afi
 
 solución: el navegador instalado es el programa; al ejecutarlo se crea el proceso (B invierte los términos). Los threads de un mismo proceso son flujos de control distintos que comparten el espacio de memoria del proceso, y por eso pueden ver y modificar los mismos datos (A es falsa). Lo que cada thread tiene propio es su pila y su punto de ejecución. El quantum es el tiempo máximo seguido de procesador, no de permanencia en memoria (D). Respuesta: C.
 
-### P5 · dificultad 3 · kc: conceptos-concurrencia · borrador · origen: ia (sonnet-5.5)
+### P5 · dificultad 3 · kc: conceptos-concurrencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un computador con un solo núcleo ejecuta dos threads, A y B, del mismo proceso. El planificador reparte el procesador por turnos con un quantum de 10 ms. A necesita 25 ms de procesador y B necesita 15 ms. Ambos llegan en el instante 0, A está primero en la cola y cambiar de thread no cuesta tiempo. ¿Cuál afirmación es correcta?
 
 - A) A termina en el instante 25 ms y B en el 40 ms, porque con un solo núcleo cada uno corre completo antes de dar paso al otro · [conc-un-procesador-sin-concurrencia]
@@ -82,7 +82,7 @@ Un computador con un solo núcleo ejecuta dos threads, A y B, del mismo proceso.
 
 solución: línea de tiempo con quantum de 10 ms. De 0 a 10 corre A (le quedan 15 ms). De 10 a 20 corre B (le quedan 5 ms). De 20 a 30 corre A (le quedan 5 ms). De 30 a 35 corre B, que termina en 35. De 35 a 40 corre A, que termina en 40. En ningún instante corren los dos a la vez: hay concurrencia y no paralelismo (B es correcta y D se equivoca en el nombre). Los tiempos de A y de C solo se darían si cada uno corriera completo o si hubiera dos núcleos.
 
-### P6 · dificultad 1 · kc: crear-threads · borrador · origen: ia (sonnet-5.5)
+### P6 · dificultad 1 · kc: crear-threads · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Se quiere que un trabajo corra en un thread propio, usando una clase que extiende Thread. ¿Qué pasos son los correctos?
 
 - A) Sobrescribir start() con el trabajo y luego llamar a run() sobre el objeto · [thr-sobrescribe-start]
@@ -92,7 +92,7 @@ Se quiere que un trabajo corra en un thread propio, usando una clase que extiend
 
 solución: el trabajo del thread se escribe en run(). new solo construye el objeto; el thread empieza cuando se llama a start(), que pide al sistema crear el flujo de control y luego invoca run() en él. start() se puede llamar una sola vez por objeto; repetir el trabajo exige un objeto nuevo. Respuesta: C.
 
-### P7 · dificultad 2 · kc: crear-threads · borrador · origen: ia (sonnet-5.5)
+### P7 · dificultad 2 · kc: crear-threads · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Dada esta clase, el método main crea un objeto y llama a run() directamente:
 
 ```
@@ -119,7 +119,7 @@ public class Prueba {
 
 solución: llamar a run() es una llamada normal a un método: no crea ningún thread, así que el código se ejecuta en el thread que lo llama (main), de forma secuencial. Se imprime A y después B. new tampoco activa nada (C), y el trabajo se define en run(), no en start() (D). Respuesta: A.
 
-### P8 · dificultad 2 · kc: crear-threads · borrador · origen: ia (sonnet-5.5)
+### P8 · dificultad 2 · kc: crear-threads · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué ocurre al ejecutar este programa?
 
 ```
@@ -144,7 +144,7 @@ public class Prueba {
 
 solución: la primera llamada a start() arranca el thread, que ejecuta run() e imprime A una vez. Un objeto Thread solo se puede arrancar una vez: tanto si el thread sigue corriendo como si ya terminó, la segunda llamada a start() lanza IllegalThreadStateException. Para volver a ejecutar el trabajo hay que crear otro objeto. El programa compila (no hace falta sobrescribir start()) y el thread sí arranca con start(), sin llamar a run() a mano. Respuesta: D.
 
-### P9 · dificultad 1 · kc: crear-threads · borrador · origen: ia (sonnet-5.5)
+### P9 · dificultad 1 · kc: crear-threads · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 La clase Aviso extiende Thread y su método run() imprime "A". El método main hace esto:
 
 ```
@@ -162,7 +162,7 @@ System.out.println("B");
 
 solución: start() lanza un thread nuevo y devuelve de inmediato; main sigue con su println sin esperar. Los dos flujos corren de forma concurrente y el planificador decide cuál escribe primero, así que se imprimen A y B en cualquier orden. main no espera al thread (A), no hay un orden fijo (C) y no hace falta llamar a run() (D). Respuesta: B.
 
-### P10 · dificultad 3 · kc: crear-threads · borrador · origen: ia (sonnet-5.5)
+### P10 · dificultad 3 · kc: crear-threads · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Este programa arranca dos threads y luego main imprime "fin":
 
 ```
@@ -191,7 +191,7 @@ public class Prueba {
 
 solución: cada start() lanza un thread que imprime tres veces su letra, y main imprime fin. En total son siete líneas, seguras en cantidad, pero los tres flujos (a, b y main) se intercalan como decida el planificador, por lo que ni el orden de arranque ni la posición de fin están garantizados. Sin join(), main no espera a nadie (C), no hay orden fijo (B) y start() es lo que pone a correr cada run() (D). Respuesta: A.
 
-### P11 · dificultad 1 · kc: condicion-carrera · borrador · origen: ia (sonnet-5.5)
+### P11 · dificultad 1 · kc: condicion-carrera · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿En cuál de estas situaciones NO hay condición de carrera?
 
 - A) Tres threads hacen cada uno 700 veces conteo++ sobre el mismo campo, porque ++ es una instrucción que nadie puede interrumpir · [carr-incremento-atomico]
@@ -201,7 +201,7 @@ solución: cada start() lanza un thread que imprime tres veces su letra, y main 
 
 solución: hay condición de carrera cuando varios threads acceden a un mismo dato y al menos uno lo modifica sin exclusión mutua. En A, ++ son tres pasos (leer, sumar, escribir) que se pueden intercalar. En B, una pausa no garantiza que los accesos no se solapen. En C, sin protección el total puede perder sumas. En D cada thread usa una variable local propia y no hay dato compartido. Respuesta: D.
 
-### P12 · dificultad 1 · kc: condicion-carrera · borrador · origen: ia (sonnet-5.5)
+### P12 · dificultad 1 · kc: condicion-carrera · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Tres threads leen el mismo arreglo de temperaturas para calcular, cada uno, un promedio distinto que guarda en una variable local. Ningún thread escribe en el arreglo. ¿Qué es correcto?
 
 - A) No hay condición de carrera: nadie modifica el arreglo compartido, así que no hace falta exclusión mutua · CORRECTA
@@ -211,7 +211,7 @@ Tres threads leen el mismo arreglo de temperaturas para calcular, cada uno, un p
 
 solución: la carrera aparece cuando alguien modifica un dato compartido. Si todos solo leen y los resultados van a variables locales, los accesos concurrentes no se estorban y no se necesita sincronización. Compartir un dato (B) o compartir el código (C) no basta, y una pausa (D) no resuelve una carrera que además no existe. Respuesta: A.
 
-### P13 · dificultad 2 · kc: condicion-carrera · borrador · origen: ia (sonnet-5.5)
+### P13 · dificultad 2 · kc: condicion-carrera · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Tres threads de tipo Empacador comparten una misma Bodega. Cada uno repite 500 veces la orden de sumar 2 unidades al campo de la bodega. El main (declarado con throws InterruptedException) los arranca y espera su fin antes de imprimir:
 
 ```
@@ -240,7 +240,7 @@ System.out.println(b.unidades);
 
 solución: unidades es un dato compartido que los tres threads modifican sin exclusión mutua. La instrucción += 2 equivale a leer el valor, sumarle 2 y escribirlo; si dos threads leen el mismo valor antes de que alguno lo escriba, una suma se pierde. La cuenta ideal es 3 · 500 · 2 = 3000, pero el valor impreso puede quedar por debajo (nunca por encima, y a veces justo en 3000 por suerte). join() solo espera a que cada thread termine, no los hace turnarse mientras suman (A). Respuesta: C.
 
-### P14 · dificultad 2 · kc: condicion-carrera · borrador · origen: ia (sonnet-5.5)
+### P14 · dificultad 2 · kc: condicion-carrera · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Cuatro threads de tipo Llenador comparten un objeto Tanque. Cada uno ejecuta 300 veces tanque.litros += 5 sobre el campo litros, y main espera con join() a que los cuatro terminen antes de imprimir; se espera que haya 6000. Hoy el resultado a veces sale menor. Se quiere que sea siempre 6000 sin dejar de usar los cuatro threads. ¿Qué cambio lo logra?
 
 - A) Declarar el método run() de Llenador como synchronized, porque los cuatro threads ejecutan el mismo código · [carr-codigo-compartido]
@@ -250,7 +250,7 @@ Cuatro threads de tipo Llenador comparten un objeto Tanque. Cada uno ejecuta 300
 
 solución: el problema se corrige con exclusión mutua sobre el dato compartido, y en Java se logra con un monitor: un método synchronized en la clase del objeto que todos comparten (Tanque). Así cada += 5 se completa antes de que otro thread lo empiece, y el total es 4 · 300 · 5 = 6000. En A, el candado de un run() synchronized es el de cada objeto Llenador, que son cuatro objetos distintos, así que no se excluyen. Una pausa (C) solo reduce la probabilidad del choque, y join() (D) solo espera a que los threads terminen, algo que main ya hace. Respuesta: B.
 
-### P15 · dificultad 3 · kc: condicion-carrera · borrador · origen: ia (sonnet-5.5)
+### P15 · dificultad 3 · kc: condicion-carrera · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Cada Cajero crea su propia Cuenta. Se arrancan dos cajeros:
 
 ```
@@ -278,7 +278,7 @@ class Cajero extends Thread {
 
 solución: cada Cajero construye su propia Cuenta, así que los dos threads trabajan sobre objetos distintos: no hay dato compartido y, por tanto, no hay condición de carrera, aunque ejecuten el mismo código. Cada thread suma sus 1000 consignaciones sobre su cuenta y la imprime: 1000 y 1000 en cualquier orden. Compartir el código (A) o ser un programa con threads (B) no crea la carrera, y saldo++ solo es un problema cuando dos threads tocan el mismo saldo (D); además, consignar ya es synchronized. Respuesta: C.
 
-### P101 · dificultad 1 · kc: conceptos-concurrencia · borrador · origen: ia (sonnet-5.5)
+### P101 · dificultad 1 · kc: conceptos-concurrencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un juego guarda el marcador en un campo `static` y cada partida usa una variable local para contar rondas. El hilo `a` termina por completo (con `join`) antes de que empiece `b`.
 
 ```
@@ -306,7 +306,7 @@ El hilo `a` imprime `3 50`. ¿Qué imprime el hilo `b`?
 - D) Un error: `b` no puede leer `puntaje` porque el valor lo escribió otro thread y esa memoria es privada de `a` · [conc-thread-memoria-propia] crees que lo que escribe un thread es privado de ese thread, cuando los datos del proceso son comunes a todos
 
 solución: un `static` está en los datos del proceso, que todos los threads comparten. Como `a` ya terminó, el 50 está escrito y `b` lo lee: `puntaje` vale 50 (A y D suponen una memoria propia por thread). Una variable local vive en la pila del thread que ejecuta el método, y cada thread tiene su pila. Por eso `rondas` de `b` empieza en 0 y cuenta 5 vueltas, sin rastro de las 3 de `a` (B supone una pila compartida). Se imprime `5 50`. Respuesta: C.
-### P102 · dificultad 2 · kc: conceptos-concurrencia · borrador · origen: ia (sonnet-5.5)
+### P102 · dificultad 2 · kc: conceptos-concurrencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un procesador tiene 6 núcleos físicos, todos con SMT de dos vías: 2 son núcleos de rendimiento y 4 son núcleos de eficiencia. Se va a ejecutar un programa que descarga y guarda archivos, y que pasa casi todo el tiempo esperando la red y el disco, con muy poco cálculo. ¿Cuántos núcleos lógicos ve el sistema operativo y en qué tipo de núcleo conviene más ejecutarlo?
 
 - A) 12 núcleos lógicos; en los núcleos de eficiencia, porque el programa casi no usa la unidad aritmética y uno de rendimiento gastaría más energía sin aprovecharse · CORRECTA
@@ -316,7 +316,7 @@ Un procesador tiene 6 núcleos físicos, todos con SMT de dos vías: 2 son núcl
 
 solución: con SMT de dos vías, cada núcleo físico se presenta al sistema operativo como dos núcleos lógicos: 6 × 2 = 12 (B cuenta solo los físicos y D cuenta cuatro por núcleo). Para un programa que casi solo espera entrada y salida, la velocidad del reloj importa poco, porque el procesador está ocioso la mayor parte del tiempo; un núcleo de eficiencia basta y gasta menos energía. Un núcleo de rendimiento tendría un consumo mayor con muy poca utilización (C). Respuesta: A.
 
-### P103 · dificultad 3 · kc: conceptos-concurrencia · borrador · origen: ia (sonnet-5.5)
+### P103 · dificultad 3 · kc: conceptos-concurrencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un proceso de simulación lanza 4 threads de cálculo intensivo. Los cuatro leen un mismo arreglo grande, que nadie modifica, y cada uno acumula su suma parcial en una variable local de su método run(). El procesador tiene 4 núcleos de rendimiento, con SMT de dos vías, y 8 núcleos de eficiencia, sin SMT. ¿Cuál descripción es correcta?
 
 - A) Los threads comparten la pila, así que los cuatro suman en la misma variable local; el sistema operativo ve 16 núcleos lógicos y el cálculo conviene a los núcleos de rendimiento · [conc-pila-compartida]

@@ -14,7 +14,7 @@ mc: inter-pausas-lo-evitan · interbloqueo · crees que añadir pausas con sleep
 
 ## Preguntas
 
-### P16 · dificultad 1 · kc: interbloqueo · borrador · origen: ia (sonnet-5.5)
+### P16 · dificultad 1 · kc: interbloqueo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Dos threads usan dos candados, A y B (por ejemplo, dos objetos con bloques synchronized anidados). T1 toma A y luego pide B; T2 toma B y luego pide A. Ninguno suelta el que tiene mientras espera el otro. ¿Qué puede ocurrir?
 
 - A) Solo se retrasan: uno de los dos terminará y soltará su candado, así que el programa siempre acaba · [inter-espera-normal]
@@ -24,7 +24,7 @@ Dos threads usan dos candados, A y B (por ejemplo, dos objetos con bloques synch
 
 solución: si T1 consigue A y T2 consigue B antes de que cualquiera pida el segundo, cada uno retiene un recurso y espera el que tiene el otro, sin salida: es un interbloqueo (B). Pero si uno de los dos consigue ambos candados antes de que el otro empiece, no hay bloqueo; por eso no ocurre en toda ejecución, y no basta la exclusión mutua (D). Una pausa solo cambia la probabilidad, no la estructura (C), y esto no es una espera normal que termine sola (A).
 
-### P17 · dificultad 2 · kc: interbloqueo · borrador · origen: ia (sonnet-5.5)
+### P17 · dificultad 2 · kc: interbloqueo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Tres threads necesitan dos candados cada uno: T1 usa A y B (pide A primero), T2 usa B y C (pide B primero) y T3 usa C y A (pide C primero). Si cada uno toma su primer candado, quedan esperando en círculo. ¿Qué cambio evita el interbloqueo?
 
 - A) Fijar un orden global A, B, C y hacer que todos pidan primero el candado de menor orden: T3 pediría A y luego C · CORRECTA
@@ -34,7 +34,7 @@ Tres threads necesitan dos candados cada uno: T1 usa A y B (pide A primero), T2 
 
 solución: la espera circular se rompe si todos piden los recursos en un mismo orden global. Con el orden A, B, C: T1 pide A y B, T2 pide B y C, y T3 pide A y luego C. Así nadie puede retener un candado de mayor orden mientras espera uno de menor orden, y no se cierra el círculo. Quitar la exclusión mutua (B) deja sin protección los datos y causa condiciones de carrera. Una pausa (C) no cambia el orden de petición. Seguir la misma regla de «primero el propio» (D) es justamente el patrón que forma el círculo. Respuesta: A.
 
-### P18 · dificultad 2 · kc: interbloqueo · borrador · origen: ia (sonnet-5.5)
+### P18 · dificultad 2 · kc: interbloqueo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Cuatro brazos robóticos están montados en círculo alrededor de una mesa de ensamble. Entre cada par de brazos vecinos hay una herramienta, así que hay cuatro herramientas en total. Para armar una pieza, un brazo necesita las dos herramientas que tiene a sus lados. Cada brazo toma primero la herramienta que queda en el sentido de las agujas del reloj, luego la otra, y no suelta la primera hasta terminar su pieza. ¿Cuál afirmación es correcta?
 
 - A) No puede haber interbloqueo, porque en algún momento un brazo termina su pieza y devuelve sus herramientas · [inter-espera-normal]
@@ -44,7 +44,7 @@ Cuatro brazos robóticos están montados en círculo alrededor de una mesa de en
 
 solución: se cumplen las cuatro condiciones: cada herramienta la usa un solo brazo a la vez, cada brazo retiene una mientras pide otra, nadie se la puede arrebatar a otro y, si los cuatro toman la primera, queda un círculo de esperas. Ningún brazo puede avanzar ni devolver nada, porque devolver exige haber terminado la pieza. Pero eso ocurre solo en algunas intercalaciones, no en toda ejecución (C). Que alguien termine y devuelva (A) no sucede cuando todos están esperando, y una pausa (B) no cambia la estructura. Respuesta: D.
 
-### P19 · dificultad 3 · kc: interbloqueo · borrador · origen: ia (sonnet-5.5)
+### P19 · dificultad 3 · kc: interbloqueo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Seis técnicos trabajan en una mesa circular de un taller. Entre cada par de técnicos vecinos hay una llave de torque, y las seis llaves están numeradas del 1 al 6. Para apretar una pieza, cada técnico necesita las dos llaves que tiene a sus lados y por costumbre toma primero la que queda a su izquierda. ¿Cuál modificación, que se pueda aplicar en el taller, evita el interbloqueo?
 
 - A) No hay modificación posible mientras las llaves sean de uso exclusivo, porque esa condición ya basta para que haya interbloqueo · [inter-basta-una-condicion]
@@ -54,7 +54,7 @@ Seis técnicos trabajan en una mesa circular de un taller. Entre cada par de té
 
 solución: para evitar el interbloqueo basta eliminar una de las cuatro condiciones. Con la regla de la llave menor primero se elimina la espera circular: el técnico que tiene a sus lados las llaves 6 y 1 toma primero la 1, y así nadie puede retener una llave de número mayor esperando una de número menor, de modo que el círculo no se cierra. Cambiar a todos de izquierda a derecha (B) sigue siendo un patrón igual para todos y deja el mismo círculo. Una sola condición no basta para producir el interbloqueo, y por eso evitarlo sí es posible (A). Quitar la exclusión mutua (D) haría que dos técnicos usaran la misma llave a la vez, algo que no se puede permitir. Respuesta: C.
 
-### P20 · dificultad 1 · kc: interbloqueo · borrador · origen: ia (sonnet-5.5)
+### P20 · dificultad 1 · kc: interbloqueo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Dos threads comparten un solo candado. T1 lo toma, hace Thread.sleep(500) y lo suelta; mientras tanto T2 lo pide y espera. T1 no necesita ningún otro recurso. ¿Hay interbloqueo?
 
 - A) No: T2 espera, pero T1 no espera a nadie y acabará soltando el candado, así que no hay espera circular · CORRECTA

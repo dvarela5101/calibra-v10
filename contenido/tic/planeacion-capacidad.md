@@ -29,7 +29,7 @@ mc: bc-dns-conoce-carga · balanceo-de-carga · crees que el DNS sabe qué servi
 
 ## Preguntas
 
-### P71 · dificultad 1 · kc: requerimientos-no-funcionales · borrador · origen: ia (sonnet-5.5)
+### P71 · dificultad 1 · kc: requerimientos-no-funcionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una plataforma de telemedicina define este requerimiento: «Durante la semana de vacunación, el sistema debe atender hasta 8.000 videoconsultas simultáneas». ¿Cómo se clasifica?
 
 - A) Escalabilidad · [rnf-concurrencia-es-escalabilidad]
@@ -39,7 +39,7 @@ Una plataforma de telemedicina define este requerimiento: «Durante la semana de
 
 solución: la exigencia fija cuántas operaciones debe poder manejar el sistema al mismo tiempo en una temporada concreta. Eso es capacidad de procesamiento. No es escalabilidad, porque no habla de crecer sin cambiar la arquitectura; no es desempeño, porque no fija un tiempo de respuesta; y no es funcional, porque no dice qué hace el sistema sino cuánto debe aguantar.
 
-### P72 · dificultad 2 · kc: requerimientos-no-funcionales · borrador · origen: ia (sonnet-5.5)
+### P72 · dificultad 2 · kc: requerimientos-no-funcionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una cadena de farmacias exige para su sistema de inventarios: «Debe poder incorporar seis sucursales nuevas por trimestre, en cualquier ciudad, sin rediseñar la arquitectura». ¿Cómo se clasifica?
 
 - A) Capacidad de procesamiento · [rnf-sedes-no-es-escalabilidad]
@@ -49,7 +49,7 @@ Una cadena de farmacias exige para su sistema de inventarios: «Debe poder incor
 
 solución: lo que se pide es que el sistema crezca (más sedes) sin cambiar su arquitectura, y eso es escalabilidad. No es capacidad de procesamiento, porque no fija una cifra de operaciones simultáneas; no es desempeño, porque no hay un tiempo de respuesta; y no es funcional, porque es una exigencia sobre cómo crece el sistema y no sobre una operación que ejecuta.
 
-### P73 · dificultad 2 · kc: requerimientos-no-funcionales · borrador · origen: ia (sonnet-5.5)
+### P73 · dificultad 2 · kc: requerimientos-no-funcionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El sistema de matrículas de una universidad guarda hoy 6 millones de filas en su base de datos, y se proyecta que lleguen a 18 millones en cuatro años. ¿Cómo se clasifica esa proyección como requerimiento?
 
 - A) Capacidad de almacenamiento · CORRECTA
@@ -59,7 +59,7 @@ El sistema de matrículas de una universidad guarda hoy 6 millones de filas en s
 
 solución: el crecimiento de los registros de la base es un asunto de cuánto espacio hay que tener, es decir, capacidad de almacenamiento. Aunque el volumen crece con el tiempo, no se pide que la arquitectura se adapte (escalabilidad); y una cifra de datos no es un tiempo de respuesta (desempeño) ni una operación del sistema (funcional).
 
-### P74 · dificultad 3 · kc: requerimientos-no-funcionales · borrador · origen: ia (sonnet-5.5)
+### P74 · dificultad 3 · kc: requerimientos-no-funcionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un portal de inscripciones tiene estos tres requerimientos: (1) «El día de cierre debe registrar hasta 25.000 solicitudes concurrentes». (2) «Debe poder abrir un país nuevo cada trimestre sin cambiar la arquitectura». (3) «Su caída total en un año no debe sumar más de 5 horas». ¿Cuál clasificación, en ese orden, es correcta?
 
 - A) (1) escalabilidad; (2) escalabilidad; (3) disponibilidad · [rnf-concurrencia-es-escalabilidad]
@@ -69,7 +69,7 @@ Un portal de inscripciones tiene estos tres requerimientos: (1) «El día de cie
 
 solución: (1) es una cifra de solicitudes simultáneas en un día pico, por lo que es capacidad de procesamiento. (2) es crecer con países nuevos sin tocar la arquitectura, o sea escalabilidad. (3) limita el tiempo fuera de servicio, por lo que es disponibilidad: el desempeño habla de tiempo de respuesta, no de tiempo caído. Solo C acierta las tres.
 
-### P75 · dificultad 1 · kc: requerimientos-no-funcionales · borrador · origen: ia (sonnet-5.5)
+### P75 · dificultad 1 · kc: requerimientos-no-funcionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Cuál de los siguientes enunciados es un requerimiento de desempeño?
 
 - A) «El sistema debe procesar 5.000 transacciones por segundo en hora pico.» · [rnf-cantidad-como-desempeno]
@@ -79,7 +79,7 @@ solución: (1) es una cifra de solicitudes simultáneas en un día pico, por lo 
 
 solución: el desempeño se expresa como tiempo de respuesta, y solo B fija uno (2 segundos por consulta). A es capacidad de procesamiento (operaciones por segundo), C es capacidad de almacenamiento (crecimiento de filas) y D es disponibilidad (tiempo fuera de servicio).
 
-### P76 · dificultad 1 · kc: metricas-y-pruebas · borrador · origen: ia (sonnet-5.5)
+### P76 · dificultad 1 · kc: metricas-y-pruebas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un banco recibe 40 solicitudes por segundo y cada una pasa en promedio 0,5 s dentro del sistema, contando la espera. Quiere saber cuántas solicitudes hay en el sistema al mismo tiempo, en promedio. ¿Qué métrica cuantifica ese requerimiento?
 
 - A) Ley de utilización · [mp-utilizacion-y-little-mezcladas]
@@ -89,7 +89,7 @@ Un banco recibe 40 solicitudes por segundo y cada una pasa en promedio 0,5 s den
 
 solución: el número promedio de solicitudes en el sistema lo da la ley de Little: N = a·R = 40 × 0,5 = 20 solicitudes. La utilización mide qué tan ocupado está un recurso (U = a·S), el speedup compara tiempos con y sin mejora y el MTTR habla de reparaciones.
 
-### P77 · dificultad 2 · kc: metricas-y-pruebas · borrador · origen: ia (sonnet-5.5)
+### P77 · dificultad 2 · kc: metricas-y-pruebas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Antes de salir a producción, un equipo escribe un guion que lanza 2.000 usuarios virtuales. Cada uno repite el flujo de compra con pausas aleatorias entre pasos, y la cantidad de usuarios activos sube y baja por franjas que el propio equipo definió. ¿Qué tipo de carga es esta?
 
 - A) Sintética: se diseñó a propósito para simular condiciones de trabajo específicas · CORRECTA
@@ -99,7 +99,7 @@ Antes de salir a producción, un equipo escribe un guion que lanza 2.000 usuario
 
 solución: la carga la fabrica el equipo con un guion, así que es sintética. No es real porque no la generan personas usando el sistema; tampoco es una carga máxima fija, porque el guion varía (pausas aleatorias y franjas de usuarios). Y una carga es el insumo de una prueba, no un tipo de estudio como el análisis de desempeño.
 
-### P78 · dificultad 2 · kc: metricas-y-pruebas · borrador · origen: ia (sonnet-5.5)
+### P78 · dificultad 2 · kc: metricas-y-pruebas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un hospital debe elegir entre tres servidores candidatos. En cada uno ejecuta el mismo guion de 500 usuarios virtuales que repiten el flujo de admisiones, con pausas aleatorias y picos distintos por franja horaria, y luego compara los resultados. ¿Qué describe mejor lo que hace?
 
 - A) Un análisis de desempeño con carga sintética · [mp-comparativa-y-analisis-invertidos]
@@ -109,7 +109,7 @@ Un hospital debe elegir entre tres servidores candidatos. En cada uno ejecuta el
 
 solución: se contrastan métricas de varias plataformas, lo que es una evaluación comparativa (el análisis de desempeño estudia el comportamiento de los componentes de una infraestructura concreta). La carga es sintética porque la construye el equipo, y no es máxima fija porque tiene variación (pausas aleatorias y picos por franja).
 
-### P79 · dificultad 3 · kc: metricas-y-pruebas · borrador · origen: ia (sonnet-5.5)
+### P79 · dificultad 3 · kc: metricas-y-pruebas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una aseguradora tiene tres necesidades: (1) saber cuántas peticiones hay a la vez en el sistema, en promedio, dadas la tasa de llegada y el tiempo de respuesta medido; (2) saber qué fracción de la mejora ideal obtiene al pasar de 1 a 8 servidores; (3) cuantificar cuánto tarda en promedio en volver a operar después de cada falla. ¿Qué métricas corresponden, en ese orden?
 
 - A) Utilización, eficiencia, MTTR · [mp-utilizacion-y-little-mezcladas]
@@ -119,7 +119,7 @@ Una aseguradora tiene tres necesidades: (1) saber cuántas peticiones hay a la v
 
 solución: (1) peticiones en el sistema: ley de Little (N = a·R); la utilización diría qué tan ocupado está el recurso, no cuántas peticiones hay. (2) la fracción de la mejora ideal es la eficiencia, E = speedup / número de servidores; el speedup solo da cuántas veces más rápido es. (3) el tiempo para volver a operar tras una falla es el MTTR; el MTBF es el tiempo entre fallas.
 
-### P80 · dificultad 1 · kc: metricas-y-pruebas · borrador · origen: ia (sonnet-5.5)
+### P80 · dificultad 1 · kc: metricas-y-pruebas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una planta quiere saber cada cuánto tiempo, en promedio, falla un equipo de refrigeración. ¿Qué métrica cuantifica ese requerimiento?
 
 - A) Ley de utilización · [mp-utilizacion-y-little-mezcladas]
@@ -129,7 +129,7 @@ Una planta quiere saber cada cuánto tiempo, en promedio, falla un equipo de ref
 
 solución: lo que se pregunta es el intervalo promedio entre una falla y la siguiente, que es el MTBF. El MTTR mide cuánto tarda cada reparación, la utilización mide qué tan ocupado está un recurso y el speedup compara tiempos de ejecución.
 
-### P81 · dificultad 1 · kc: balanceo-de-carga · borrador · origen: ia (sonnet-5.5)
+### P81 · dificultad 1 · kc: balanceo-de-carga · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una tienda registra tres direcciones IP para el mismo nombre de dominio. Cuando un cliente consulta ese nombre, ¿qué hace el DNS?
 
 - A) Responde con una de las tres direcciones IP registradas · CORRECTA
@@ -139,7 +139,7 @@ Una tienda registra tres direcciones IP para el mismo nombre de dominio. Cuando 
 
 solución: el DNS solo traduce nombres a direcciones: mantiene varias IP para el dominio y entrega una en cada respuesta. No participa en el tráfico posterior (no reenvía), no mira el contenido de la petición y no conoce la carga de los servidores.
 
-### P82 · dificultad 2 · kc: balanceo-de-carga · borrador · origen: ia (sonnet-5.5)
+### P82 · dificultad 2 · kc: balanceo-de-carga · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un balanceador envía siempre al mismo servidor las peticiones que llegan desde una misma dirección IP, y a otros servidores las de otras direcciones. ¿En qué criterio se basa el reparto?
 
 - A) La carga actual de cada servidor · [bc-solo-por-carga]
@@ -149,7 +149,7 @@ Un balanceador envía siempre al mismo servidor las peticiones que llegan desde 
 
 solución: el servidor se decide por la dirección de donde viene la petición, así que el criterio es el origen. Un balanceador puede repartir por origen, por carga, por capacidad o al azar; que no mida el estado de los servidores no le quita el carácter de balanceador.
 
-### P83 · dificultad 2 · kc: balanceo-de-carga · borrador · origen: ia (sonnet-5.5)
+### P83 · dificultad 2 · kc: balanceo-de-carga · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un cluster tiene dos servidores: A con 16 núcleos y B con 4. El balanceador envía a A cuatro de cada cinco peticiones, sin consultar cuánto trabajo tiene cada servidor en ese momento. ¿En qué criterio se basa?
 
 - A) La carga actual: A recibe más peticiones, así que es el más cargado · [bc-capacidad-es-carga]
@@ -159,7 +159,7 @@ Un cluster tiene dos servidores: A con 16 núcleos y B con 4. El balanceador env
 
 solución: A tiene cuatro veces la capacidad de B (16 contra 4 núcleos) y recibe cuatro de cada cinco peticiones, proporcional a esa capacidad, sin mirar su carga del momento. Capacidad es lo que el servidor puede atender; carga es lo que atiende ahora.
 
-### P84 · dificultad 3 · kc: balanceo-de-carga · borrador · origen: ia (sonnet-5.5)
+### P84 · dificultad 3 · kc: balanceo-de-carga · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una empresa registra cuatro IP para su dominio. Un servidor se cae y, aun así, aproximadamente una de cada cuatro consultas de los clientes sigue recibiendo la IP del servidor caído. ¿Cuál explicación es correcta?
 
 - A) El DNS reenvía el tráfico y falla al reenviar al servidor caído · [bc-dns-reenvia]
@@ -169,7 +169,7 @@ Una empresa registra cuatro IP para su dominio. Un servidor se cae y, aun así, 
 
 solución: con cuatro IP registradas, cada respuesta lleva una de ellas, por lo que una de cada cuatro consultas recibe la del servidor caído. El DNS no mide carga ni salud, no lee las peticiones y no reenvía tráfico; por eso no se entera de la caída.
 
-### P85 · dificultad 1 · kc: balanceo-de-carga · borrador · origen: ia (sonnet-5.5)
+### P85 · dificultad 1 · kc: balanceo-de-carga · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un balanceador asigna cada petición a un servidor escogido sin mirar ni al cliente ni a los servidores. ¿Qué criterio usa?
 
 - A) Al azar · CORRECTA
