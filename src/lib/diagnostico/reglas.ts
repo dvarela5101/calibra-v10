@@ -119,6 +119,11 @@ export function esLetra(valor: unknown): valor is Letra {
   return typeof valor === "string" && (LETRAS as readonly string[]).includes(valor);
 }
 
+/** Una respuesta a una pregunta: una letra de la A a la D o `null`, que es «No sé» (D-83 c). Ausente no vale. */
+export function esRespuesta(valor: unknown): valor is Letra | null {
+  return valor === null || esLetra(valor);
+}
+
 // ---------------------------------------------------------------------------
 // Lo que vuelve al navegador
 // ---------------------------------------------------------------------------

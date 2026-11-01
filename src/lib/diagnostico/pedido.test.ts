@@ -38,7 +38,11 @@ describe("leerPedidoDeResponder", () => {
     expect(leerPedidoDeResponder(pedido(letra))).toEqual({ idDiagnostico: ID, paso: 2, letra });
   });
 
-  it.each([["a"], ["E"], [""], ["AB"], [" A"], [null], [undefined], [1], [["A"]], [{}]])("la letra %j no es válida: null, y el módulo no se llama", (letra) => {
+  it("la letra null es «No sé» (D-83 c) y es válida", () => {
+    expect(leerPedidoDeResponder(pedido(null))).toEqual({ idDiagnostico: ID, paso: 2, letra: null });
+  });
+
+  it.each([["a"], ["E"], [""], ["AB"], [" A"], ["No sé"], [undefined], [false], [1], [["A"]], [{}]])("la letra %j no es válida: null, y el módulo no se llama", (letra) => {
     expect(leerPedidoDeResponder(pedido(letra))).toBeNull();
   });
 

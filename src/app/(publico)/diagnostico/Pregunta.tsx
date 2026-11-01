@@ -21,13 +21,15 @@ type Props = {
    * «Cambiar de materia» queda deshabilitado.
    */
   ocupado: boolean;
-  alResponder: (letra: Letra) => void;
+  /** Null: «No sé» (D-83 c). */
+  alResponder: (letra: Letra | null) => void;
   alCambiarDeMateria: () => void;
 };
 
 /**
  * HU-009: una pregunta del diagnóstico. El enunciado, las cuatro opciones (radios nativos con su letra de A a D) y los botones.
  * Elegir una opción no envía nada: la elección es estado de esta pantalla, y la respuesta sale una sola vez con «Responder».
+ * «No sé», bajo las opciones, responde en un toque sin elegir ninguna (D-83 e).
  * No muestra si acertó ni deja volver a una pregunta anterior. `Recorrido` la remonta (con `key`) en cada pregunta nueva para
  * limpiar la opción, y pone fuera de ella el avance «Pregunta N de hasta M», para que su región viva sea siempre el mismo elemento.
  */
@@ -46,6 +48,13 @@ export function Pregunta({ enCurso, mensaje, ocupado, alResponder, alCambiarDeMa
     // «Elige una opción» no mueve el foco y no llama a nada.
     if (decision === "falta_elegir") setFaltaElegir(true);
     if (decision === "enviar" && elegida !== null) alResponder(elegida);
+  }
+
+  // Como «Responder»: mientras hay una llamada en curso no envía nada.
+  function decirNoSe() {
+    if (ocupado) return;
+    setFaltaElegir(false);
+    alResponder(null);
   }
 
   // No se confía en el envío implícito del navegador sobre un radio: Enter en una opción envía como «Responder».
@@ -80,6 +89,10 @@ export function Pregunta({ enCurso, mensaje, ocupado, alResponder, alCambiarDeMa
           </label>
         ))}
       </div>
+
+      <button type="button" className={formulario.botonSecundario} onClick={decirNoSe} aria-disabled={ocupado || undefined}>
+        {TEXTOS.noSe}
+      </button>
 
       {aviso && (
         <p role="alert" className={formulario.error}>

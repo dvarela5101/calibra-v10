@@ -16,6 +16,7 @@ import {
   textoDeAciertos,
   textoDeAvance,
   textoDeErroresDetectados,
+  textoDeNoSe,
   textoDeVerErrores,
   textoDePorcentaje,
   textoDeRespondidas,
@@ -284,5 +285,13 @@ describe("TEXTOS", () => {
       expect(texto.toLowerCase()).not.toContain("subtema");
       expect(texto.toLowerCase()).not.toContain("sin nota");
     }
+  });
+});
+
+describe("textoDeNoSe (HU-115, D-83 d)", () => {
+  it("en singular y en plural", () => {
+    expect(textoDeNoSe(1)).toBe("Dijiste «No sé» en 1 pregunta");
+    expect(textoDeNoSe(3)).toBe("Dijiste «No sé» en 3 preguntas");
+    expect(TEXTOS.noSe).toBe("No sé");
   });
 });

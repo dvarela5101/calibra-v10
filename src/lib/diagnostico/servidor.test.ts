@@ -350,7 +350,8 @@ function letraDeLaOpcion(pregunta: EnCurso["pregunta"], indice: number): Letra {
   return LETRAS[pregunta.opciones.findIndex((o) => o.texto === texto)];
 }
 
-type Eleccion = (pregunta: EnCurso["pregunta"], paso: number) => Letra;
+/** La letra que elige, o null para «No sé» (D-83 c). */
+type Eleccion = (pregunta: EnCurso["pregunta"], paso: number) => Letra | null;
 const laCorrecta: Eleccion = (pregunta) => letraDeLaOpcion(pregunta, 0);
 const laPrimeraTrampa: Eleccion = (pregunta) => letraDeLaOpcion(pregunta, 1);
 
@@ -1352,5 +1353,30 @@ describe("errores de la base y del motor", () => {
       return original(nombre, args);
     });
     await expect(iniciar()).rejects.toThrow("resultado que el servidor no conoce");
+  });
+});
+
+describe("responderDiagnostico: «No sé» (HU-115, D-83 c y d)", () => {
+  it("guarda la copia sin letra, sigue con la siguiente pregunta y al terminar cuenta los «No sé» aparte, sin errores", async () => {
+    const decirNoSe: Eleccion = () => null;
+    const { recibido, final } = await jugar(decirNoSe);
+    expect((final as Terminado).estado).toBe("terminado");
+    expect(recibido.filter((r) => (r as EnCurso).estado === "en_curso").every((r) => (r as EnCurso).maximo <= 10)).toBe(true);
+    const guardado = base.diagnosticos[0];
+    const esperado = conElMotor(decirNoSe);
+    expect((guardado.respuestas as CopiaDePaso[]).every((c) => c.letraElegida === null)).toBe(true);
+    expect(guardado.aciertos).toBe(0);
+    expect(guardado.puntaje).toBe(0);
+    const resultado = guardado.resultado_por_habilidad as { noSe: number; errores: unknown[]; habilidades: { nivel: string; respuestas: number }[] };
+    expect(resultado.noSe).toBe(esperado.pasos.length);
+    expect(resultado.errores).toEqual([]);
+    expect(resultado.habilidades.filter((h) => h.respuestas > 0).every((h) => h.nivel === "no_lo_domina")).toBe(true);
+  });
+
+  it("una letra ausente no es «No sé»: no aplica nada", async () => {
+    const primera = enCurso(await iniciar());
+    sinLlamadas();
+    expect(await responder({ idDiagnostico: primera.idDiagnostico, paso: 0, letra: undefined })).toEqual(primera);
+    expect((base.enCurso.get(SESION.idUsuario) as Fila).paso).toBe(0);
   });
 });

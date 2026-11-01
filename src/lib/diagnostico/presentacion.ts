@@ -35,6 +35,8 @@ export const TEXTOS = {
   responder: "Responder",
   cambiarDeMateria: "Cambiar de materia",
   eligeUnaOpcion: "Elige una opción",
+  // D-83 e: responde sin elegir opción.
+  noSe: "No sé",
   errorAlResponder: "No pudimos guardar tu respuesta. Inténtalo de nuevo.",
   diagnosticoVencido: "Ese diagnóstico ya no está. Empieza uno nuevo.",
 
@@ -168,6 +170,11 @@ export function descripcionDelPorcentaje(aciertos: number, respondidas: number):
 /** Hasta `maximo` habilidades para trabajar: primero las que no domina y luego las en proceso, cada grupo en el orden de la materia. */
 export function queTrabajar<T extends { nivel: NivelHabilidad }>(habilidades: readonly T[], maximo = 3): T[] {
   return [...habilidades.filter((h) => h.nivel === "no_lo_domina"), ...habilidades.filter((h) => h.nivel === "en_proceso")].slice(0, maximo);
+}
+
+/** D-83 d: los «No sé» van aparte y no como errores. `Dijiste «No sé» en 1 pregunta` / `… en 3 preguntas`. */
+export function textoDeNoSe(cantidad: number): string {
+  return `Dijiste «No sé» en ${cantidad} ${cantidad === 1 ? "pregunta" : "preguntas"}`;
 }
 
 /** `1 error detectado` / `3 errores detectados`: los confirmados y los posibles, todos. */

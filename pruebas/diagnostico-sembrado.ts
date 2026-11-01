@@ -73,6 +73,7 @@ export const GUARDADO_DE_EJEMPLO: ResultadoGuardado = {
     { materia: null, habilidad: "repasar-secreta-1", descripcion: "despeja una incógnita en $ax + b = c$" },
     { materia: "Cálculo Diferencial", habilidad: "repasar-secreta-2", descripcion: "deriva polinomios" },
   ],
+  noSe: 0,
 };
 
 /** 5 de 8: «Puntaje global: 63 %». La fecha es del 4 de octubre en Bogotá y del 5 en UTC. */

@@ -23,11 +23,13 @@ export function PreguntasDelDiagnostico({ preguntas }: { preguntas: PreguntaDelM
     <ol className={estilos.preguntas}>
       {preguntas.map((pregunta, posicion) => {
         const acerto = pregunta.letraElegida === pregunta.letraCorrecta;
+        // D-83 c: «No sé» no es un fallo; la marca va sin el color de acierto ni el de fallo.
+        const claseDeMarca = pregunta.letraElegida === null ? "" : acerto ? estilos.acerto : estilos.fallo;
         return (
           <li key={posicion} className={estilos.pregunta}>
             <h3 className={estilos.encabezadoDePregunta}>
               <span>{`Pregunta ${posicion + 1}`}</span>{" "}
-              <span className={`${estilos.marca} ${acerto ? estilos.acerto : estilos.fallo}`}>{marcaDeLaPregunta(pregunta)}</span>
+              <span className={`${estilos.marca} ${claseDeMarca}`.trim()}>{marcaDeLaPregunta(pregunta)}</span>
             </h3>
             <div className={estilos.enunciado}>
               <TextoDelBanco texto={pregunta.enunciado} />

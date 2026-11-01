@@ -416,3 +416,15 @@ describe("NivelEscrito", () => {
     expect(texto(renderToStaticMarkup(createElement(NivelEscrito, { nivel })))).toBe(etiqueta);
   });
 });
+
+describe("«No sé» en el resumen (HU-115, D-83 d)", () => {
+  it("con «No sé» lo dice aparte y no lo cuenta como error", () => {
+    const t = texto(pintar(con({ noSe: 2 })));
+    expect(t).toContain("Dijiste «No sé» en 2 preguntas");
+    expect(t).toContain(`Ver los ${RESULTADO.errores.length} errores detectados`);
+  });
+
+  it("sin «No sé» no dice nada", () => {
+    expect(texto(pintar())).not.toContain("No sé");
+  });
+});

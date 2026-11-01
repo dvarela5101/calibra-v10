@@ -209,7 +209,8 @@ function leerPaso(valor: unknown, ruta: string): CopiaDePaso {
   return {
     ...leerCandidata(valor, ruta),
     orden,
-    letraElegida: letra(paso.letraElegida, `${ruta}.letraElegida`),
+    // Null: dijo «No sé» (D-83 c).
+    letraElegida: paso.letraElegida === null ? null : letra(paso.letraElegida, `${ruta}.letraElegida`),
     fecha: texto(paso.fecha, `${ruta}.fecha`),
   };
 }

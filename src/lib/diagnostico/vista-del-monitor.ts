@@ -43,6 +43,7 @@ export const TEXTOS = {
   preguntas: "Preguntas",
   acerto: "Acertó",
   fallo: "Falló",
+  noSe: "No sé",
   eligio: "Eligió",
   correcta: "Correcta",
   solucion: "Solución",
@@ -78,7 +79,8 @@ export type OpcionDeLaPregunta = { letra: Letra; texto: string };
 export type PreguntaDelMonitor = {
   enunciado: string;
   opciones: OpcionDeLaPregunta[];
-  letraElegida: Letra;
+  /** Null: dijo «No sé» (D-83 c). */
+  letraElegida: Letra | null;
   letraCorrecta: Letra;
   solucion: string | null;
 };
@@ -280,7 +282,7 @@ function leerPregunta(valor: unknown, ruta: string): PreguntaDelMonitor {
   return {
     enunciado,
     opciones,
-    letraElegida: exigirLetra(p.letraElegida, `${ruta}.letraElegida`),
+    letraElegida: p.letraElegida === null ? null : exigirLetra(p.letraElegida, `${ruta}.letraElegida`),
     letraCorrecta: exigirLetra(p.letraCorrecta, `${ruta}.letraCorrecta`),
     solucion: exigirTextoONulo(p.solucion, `${ruta}.solucion`),
   };
@@ -397,7 +399,14 @@ export function textoDeVeces(veces: number): string {
   return veces === 1 ? "Lo eligió 1 vez" : `Lo eligió ${veces} veces`;
 }
 
-/** «Acertó» si la letra que eligió es la correcta (las dos en el orden en que las vio); si no, «Falló». */
-export function marcaDeLaPregunta(pregunta: { letraElegida: Letra; letraCorrecta: Letra }): typeof TEXTOS.acerto | typeof TEXTOS.fallo {
+/**
+ * «Acertó» si la letra que eligió es la correcta (las dos en el orden en que las vio); «No sé» si no eligió ninguna (D-83 c),
+ * que no es un error; si no, «Falló».
+ */
+export function marcaDeLaPregunta(pregunta: {
+  letraElegida: Letra | null;
+  letraCorrecta: Letra;
+}): typeof TEXTOS.acerto | typeof TEXTOS.fallo | typeof TEXTOS.noSe {
+  if (pregunta.letraElegida === null) return TEXTOS.noSe;
   return pregunta.letraElegida === pregunta.letraCorrecta ? TEXTOS.acerto : TEXTOS.fallo;
 }

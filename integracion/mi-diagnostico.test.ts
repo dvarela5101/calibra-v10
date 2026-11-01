@@ -196,7 +196,7 @@ function esperadoDe(referencia: ReturnType<typeof correrReferencia>) {
   const descripcionPorHabilidad = new Map(resultado.habilidades.map((h) => [h.habilidad, h.descripcion]));
   return {
     respondidas: pasos.length,
-    aciertos: pasos.filter((paso) => opcionElegida(paso).correcta).length,
+    aciertos: pasos.filter((paso) => opcionElegida(paso)?.correcta === true).length,
     habilidades: resultado.habilidades.map((h) => ({ descripcion: h.descripcion, nivel: h.nivel, respuestas: h.respuestas, aciertos: h.aciertos })),
     errores: resultado.errores.map((e) => ({
       titulo: e.texto,
