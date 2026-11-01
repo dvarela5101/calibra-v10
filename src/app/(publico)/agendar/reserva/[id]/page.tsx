@@ -62,7 +62,7 @@ export default async function ReservaApartada({ params }: PageProps<"/agendar/re
       {estado}
       {quienPaga && reserva.estado === "confirmada" && (
         <p role="status" className={formulario.ayuda}>
-          Recibimos tu comprobante de pago.
+          {reserva.gratis ? "Esta monitoría es gratis: no tienes que pagar nada." : "Recibimos tu comprobante de pago."}
         </p>
       )}
       <ResumenDeCita
@@ -74,6 +74,7 @@ export default async function ReservaApartada({ params }: PageProps<"/agendar/re
           duracionMin: reserva.duracionMin,
           presencial: reserva.presencial,
           valor: reserva.valorTotal,
+          gratis: reserva.gratis,
         }}
       />
       {reserva.estado !== "cancelada" && reserva.estado !== "realizada" && !dentroDePlazo(reserva.cancelableHasta, ahora) && (

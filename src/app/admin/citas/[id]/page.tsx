@@ -17,6 +17,7 @@ import {
   type AutorizacionRegistrada,
   type VistaDeLaCita,
 } from "@/lib/admin/citas-reglas";
+import { accionDeGratis, avisosDeMarca, type MarcaRegistrada } from "@/lib/admin/gratis-reglas";
 import { TEXTOS_DEL_ESTADO_DE_PAGO, TEXTOS_DEL_REEMBOLSO } from "@/lib/admin/reportes-reglas";
 import { textoDeEstado } from "@/lib/agenda/reglas";
 import { esUuid } from "@/lib/agendar/reglas";
@@ -28,6 +29,7 @@ import { dentroDePlazo } from "@/lib/plazos/motor";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { AutorizarCancelacion } from "./AutorizarCancelacion";
 import estilos from "./cita.module.css";
+import { MarcarGratis } from "./MarcarGratis";
 
 export const metadata: Metadata = { title: "Autorizar una cancelación · Calibra" };
 
@@ -36,6 +38,8 @@ const EYEBROW = "Cancelaciones";
 const TITULO_DE_AUTORIZAR = "Autorizar la cancelación";
 const TITULO_DE_AUTORIZADA = "Cancelación autorizada";
 const TITULO_DE_NO_AUTORIZABLE = "No se puede autorizar esta cancelación";
+// HU-116: una cita que no se cancela aquí pero se marca, o ya es, de prueba.
+const TITULO_DE_PRUEBA = "Monitoría de prueba";
 
 const tituloDe = (vista: VistaDeLaCita) =>
   vista === "autorizar" ? TITULO_DE_AUTORIZAR : vista === "autorizada" ? TITULO_DE_AUTORIZADA : TITULO_DE_NO_AUTORIZABLE;
@@ -45,6 +49,8 @@ const tituloDe = (vista: VistaDeLaCita) =>
  * y cómo contactarlo, el monitor (nunca su contacto), los pagos con su reembolso y cuánto se devolvería. Cualquier admin
  * activo la ve (las políticas ya lo dejan) y la autoriza, con confirmación y sin vuelta atrás. Una cita que ya se autorizó
  * dice quién, cuándo, con qué motivo y qué nota; una que no se puede autorizar, por qué. Nunca muestra comisión.
+ * HU-116: aquí mismo el admin marca una monitoría por pagar como de prueba (gratis, D-84 b) o le quita la marca, y ve quién la
+ * marcó o desmarcó por última vez y cuándo.
  */
 export default async function AutorizarUnaCancelacion({ params, searchParams }: PageProps<"/admin/citas/[id]">) {
   const { id } = await params;
@@ -72,20 +78,26 @@ export default async function AutorizarUnaCancelacion({ params, searchParams }: 
 
   const consulta = await searchParams;
   const vista = vistaDeLaCita(cita, ahora);
-  const avisos = avisosDeLaPagina(
-    consulta,
-    { autorizacion: cita.autorizacion, pagos: cita.pagos.map((p) => ({ estado: p.estado, tieneReembolso: p.reembolso !== null })) },
-    sesion.idUsuario,
-  );
+  const accionGratis = accionDeGratis(cita, ahora);
+  const avisos = [
+    ...avisosDeMarca(consulta, cita, sesion.idUsuario),
+    ...avisosDeLaPagina(
+      consulta,
+      { autorizacion: cita.autorizacion, pagos: cita.pagos.map((p) => ({ estado: p.estado, tieneReembolso: p.reembolso !== null })) },
+      sesion.idUsuario,
+    ),
+  ];
   const devolver = aDevolver(cita.pagos);
   // Solo donde es cierto: en los modos que no cancelan nada, aprobar un pago en revisión no genera un reembolso.
   const enRevision = vista === "autorizar" || vista === "autorizada" ? textoDePagosEnRevision(cita.pagos.filter((p) => p.estado === "en_revision").length) : null;
   // El mensaje de un resultado que ya salió arriba como alerta no se repite.
-  const mensaje = typeof vista === "object" ? MENSAJES_DE_AUTORIZACION[vista.motivo] : null;
+  // Con la marca de prueba a la mano, que no se cancele aquí no es lo que el admin vino a hacer.
+  const mensaje = typeof vista === "object" && accionGratis !== "marcar" ? MENSAJES_DE_AUTORIZACION[vista.motivo] : null;
+  const titulo = typeof vista === "object" && (accionGratis !== null || cita.gratis) ? TITULO_DE_PRUEBA : tituloDe(vista);
   const mensajeRepetido = mensaje !== null && avisos.some((aviso) => !aviso.exito && aviso.texto === mensaje);
 
   return (
-    <Pantalla eyebrow={EYEBROW} titulo={tituloDe(vista)}>
+    <Pantalla eyebrow={EYEBROW} titulo={titulo}>
       {avisos.map((aviso) => (
         <p key={aviso.texto} role={aviso.exito ? "status" : "alert"} className={aviso.exito ? formulario.exito : formulario.error}>
           {aviso.texto}
@@ -160,6 +172,20 @@ export default async function AutorizarUnaCancelacion({ params, searchParams }: 
         {enRevision && <p className={estilos.mensaje}>{enRevision}</p>}
       </section>
 
+      {(cita.gratis || accionGratis || cita.ultimaMarca) && (
+        <section aria-labelledby="prueba" className={estilos.seccion}>
+          <h2 id="prueba" className={estilos.titulo}>
+            Monitoría de prueba
+          </h2>
+          <dl className={estilos.datos}>
+            <dt className={estilos.dato}>Gratis</dt>
+            <dd className={estilos.valor}>{cita.gratis ? "Sí: quien agendó no paga" : "No: se paga el precio normal"}</dd>
+            {cita.ultimaMarca && <UltimaMarca marca={cita.ultimaMarca} />}
+          </dl>
+          {accionGratis && <MarcarGratis idMonitoria={cita.id} accion={accionGratis} />}
+        </section>
+      )}
+
       {vista === "autorizar" && (
         <>
           <p className={estilos.advertencia}>{ADVERTENCIA_DE_QUIEN_ESCRIBIO}</p>
@@ -194,6 +220,20 @@ function Autorizacion({ autorizacion }: { autorizacion: AutorizacionRegistrada }
         <dd className={`${estilos.valor} ${estilos.nota}`}>{autorizacion.nota ?? "Sin nota"}</dd>
       </dl>
     </section>
+  );
+}
+
+/** Quién marcó o le quitó la marca de prueba por última vez, y cuándo (supuesto g de HU-116). Solo lo leen los admins. */
+function UltimaMarca({ marca }: { marca: MarcaRegistrada }) {
+  return (
+    <>
+      <dt className={estilos.dato}>{marca.gratis ? "La marcó" : "Le quitó la marca"}</dt>
+      <dd className={estilos.valor}>{marca.nombreAdmin}</dd>
+      <dt className={estilos.dato}>Cuándo</dt>
+      <dd className={estilos.valor}>
+        <time dateTime={marca.hechaEn.toISOString()}>{formatearFechaHora(marca.hechaEn)}</time>
+      </dd>
+    </>
   );
 }
 

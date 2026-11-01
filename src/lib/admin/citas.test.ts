@@ -251,9 +251,18 @@ const CITA: Record<string, Fila[]> = {
       id_materia: "mat",
       id_monitor: "mon",
       id_lead: "l1",
+      gratis: false,
     },
   ],
-  monitoria_plazos: [{ id_monitoria: M3, inicio: "2030-01-07T15:00:00+00:00", cancelable_hasta: "2030-01-07T03:00:00+00:00", es_grupal: false }],
+  monitoria_plazos: [
+    {
+      id_monitoria: M3,
+      inicio: "2030-01-07T15:00:00+00:00",
+      cancelable_hasta: "2030-01-07T03:00:00+00:00",
+      reserva_hasta: "2030-01-05T15:10:00+00:00",
+      es_grupal: false,
+    },
+  ],
   franja: [{ id: "f1", hora: "10:00:00", duracion_min: 60 }],
   materia: [{ id: "mat", nombre: "Cálculo Diferencial" }],
   monitor: [{ id: "mon", nombre: "Andrés Gómez" }],
@@ -263,6 +272,7 @@ const CITA: Record<string, Fila[]> = {
     { id: "p2", id_monitoria: M3, nombre_pagador: "Luis Pérez", monto: 15_000, estado: "en_revision", reembolso: null },
   ],
   cancelacion_excepcional: [],
+  marca_gratis: [],
 };
 
 const REGISTRO = {
@@ -295,7 +305,39 @@ describe("cargarCitaParaAutorizar (HU-052)", () => {
         { id: "p2", nombrePagador: "Luis Pérez", monto: 15_000, estado: "en_revision", reembolso: null },
       ],
       autorizacion: null,
+      gratis: false,
+      reservaHasta: new Date("2030-01-05T15:10:00.000Z"),
+      ultimaMarca: null,
     });
+  });
+
+  it("HU-116: una cita gratis trae la marca y la última vez que un admin la cambió (la más reciente)", async () => {
+    const { cliente, pedidos } = clienteConLectura({
+      ...CITA,
+      monitoria: [{ ...CITA.monitoria[0], gratis: true }],
+      pago: [],
+      marca_gratis: [{ id_monitoria: M3, gratis: true, hecha_en: "2030-01-05T15:05:00+00:00", id_admin: ADMIN, admin: { nombre: "Admin Uno" } }],
+    });
+    expect(await cargarCitaParaAutorizar(cliente, M3)).toMatchObject({
+      gratis: true,
+      ultimaMarca: { gratis: true, hechaEn: new Date("2030-01-05T15:05:00.000Z"), idAdmin: ADMIN, nombreAdmin: "Admin Uno" },
+    });
+    const marca = pedidos.find((p) => p.tabla === "marca_gratis");
+    expect(marca?.columnas).toBe("gratis, hecha_en, id_admin, admin(nombre)");
+    expect(marca?.filtros).toEqual([["eq", "id_monitoria", M3]]);
+    expect(marca?.orden).toEqual([
+      { columna: "hecha_en", ascending: false },
+      { columna: "id", ascending: false },
+    ]);
+    expect(marca?.limite).toBe(1);
+  });
+
+  it("HU-116: una marca sin admin o con la hora ilegible lanza", async () => {
+    const fila = { id_monitoria: M3, gratis: true, hecha_en: "2030-01-05T15:05:00+00:00", id_admin: ADMIN, admin: { nombre: "Admin Uno" } };
+    for (const marca of [{ ...fila, admin: null }, { ...fila, hecha_en: "no es una fecha" }]) {
+      const { cliente } = clienteConLectura({ ...CITA, marca_gratis: [marca] });
+      await expect(cargarCitaParaAutorizar(cliente, M3), JSON.stringify(marca)).rejects.toThrow();
+    }
   });
 
   it("una cita ya autorizada trae quién, cuándo, el motivo y la nota; y cada pago su reembolso", async () => {
@@ -345,7 +387,7 @@ describe("cargarCitaParaAutorizar (HU-052)", () => {
     await cargarCitaParaAutorizar(cliente, M3);
     const de = (tabla: string) => pedidos.find((p) => p.tabla === tabla);
     expect(de("monitoria")?.filtros).toEqual([["eq", "id", M3]]);
-    expect(de("monitoria_plazos")?.columnas).toBe("inicio, cancelable_hasta, es_grupal");
+    expect(de("monitoria_plazos")?.columnas).toBe("inicio, cancelable_hasta, reserva_hasta, es_grupal");
     expect(de("monitoria_plazos")?.filtros).toEqual([["eq", "id_monitoria", M3]]);
     expect(de("pago")?.filtros).toEqual([["eq", "id_monitoria", M3]]);
     expect(de("cancelacion_excepcional")?.filtros).toEqual([["eq", "id_monitoria", M3]]);
@@ -364,6 +406,7 @@ describe("cargarCitaParaAutorizar (HU-052)", () => {
       "cancelacion_excepcional",
       "franja",
       "lead",
+      "marca_gratis",
       "materia",
       "monitor",
       "monitoria",
@@ -417,7 +460,7 @@ describe("cargarCitaParaAutorizar (HU-052)", () => {
   });
 
   it("si una lectura falla, lanza con el mensaje de la base", async () => {
-    for (const tabla of ["monitoria", "monitoria_plazos", "pago", "cancelacion_excepcional", "lead"]) {
+    for (const tabla of ["monitoria", "monitoria_plazos", "pago", "cancelacion_excepcional", "marca_gratis", "lead"]) {
       const { cliente } = clienteConLectura(CITA, { errores: { [tabla]: "se cayó la base" } });
       await expect(cargarCitaParaAutorizar(cliente, M3), tabla).rejects.toThrow("No se pudo leer la cita: se cayó la base");
     }

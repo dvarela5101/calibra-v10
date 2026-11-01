@@ -1136,3 +1136,25 @@ describe("el pedido de la llave y su recordatorio (HU-025, P-10, D-37)", () => {
     }
   });
 });
+
+describe("confirmación de una monitoría gratis (HU-116, D-84 c)", () => {
+  const plano = (cambios: Partial<DatosPorPlantilla["confirmacion_cita"]> = {}) =>
+    render("confirmacion_cita", cambios).texto.replace(/[  ]/g, " ");
+
+  it("dice «Gratis» con el precio normal al lado y no pide pago ni comprobante", () => {
+    const texto = plano({ gratis: true });
+    expect(texto).toContain("Valor: Gratis (precio normal: $ 25.000).");
+    expect(texto).toContain("Esta monitoría es gratis: no tienes que pagar nada ni adjuntar comprobante.");
+    expect(texto).not.toContain("Recibimos tu comprobante");
+    expect(texto).not.toMatch(/prueba/i);
+    expect(render("confirmacion_cita", { gratis: true }).html).not.toMatch(/prueba/i);
+  });
+
+  it("sin la marca, el correo de siempre", () => {
+    for (const texto of [plano(), plano({ gratis: false })]) {
+      expect(texto).toContain("Valor: $ 25.000.");
+      expect(texto).toContain("Recibimos tu comprobante.");
+      expect(texto).not.toContain("Gratis");
+    }
+  });
+});

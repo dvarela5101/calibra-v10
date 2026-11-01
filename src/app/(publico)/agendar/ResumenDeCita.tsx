@@ -20,6 +20,8 @@ export type DatosDeCita = {
   enlace?: string | null;
   /** D-76: el dato es de cada monitoría y lo pone el monitor. Con la cita confirmada, si aún no está, se dice. */
   avisarSiFalta?: boolean;
+  /** HU-116 (D-84 c): la monitoría es gratis; el valor sale tachado y al lado «Gratis». */
+  gratis?: boolean;
 };
 
 export const FALTA_EL_LUGAR = "Tu monitor aún no ha puesto el lugar de la sesión. Vuelve a esta página más cerca de la hora.";
@@ -87,7 +89,21 @@ export function ResumenDeCita({ cita }: { cita: DatosDeCita }) {
         </>
       )}
       <dt className={estilos.dato}>Valor</dt>
-      <dd className={estilos.valor}>{formatearPesos(cita.valor)}</dd>
+      <dd className={estilos.valor}>
+        {cita.gratis ? (
+          // D-84 c: el precio normal tachado y «Gratis» en verde, como un descuento. El tachado es la raya, no el color, y el
+          // lector de pantalla oye «Precio normal».
+          <>
+            <del className={estilos.precioNormal}>
+              <span className={estilos.oculto}>Precio normal: </span>
+              {formatearPesos(cita.valor)}
+            </del>{" "}
+            <span className={estilos.gratis}>Gratis</span>
+          </>
+        ) : (
+          formatearPesos(cita.valor)
+        )}
+      </dd>
     </dl>
   );
 }

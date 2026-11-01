@@ -46,6 +46,8 @@ const PREAMBULOS = new Map([
       "drop function if exists privado.mi_cita(uuid);",
       "drop function if exists privado.mis_citas();",
       "drop function if exists privado.datos_de_cita(uuid);",
+      // HU-116 sumó `gratis` al final de esas seis y de datos_de_confirmacion_cita (D-84).
+      "drop function if exists public.datos_de_confirmacion_cita(uuid);",
     ].join(" "),
   ],
 ]);

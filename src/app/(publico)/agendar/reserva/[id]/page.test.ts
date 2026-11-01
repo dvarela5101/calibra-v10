@@ -49,6 +49,7 @@ function reserva(cambios: Partial<Reserva>): Reserva {
     duracionMin: 60,
     presencial: true,
     valorTotal: 32_000,
+    gratis: false,
     nombreMonitor: "Andrés Gómez",
     nombreMateria: "Cálculo Diferencial",
     codigoMateria: "MATE-1203",
@@ -127,5 +128,20 @@ describe("Página de la reserva (HU-027): la cancelada por vencer se ve como la 
     expect(texto(html)).toContain("Apartamos tu fecha");
     expect(html).toContain("<form");
     expect(texto(html)).not.toContain(EXPIRO);
+  });
+});
+
+describe("ReservaApartada (HU-116): una monitoría gratis", () => {
+  it("confirmada y gratis: el precio tachado, «Gratis», sin pago ni «Recibimos tu comprobante», sin la palabra «prueba»", async () => {
+    const html = await pintar(LEAD, { estado: "confirmada", gratis: true });
+    const t = texto(html);
+    expect(t).toContain("Tu monitoría está confirmada");
+    expect(t).toContain("Esta monitoría es gratis: no tienes que pagar nada.");
+    expect(html).toMatch(/<del[^>]*>.*32\.000<\/del>/);
+    expect(t).not.toContain("Recibimos tu comprobante");
+    expect(t).not.toContain("Llave");
+    // La palabra «prueba» no la agrega la marca: sale las mismas veces que en una confirmada normal (el menú del sitio ya la usa).
+    const cuantas = (x: string) => (x.match(/prueba/gi) ?? []).length;
+    expect(cuantas(t)).toBe(cuantas(texto(await pintar(LEAD, { estado: "confirmada", gratis: false }))));
   });
 });

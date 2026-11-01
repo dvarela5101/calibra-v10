@@ -82,6 +82,9 @@ function cita(cambios: Partial<CitaParaAutorizar> = {}): CitaParaAutorizar {
     grupal: false,
     pagos: [PAGO],
     autorizacion: null,
+    gratis: false,
+    reservaHasta: new Date("2030-01-05T15:10:00.000Z"),
+    ultimaMarca: null,
     ...cambios,
   };
 }
@@ -567,5 +570,68 @@ describe("Autorizar una cancelación: sin cifras de comisión (CLAUDE.md, D-59)"
     const espia = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(await pintar(cita())).not.toMatch(/comisi|bruto|neto/i);
     espia.mockRestore();
+  });
+});
+
+describe("Monitoría de prueba (HU-116): lo que ve el admin en la ficha", () => {
+  // Por pagar, con la reserva vigente hasta las 4:05 a. m. y sin pagos.
+  const porPagar = (cambios: Partial<CitaParaAutorizar> = {}) =>
+    cita({ estado: "pendiente_pago", pagos: [], reservaHasta: new Date("2030-01-07T09:05:00.000Z"), ...cambios });
+  const MARCA = { gratis: true, hechaEn: new Date("2030-01-07T08:58:00.000Z"), idAdmin: YO, nombreAdmin: "Admin Uno" };
+
+  it("una por pagar con la reserva vigente ofrece marcarla, dentro de una confirmación que dice qué cambia", async () => {
+    const html = await pintar(porPagar());
+    const t = texto(html);
+    expect(t).toContain("Monitoría de prueba");
+    expect(t).toContain("No: se paga el precio normal");
+    expect(html).toMatch(/<details[^>]*>\s*<summary[^>]*>Marcar como monitoría de prueba<\/summary>/);
+    expect(html).toContain('name="gratis" value="1"');
+    expect(t).toContain("queda confirmada sin pago ni comprobante");
+    expect(t).toContain("Sí, marcarla gratis");
+    // Lo de cancelar no estorba: no se puede cancelar aquí y no se dice.
+    expect(t).not.toContain(MENSAJES_DE_AUTORIZACION.no_cancelable);
+  });
+
+  it("con la reserva vencida, con un pago o confirmada sin la marca, no ofrece marcarla", async () => {
+    for (const c of [
+      porPagar({ reservaHasta: new Date("2030-01-07T08:59:59.999Z") }),
+      porPagar({ pagos: [{ ...PAGO, estado: "en_revision" }] }),
+      cita(),
+    ]) {
+      const html = await pintar(c);
+      expect(html).not.toContain('name="gratis"');
+      expect(texto(html)).not.toContain("Marcar como monitoría de prueba");
+    }
+  });
+
+  it("una gratis confirmada dice que es gratis, quién la marcó y cuándo, y ofrece quitar la marca", async () => {
+    const html = await pintar(cita({ gratis: true, pagos: [], ultimaMarca: MARCA }));
+    const t = texto(html);
+    expect(t).toContain("Sí: quien agendó no paga");
+    expect(t).toContain("La marcó Admin Uno");
+    expect(html).toContain(`dateTime="${MARCA.hechaEn.toISOString()}"`);
+    expect(t).toContain("Quitar la marca de prueba");
+    expect(html).toContain('name="gratis" value="0"');
+    expect(t).toContain("Quien agendó tiene 10 minutos desde ahora");
+  });
+
+  it("una gratis que ya empezó o terminó no ofrece quitar la marca", async () => {
+    vi.setSystemTime(new Date("2030-01-07T15:00:00.000Z"));
+    expect(await pintar(cita({ gratis: true, pagos: [], ultimaMarca: MARCA }))).not.toContain('name="gratis"');
+    vi.setSystemTime(AHORA);
+    expect(await pintar(cita({ gratis: true, pagos: [], estado: "realizada", ultimaMarca: MARCA }))).not.toContain('name="gratis"');
+  });
+
+  it("tras marcarla dice el éxito; tras un cambio mientras miraba, la alerta", async () => {
+    expect(texto(await pintar(cita({ gratis: true, pagos: [], ultimaMarca: MARCA }), { gratis: "marcada" }))).toContain(
+      "Marcaste la monitoría como de prueba",
+    );
+    expect(texto(await pintar(porPagar({ reservaHasta: new Date("2030-01-07T08:00:00.000Z") }), { gratis_error: "reserva_vencida" }))).toContain(
+      "La reserva ya venció",
+    );
+  });
+
+  it("una cita normal confirmada con pagos no muestra la sección", async () => {
+    expect(texto(await pintar(cita()))).not.toContain("Monitoría de prueba");
   });
 });

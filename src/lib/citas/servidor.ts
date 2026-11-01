@@ -61,6 +61,7 @@ async function leerDatos(cliente: Cliente, idMonitoria: string): Promise<DatosDe
     enlace: fila.enlace,
     valorTotal: fila.valor_total,
     cancelableHasta: instanteIso(fila.cancelable_hasta),
+    gratis: fila.gratis,
   };
 }
 

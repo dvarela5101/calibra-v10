@@ -14,6 +14,7 @@ import {
   type PedidoDeAutorizacion,
   type ResultadoDeAutorizacion,
 } from "./citas-reglas";
+import { esResultadoDeMarca, type MarcaRegistrada, type PedidoDeMarca, type ResultadoDeMarca } from "./gratis-reglas";
 
 /**
  * Autorizar una cancelación fuera de plazo (HU-052) con la sesión del admin. Nada de la llave secreta: las políticas dejan
@@ -159,6 +160,12 @@ export type CitaParaAutorizar = {
   pagos: PagoParaAutorizar[];
   /** La autorización ya registrada, si esta cancelación se autorizó. Solo la leen los admins. */
   autorizacion: AutorizacionRegistrada | null;
+  /** HU-116: la monitoría es de prueba, gratis (D-84). */
+  gratis: boolean;
+  /** Hasta cuándo quien agendó puede adjuntar el comprobante (RN-34): una por pagar solo se marca antes. */
+  reservaHasta: Date;
+  /** HU-116: la última vez que un admin la marcó o le quitó la marca. Solo la leen los admins. */
+  ultimaMarca: MarcaRegistrada | null;
 };
 
 /**
@@ -171,15 +178,15 @@ export type CitaParaAutorizar = {
 export async function cargarCitaParaAutorizar(cliente: Cliente, id: string): Promise<CitaParaAutorizar | null> {
   const leida = await cliente
     .from("monitoria")
-    .select("estado, motivo_cancelacion, fecha, id_franja, id_materia, id_monitor, id_lead")
+    .select("estado, motivo_cancelacion, fecha, id_franja, id_materia, id_monitor, id_lead, gratis")
     .eq("id", id)
     .maybeSingle();
   if (leida.error) throw new Error(`No se pudo leer la cita: ${leida.error.message}`);
   const m = leida.data;
   if (!m) return null;
 
-  const [plazos, franja, materia, monitor, lead, pagos, autorizacion] = await Promise.all([
-    cliente.from("monitoria_plazos").select("inicio, cancelable_hasta, es_grupal").eq("id_monitoria", id).maybeSingle(),
+  const [plazos, franja, materia, monitor, lead, pagos, autorizacion, marca] = await Promise.all([
+    cliente.from("monitoria_plazos").select("inicio, cancelable_hasta, reserva_hasta, es_grupal").eq("id_monitoria", id).maybeSingle(),
     cliente.from("franja").select("hora, duracion_min").eq("id", m.id_franja).single(),
     cliente.from("materia").select("nombre").eq("id", m.id_materia).single(),
     cliente.from("monitor").select("nombre").eq("id", m.id_monitor).single(),
@@ -195,14 +202,24 @@ export async function cargarCitaParaAutorizar(cliente: Cliente, id: string): Pro
       .select("categoria, nota, autorizada_en, id_admin, admin(nombre)")
       .eq("id_monitoria", id)
       .maybeSingle(),
+    cliente
+      .from("marca_gratis")
+      .select("gratis, hecha_en, id_admin, admin(nombre)")
+      .eq("id_monitoria", id)
+      .order("hecha_en", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
-  const fallo = plazos.error ?? franja.error ?? materia.error ?? monitor.error ?? lead.error ?? pagos.error ?? autorizacion.error;
+  const fallo =
+    plazos.error ?? franja.error ?? materia.error ?? monitor.error ?? lead.error ?? pagos.error ?? autorizacion.error ?? marca.error;
   if (fallo) throw new Error(`No se pudo leer la cita: ${fallo.message}`);
   if (!plazos.data || plazos.data.es_grupal === null || !franja.data || !materia.data || !monitor.data || !lead.data) {
     throw new Error("La cita está incompleta.");
   }
   const inicio = instante(plazos.data.inicio, "su inicio");
   const cancelableHasta = instante(plazos.data.cancelable_hasta, "el fin de su plazo");
+  const reservaHasta = instante(plazos.data.reserva_hasta, "el fin de su reserva");
 
   const registro = autorizacion.data;
   let autorizada: AutorizacionRegistrada | null = null;
@@ -216,6 +233,9 @@ export async function cargarCitaParaAutorizar(cliente: Cliente, id: string): Pro
       nombreAdmin: registro.admin.nombre,
     };
   }
+
+  const ultima = marca.data;
+  if (ultima && !ultima.admin) throw new Error("La marca de prueba de la cita está incompleta.");
 
   return {
     id,
@@ -238,6 +258,12 @@ export async function cargarCitaParaAutorizar(cliente: Cliente, id: string): Pro
       reembolso: pago.reembolso ? { id: pago.reembolso.id, estado: pago.reembolso.estado } : null,
     })),
     autorizacion: autorizada,
+    gratis: m.gratis,
+    reservaHasta,
+    ultimaMarca:
+      ultima && ultima.admin
+        ? { gratis: ultima.gratis, hechaEn: instante(ultima.hecha_en, "la hora de la marca"), idAdmin: ultima.id_admin, nombreAdmin: ultima.admin.nombre }
+        : null,
   };
 }
 
@@ -255,5 +281,17 @@ export async function autorizarCancelacion(cliente: Cliente, pedido: PedidoDeAut
   // Solo el código y el mensaje: el detalle de PostgREST podría traer la nota o la fila.
   if (error) throw new Error(`No se pudo autorizar la cancelación: ${error.code ?? ""} ${error.message}`.trim());
   if (!esResultadoDeAutorizacion(data)) throw new Error(`Respuesta inesperada al autorizar la cancelación: ${JSON.stringify(data ?? null)}`);
+  return data;
+}
+
+/**
+ * HU-116: marca la monitoría como de prueba (`gratis`) o le quita la marca, con la sesión de `cliente`. La base comprueba que
+ * la sesión sea un admin activo y que la monitoría siga por pagar (al marcar) o confirmada y gratis (al desmarcar), sin empezar,
+ * y deja el registro de quién y cuándo en la misma transacción.
+ */
+export async function marcarGratis(cliente: Cliente, pedido: PedidoDeMarca): Promise<ResultadoDeMarca> {
+  const { data, error } = await cliente.rpc("marcar_monitoria_gratis", { p_id_monitoria: pedido.idMonitoria, p_gratis: pedido.gratis });
+  if (error) throw new Error(`No se pudo cambiar la marca de prueba: ${error.code ?? ""} ${error.message}`.trim());
+  if (!esResultadoDeMarca(data)) throw new Error(`Respuesta inesperada al cambiar la marca de prueba: ${JSON.stringify(data ?? null)}`);
   return data;
 }

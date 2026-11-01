@@ -163,24 +163,24 @@ select is(
    from pg_proc p, unnest(p.proargnames, p.proargmodes) with ordinality as a(n, m, o)
    where p.oid = 'public.datos_de_confirmacion_cita(uuid)'::regprocedure and a.m = 't'),
   array['token', 'creada_en', 'estado', 'grupal', 'correo_destino', 'nombre_lead', 'nombre_monitor', 'nombre_materia', 'inicio',
-        'duracion_min', 'presencial', 'lugar', 'enlace', 'valor_total', 'cancelable_hasta'],
-  'datos_de_confirmacion_cita devuelve token, creada_en, estado, grupal, correo_destino, nombre_lead, monitor, materia, inicio, duración, modalidad, lugar, enlace, valor y plazo');
+        'duracion_min', 'presencial', 'lugar', 'enlace', 'valor_total', 'cancelable_hasta', 'gratis'],
+  'datos_de_confirmacion_cita devuelve token, creada_en, estado, grupal, correo_destino, nombre_lead, monitor, materia, inicio, duración, modalidad, lugar, enlace, valor, plazo y si es gratis (HU-116)');
 select is(
   (select array_agg(a.n order by a.o)
    from pg_proc p, unnest(p.proargnames, p.proargmodes) with ordinality as a(n, m, o)
    where p.oid = 'privado.datos_de_cita(uuid)'::regprocedure and a.m = 't'),
   array['id_lead', 'id_monitoria', 'estado', 'motivo_cancelacion', 'nombre_monitor', 'nombre_materia', 'codigo_materia', 'fecha',
         'hora', 'duracion_min', 'presencial', 'valor_total', 'lugar', 'enlace', 'inicio', 'fin_programado', 'cancelable_hasta',
-        'reporte_hasta', 'estado_pago', 'estado_reembolso', 'estado_reporte', 'observaciones_reporte'],
-  'privado.datos_de_cita devuelve el id del Lead (para las puertas con sesión) y la cita con sus plazos, los estados del pago, el reembolso y el reporte, y las observaciones del reporte (D-37)');
+        'reporte_hasta', 'estado_pago', 'estado_reembolso', 'estado_reporte', 'observaciones_reporte', 'gratis'],
+  'privado.datos_de_cita devuelve el id del Lead (para las puertas con sesión) y la cita con sus plazos, los estados del pago, el reembolso y el reporte, las observaciones del reporte (D-37) y si es gratis (HU-116)');
 select is(
   (select array_agg(a.n order by a.o)
    from pg_proc p, unnest(p.proargnames, p.proargmodes) with ordinality as a(n, m, o)
    where p.oid = 'public.cita_por_token(text)'::regprocedure and a.m = 't'),
   array['id_monitoria', 'estado', 'motivo_cancelacion', 'nombre_monitor', 'nombre_materia', 'codigo_materia', 'fecha', 'hora',
         'duracion_min', 'presencial', 'valor_total', 'lugar', 'enlace', 'inicio', 'fin_programado', 'cancelable_hasta',
-        'reporte_hasta', 'estado_pago', 'estado_reembolso', 'estado_reporte', 'observaciones_reporte'],
-  'cita_por_token devuelve la cita sin el id del Lead, con las observaciones del reporte (D-37)');
+        'reporte_hasta', 'estado_pago', 'estado_reembolso', 'estado_reporte', 'observaciones_reporte', 'gratis'],
+  'cita_por_token devuelve la cita sin el id del Lead, con las observaciones del reporte (D-37) y si es gratis (HU-116)');
 select is(
   (select array_agg(a.n order by a.o)
    from pg_proc p, unnest(p.proargnames, p.proargmodes) with ordinality as a(n, m, o)

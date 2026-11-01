@@ -38,6 +38,7 @@ const CITA: Cita = {
   duracionMin: 90,
   presencial: true,
   valorTotal: 25_000,
+  gratis: false,
   lugar: "Edificio Principal, salón 301",
   enlace: null,
   inicio: INICIO,
