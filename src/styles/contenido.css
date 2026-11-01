@@ -82,3 +82,18 @@
   font: inherit;
   letter-spacing: inherit;
 }
+
+/* Código en línea (entre acentos graves) dentro de una frase, una opción o un título: se parte en renglones si no cabe. */
+.texto-banco-en-linea {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+  font-size: max(14px, 0.95em);
+  font-weight: 400;
+  letter-spacing: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 1px 4px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}

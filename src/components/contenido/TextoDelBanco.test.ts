@@ -46,6 +46,23 @@ describe("TextoDelBanco", () => {
     );
   });
 
+  it("HU-118: el código entre acentos graves sale en un <code>, sin los acentos y todo literal", () => {
+    expect(dibujar("`int n = a.nextInt(3) + 2; $x$ \frac{1}{2}`")).toBe(
+      '<span class="texto-banco"><code class="texto-banco-en-linea">int n = a.nextInt(3) + 2; $x$ \frac{1}{2}</code></span>',
+    );
+    expect(dibujar("Usa `f(x)` y $y$ aquí")).toBe(
+      '<span class="texto-banco">Usa <code class="texto-banco-en-linea">f(x)</code> y <math aria-label="y"><mi>y</mi></math> aquí</span>',
+    );
+    expect(dibujar("`a` y `b`")).toBe(
+      '<span class="texto-banco"><code class="texto-banco-en-linea">a</code> y <code class="texto-banco-en-linea">b</code></span>',
+    );
+  });
+
+  it("HU-118: un acento grave sin cerrar o vacío se ve como texto", () => {
+    expect(dibujar("Abre ` y no cierra")).toBe('<span class="texto-banco">Abre ` y no cierra</span>');
+    expect(dibujar("vacío `` aquí")).toBe('<span class="texto-banco">vacío `` aquí</span>');
+  });
+
   it("criterio 5: el bloque de código es una región con nombre, alcanzable con el teclado, y todo va literal", () => {
     const html = dibujar("¿Qué imprime?\n```\ndef f(x):\n    return $x$ + \\frac{1}{2}\n```");
     expect(html).toBe(
