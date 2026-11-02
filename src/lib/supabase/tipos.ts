@@ -436,6 +436,31 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"franja_de_prueba": {
+                  Row: {
+                    "id_admin": string,"id_franja": string,"marcada_en": string
+                  }
+                  Insert: {
+                    "id_admin": string,"id_franja": string,"marcada_en"?: string
+                  }
+                  Update: {
+                    "id_admin"?: string,"id_franja"?: string,"marcada_en"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "franja_de_prueba_id_admin_fkey"
+      columns: ["id_admin"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "franja_de_prueba_id_franja_fkey"
+      columns: ["id_franja"]
+isOneToOne: true
+      referencedRelation: "franja"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"habilidad": {
                   Row: {
                     "clave": string,"descripcion": string,"id": string,"id_materia": string,"id_tema": string
@@ -696,6 +721,31 @@ isOneToOne: true
 isOneToOne: true
       referencedRelation: "monitoria_plazos"
       referencedColumns: ["id_monitoria"]
+    }
+                  ]
+                },"marca_franja_prueba": {
+                  Row: {
+                    "de_prueba": boolean,"hecha_en": string,"id": string,"id_admin": string,"id_franja": string
+                  }
+                  Insert: {
+                    "de_prueba": boolean,"hecha_en"?: string,"id"?: string,"id_admin": string,"id_franja": string
+                  }
+                  Update: {
+                    "de_prueba"?: boolean,"hecha_en"?: string,"id"?: string,"id_admin"?: string,"id_franja"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "marca_franja_prueba_id_admin_fkey"
+      columns: ["id_admin"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "marca_franja_prueba_id_franja_fkey"
+      columns: ["id_franja"]
+isOneToOne: false
+      referencedRelation: "franja"
+      referencedColumns: ["id"]
     }
                   ]
                 },"marca_gratis": {
@@ -1494,7 +1544,7 @@ isOneToOne: false
                            },
 "fechas_libres_de_materia":
 { Args: { "p_codigo_materia": string,"p_semanas": number }; Returns: {
-              "duracion_min": number,"fecha": string,"hora": string,"id_franja": string,"id_monitor": string,"nombre_monitor": string,"precio": number,"presencial": boolean
+              "de_prueba": boolean,"duracion_min": number,"fecha": string,"hora": string,"id_franja": string,"id_monitor": string,"nombre_monitor": string,"precio": number,"presencial": boolean
             }[]
                            },
 "fin_programado":
@@ -1502,6 +1552,11 @@ isOneToOne: false
                            },
 "finalizar_monitoria":
 { Args: { "p_id_monitoria": string }; Returns: string
+                           },
+"franjas_para_admin":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "de_prueba": boolean,"dia": number,"duracion_min": number,"hora": string,"id_franja": string,"nombre_monitor": string,"precio": number,"presencial": boolean
+            }[]
                            },
 "iniciar_diagnostico":
 { Args: { "p_candidatas": Json,"p_contexto": Json,"p_id_evaluacion": string,"p_id_sesion": string,"p_repetido": boolean,"p_semilla": number,"p_vistas_antes": (string)[] }; Returns: {
@@ -1542,6 +1597,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "enlace": string,"id_monitoria": string,"lugar": string
             }[]
+                           },
+"marcar_franja_de_prueba":
+{ Args: { "p_de_prueba": boolean,"p_id_franja": string }; Returns: string
                            },
 "marcar_monitoria_gratis":
 { Args: { "p_gratis": boolean,"p_id_monitoria": string }; Returns: string

@@ -2,6 +2,7 @@ import formulario from "@/components/formulario.module.css";
 import { formatearDiaConSemana } from "@/lib/fechas";
 import { horaCorta, horaDeFin } from "@/lib/franjas/reglas";
 import { formatearPesos } from "@/lib/moneda";
+import { PrecioConOferta } from "@/components/PrecioConOferta";
 import estilos from "./agendar.module.css";
 
 export type DatosDeCita = {
@@ -22,6 +23,8 @@ export type DatosDeCita = {
   avisarSiFalta?: boolean;
   /** HU-116 (D-84 c): la monitoría es gratis; el valor sale tachado y al lado «Gratis». */
   gratis?: boolean;
+  /** HU-119 (D-85 b): la franja es una oferta; el valor sale con la etiqueta «Oferta · 100 % de descuento». */
+  oferta?: boolean;
 };
 
 export const FALTA_EL_LUGAR = "Tu monitor aún no ha puesto el lugar de la sesión. Vuelve a esta página más cerca de la hora.";
@@ -90,7 +93,9 @@ export function ResumenDeCita({ cita }: { cita: DatosDeCita }) {
       )}
       <dt className={estilos.dato}>Valor</dt>
       <dd className={estilos.valor}>
-        {cita.gratis ? (
+        {cita.oferta ? (
+          <PrecioConOferta precio={cita.valor} />
+        ) : cita.gratis ? (
           // D-84 c: el precio normal tachado y «Gratis» en verde, como un descuento. El tachado es la raya, no el color, y el
           // lector de pantalla oye «Precio normal».
           <>

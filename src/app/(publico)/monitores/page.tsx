@@ -18,6 +18,7 @@ import { rutaDeAgendar } from "@/lib/agendar/reglas";
 import { formatearDiaConSemana } from "@/lib/fechas";
 import { horaCorta, horaDeFin } from "@/lib/franjas/reglas";
 import type { DatosDelPerfil } from "@/lib/monitores/perfil";
+import { PrecioConOferta } from "@/components/PrecioConOferta";
 import { formatearPesos } from "@/lib/moneda";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import estilos from "./monitores.module.css";
@@ -164,7 +165,7 @@ function ListaDeFechas({ fechas, codigoMateria }: { fechas: FechaLibre[]; codigo
               </time>
               <span className={estilos.detalle}>
                 {horaCorta(f.hora)} a {horaDeFin(f.hora, f.duracionMin)} ({f.duracionMin} min) · {f.presencial ? "Presencial" : "Virtual"} ·{" "}
-                {formatearPesos(f.precio)}
+                {f.dePrueba ? <PrecioConOferta precio={f.precio} /> : formatearPesos(f.precio)}
               </span>
             </span>
             <span className={estilos.agendar}>Agendar</span>

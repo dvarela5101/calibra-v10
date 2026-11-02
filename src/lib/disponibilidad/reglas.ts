@@ -23,6 +23,8 @@ export type FechaLibre = {
   duracionMin: number;
   presencial: boolean;
   precio: number;
+  /** HU-119 (D-85): la franja está marcada de prueba; se muestra como una oferta con «Gratis». */
+  dePrueba: boolean;
 };
 
 export type MonitorConFechas = { idMonitor: string; nombre: string; fechas: FechaLibre[] };

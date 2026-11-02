@@ -1,0 +1,36 @@
+/* HU-119: el precio de una oferta. --success es relleno: el texto verde va en --success-text. Nada por debajo de 14 px. */
+.oferta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+.etiqueta {
+  padding: 1px 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--success-text);
+  border: 1px solid var(--success-text);
+  border-radius: var(--r);
+}
+
+.normal {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.gratis {
+  font-weight: 700;
+  color: var(--success-text);
+}
+
+/* Solo para el lector de pantalla. */
+.oculto {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

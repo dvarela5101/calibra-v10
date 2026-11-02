@@ -95,8 +95,10 @@ export default async function Agendar({ searchParams }: PageProps<"/agendar">) {
           duracionMin: fecha.duracionMin,
           presencial: fecha.presencial,
           valor: fecha.precio,
+          oferta: fecha.dePrueba,
         }}
       />
+      {fecha.dePrueba && <p className={estilos.nota}>Esta oferta queda confirmada de una vez: no tienes que pagar nada.</p>}
       {fecha.presencial && <p className={estilos.nota}>El lugar te llega con la cita confirmada.</p>}
 
       {esDelEquipo ? (
