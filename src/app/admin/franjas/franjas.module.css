@@ -1,0 +1,45 @@
+/* HU-119: la lista de franjas de oferta. Texto de 14 px o más y botones de 44 px o más; colores solo de tokens.css. */
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.franja {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  padding: var(--e3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+.datos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-inline-size: 0;
+}
+
+.detalle {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.marca {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--success-text);
+}
+
+.exito {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--success-text);
+}

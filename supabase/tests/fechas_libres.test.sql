@@ -234,8 +234,8 @@ select is(
   (select array_agg(k order by k) from (
      select jsonb_object_keys(to_jsonb(f)) as k
      from (select * from privado.fechas_libres_de_materia('PRB-16X', 4, '2026-10-05 12:00-05') limit 1) f) claves),
-  array['duracion_min', 'fecha', 'hora', 'id_franja', 'id_monitor', 'nombre_monitor', 'precio', 'presencial'],
-  'Cada fila trae solo lo público: monitor, franja, fecha, hora, duración, modalidad y precio');
+  array['de_prueba', 'duracion_min', 'fecha', 'hora', 'id_franja', 'id_monitor', 'nombre_monitor', 'precio', 'presencial'],
+  'Cada fila trae solo lo público: monitor, franja, fecha, hora, duración, modalidad, precio y si la franja es de oferta (HU-119)');
 select ok(
   not exists (
     select 1 from privado.fechas_libres_de_materia('PRB-16X', 12, '2026-10-05 12:00-05') f

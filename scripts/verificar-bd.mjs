@@ -37,6 +37,11 @@ const PREAMBULOS = new Map([
     "alter table public.diagnostico rename column resultado_por_habilidad to resultado_por_tema;",
   ],
   [
+    "20261001034154_fechas_libres_de_materia.sql",
+    // HU-119 sumó `de_prueba` al final de la lista de fechas libres, en la de privado y en su puerta pública (D-85).
+    ["drop function if exists public.fechas_libres_de_materia(text, integer);", "drop function if exists privado.fechas_libres_de_materia(text, integer, timestamptz);"].join(" "),
+  ],
+  [
     "20261002064121_confirmacion_cita.sql",
     // HU-029 sumó observaciones_reporte a la salida de la cita (D-37): 20 columnas pasaron a 21 (22 en privado.datos_de_cita).
     [

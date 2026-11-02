@@ -31,6 +31,7 @@ const fecha = (idMonitor: string, nombreMonitor: string, dia: string, hora: stri
   duracionMin: 60,
   presencial: true,
   precio: 25000,
+  dePrueba: false,
 });
 
 describe("agruparPorMonitor (D-4)", () => {

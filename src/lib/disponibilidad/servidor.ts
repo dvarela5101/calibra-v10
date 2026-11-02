@@ -45,6 +45,7 @@ export async function cargarFechasLibres(cliente: Cliente, codigoMateria: string
     duracionMin: f.duracion_min,
     presencial: f.presencial,
     precio: f.precio,
+    dePrueba: f.de_prueba,
   }));
 }
 

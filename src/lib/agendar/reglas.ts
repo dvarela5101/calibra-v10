@@ -19,6 +19,7 @@ export const RESULTADOS = [
   "confirmar_sin_cancelacion",
   "sin_antelacion",
   "ocupada",
+  "prueba_ya_usada",
   "no_disponible",
   "no_es_lead",
   "sin_sesion",
@@ -87,6 +88,7 @@ export const MENSAJES: Record<Exclude<ResultadoDeAgendar, "agendada" | "ya_agend
   confirmar_sin_cancelacion: `Faltan menos de 12 horas para esta monitoría y no podrás cancelarla. Si quieres apartarla, marca "${TEXTO_CASILLA_SIN_CANCELACION}".`,
   sin_antelacion: "Faltan menos de 3 horas para esta monitoría y ya no se puede agendar. Elige otra fecha.",
   ocupada: "Alguien acaba de apartar esta fecha. Elige otra.",
+  prueba_ya_usada: "Esta oferta ya la usaste: es una por persona. Elige otra franja.",
   no_disponible: "Esta fecha ya no está disponible. Elige otra.",
   sin_sesion: "No pudimos verificar tu navegador. Recarga la página e intenta de nuevo.",
 };
