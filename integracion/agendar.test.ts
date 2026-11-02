@@ -207,6 +207,7 @@ describe("criterio 1 y RN-32: agendar una fecha libre de una materia certificada
       duracionMin: 90,
       presencial: true,
       valorTotal: 32_000,
+      gratis: false,
       nombreMonitor: "Monitor de prueba",
       nombreMateria: "Materia de prueba",
       codigoMateria: e.materia.codigo,

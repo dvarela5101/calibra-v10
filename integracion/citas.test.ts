@@ -646,6 +646,7 @@ describe("criterios 2 y 3: leerCitaPorToken, la puerta del enlace del correo", (
       duracionMin: 60,
       presencial: true,
       valorTotal: PRECIO,
+      gratis: false,
       lugar: "Salón de prueba",
       enlace: null,
       inicio,
