@@ -90,7 +90,7 @@ describe("PagoPorLlave (HU-018): con la llave configurada y la reserva vigente",
 });
 
 describe("PagoPorLlave (HU-018, supuesto 1): sin la llave configurada", () => {
-  it.each(["LLAVE_PLATAFORMA", "LLAVE_PLATAFORMA_TITULAR", "LLAVE_PLATAFORMA_QR_URL"])(
+  it.each(["LLAVE_PLATAFORMA", "LLAVE_PLATAFORMA_TITULAR"])(
     "sin %s dice que el pago no está disponible y da el correo; ni llave, ni QR, ni formulario",
     (variable) => {
       configurar({ [variable]: "" });
@@ -104,6 +104,19 @@ describe("PagoPorLlave (HU-018, supuesto 1): sin la llave configurada", () => {
       if (variable !== "LLAVE_PLATAFORMA") expect(html).not.toContain("3001234567");
     },
   );
+
+  it("sin el QR (HU-120, D-86) el pago sigue: la llave, el botón de copiar, el titular y el formulario, sin imagen", () => {
+    configurar({ LLAVE_PLATAFORMA_QR_URL: "" });
+    const html = pintar(vigente);
+    const t = texto(html);
+    expect(html).not.toContain("<img");
+    expect(t).not.toContain("escanea el código QR");
+    expect(t).toContain("transfiere");
+    for (const presente of ["pago-llave", "Copiar llave", "<form", "3001234567"]) {
+      expect(html, presente).toContain(presente);
+    }
+    expect(t).toContain("Titular de la llave: Calibra SAS");
+  });
 
   it("sin el correo de Calibra pide intentarlo más tarde", () => {
     configurar({ LLAVE_PLATAFORMA: "", CORREO_DATOS_PERSONALES: "" });

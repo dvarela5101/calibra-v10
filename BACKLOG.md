@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-11-01 20:50. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-11-01 21:11. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -28,6 +28,7 @@ _Generado automaticamente: 2026-11-01 20:50. No editar a mano; usa `scripts/back
 | [HU-105](backlog/HU-105.md) | Selector del diagnóstico como el prototipo: tarjetas sin radio, elegir siempre la Evaluación y botón «Ver monitores sin hacer la prueba» | En revision | P0 | S | HU-009 |
 | [HU-106](backlog/HU-106.md) | Acceso visible en la cabecera (Iniciar sesión / Registrarse) e invitar a un monitor desde su solicitud | En revision | P0 | M |  |
 | [HU-107](backlog/HU-107.md) | El monitor pone el enlace o el lugar de cada monitoría desde su agenda | En revision | P0 | M |  |
+| [HU-120](backlog/HU-120.md) | El QR del pago por Llave es opcional | En revision | P0 | S |  |
 | [HU-099](backlog/HU-099.md) | [Contenido] Revisar los borradores de HU-091 y activar Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | En revision | P1 | S | HU-091 |
 | [HU-100](backlog/HU-100.md) | [Contenido] Revisar los borradores del Parcial 1 de Cálculo Diferencial y activarlo | En revision | P1 | M | HU-061 |
 | [HU-101](backlog/HU-101.md) | [Contenido] Parciales 2 y 3 de Cálculo Diferencial: borradores y revisión | En revision | P1 | L | HU-100 |

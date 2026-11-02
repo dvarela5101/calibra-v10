@@ -14,7 +14,7 @@ describe("configuracionDeLlave (HU-018, RN-40)", () => {
     expect(configuracionDeLlave({ ...LLAVE, LLAVE_PLATAFORMA_QR_URL: qrUrl })).toMatchObject({ qrUrl });
   });
 
-  it.each(["LLAVE_PLATAFORMA", "LLAVE_PLATAFORMA_TITULAR", "LLAVE_PLATAFORMA_QR_URL"] as const)(
+  it.each(["LLAVE_PLATAFORMA", "LLAVE_PLATAFORMA_TITULAR"] as const)(
     "sin %s no hay pago por Llave (nunca una llave a medias)",
     (variable) => {
       expect(configuracionDeLlave({ ...LLAVE, [variable]: undefined })).toBeNull();
@@ -23,11 +23,17 @@ describe("configuracionDeLlave (HU-018, RN-40)", () => {
   );
 
   it.each(["qr-llave.png", "/qr-llave.png", "http://calibra.example/qr.png", "javascript:alert(1)"])(
-    "un QR que no es una imagen usable (%s) cuenta como si faltara",
+    "un QR que no es una imagen usable (%s) se ignora y el pago sigue (HU-120)",
     (qrUrl) => {
-      expect(configuracionDeLlave({ ...LLAVE, LLAVE_PLATAFORMA_QR_URL: qrUrl })).toBeNull();
+      expect(configuracionDeLlave({ ...LLAVE, LLAVE_PLATAFORMA_QR_URL: qrUrl })).toEqual({ llave: "3001234567", titular: "Calibra SAS", qrUrl: null });
     },
   );
+
+  it("el QR es opcional: sin LLAVE_PLATAFORMA_QR_URL, o vacío, hay pago por Llave sin imagen (HU-120, D-86)", () => {
+    const sinQr = { LLAVE_PLATAFORMA: " @DVT067 ", LLAVE_PLATAFORMA_TITULAR: " David Varela Trujillo " };
+    expect(configuracionDeLlave(sinQr)).toEqual({ llave: "@DVT067", titular: "David Varela Trujillo", qrUrl: null });
+    expect(configuracionDeLlave({ ...sinQr, LLAVE_PLATAFORMA_QR_URL: "   " })).toMatchObject({ qrUrl: null });
+  });
 
   it("sin ninguna variable, null", () => {
     expect(configuracionDeLlave({})).toBeNull();

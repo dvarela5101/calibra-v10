@@ -61,15 +61,17 @@ export function PagoPorLlave({ idMonitoria, valorTotal, reservaHasta, ahora, idU
             ahora={ahora.toISOString()}
             textoInicial={describirTiempoRestante(reservaHasta, ahora).texto}
           />
-          <p className={estilos.nota}>Desde la app de tu banco, transfiere {valor} a esta llave o escanea el código QR. Después adjunta el comprobante.</p>
-          {/* eslint-disable-next-line @next/next/no-img-element -- El QR es la imagen que da el banco y su URL es configuración externa: next/image exigiría declarar su dominio en next.config. */}
-          <img
-            src={llave.qrUrl}
-            alt={`Código QR para transferir a la llave ${llave.llave}, de ${llave.titular}`}
-            width={220}
-            height={220}
-            className={estilos.qr}
-          />
+          <p className={estilos.nota}>Desde la app de tu banco, transfiere {valor} a esta llave{llave.qrUrl ? " o escanea el código QR" : ""}. Después adjunta el comprobante.</p>
+          {llave.qrUrl && (
+            // eslint-disable-next-line @next/next/no-img-element -- El QR es la imagen que da el banco y su URL es configuración externa: next/image exigiría declarar su dominio en next.config.
+            <img
+              src={llave.qrUrl}
+              alt={`Código QR para transferir a la llave ${llave.llave}, de ${llave.titular}`}
+              width={220}
+              height={220}
+              className={estilos.qr}
+            />
+          )}
           <div className={formulario.campo}>
             <label htmlFor="pago-llave" className={formulario.etiqueta}>
               Llave
