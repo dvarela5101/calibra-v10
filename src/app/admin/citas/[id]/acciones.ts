@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { autorizarCancelacion } from "@/lib/admin/citas";
+import { autorizarCancelacion, marcarGratis } from "@/lib/admin/citas";
 import {
   CAMBIOS_DE_LA_CITA,
   leerAutorizacion,
@@ -10,6 +10,13 @@ import {
   MENSAJES_DE_AUTORIZACION,
   type ResultadoDeAutorizacion,
 } from "@/lib/admin/citas-reglas";
+import {
+  CAMBIOS_DE_LA_MARCA,
+  leerMarca,
+  MENSAJE_DE_FALLO_DE_MARCA,
+  MENSAJES_DE_MARCA,
+  type ResultadoDeMarca,
+} from "@/lib/admin/gratis-reglas";
 import { esUuid } from "@/lib/agendar/reglas";
 import { exigirRol } from "@/lib/auth/sesion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
@@ -66,4 +73,45 @@ export async function autorizar(_anterior: EstadoAutorizacion, datos: FormData):
     redirect(`${ruta}?${new URLSearchParams(resultado === "autorizada" ? { autorizada: "1" } : { error: resultado })}`);
   }
   return { error: MENSAJES_DE_AUTORIZACION[resultado], valores };
+}
+
+/**
+ * HU-116: un admin activo marca una monitoría por pagar como de prueba (queda confirmada y gratis, D-84) o le quita la marca
+ * (vuelve a por pagar). Escribe con la sesión del admin: si se puede, qué cambia y el registro lo decide
+ * `public.marcar_monitoria_gratis` bajo candado, con la identidad (`auth.uid()`) y la hora de la base. Tras el cambio vuelve a
+ * la ficha, que dice qué pasó (`?gratis=`); lo que cambió mientras el admin miraba (llegó un comprobante, venció la reserva, otro
+ * admin ya la marcó) también vuelve a pintarla (`?gratis_error=`). La acción no manda correos: la confirmación al estudiante y el
+ * aviso al monitor los anota la base al confirmarse la cita.
+ */
+export type EstadoMarca = { error: string | null };
+
+const esCambioDeMarca = (resultado: ResultadoDeMarca): resultado is (typeof CAMBIOS_DE_LA_MARCA)[number] =>
+  (CAMBIOS_DE_LA_MARCA as readonly string[]).includes(resultado);
+
+export async function cambiarMarcaGratis(_anterior: EstadoMarca, datos: FormData): Promise<EstadoMarca> {
+  const id = String(datos.get("id_monitoria") ?? "").trim().toLowerCase();
+  // La acción se protege por sí sola: se puede llamar sin pasar por la página.
+  await exigirRol("admin", esUuid(id) ? rutaDeLaCita(id) : "/admin");
+  const lectura = leerMarca(datos);
+  if (!lectura.ok) return { error: lectura.error };
+  const ruta = rutaDeLaCita(lectura.datos.idMonitoria);
+
+  let resultado: ResultadoDeMarca;
+  try {
+    const supabase: Cliente | null = await crearClienteServidor();
+    if (!supabase) throw new Error("Faltan las variables de Supabase.");
+    resultado = await marcarGratis(supabase, lectura.datos);
+  } catch (error) {
+    console.error("[citas] no se pudo cambiar la marca de prueba:", error instanceof Error ? error.message : error);
+    return { error: MENSAJE_DE_FALLO_DE_MARCA };
+  }
+
+  if (resultado === "marcada" || resultado === "desmarcada" || esCambioDeMarca(resultado)) {
+    // La cita cambia de estado: la lista de citas sin plazo y la bandeja pueden cambiar. Antes del redirect, que lanza.
+    revalidatePath("/admin");
+    revalidatePath("/admin/citas");
+    revalidatePath(ruta);
+    redirect(`${ruta}?${new URLSearchParams(resultado === "marcada" || resultado === "desmarcada" ? { gratis: resultado } : { gratis_error: resultado })}`);
+  }
+  return { error: MENSAJES_DE_MARCA[resultado] };
 }

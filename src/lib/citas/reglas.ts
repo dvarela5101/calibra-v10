@@ -77,6 +77,8 @@ export type Cita = {
   duracionMin: number;
   presencial: boolean;
   valorTotal: number;
+  /** HU-116: la monitoría es gratis (D-84): sin pago ni reembolso; `valorTotal` sigue siendo el precio normal. */
+  gratis: boolean;
   /** Lugar de la presencial (D-5). */
   lugar: string | null;
   /** Enlace de la videollamada de la virtual (D-5). Es https. */
@@ -117,6 +119,8 @@ export type FilaDeCita = {
   estado_reembolso: string | null;
   estado_reporte: string | null;
   observaciones_reporte: string | null;
+  /** HU-116. Una fila sin la columna se lee como no gratis. */
+  gratis?: boolean | null;
 };
 
 function uno<T extends string>(valores: readonly T[], valor: string, campo: string): T {
@@ -149,6 +153,7 @@ export function citaDeFila(fila: FilaDeCita): Cita {
     duracionMin: fila.duracion_min,
     presencial: fila.presencial,
     valorTotal: fila.valor_total,
+    gratis: fila.gratis === true,
     lugar: fila.lugar,
     enlace: fila.enlace,
     inicio: instante(fila.inicio, "inicio"),
@@ -313,7 +318,10 @@ function vistaDelReporte(cita: Cita, puedeReportar: boolean): Pick<VistaDeCita, 
   switch (cita.estadoReporte) {
     case null:
       if (puedeReportar) {
-        textoDelReporte = `${cerrar(`¿El monitor no llegó? Puedes reportarlo hasta el ${cuando(cita.reporteHasta)}`)} Un admin revisa el caso. Si lo acepta, la monitoría se cancela y te devolvemos el dinero de tu pago.`;
+        textoDelReporte = `${cerrar(`¿El monitor no llegó? Puedes reportarlo hasta el ${cuando(cita.reporteHasta)}`)} Un admin revisa el caso. ${
+          // HU-116: una gratis no tiene pago que devolver.
+          cita.gratis ? "Si lo acepta, la monitoría se cancela." : "Si lo acepta, la monitoría se cancela y te devolvemos el dinero de tu pago."
+        }`;
       }
       break;
     case "en_revision":
@@ -452,6 +460,8 @@ export type DatosDeConfirmacionCita = {
   enlace: string | null;
   valorTotal: number;
   cancelableHasta: string;
+  /** HU-116: la monitoría es gratis (D-84). Sin el dato, no lo es. */
+  gratis?: boolean;
 };
 
 /**
@@ -484,6 +494,8 @@ export function datosDeConfirmacion(d: DatosDeConfirmacionCita, enlaceDeGestion:
     duracionMin: d.duracionMin,
     presencial: d.presencial,
     valorTotal: d.valorTotal,
+    // HU-116: solo cuando es gratis, para que el cuerpo de una normal no cambie.
+    ...(d.gratis ? { gratis: true } : {}),
     lugar: d.presencial ? textoOpcional(d.lugar) : null,
     enlaceSesion: d.presencial ? null : textoOpcional(d.enlace),
     cancelableHasta: yaNoSePodiaCancelar ? null : d.cancelableHasta,

@@ -50,6 +50,7 @@ export function DetalleDeCita({ cita, ahora, acciones, contactoSoporte = null, c
           duracionMin: cita.duracionMin,
           presencial: cita.presencial,
           valor: cita.valorTotal,
+          gratis: cita.gratis,
           lugar: vista.mostrarLugarYEnlace ? cita.lugar : null,
           enlace: vista.mostrarLugarYEnlace ? cita.enlace : null,
           // D-76: la página se lee de nuevo en cada visita; si el monitor aún no lo puso, lo dice.

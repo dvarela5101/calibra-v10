@@ -23,6 +23,7 @@ const PRESENCIAL: Cita = {
   duracionMin: 60,
   presencial: true,
   valorTotal: 32_000,
+  gratis: false,
   lugar: "Edificio Santo Domingo, salón 301",
   enlace: null,
   inicio: INICIO,
@@ -419,5 +420,24 @@ describe("NoPudimosCargar", () => {
     expect(titulo(html)).toBe("No pudimos cargar tu cita");
     expect(html).toContain('role="alert"');
     expect(texto(html)).toContain("Recarga la página; si sigue igual, inténtalo más tarde.");
+  });
+});
+
+describe("DetalleDeCita (HU-116): una monitoría gratis", () => {
+  const html = pintar({ ...PRESENCIAL, gratis: true, estadoPago: "sin_pagar" });
+  const t = texto(html);
+
+  it("es una cita confirmada como cualquiera, con el precio normal tachado y «Gratis», sin la palabra «prueba»", () => {
+    expect(titulo(html)).toBe("Tu monitoría está confirmada");
+    expect(html).toMatch(/<del[^>]*>.*32\.000<\/del>/);
+    expect(t).toContain("Gratis");
+    expect(t).not.toMatch(/prueba/i);
+  });
+
+  it("no pide pago ni comprobante, y el reporte de inasistencia no promete devolver dinero", () => {
+    expect(t).not.toMatch(/comprobante|tu pago/i);
+    const tarde = texto(pintar({ ...PRESENCIAL, gratis: true, estadoPago: "sin_pagar" }, new Date(INICIO.getTime() + 2 * HORA)));
+    expect(tarde).toContain("Si lo acepta, la monitoría se cancela.");
+    expect(tarde).not.toContain("te devolvemos");
   });
 });

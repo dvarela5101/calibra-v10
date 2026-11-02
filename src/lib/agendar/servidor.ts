@@ -40,6 +40,8 @@ export type Reserva = {
   duracionMin: number;
   presencial: boolean;
   valorTotal: number;
+  /** HU-116: la monitoría es gratis (D-84); `valorTotal` sigue siendo el precio normal. */
+  gratis: boolean;
   nombreMonitor: string;
   nombreMateria: string;
   codigoMateria: string;
@@ -55,7 +57,7 @@ export type Reserva = {
 export async function cargarReserva(cliente: Cliente, idMonitoria: string): Promise<Reserva | null> {
   const { data: monitoria, error } = await cliente
     .from("monitoria")
-    .select("id, id_lead, estado, motivo_cancelacion, fecha, valor_total, id_franja, id_monitor, id_materia")
+    .select("id, id_lead, estado, motivo_cancelacion, fecha, valor_total, gratis, id_franja, id_monitor, id_materia")
     .eq("id", idMonitoria)
     .maybeSingle();
   if (error) throw new Error(`No se pudo leer la reserva: ${error.message}`);
@@ -84,6 +86,7 @@ export async function cargarReserva(cliente: Cliente, idMonitoria: string): Prom
     duracionMin: franja.data.duracion_min,
     presencial: franja.data.presencial,
     valorTotal: monitoria.valor_total,
+    gratis: monitoria.gratis,
     nombreMonitor: monitor.data.nombre,
     nombreMateria: materia.data.nombre,
     codigoMateria: materia.data.codigo,

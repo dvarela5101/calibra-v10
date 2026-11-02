@@ -49,6 +49,7 @@ const CITA: Cita = {
   duracionMin: 60,
   presencial: true,
   valorTotal: 32_000,
+  gratis: false,
   lugar: "Edificio Santo Domingo, salón 301",
   enlace: null,
   inicio: INICIO,

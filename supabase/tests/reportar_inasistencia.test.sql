@@ -128,12 +128,12 @@ select is(
    where p.oid = 'public.cita_por_token(text)'::regprocedure and a.m = 't'),
   array['id_monitoria', 'estado', 'motivo_cancelacion', 'nombre_monitor', 'nombre_materia', 'codigo_materia', 'fecha', 'hora',
         'duracion_min', 'presencial', 'valor_total', 'lugar', 'enlace', 'inicio', 'fin_programado', 'cancelable_hasta',
-        'reporte_hasta', 'estado_pago', 'estado_reembolso', 'estado_reporte', 'observaciones_reporte'],
-  'cita_por_token termina en estado_reporte y observaciones_reporte (21 columnas)');
+        'reporte_hasta', 'estado_pago', 'estado_reembolso', 'estado_reporte', 'observaciones_reporte', 'gratis'],
+  'cita_por_token sigue con estado_reporte y observaciones_reporte; HU-116 sumó gratis al final (22 columnas)');
 select is(
   (select count(*)::int from pg_proc p, unnest(p.proargnames, p.proargmodes) as a(n, m)
    where p.oid = 'privado.datos_de_cita(uuid)'::regprocedure and a.m = 't'),
-  22, 'privado.datos_de_cita devuelve 22 columnas: el id del Lead y las 21 de la cita');
+  23, 'privado.datos_de_cita devuelve 23 columnas: el id del Lead y las 22 de la cita (HU-116 sumó gratis)');
 select ok(
   (select array_agg(a.n order by a.o)
    from pg_proc p, unnest(p.proargnames, p.proargmodes) with ordinality as a(n, m, o)

@@ -698,6 +698,43 @@ isOneToOne: true
       referencedColumns: ["id_monitoria"]
     }
                   ]
+                },"marca_gratis": {
+                  Row: {
+                    "gratis": boolean,"hecha_en": string,"id": string,"id_admin": string,"id_monitoria": string
+                  }
+                  Insert: {
+                    "gratis": boolean,"hecha_en"?: string,"id"?: string,"id_admin": string,"id_monitoria": string
+                  }
+                  Update: {
+                    "gratis"?: boolean,"hecha_en"?: string,"id"?: string,"id_admin"?: string,"id_monitoria"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "marca_gratis_id_admin_fkey"
+      columns: ["id_admin"]
+isOneToOne: false
+      referencedRelation: "admin"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "marca_gratis_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: false
+      referencedRelation: "citas_sin_plazo_para_cancelar"
+      referencedColumns: ["id_monitoria"]
+    },{
+      foreignKeyName: "marca_gratis_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: false
+      referencedRelation: "monitoria"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "marca_gratis_id_monitoria_fkey"
+      columns: ["id_monitoria"]
+isOneToOne: false
+      referencedRelation: "monitoria_plazos"
+      referencedColumns: ["id_monitoria"]
+    }
+                  ]
                 },"materia": {
                   Row: {
                     "carpeta": string | null,"codigo": string,"editada_en_app": boolean,"id": string,"nombre": string
@@ -764,13 +801,13 @@ isOneToOne: true
                   ]
                 },"monitoria": {
                   Row: {
-                    "estado": Database["public"]['Enums']["estado_monitoria"],"fecha": string,"fecha_creacion": string,"fecha_finalizacion": string | null,"id": string,"id_diagnostico": string | null,"id_franja": string,"id_lead": string,"id_materia": string,"id_monitor": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"] | null,"valor_total": number
+                    "estado": Database["public"]['Enums']["estado_monitoria"],"fecha": string,"fecha_creacion": string,"fecha_finalizacion": string | null,"gratis": boolean,"id": string,"id_diagnostico": string | null,"id_franja": string,"id_lead": string,"id_materia": string,"id_monitor": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"] | null,"valor_total": number
                   }
                   Insert: {
-                    "estado"?: Database["public"]['Enums']["estado_monitoria"],"fecha": string,"fecha_creacion"?: string,"fecha_finalizacion"?: string | null,"id"?: string,"id_diagnostico"?: string | null,"id_franja": string,"id_lead": string,"id_materia": string,"id_monitor": string,"motivo_cancelacion"?: Database["public"]['Enums']["motivo_cancelacion"] | null,"valor_total": number
+                    "estado"?: Database["public"]['Enums']["estado_monitoria"],"fecha": string,"fecha_creacion"?: string,"fecha_finalizacion"?: string | null,"gratis"?: boolean,"id"?: string,"id_diagnostico"?: string | null,"id_franja": string,"id_lead": string,"id_materia": string,"id_monitor": string,"motivo_cancelacion"?: Database["public"]['Enums']["motivo_cancelacion"] | null,"valor_total": number
                   }
                   Update: {
-                    "estado"?: Database["public"]['Enums']["estado_monitoria"],"fecha"?: string,"fecha_creacion"?: string,"fecha_finalizacion"?: string | null,"id"?: string,"id_diagnostico"?: string | null,"id_franja"?: string,"id_lead"?: string,"id_materia"?: string,"id_monitor"?: string,"motivo_cancelacion"?: Database["public"]['Enums']["motivo_cancelacion"] | null,"valor_total"?: number
+                    "estado"?: Database["public"]['Enums']["estado_monitoria"],"fecha"?: string,"fecha_creacion"?: string,"fecha_finalizacion"?: string | null,"gratis"?: boolean,"id"?: string,"id_diagnostico"?: string | null,"id_franja"?: string,"id_lead"?: string,"id_materia"?: string,"id_monitor"?: string,"motivo_cancelacion"?: Database["public"]['Enums']["motivo_cancelacion"] | null,"valor_total"?: number
                   }
                   Relationships: [
                     {
@@ -1326,7 +1363,7 @@ isOneToOne: false
                            },
 "cita_por_token":
 { Args: { "p_token": string }; Returns: {
-              "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"observaciones_reporte": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
+              "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"gratis": boolean,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"observaciones_reporte": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
             }[]
                            },
 "comision":
@@ -1368,7 +1405,7 @@ isOneToOne: false
                            },
 "datos_de_confirmacion_cita":
 { Args: { "p_id_monitoria": string }; Returns: {
-              "cancelable_hasta": string,"correo_destino": string,"creada_en": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"grupal": boolean,"inicio": string,"lugar": string,"nombre_lead": string,"nombre_materia": string,"nombre_monitor": string,"presencial": boolean,"token": string,"valor_total": number
+              "cancelable_hasta": string,"correo_destino": string,"creada_en": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"gratis": boolean,"grupal": boolean,"inicio": string,"lugar": string,"nombre_lead": string,"nombre_materia": string,"nombre_monitor": string,"presencial": boolean,"token": string,"valor_total": number
             }[]
                            },
 "datos_de_invitacion_resena":
@@ -1506,6 +1543,9 @@ isOneToOne: false
               "enlace": string,"id_monitoria": string,"lugar": string
             }[]
                            },
+"marcar_monitoria_gratis":
+{ Args: { "p_gratis": boolean,"p_id_monitoria": string }; Returns: string
+                           },
 "mi_agenda":
 { Args: Record<PropertyKey, never>; Returns: {
               "codigo_materia": string,"duracion_min": number,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"fecha": string,"hora": string,"id_monitoria": string,"inicio": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_estudiante": string,"nombre_materia": string,"presencial": boolean,"reserva_vencida": boolean
@@ -1513,7 +1553,7 @@ isOneToOne: false
                            },
 "mi_cita":
 { Args: { "p_id_monitoria": string }; Returns: {
-              "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"observaciones_reporte": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
+              "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"gratis": boolean,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"observaciones_reporte": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
             }[]
                            },
 "mi_cuota_de_comprobantes":
@@ -1536,7 +1576,7 @@ isOneToOne: false
                            },
 "mis_citas":
 { Args: Record<PropertyKey, never>; Returns: {
-              "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"observaciones_reporte": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
+              "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"gratis": boolean,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"observaciones_reporte": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
             }[]
                            },
 "mis_desembolsos":

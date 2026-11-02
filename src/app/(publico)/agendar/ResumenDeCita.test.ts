@@ -67,3 +67,19 @@ describe("esEnlaceHttps", () => {
     for (const no of ["http://meet.example/a", "javascript:alert(1)", "ftp://meet.example", "", "https"]) expect(esEnlaceHttps(no), no).toBe(false);
   });
 });
+
+describe("ResumenDeCita: la monitoría gratis (HU-116, D-84 c)", () => {
+  it("el precio normal sale tachado y al lado «Gratis» en el verde de texto; el lector oye «Precio normal»", () => {
+    const html = pintar({ gratis: true });
+    expect(html).toMatch(/<del class="[^"]*precioNormal[^"]*"><span class="[^"]*oculto[^"]*">Precio normal: <\/span>\$\s?32\.000<\/del>/);
+    expect(html).toMatch(/<span class="[^"]*gratis[^"]*">Gratis<\/span>/);
+    expect(html).not.toMatch(/prueba/i);
+  });
+
+  it("sin la marca, el valor de siempre, sin tachar", () => {
+    for (const html of [pintar(), pintar({ gratis: false })]) {
+      expect(html).not.toContain("<del");
+      expect(html).not.toContain("Gratis");
+    }
+  });
+});

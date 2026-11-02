@@ -136,6 +136,8 @@ export type DatosPorPlantilla = {
     duracionMin: number;
     presencial: boolean;
     valorTotal: number;
+    /** HU-116 (D-84): gratis, con el precio normal como referencia; no se habla de pago ni de comprobante. */
+    gratis?: boolean;
     lugar: string | null;
     enlaceSesion: string | null;
     cancelableHasta: string | null;
@@ -462,14 +464,19 @@ function contenidoDe<P extends Plantilla>(plantilla: P, datos: DatosPorPlantilla
       // D-76 (HU-107): el monitor lo pone en cada monitoría; si aún no lo ha puesto, la página de la cita lo mostrará.
       if (d.presencial && d.lugar == null) parrafos.push("Tu monitor pondrá el lugar de la sesión en la página de tu cita.");
       if (!d.presencial && d.enlaceSesion == null) parrafos.push("Tu monitor pondrá el enlace de la videollamada en la página de tu cita.");
-      parrafos.push(`Valor: ${cerrar(formatearPesos(d.valorTotal))}`);
+      // HU-116 (D-84 c): el mismo «Gratis» de la página, con el precio normal al lado.
+      parrafos.push(d.gratis ? `Valor: Gratis (precio normal: ${formatearPesos(d.valorTotal)}).` : `Valor: ${cerrar(formatearPesos(d.valorTotal))}`);
       parrafos.push(
         d.cancelableHasta == null
           ? "No podrás cancelarla: cuando la agendaste ya había pasado el plazo para hacerlo."
           : `Puedes cancelarla hasta el ${cerrar(formatearFechaHora(instante(d.cancelableHasta, "cancelableHasta")))}`,
       );
       // D-22: el pago puede estar todavía en revisión (RN-38), así que el correo no promete que está aprobado.
-      parrafos.push("Recibimos tu comprobante. Un admin lo revisa y, si hay algún problema, te avisamos a este correo.");
+      parrafos.push(
+        d.gratis
+          ? "Esta monitoría es gratis: no tienes que pagar nada ni adjuntar comprobante."
+          : "Recibimos tu comprobante. Un admin lo revisa y, si hay algún problema, te avisamos a este correo.",
+      );
       // D-23: no se avisa si el monitor cambia el lugar o el enlace; la página siempre muestra el dato actual.
       parrafos.push("Si el lugar o el enlace cambian, la página de tu monitoría siempre muestra el dato actual.");
       return {
