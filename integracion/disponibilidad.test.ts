@@ -110,6 +110,7 @@ describe("criterios 1 y 2: los certificados en la materia y sus fechas libres", 
         duracionMin: 90,
         presencial: true,
         precio: 32_000,
+        dePrueba: false,
       })),
     );
   });
@@ -191,7 +192,7 @@ describe("criterio 4: no se exponen teléfono, correo ni llave", () => {
       expect(texto).not.toContain(secreto);
     }
     expect(Object.keys(crudo![0]).sort()).toEqual(
-      ["duracion_min", "fecha", "hora", "id_franja", "id_monitor", "nombre_monitor", "precio", "presencial"].sort(),
+      ["de_prueba", "duracion_min", "fecha", "hora", "id_franja", "id_monitor", "nombre_monitor", "precio", "presencial"].sort(),
     );
   });
 
