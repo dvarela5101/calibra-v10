@@ -11,7 +11,8 @@ import { correoConsultasDatos } from "@/lib/privacidad/consentimiento";
 
 type Entorno = Record<string, string | undefined>;
 
-export type ConfiguracionDeLlave = { llave: string; titular: string; qrUrl: string };
+/** `qrUrl` es opcional (HU-120, D-86): sin QR, o con uno que no es una imagen usable, la reserva sale sin imagen. */
+export type ConfiguracionDeLlave = { llave: string; titular: string; qrUrl: string | null };
 
 export type IdentidadDelProveedor = {
   nombre: string;
@@ -39,15 +40,16 @@ function esUrlDeImagen(valor: string): boolean {
 }
 
 /**
- * La llave, su titular y la URL del QR, recortados. Si falta cualquiera de los tres, `null`: la página dice
- * que el pago por Llave no está disponible en vez de mostrar una llave incompleta o falsa.
+ * La llave, su titular y la URL del QR, recortados. Si falta la llave o el titular, `null`: la página dice que el pago por
+ * Llave no está disponible en vez de mostrar una llave incompleta o falsa. El QR es opcional (HU-120, D-86): sin él, o con una
+ * URL que no es una imagen usable, `qrUrl` es `null` y la reserva sale sin imagen.
  */
 export function configuracionDeLlave(entorno: Entorno = process.env): ConfiguracionDeLlave | null {
   const llave = texto(entorno.LLAVE_PLATAFORMA);
   const titular = texto(entorno.LLAVE_PLATAFORMA_TITULAR);
   const qrUrl = texto(entorno.LLAVE_PLATAFORMA_QR_URL);
-  if (!llave || !titular || !qrUrl || !esUrlDeImagen(qrUrl)) return null;
-  return { llave, titular, qrUrl };
+  if (!llave || !titular) return null;
+  return { llave, titular, qrUrl: qrUrl && esUrlDeImagen(qrUrl) ? qrUrl : null };
 }
 
 /**
