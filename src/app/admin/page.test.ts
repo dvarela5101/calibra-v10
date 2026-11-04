@@ -26,6 +26,8 @@ const VACIA: Bandeja = {
   reportes: [],
   desembolsos: [],
   correosSinEnviar: [],
+  monitoresPorCertificar: [],
+  solicitudesPorContactar: [],
   contadores: {
     pagos: 0,
     pagosDeOtros: 0,
@@ -38,6 +40,8 @@ const VACIA: Bandeja = {
     reportes: 0,
     desembolsos: 0,
     correosSinEnviar: 0,
+    monitoresPorCertificar: 0,
+    solicitudesPorContactar: 0,
   },
 };
 
