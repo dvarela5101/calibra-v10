@@ -1,16 +1,14 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-11-03 19:28. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-11-03 19:59. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
 | [HU-086](backlog/HU-086.md) | [Estudiante] Ligar a mi cita un diagnóstico hecho después de agendar | Backlog | P1 | M | HU-022, HU-019 |
-| [HU-121](backlog/HU-121.md) | Landing de monitores: mostrar cuánto puede ganar el monitor | Backlog | P1 | M | HU-109 |
 | [HU-123](backlog/HU-123.md) | [Monitor] Rediseñar mi panel: dejar la lista de enlaces y ver lo importante de un vistazo | Backlog | P1 | L | HU-021, HU-049, HU-050 |
-| [HU-124](backlog/HU-124.md) | [Admin] Ver en mi bandeja a quién contactar para certificarlo | Backlog | P1 | M | HU-012, HU-013, HU-014, HU-062 |
 | [HU-088](backlog/HU-088.md) | [Estudiante] Ver la calificación y las reseñas del monitor en su tarjeta | Backlog | P2 | M | HU-049, HU-035 |
 | [HU-090](backlog/HU-090.md) | [Admin] Registrar desde la gestión de leads el retiro de la autorización de datos | Backlog | P2 | S | HU-053, HU-085 |
-| [HU-122](backlog/HU-122.md) | Fondo de las landings: quitar el beige y agregar una animación de fondo | Backlog | P2 | M | HU-108, HU-109 |
+| [HU-125](backlog/HU-125.md) | Opcional: la animación de fondo de las landings reacciona al scroll | Backlog | P3 | S | HU-122 |
 | [HU-033](backlog/HU-033.md) | [Estudiante] Gestionar mis citas y diagnósticos desde mi cuenta | Lista | P1 | M | HU-032, HU-019, HU-024, HU-029, HU-009, HU-081 |
 | [HU-036](backlog/HU-036.md) | [Estudiante] Agendar una sesión grupal como organizador | Lista | P1 | L | HU-032, HU-017, HU-018 |
 | [HU-037](backlog/HU-037.md) | [Estudiante] Compartir el enlace del grupo y ver quién ha pagado | Lista | P1 | M | HU-036 |
@@ -24,8 +22,11 @@ _Generado automaticamente: 2026-11-03 19:28. No editar a mano; usa `scripts/back
 | [HU-045](backlog/HU-045.md) | [Estudiante] Reportar inasistencia del monitor en mi grupal | Lista | P1 | XS | HU-029, HU-036 |
 | [HU-046](backlog/HU-046.md) | [Monitor] Finalizar una grupal y entregar el enlace de reseña | Lista | P1 | S | HU-023, HU-036 |
 | [HU-047](backlog/HU-047.md) | [Integrante] Reseñar la sesión grupal eligiendo mi nombre | Lista | P1 | M | HU-046, HU-038, HU-035 |
+| [HU-121](backlog/HU-121.md) | Landing de monitores: mostrar cuánto puede ganar el monitor | Lista | P1 | M | HU-109 |
+| [HU-124](backlog/HU-124.md) | [Admin] Ver en mi bandeja a quién contactar para certificarlo | Lista | P1 | M | HU-012, HU-013, HU-014, HU-062 |
 | [HU-085](backlog/HU-085.md) | [Sistema] Borrar o anonimizar los datos de un Lead o aspirante que retiró su autorización o lleva 24 meses sin actividad | Lista | P2 | L | HU-056, HU-006, HU-062, HU-068 |
 | [HU-092](backlog/HU-092.md) | [Monitor] Marcar en mi perfil los temas en los que soy fuerte | Lista | P2 | M | HU-049 |
+| [HU-122](backlog/HU-122.md) | Fondo de las landings: quitar el beige y agregar una animación de fondo | Lista | P2 | M | HU-108, HU-109 |
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | En progreso | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056, HU-084, HU-089, HU-095, HU-096, HU-097, HU-091, HU-103 |
 | [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
 | [HU-105](backlog/HU-105.md) | Selector del diagnóstico como el prototipo: tarjetas sin radio, elegir siempre la Evaluación y botón «Ver monitores sin hacer la prueba» | En revision | P0 | S | HU-009 |
