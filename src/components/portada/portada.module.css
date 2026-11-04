@@ -28,11 +28,11 @@
 /* HU-125: los trazos de todas las materias, que se dibujan a medida que se baja. La animación avanza con la posición de cada dibujo en
    la pantalla y no con el tiempo, así que subir los borra. Es solo CSS; sin soporte para `animation-timeline` se ven completos. Ver
    FondoAnimado.tsx. La capa de los márgenes va sobre el fondo de las secciones (la franja azul) y nunca sobre el contenido, porque
-   solo aparece cuando el margen le da cabida. Termina 60vh antes del final para que hasta el último dibujo alcance a completarse. */
+   solo aparece cuando el margen le da cabida. Termina 75vh antes del final para que hasta el último dibujo alcance a completarse. */
 
 .fondoAnimado {
   position: absolute;
-  inset: 88px 0 60vh;
+  inset: 88px 0 75vh;
   z-index: 0;
   overflow: clip;
   pointer-events: none;
@@ -104,20 +104,24 @@
   @media (prefers-reduced-motion: no-preference) {
     .trazoDeFondo {
       view-timeline: --dibujo block;
-      --tramo: 30%;
+      --desde: 15vh;
+      --fin: min(75vh, 760px);
+      --tramo: calc(var(--fin) - var(--desde));
     }
 
-    /* Cada trazo sigue al anterior, como una mano que escribe: el dibujo empieza al asomar por abajo y acaba antes de la mitad. */
+    /* Cada trazo sigue al anterior, como una mano que escribe. El borde superior del dibujo sube del 85 % al 25 % de la pantalla mientras
+       se traza, así que se ve en el centro y no solo al asomar. Va en vh para que no dependa de la altura del dibujo. El tope en px es
+       porque lo que queda de página debajo del último dibujo no crece con la pantalla: sin él, en una pantalla alta no se completaría. */
     .trazoDeFondo path {
       stroke-dasharray: 1 2;
       animation: dibujarTrazo linear both;
       animation-timeline: --dibujo;
-      animation-range: cover calc(4% + var(--i) / var(--n) * var(--tramo)) cover calc(4% + (var(--i) + 1.5) / var(--n) * var(--tramo));
+      animation-range: cover calc(var(--desde) + var(--i) / (var(--n) + 0.5) * var(--tramo)) cover calc(var(--desde) + (var(--i) + 1.5) / (var(--n) + 0.5) * var(--tramo));
     }
 
-    /* El cierre queda cerca del final: se termina antes para que alcance sin importar la altura de la pantalla. */
-    .curvaCierre {
-      --tramo: 12%;
+    /* El último dibujo de la página: debajo de él solo quedan unos 660 px. */
+    .curvaAlFinal {
+      --fin: min(75vh, 620px);
     }
   }
 }
@@ -155,6 +159,13 @@
 
 .curvaCierre {
   inset-block-end: 20px;
+  inset-inline-end: max(var(--lado), calc((100% - var(--ancho-hero)) / 2 + var(--lado)));
+  inline-size: 180px;
+}
+
+/* Sobre el título del cierre y no debajo: al final de la página aún le queda recorrido para trazarse a la vista. */
+.curvaAlFinal {
+  inset-block-start: 32px;
   inset-inline-end: max(var(--lado), calc((100% - var(--ancho-hero)) / 2 + var(--lado)));
   inline-size: 180px;
 }

@@ -90,6 +90,38 @@ for (const [nombre, ruta] of LANDINGS) {
       await expect.poll(() => trazosCompletos(page)).toBe(alCargar);
     });
 
+    test("HU-125: cada dibujo se traza a la vista, con su borde superior subiendo del 85 % al 25 % de la pantalla", async ({ page }) => {
+      if (esMovil(page)) return;
+      await abrir(page, ruta);
+      const dibujo = capa(page).locator('[data-dibujo="sumatoria"]');
+      /** Lleva el dibujo a esa altura de la pantalla y dice cuánto se ha trazado, de 0 a 1. */
+      const trazadoCon = async (altura: number) => {
+        await dibujo.evaluate((el, a) => {
+          const destino = window.scrollY + el.getBoundingClientRect().top - window.innerHeight * a;
+          window.scrollTo({ top: destino, behavior: "instant" });
+        }, altura);
+        return dibujo.evaluate((el) => {
+          const trazos = [...el.querySelectorAll("path")].map((t) => 1 - Math.min(parseFloat(getComputedStyle(t).strokeDashoffset), 1));
+          return trazos.reduce((a, b) => a + b, 0) / trazos.length;
+        });
+      };
+      await expect.poll(() => trazadoCon(0.9)).toBe(0);
+      const aLaMitad = await trazadoCon(0.55);
+      expect(aLaMitad).toBeGreaterThan(0.2);
+      expect(aLaMitad).toBeLessThan(0.8);
+      await expect.poll(() => trazadoCon(0.2)).toBe(1);
+    });
+
+    test("HU-125: al final de la página todos quedan completos también en pantallas bajas y altas", async ({ page }) => {
+      if (esMovil(page)) return;
+      for (const [width, height] of [[1280, 720], [1920, 1080], [2560, 1300]] as const) {
+        await page.setViewportSize({ width, height });
+        await abrir(page, ruta);
+        await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
+        await expect.poll(() => trazosCompletos(page)).toBe(await page.locator("[data-simbolo], [data-curva]").count());
+      }
+    });
+
     test("HU-125: ningún dibujo pasa por detrás de un texto o un control, en 1280 y en 1920 px", async ({ page }) => {
       if (esMovil(page)) return;
       for (const [width, height] of [[1280, 800], [1920, 1080]] as const) {

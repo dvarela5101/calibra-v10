@@ -149,7 +149,7 @@ export function Portada({ parametros }: { parametros: ParametrosNegocio | null }
         </section>
 
         <section className={`${estilos.cierre} ${estilos.conCurva}`} aria-labelledby="cierre">
-          <CurvaDeFondo forma="reaccion" clase={estilos.curvaCierre} />
+          <CurvaDeFondo forma="reaccion" clase={estilos.curvaAlFinal} />
           <div className={estilos.contenedor}>
             <h2 id="cierre" className={estilos.tituloCierre}>
               Averigua qué te falla antes del próximo parcial.
