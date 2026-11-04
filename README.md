@@ -600,7 +600,7 @@ Mientras falten los secretos, el paso de despliegue se salta con un aviso y el p
 
 - Zona horaria de negocio `America/Bogota`, idioma `es`, locale `es-CO`: `src/config/regional.ts`. Toda fecha se muestra en esa zona aunque el servidor corra en UTC (`src/lib/fechas.ts`).
 - Tokens de diseño del prototipo: `src/styles/tokens.css`. Los colores `--alert`, `--warn` y `--success` son solo relleno; para texto se usan `--alert-text`, `--success-text` y `--muted`, que pasan WCAG AA. `src/styles/tokens.test.ts` lo comprueba.
-- Reglas que no se negocian: ningún texto por debajo de 14 px, áreas táctiles de 44 px o más, sin degradados, sin emojis decorativos, sin iconos de cerebro, robot o IA, y nunca mostrar cifras de comisión; excepciones: (D-59) `/monitor/desembolsos`, al monitor dueño del desembolso (ver «Mis desembolsos (monitor)»), y (HU-096) la regla general (el porcentaje y el tope, sin ningún monto) en el registro del monitor, `/monitores/registro`, solo con una invitación vigente.
+- Reglas que no se negocian: ningún texto por debajo de 14 px, áreas táctiles de 44 px o más, sin degradados, sin emojis decorativos, sin iconos de cerebro, robot o IA, y nunca mostrar cifras de comisión; excepciones: (D-59) `/monitor/desembolsos`, al monitor dueño del desembolso (ver «Mis desembolsos (monitor)»), y (HU-096) la regla general (el porcentaje y el tope, sin ningún monto) en el registro del monitor, `/monitores/registro`, solo con una invitación vigente, y (D-87, HU-121) lo que recibe el monitor, solo el neto, en el ejemplo con precios de muestra de `/quiero-ser-monitor`.
 
 ## Estructura
 

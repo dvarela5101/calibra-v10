@@ -7,6 +7,8 @@ import { describe, expect, it } from "vitest";
 // HU-096 (D-71 b) suma un segundo lugar: la regla general (el porcentaje y el tope, sin ningún monto) en el registro del
 // monitor, solo con una invitación vigente. Ese texto vive en `src/lib/plazos/regla-general.ts`, que ya está permitido;
 // la página del registro es la única que lo llama (regla G), sin ningún literal con la palabra.
+// HU-121 (D-87) suma un tercer lugar: lo que recibe el monitor (solo el neto) en el ejemplo de `/quiero-ser-monitor`. Lo arma
+// `src/lib/plazos/ejemplo-de-ganancia.ts`, y la página de esa ruta es la única que lo llama (regla H).
 //
 // Antes, la prohibición estaba repartida en comentarios y en unas 15 pruebas de pantallas que ya existían. Esta guarda
 // vigila lo que importa: que ninguna pantalla, correo ni consulta NUEVA reciba la comisión sin que una prueba se ponga en rojo.
@@ -23,7 +25,7 @@ const RAIZ = join(__dirname, "..");
 const SRC = join(RAIZ, "src");
 
 type Fuente = { ruta: string; texto: string };
-type Regla = "A" | "B" | "C" | "D" | "E" | "F" | "G";
+type Regla = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H";
 type Hallazgo = { regla: Regla; ruta: string; detalle: string };
 
 /** Todos los .ts y .tsx de una carpeta, sin las pruebas. */
@@ -66,6 +68,12 @@ const REGLA_GENERAL = "src/lib/plazos/regla-general";
 const USA_LA_REGLA_GENERAL = "src/app/(cuentas)/monitores/registro/page.tsx";
 const FUNCIONES_DE_LA_REGLA_GENERAL = new Set(["describirReglaDeComision", "textoDeLaReglaDeComision"]);
 const puedeUsarLaReglaGeneral = (ruta: string) => ruta.startsWith(FUERA_DE_LOS_CALCULOS) || ruta === USA_LA_REGLA_GENERAL;
+
+/** El ejemplo de lo que recibe el monitor (HU-121, D-87): el módulo que lo arma, quién puede usarlo y con qué nombres. */
+const EJEMPLO_DE_GANANCIA = "src/lib/plazos/ejemplo-de-ganancia";
+const USA_EL_EJEMPLO = "src/app/quiero-ser-monitor/page.tsx";
+const FUNCIONES_DEL_EJEMPLO = new Set(["calcularEjemploDeGanancia", "cargarEjemploDeGanancia"]);
+const puedeUsarElEjemplo = (ruta: string) => ruta.startsWith(FUERA_DE_LOS_CALCULOS) || ruta === USA_EL_EJEMPLO;
 
 // ---------------------------------------------------------------------------
 // El escáner: una función pura que recibe una ruta y un texto
@@ -154,7 +162,7 @@ function nacioEnDesembolso(llamada: ts.CallExpression): boolean {
 const esDeCliente = (archivo: ts.SourceFile) =>
   archivo.statements.some((s) => ts.isExpressionStatement(s) && ts.isStringLiteral(s.expression) && s.expression.text === "use client");
 
-/** Revisa un archivo contra las reglas A a F de D-59 y la G de HU-096. Vacío si cumple. */
+/** Revisa un archivo contra las reglas A a F de D-59, la G de HU-096 y la H de HU-121. Vacío si cumple. */
 function revisar(fuente: Fuente): Hallazgo[] {
   const { ruta } = fuente;
   const archivo = analizar(fuente);
@@ -183,6 +191,12 @@ function revisar(fuente: Fuente): Hallazgo[] {
       if (ts.isIdentifier(nodo) && FUNCIONES_DE_LA_REGLA_GENERAL.has(nodo.text)) nota("G", `usa ${nodo.text}`);
     }
 
+    // H. El ejemplo de lo que recibe el monitor (HU-121) solo lo usa /quiero-ser-monitor: nadie más lo importa ni llama sus funciones.
+    if (!puedeUsarElEjemplo(ruta)) {
+      if (destino !== null && destino.replace(/\.tsx?$/, "") === EJEMPLO_DE_GANANCIA) nota("H", `importa ${especificador}`);
+      if (ts.isIdentifier(nodo) && FUNCIONES_DEL_EJEMPLO.has(nodo.text)) nota("H", `usa ${nodo.text}`);
+    }
+
     // D. Nadie calcula la comisión fuera del motor de plazos.
     if (ts.isIdentifier(nodo) && CALCULOS_DE_COMISION.has(nodo.text) && !ruta.startsWith(FUERA_DE_LOS_CALCULOS)) nota("D", `usa ${nodo.text}`);
 
@@ -195,7 +209,7 @@ function revisar(fuente: Fuente): Hallazgo[] {
   return hallazgos;
 }
 
-// `src/` se analiza una sola vez, al cargar el archivo y no dentro de cada prueba: las reglas A a G filtran lo mismo, y
+// `src/` se analiza una sola vez, al cargar el archivo y no dentro de cada prueba: las reglas A a H filtran lo mismo, y
 // con el equipo cargado cada pasada de la API de TypeScript pasaba de los 5 s que tiene una prueba (HU-098).
 const HALLAZGOS: readonly Hallazgo[] = archivos.flatMap(revisar);
 const hallazgosDe = (regla: Regla) => HALLAZGOS.filter((h) => h.regla === regla).map((h) => `${h.ruta}: ${h.detalle}`);
@@ -231,6 +245,10 @@ describe("la comisión solo se muestra en /monitor/desembolsos y la regla genera
 
   it("G. solo la página del registro del monitor usa la regla general (HU-096): nadie más importa regla-general ni llama sus funciones", () => {
     expect(hallazgosDe("G")).toEqual([]);
+  });
+
+  it("H. solo la página de /quiero-ser-monitor usa el ejemplo de lo que recibe el monitor (HU-121, D-87): nadie más importa ejemplo-de-ganancia ni llama sus funciones", () => {
+    expect(hallazgosDe("H")).toEqual([]);
   });
 
   it("la lista de lugares permitidos para la palabra no se pudre: cada entrada existe, tiene motivo y se usa", () => {
@@ -292,7 +310,19 @@ describe("los controles de la guarda (G2.G)", () => {
     expect(revisar(plantillas!)).toEqual([]);
   });
 
+  it("control positivo (HU-121): la página de /quiero-ser-monitor usa el ejemplo, y la landing no dice la palabra", () => {
+    const pagina = archivos.find((a) => a.ruta === USA_EL_EJEMPLO)!;
+    expect(pagina.texto).toContain("cargarEjemploDeGanancia");
+    expect(revisar(pagina)).toEqual([]);
+    expect(revisar({ ruta: "src/app/(publico)/page.tsx", texto: pagina.texto }).some((h) => h.regla === "H")).toBe(true);
+    for (const a of archivos.filter((x) => x.ruta.startsWith("src/components/portada/"))) expect(revisar(a), a.ruta).toEqual([]);
+  });
+
   const MALAS: [string, Fuente, Regla][] = [
+    ["el ejemplo importado en la landing de estudiantes", { ruta: "src/app/(publico)/page.tsx", texto: 'import { cargarEjemploDeGanancia } from "@/lib/plazos/ejemplo-de-ganancia";' }, "H"],
+    ["el ejemplo importado en un componente de la portada", { ruta: "src/components/portada/AgendaDeMuestra.tsx", texto: 'import { calcularEjemploDeGanancia } from "../../lib/plazos/ejemplo-de-ganancia";' }, "H"],
+    ["el ejemplo en el panel del monitor, por import dinámico", { ruta: "src/app/monitor/agenda/page.tsx", texto: 'export async function f() { return import("@/lib/plazos/ejemplo-de-ganancia"); }' }, "H"],
+    ["calcularMontoNeto en la landing de monitores", { ruta: "src/components/portada/PortadaDeMonitores.tsx", texto: 'import { calcularMontoNeto } from "@/lib/plazos/motor";' }, "D"],
     ["un literal «Comisión» en la agenda del monitor", { ruta: "src/app/monitor/agenda/x.tsx", texto: 'export const x = "Comisión";' }, "C"],
     ["«COMISIÓN» en mayúsculas", { ruta: "src/lib/admin/x.ts", texto: 'export const x = "COMISIÓN";' }, "C"],
     ["«comision» sin tilde", { ruta: "src/lib/admin/x.ts", texto: 'export const x = "comision";' }, "C"],
@@ -334,6 +364,7 @@ describe("los controles de la guarda (G2.G)", () => {
   });
 
   const BUENAS: [string, Fuente][] = [
+    ["la página de /quiero-ser-monitor usando el ejemplo", { ruta: "src/app/quiero-ser-monitor/page.tsx", texto: 'import { cargarEjemploDeGanancia } from "@/lib/plazos/ejemplo-de-ganancia"; export const f = cargarEjemploDeGanancia;' }],
     ["la palabra en un comentario de línea", { ruta: "src/app/monitor/agenda/x.ts", texto: "// La comisión y el bruto no se muestran aquí.\nexport const x = 1;" }],
     ["la palabra en un comentario de bloque", { ruta: "src/lib/admin/x.ts", texto: "/** Nunca la comisión ni el bruto (CLAUDE.md). */\nexport const x = 1;" }],
     ["la palabra en un comentario dentro de JSX", { ruta: "src/app/admin/x/Componente.tsx", texto: "export function X() { return <p>{/* comisión */}Hola</p>; }" }],
@@ -372,5 +403,7 @@ describe("CLAUDE.md y el README nombran la excepción de la comisión (D-59, G4)
     expect(lineas, `${nombre}: la regla de las cifras de comisión`).toHaveLength(1);
     expect(lineas[0], nombre).toContain("/monitor/desembolsos");
     expect(lineas[0], nombre).toContain("D-59");
+    expect(lineas[0], nombre).toContain("D-87");
+    expect(lineas[0], nombre).toContain("/quiero-ser-monitor");
   });
 });

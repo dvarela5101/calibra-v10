@@ -4,7 +4,7 @@ import { expect, test, type Page } from "@playwright/test";
 // e2e/solicitudes.spec.ts). Corre en `movil` (390x844) y `escritorio` (1280x800). No necesita sesión ni datos propios.
 
 const ESPERA = { timeout: 20_000 };
-const H1 = "Monitorías de ciclo básico donde ya sabes qué explicar.";
+const H1 = "Gana plata enseñando lo que ya dominas, y llega sabiendo qué explicar.";
 const CTA = "Quiero ser monitor";
 
 async function abrir(page: Page) {
@@ -20,7 +20,7 @@ test.describe("HU-109 · la landing de monitores", () => {
   test("sin hacer scroll: el titular, el subtítulo y el CTA; en escritorio, también la agenda", async ({ page }) => {
     await abrir(page);
     await expect(page).toHaveTitle("Quiero ser monitor · Calibra");
-    await expect(page.getByText("Antes de la sesión ves el diagnóstico de tu estudiante", { exact: false })).toBeInViewport();
+    await expect(page.getByText("Tú pones tus horarios y tu precio.", { exact: false })).toBeInViewport();
     const cta = page.getByRole("main").getByRole("link", { name: CTA, exact: true }).first();
     await expect(cta).toBeInViewport();
     await expect(cta).toHaveAttribute("href", "#solicitud");
@@ -35,6 +35,7 @@ test.describe("HU-109 · la landing de monitores", () => {
     const esperados = [
       "Tus próximas monitorías",
       "Dar monitorías por tu cuenta es más trabajo que enseñar.",
+      "Cuánto recibirías con tres monitorías a la semana",
       "Cómo llegas a tu primera monitoría",
       "Tú enseñas. Lo demás lo hace Calibra.",
       "Preguntas frecuentes",
@@ -68,6 +69,42 @@ test.describe("HU-109 · la landing de monitores", () => {
     const diagnostico = page.locator('[aria-live="polite"]').filter({ hasText: "Diagnóstico de Santiago" });
     await expect(diagnostico.locator("ellipse")).toHaveCount(1);
     await expect(diagnostico.locator("li").filter({ hasText: "Leyes de Newton" }).locator("ellipse")).toHaveCount(1);
+  });
+
+  test("HU-121: la tarjeta dice cuánto se recibe y, al cambiar de monitoría, los montos no cambian", async ({ page }) => {
+    await abrir(page);
+    const textos = () => monitorias(page).allInnerTexts();
+    const antes = await textos();
+    for (const [i, monto] of [[0, "22.500"], [1, "31.500"], [2, "27.000"]] as const) {
+      expect(antes[i]).toContain(monto);
+    }
+    const total = page.getByText("Por estas tres monitorías recibes");
+    await expect(total).toContainText("81.000");
+    await expect(page.getByText("Ejemplo con precios de muestra")).toBeVisible();
+
+    if (!esMovil(page)) {
+      for (const el of [monitorias(page).nth(2), total, page.locator('[aria-live="polite"] li').first()]) await expect(el).toBeInViewport({ ratio: 1 });
+      await expect(ctas(page).first()).toBeInViewport({ ratio: 1 });
+    }
+
+    await monitorias(page).nth(1).click();
+    await expect(page.getByText("Diagnóstico de Santiago · Física I")).toBeVisible();
+    expect(await textos()).toEqual(antes);
+    await expect(total).toContainText("81.000");
+  });
+
+  test("HU-121: la sección del ejemplo suma lo que se recibe y dice que es una muestra, sin desglose de la parte de Calibra", async ({ page }) => {
+    await abrir(page);
+    const seccion = page.getByRole("region", { name: "Cuánto recibirías con tres monitorías a la semana" });
+    await expect(seccion.getByRole("row", { name: /A la semana/ })).toContainText("81.000");
+    await expect(seccion.getByRole("row", { name: /En cuatro semanas/ })).toContainText("324.000");
+    await expect(seccion).toContainText("Los precios son de muestra y cada monitor pone los suyos.");
+    await expect(seccion).toContainText("depende de cuántos estudiantes te agenden");
+
+    const texto = await page.locator("body").innerText();
+    expect(texto).not.toMatch(/bruto|garantiza|mínimo de estudiantes/i);
+    // Ninguna cifra de lo que se queda Calibra: 2.500, 3.500 y 3.000 son lo que le queda por cada precio de muestra.
+    expect(texto).not.toMatch(/\$\s?(2\.500|3\.500|3\.000|9\.000|36\.000|15\.000)\b/);
   });
 
   test("con movimiento reducido, el trazo aparece sin animación", async ({ page }) => {
@@ -119,6 +156,19 @@ test.describe("HU-109 · la landing de monitores", () => {
     await expect(barra).toBeHidden();
     await page.getByRole("heading", { name: "Preguntas frecuentes" }).scrollIntoViewIfNeeded();
     await expect(barra).toBeVisible();
+  });
+
+  test("HU-121: en el teléfono, la tarjeta y la cuenta no se salen de la pantalla", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await abrir(page);
+    for (const el of [page.getByRole("heading", { name: "Tus próximas monitorías" }), page.getByRole("table")]) {
+      await el.scrollIntoViewIfNeeded();
+      const caja = await el.boundingBox();
+      expect(caja!.x).toBeGreaterThanOrEqual(0);
+      expect(caja!.x + caja!.width).toBeLessThanOrEqual(390);
+    }
+    const anchos = await monitorias(page).evaluateAll((botones) => botones.map((b) => b.scrollWidth - b.clientWidth));
+    expect(Math.max(...anchos)).toBeLessThanOrEqual(0);
   });
 
   test("respeta las reglas del producto: nada se sale de la pantalla, sin texto menor de 14 px ni degradados", async ({ page }) => {

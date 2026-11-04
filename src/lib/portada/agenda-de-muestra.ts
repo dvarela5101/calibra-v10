@@ -15,8 +15,13 @@ export type HabilidadDeMuestra = {
 
 export type MonitoriaDeMuestra = {
   clave: string;
+  /** Como se lee en la tarjeta del hero: «Mar». */
   dia: string;
+  /** Como se lee en «Tus horarios»: «Martes». */
+  diaCompleto: string;
   hora: string;
+  /** El precio de muestra de la monitoría, en pesos: de él salen «Tus horarios» y el ejemplo de lo que se recibe (HU-121). */
+  precio: number;
   estudiante: string;
   materia: string;
   /** La carpeta de la materia en `contenido/`. */
@@ -30,7 +35,9 @@ export const AGENDA_DE_MUESTRA: MonitoriaDeMuestra[] = [
   {
     clave: "laura",
     dia: "Mar",
+    diaCompleto: "Martes",
     hora: "4:00 p. m.",
+    precio: 25_000,
     estudiante: "Laura",
     materia: "Cálculo Diferencial",
     carpeta: "calculo-diferencial",
@@ -54,7 +61,9 @@ export const AGENDA_DE_MUESTRA: MonitoriaDeMuestra[] = [
   {
     clave: "santiago",
     dia: "Mié",
+    diaCompleto: "Miércoles",
     hora: "6:00 p. m.",
+    precio: 35_000,
     estudiante: "Santiago",
     materia: "Física I",
     carpeta: "fisica-1",
@@ -68,8 +77,10 @@ export const AGENDA_DE_MUESTRA: MonitoriaDeMuestra[] = [
   },
   {
     clave: "camila",
-    dia: "Sáb",
+    dia: "Dom",
+    diaCompleto: "Domingo",
     hora: "10:00 a. m.",
+    precio: 30_000,
     estudiante: "Camila",
     materia: "Álgebra Lineal",
     carpeta: "algebra-lineal",
@@ -86,6 +97,17 @@ export const AGENDA_DE_MUESTRA: MonitoriaDeMuestra[] = [
     },
   },
 ];
+
+/**
+ * HU-121 (D-87 b): lo que recibe el monitor en el ejemplo, ya calculado en el servidor. Solo netos: ni el precio al lado, ni el
+ * porcentaje, ni el tope.
+ */
+export type GananciaDeMuestra = {
+  /** Lo que recibe por cada monitoría, por su `clave`. */
+  porMonitoria: Record<string, number>;
+  porSemana: number;
+  porCuatroSemanas: number;
+};
 
 /** El error como se lee en la tarjeta: con mayúscula y punto, como en el resultado. */
 export const textoDelError = (descripcion: string) => `${descripcion.charAt(0).toUpperCase()}${descripcion.slice(1)}.`;
