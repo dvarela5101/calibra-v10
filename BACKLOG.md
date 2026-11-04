@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-11-03 20:44. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-11-03 20:57. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -28,27 +28,7 @@ _Generado automaticamente: 2026-11-03 20:44. No editar a mano; usa `scripts/back
 | [HU-122](backlog/HU-122.md) | Fondo de las landings: quitar el beige y agregar una animación de fondo | Lista | P2 | M | HU-108, HU-109 |
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | En progreso | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056, HU-084, HU-089, HU-095, HU-096, HU-097, HU-091, HU-103 |
 | [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
-| [HU-105](backlog/HU-105.md) | Selector del diagnóstico como el prototipo: tarjetas sin radio, elegir siempre la Evaluación y botón «Ver monitores sin hacer la prueba» | En revision | P0 | S | HU-009 |
-| [HU-106](backlog/HU-106.md) | Acceso visible en la cabecera (Iniciar sesión / Registrarse) e invitar a un monitor desde su solicitud | En revision | P0 | M |  |
-| [HU-107](backlog/HU-107.md) | El monitor pone el enlace o el lugar de cada monitoría desde su agenda | En revision | P0 | M |  |
-| [HU-120](backlog/HU-120.md) | El QR del pago por Llave es opcional | En revision | P0 | S |  |
-| [HU-099](backlog/HU-099.md) | [Contenido] Revisar los borradores de HU-091 y activar Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | En revision | P1 | S | HU-091 |
-| [HU-100](backlog/HU-100.md) | [Contenido] Revisar los borradores del Parcial 1 de Cálculo Diferencial y activarlo | En revision | P1 | M | HU-061 |
-| [HU-101](backlog/HU-101.md) | [Contenido] Parciales 2 y 3 de Cálculo Diferencial: borradores y revisión | En revision | P1 | L | HU-100 |
-| [HU-102](backlog/HU-102.md) | [Contenido] Completar el Parcial 2 de Cálculo Integral: soluciones, preguntas que faltan y revisión | En revision | P1 | L | HU-100 |
-| [HU-104](backlog/HU-104.md) | [Técnica] Que un fallo de red con Cloudflare no tumbe las pruebas de integración del CAPTCHA | En revision | P1 | XS | HU-058 |
-| [HU-108](backlog/HU-108.md) | Landing de la portada: pregunta de muestra, una sola acción y medición de conversión | En revision | P1 | L | HU-011, HU-106 |
-| [HU-109](backlog/HU-109.md) | Landing en dos columnas y landing de monitores en /quiero-ser-monitor | En revision | P1 | L | HU-062, HU-108 |
-| [HU-110](backlog/HU-110.md) | El resultado del diagnóstico empieza con un resumen visual, para el estudiante y para el monitor | En revision | P1 | M | HU-009, HU-022 |
-| [HU-114](backlog/HU-114.md) | [Contenido] Revisar los borradores de TIC (HU-113) y activar las Evaluaciones de los Parciales 3 y 4 | En revision | P1 | S | HU-113 |
-| [HU-115](backlog/HU-115.md) | Diagnóstico más corto (tope de 10) y opción «No sé» (primero en TIC) | En revision | P1 | L |  |
-| [HU-116](backlog/HU-116.md) | Monitoría de prueba gratis: el admin la marca y el estudiante ve «Gratis» | En revision | P1 | M |  |
-| [HU-117](backlog/HU-117.md) | Contenido: Introducción a la Programación (ISIS-1221), Evaluación del examen de nivel 3 | En revision | P1 | L |  |
-| [HU-118](backlog/HU-118.md) | Dibujar el código en línea (entre acentos graves) en el texto del banco | En revision | P1 | S |  |
-| [HU-119](backlog/HU-119.md) | Franja de prueba: el admin la marca y la reserva nace confirmada y gratis | En revision | P1 | M |  |
 | [HU-124](backlog/HU-124.md) | [Admin] Ver en mi bandeja a quién contactar para certificarlo | En revision | P1 | M | HU-012, HU-013, HU-014, HU-062 |
-| [HU-111](backlog/HU-111.md) | La solicitud para ser monitor deja escribir una materia que no está en la lista, y el admin la ve | En revision | P2 | XS | HU-062 |
-| [HU-112](backlog/HU-112.md) | El resumen del resultado deja abrir ahí mismo los errores detectados | En revision | P2 | XS | HU-110 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
 | [HU-002](backlog/HU-002.md) | [Técnica] Esquema de base de datos del modelo v10 con políticas de acceso | Hecha | P0 | L | HU-001 |
 | [HU-003](backlog/HU-003.md) | [Técnica] Motor de plazos y montos derivados con pruebas de casos límite | Hecha | P0 | M | HU-002 |
@@ -90,6 +70,10 @@ _Generado automaticamente: 2026-11-03 20:44. No editar a mano; usa `scripts/back
 | [HU-083](backlog/HU-083.md) | [Técnica] Dibujar fórmulas y código del banco de preguntas | Hecha | P0 | S | HU-005 |
 | [HU-087](backlog/HU-087.md) | [Técnica] Ampliar la autorización y el aviso de privacidad a las respuestas del diagnóstico | Hecha | P0 | S | HU-008, HU-068 |
 | [HU-103](backlog/HU-103.md) | [Técnica] Cargar el banco de preguntas en la base de la nube | Hecha | P0 | S | HU-055 |
+| [HU-105](backlog/HU-105.md) | Selector del diagnóstico como el prototipo: tarjetas sin radio, elegir siempre la Evaluación y botón «Ver monitores sin hacer la prueba» | Hecha | P0 | S | HU-009 |
+| [HU-106](backlog/HU-106.md) | Acceso visible en la cabecera (Iniciar sesión / Registrarse) e invitar a un monitor desde su solicitud | Hecha | P0 | M |  |
+| [HU-107](backlog/HU-107.md) | El monitor pone el enlace o el lugar de cada monitoría desde su agenda | Hecha | P0 | M |  |
+| [HU-120](backlog/HU-120.md) | El QR del pago por Llave es opcional | Hecha | P0 | S |  |
 | [HU-031](backlog/HU-031.md) | [Lead] Recuperar mis resultados desde otro dispositivo con un enlace | Hecha | P1 | M | HU-006, HU-009, HU-010, HU-081 |
 | [HU-032](backlog/HU-032.md) | [Estudiante] Crear mi cuenta de Estudiante sin perder mis diagnósticos ni citas | Hecha | P1 | M | HU-004, HU-019, HU-068 |
 | [HU-034](backlog/HU-034.md) | [Admin] Revisar pagos desde una bandeja común y avisar a todos los admins cuando llega uno | Hecha | P1 | M | HU-020, HU-006, HU-054, HU-065, HU-074, HU-077 |
@@ -114,7 +98,21 @@ _Generado automaticamente: 2026-11-03 20:44. No editar a mano; usa `scripts/back
 | [HU-095](backlog/HU-095.md) | [Técnica] Cerrar la lectura de diagnósticos a la sesión que los hizo y a la cuenta de Estudiante de su Lead (D-53 e) | Hecha | P1 | S | HU-009, HU-081 |
 | [HU-096](backlog/HU-096.md) | [Monitor] Saber la comisión de Calibra al registrarme | Hecha | P1 | XS | HU-050 |
 | [HU-097](backlog/HU-097.md) | [Técnica] Códigos vigentes de Física I y Física II (FISI-1518 y FISI-1528) | Hecha | P1 | XS | HU-055 |
+| [HU-099](backlog/HU-099.md) | [Contenido] Revisar los borradores de HU-091 y activar Física I, Álgebra Lineal, Cálculo Vectorial y Probabilidad | Hecha | P1 | S | HU-091 |
+| [HU-100](backlog/HU-100.md) | [Contenido] Revisar los borradores del Parcial 1 de Cálculo Diferencial y activarlo | Hecha | P1 | M | HU-061 |
+| [HU-101](backlog/HU-101.md) | [Contenido] Parciales 2 y 3 de Cálculo Diferencial: borradores y revisión | Hecha | P1 | L | HU-100 |
+| [HU-102](backlog/HU-102.md) | [Contenido] Completar el Parcial 2 de Cálculo Integral: soluciones, preguntas que faltan y revisión | Hecha | P1 | L | HU-100 |
+| [HU-104](backlog/HU-104.md) | [Técnica] Que un fallo de red con Cloudflare no tumbe las pruebas de integración del CAPTCHA | Hecha | P1 | XS | HU-058 |
+| [HU-108](backlog/HU-108.md) | Landing de la portada: pregunta de muestra, una sola acción y medición de conversión | Hecha | P1 | L | HU-011, HU-106 |
+| [HU-109](backlog/HU-109.md) | Landing en dos columnas y landing de monitores en /quiero-ser-monitor | Hecha | P1 | L | HU-062, HU-108 |
+| [HU-110](backlog/HU-110.md) | El resultado del diagnóstico empieza con un resumen visual, para el estudiante y para el monitor | Hecha | P1 | M | HU-009, HU-022 |
 | [HU-113](backlog/HU-113.md) | Contenido: TIC (ISIS-1311), materia nueva con mapa completo y preguntas de los Parciales 3 y 4 | Hecha | P1 | L |  |
+| [HU-114](backlog/HU-114.md) | [Contenido] Revisar los borradores de TIC (HU-113) y activar las Evaluaciones de los Parciales 3 y 4 | Hecha | P1 | S | HU-113 |
+| [HU-115](backlog/HU-115.md) | Diagnóstico más corto (tope de 10) y opción «No sé» (primero en TIC) | Hecha | P1 | L |  |
+| [HU-116](backlog/HU-116.md) | Monitoría de prueba gratis: el admin la marca y el estudiante ve «Gratis» | Hecha | P1 | M |  |
+| [HU-117](backlog/HU-117.md) | Contenido: Introducción a la Programación (ISIS-1221), Evaluación del examen de nivel 3 | Hecha | P1 | L |  |
+| [HU-118](backlog/HU-118.md) | Dibujar el código en línea (entre acentos graves) en el texto del banco | Hecha | P1 | S |  |
+| [HU-119](backlog/HU-119.md) | Franja de prueba: el admin la marca y la reserva nace confirmada y gratis | Hecha | P1 | M |  |
 | [HU-049](backlog/HU-049.md) | [Monitor] Administrar mi perfil | Hecha | P2 | M | HU-013, HU-016, HU-069 |
 | [HU-052](backlog/HU-052.md) | [Admin] Autorizar una cancelación fuera de plazo en casos extremos | Hecha | P2 | M | HU-024, HU-026 |
 | [HU-053](backlog/HU-053.md) | [Admin] Gestionar leads | Hecha | P2 | M | HU-012, HU-068 |
@@ -128,4 +126,6 @@ _Generado automaticamente: 2026-11-03 20:44. No editar a mano; usa `scripts/back
 | [HU-073](backlog/HU-073.md) | [Lead] Decir en el aviso de privacidad que guardamos la calificación y el comentario de cada monitoría | Hecha | P2 | XS | HU-035, HU-008 |
 | [HU-079](backlog/HU-079.md) | [Técnica] Unificar los procesadores de la bandeja de salida de correos | Hecha | P2 | S | HU-019, HU-024, HU-025, HU-030, HU-035, HU-051, HU-076, HU-080 |
 | [HU-089](backlog/HU-089.md) | [Admin] Registrar que un Lead pidió no recibir más mensajes | Hecha | P2 | S | HU-053 |
+| [HU-111](backlog/HU-111.md) | La solicitud para ser monitor deja escribir una materia que no está en la lista, y el admin la ve | Hecha | P2 | XS | HU-062 |
+| [HU-112](backlog/HU-112.md) | El resumen del resultado deja abrir ahí mismo los errores detectados | Hecha | P2 | XS | HU-110 |
 | [HU-098](backlog/HU-098.md) | [Técnica] Acelerar las pruebas de Vitest que recorren todo el repo | Hecha | P3 | XS | HU-050 |
