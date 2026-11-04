@@ -34,7 +34,7 @@ export default async function PanelAdmin({ searchParams }: PageProps<"/admin">) 
     <Pantalla
       eyebrow="Administración"
       titulo={admin ? `Hola, ${admin.nombre}` : "Hola"}
-      subtitulo="Esto es lo que tienes asignado."
+      subtitulo="Esto es lo que tienes pendiente."
     >
       {aviso && (
         <p role={aviso.exito ? "status" : "alert"} className={aviso.exito ? formulario.exito : formulario.error}>
