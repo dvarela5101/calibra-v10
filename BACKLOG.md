@@ -1,11 +1,13 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-11-03 18:52. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-11-03 19:28. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
 | [HU-086](backlog/HU-086.md) | [Estudiante] Ligar a mi cita un diagnóstico hecho después de agendar | Backlog | P1 | M | HU-022, HU-019 |
 | [HU-121](backlog/HU-121.md) | Landing de monitores: mostrar cuánto puede ganar el monitor | Backlog | P1 | M | HU-109 |
+| [HU-123](backlog/HU-123.md) | [Monitor] Rediseñar mi panel: dejar la lista de enlaces y ver lo importante de un vistazo | Backlog | P1 | L | HU-021, HU-049, HU-050 |
+| [HU-124](backlog/HU-124.md) | [Admin] Ver en mi bandeja a quién contactar para certificarlo | Backlog | P1 | M | HU-012, HU-013, HU-014, HU-062 |
 | [HU-088](backlog/HU-088.md) | [Estudiante] Ver la calificación y las reseñas del monitor en su tarjeta | Backlog | P2 | M | HU-049, HU-035 |
 | [HU-090](backlog/HU-090.md) | [Admin] Registrar desde la gestión de leads el retiro de la autorización de datos | Backlog | P2 | S | HU-053, HU-085 |
 | [HU-122](backlog/HU-122.md) | Fondo de las landings: quitar el beige y agregar una animación de fondo | Backlog | P2 | M | HU-108, HU-109 |
