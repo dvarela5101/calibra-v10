@@ -548,6 +548,9 @@ test("Vuelve · desde el mismo navegador ve su último diagnóstico con las cifr
   await expectResultadoDeEjemplo(page, materia, evaluacion);
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
   await expect(page.getByRole("link", { name: "Hacer mi diagnóstico gratis", exact: true }), "no pinta la landing debajo").toHaveCount(0);
+  // HU-122: esta portada no es una landing: conserva el fondo de la app y no lleva los trazos.
+  await expect(page.locator("[data-fondo-animado], [data-curva]")).toHaveCount(0);
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(255, 253, 245)");
   await expectLasSalidas(page, materia);
 
   // Lo que recibió el navegador: las páginas y los payloads de Next. Ni lo de adentro de la fila ni las copias de las preguntas.

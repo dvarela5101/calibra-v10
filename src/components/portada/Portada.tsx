@@ -5,6 +5,7 @@ import type { ParametrosNegocio } from "@/lib/plazos/parametros";
 import { respuestaDeCancelar, respuestaDeCuenta, textoDelBeneficioDeCancelar } from "@/lib/portada/textos";
 import { RUTA_SER_MONITOR } from "@/lib/solicitudes/reglas";
 import { EnlaceConEvento } from "./EnlaceConEvento";
+import { CurvaDeFondo, FondoAnimado } from "./FondoAnimado";
 import { Beneficio, CabeceraDeLaPortada, Paso, PieDeLaPortada, Pregunta, Problema } from "./piezas";
 import { PreguntaDeMuestra } from "./PreguntaDeMuestra";
 import estilos from "./portada.module.css";
@@ -22,10 +23,11 @@ import estilos from "./portada.module.css";
 export function Portada({ parametros }: { parametros: ParametrosNegocio | null }) {
   return (
     <div className={estilos.portada} data-landing="">
+      <FondoAnimado />
       <CabeceraDeLaPortada />
 
       <main>
-        <section className={estilos.hero}>
+        <section className={`${estilos.hero} ${estilos.conCurva}`}>
           <div className={estilos.heroInterior}>
             <div className={estilos.propuesta}>
               <h1 className={estilos.titular}>Monitorías de ciclo básico que empiezan por tu error.</h1>
@@ -39,7 +41,8 @@ export function Portada({ parametros }: { parametros: ParametrosNegocio | null }
           </div>
         </section>
 
-        <section className={`${estilos.contenedor} ${estilos.seccion}`} aria-labelledby="problema">
+        <section className={`${estilos.contenedor} ${estilos.seccion} ${estilos.conCurva}`} aria-labelledby="problema">
+          <CurvaDeFondo forma="seno" clase={estilos.curvaProblema} />
           <div className={estilos.partido}>
             <h2 id="problema" className={estilos.tituloSeccion}>
               Estudiar más horas no arregla un error que no sabes que tienes.
@@ -115,7 +118,8 @@ export function Portada({ parametros }: { parametros: ParametrosNegocio | null }
           </div>
         </section>
 
-        <section className={`${estilos.contenedor} ${estilos.seccion}`} aria-labelledby="preguntas-frecuentes">
+        <section className={`${estilos.contenedor} ${estilos.seccion} ${estilos.conCurva}`} aria-labelledby="preguntas-frecuentes">
+          <CurvaDeFondo forma="parabola" clase={estilos.curvaPreguntas} />
           <div className={estilos.partido}>
             <h2 id="preguntas-frecuentes" className={estilos.tituloSeccion}>
               Preguntas frecuentes
@@ -144,7 +148,8 @@ export function Portada({ parametros }: { parametros: ParametrosNegocio | null }
           </div>
         </section>
 
-        <section className={estilos.cierre} aria-labelledby="cierre">
+        <section className={`${estilos.cierre} ${estilos.conCurva}`} aria-labelledby="cierre">
+          <CurvaDeFondo forma="exponencial" clase={estilos.curvaCierre} />
           <div className={estilos.contenedor}>
             <h2 id="cierre" className={estilos.tituloCierre}>
               Averigua qué te falla antes del próximo parcial.
