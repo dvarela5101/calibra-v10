@@ -42,7 +42,7 @@ export function Portada({ parametros }: { parametros: ParametrosNegocio | null }
         </section>
 
         <section className={`${estilos.contenedor} ${estilos.seccion} ${estilos.conCurva}`} aria-labelledby="problema">
-          <CurvaDeFondo forma="seno" clase={estilos.curvaProblema} />
+          <CurvaDeFondo forma="senoGrande" clase={estilos.curvaProblema} />
           <div className={estilos.partido}>
             <h2 id="problema" className={estilos.tituloSeccion}>
               Estudiar más horas no arregla un error que no sabes que tienes.
@@ -119,7 +119,7 @@ export function Portada({ parametros }: { parametros: ParametrosNegocio | null }
         </section>
 
         <section className={`${estilos.contenedor} ${estilos.seccion} ${estilos.conCurva}`} aria-labelledby="preguntas-frecuentes">
-          <CurvaDeFondo forma="parabola" clase={estilos.curvaPreguntas} />
+          <CurvaDeFondo forma="campana" clase={estilos.curvaPreguntas} />
           <div className={estilos.partido}>
             <h2 id="preguntas-frecuentes" className={estilos.tituloSeccion}>
               Preguntas frecuentes
@@ -149,7 +149,7 @@ export function Portada({ parametros }: { parametros: ParametrosNegocio | null }
         </section>
 
         <section className={`${estilos.cierre} ${estilos.conCurva}`} aria-labelledby="cierre">
-          <CurvaDeFondo forma="exponencial" clase={estilos.curvaCierre} />
+          <CurvaDeFondo forma="reaccion" clase={estilos.curvaCierre} />
           <div className={estilos.contenedor}>
             <h2 id="cierre" className={estilos.tituloCierre}>
               Averigua qué te falla antes del próximo parcial.

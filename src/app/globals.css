@@ -55,6 +55,12 @@ body:has([data-landing]) [data-pie-global] {
   display: none;
 }
 
+/* HU-125: con `hidden`, body cuenta como contenedor de scroll aunque nunca se mueva, y los trazos de la landing seguirían su scroll, no
+   el de la página. `clip` recorta igual sin ser contenedor. */
+body:has([data-landing]) {
+  overflow-x: clip;
+}
+
 :focus-visible {
   outline: 3px solid var(--primary);
   outline-offset: 2px;
