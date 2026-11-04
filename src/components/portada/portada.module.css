@@ -8,11 +8,164 @@
 
 .portada {
   /* Texto de cuerpo: más oscuro que --muted (que queda para notas) y siempre por encima de AA sobre --bg y --surface. */
-  --cuerpo: color-mix(in srgb, var(--text) 82%, var(--bg));
+  --cuerpo: color-mix(in srgb, var(--text) 82%, var(--surface));
   --ancho-hero: 1200px;
   --lado: clamp(16px, 4vw, 48px);
   --radio-grande: 16px;
   --sombra-flotante: 0 1px 1px color-mix(in srgb, var(--text) 4%, transparent), 0 10px 30px color-mix(in srgb, var(--text) 7%, transparent);
+
+  /* HU-122 (D-88 a): blanco con la cuadrícula en toda la página, también dentro del formulario y de las tarjetas: aquí --bg vale
+     blanco. `body` y el resto de la app conservan el suyo. */
+  --bg: var(--surface);
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+  background-color: var(--surface);
+  background-image: var(--papel-cuadriculado);
+  background-position: -1px -1px;
+}
+
+/* HU-122: los trazos, detrás de todo (z-index en el contexto de .portada) y recortados por ella para que no amplíen el ancho. Las
+   curvas se dibujan una vez y después solo se mueven los símbolos, con transform. Ver FondoAnimado.tsx. */
+
+.fondoAnimado {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: clip;
+  pointer-events: none;
+}
+
+.trazoDeFondo {
+  position: absolute;
+  max-inline-size: none; /* globals.css limita todo svg al 100 % de su caja */
+  fill: none;
+  stroke: var(--marca);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.conCurva {
+  position: relative;
+}
+
+.curvaDeFondo {
+  z-index: -1;
+  pointer-events: none;
+  stroke-opacity: 0.32;
+}
+
+.curvaDeFondo path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: trazar 2400ms cubic-bezier(0.45, 0.05, 0.25, 1) 200ms forwards;
+}
+
+.curvaDeFondo path:nth-child(2) {
+  animation-delay: 700ms;
+}
+
+.curvaDeFondo path:nth-child(3) {
+  animation-delay: 1400ms;
+}
+
+.simboloDeFondo {
+  stroke-opacity: 0.3;
+  animation: flotar 26s ease-in-out infinite alternate;
+}
+
+.simboloDeFondo:nth-of-type(even) {
+  animation-duration: 34s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes flotar {
+  from {
+    transform: translate3d(0, 0, 0) rotate(-3deg);
+  }
+
+  to {
+    transform: translate3d(8px, -18px, 0) rotate(4deg);
+  }
+}
+
+/* Cada curva, en el espacio libre de su sección: debajo del título, o a un lado en el cierre. */
+
+.curvaHero {
+  inset-block-end: 40px;
+  inset-inline-start: max(var(--lado), calc((100% - var(--ancho-hero)) / 2 + var(--lado)));
+  inline-size: 340px;
+}
+
+.curvaProblema {
+  inset-block-end: -96px;
+  inset-inline-start: var(--lado);
+  inline-size: 430px;
+}
+
+.curvaPreguntas {
+  inset-block-end: -72px;
+  inset-inline-start: calc(var(--lado) + 24px);
+  inline-size: 280px;
+}
+
+.curvaCierre {
+  inset-block-end: 40px;
+  inset-inline-end: max(var(--lado), calc((100% - var(--ancho-hero)) / 2 + var(--lado)));
+  inline-size: 200px;
+}
+
+.curvaSolicitud {
+  inset-block-end: clamp(72px, 10vw, 120px);
+  inset-inline-start: calc(var(--lado) + 24px);
+  inline-size: 340px;
+}
+
+/* Los símbolos, en los márgenes, en proporción a la altura de la página. */
+
+.simboloIntegral {
+  inset-block-start: 130px;
+  inset-inline-start: 1.5%;
+  inline-size: 40px;
+}
+
+.simboloSuma {
+  inset-block-start: 15%;
+  inset-inline-start: 1.5%;
+  inline-size: 56px;
+}
+
+.simboloPi {
+  inset-block-start: 45%;
+  inset-inline-end: 1.2%;
+  inline-size: 60px;
+}
+
+.simboloRaiz {
+  inset-block-start: 36%;
+  inset-inline-start: 1%;
+  inline-size: 76px;
+}
+
+.simboloDelta {
+  inset-block-start: 68%;
+  inset-inline-end: 1.5%;
+  inline-size: 56px;
+}
+
+.simboloInfinito {
+  inset-block-start: 90%;
+  inset-inline-start: 2%;
+  inline-size: 80px;
+}
+
+/* En un teléfono o una tablet angosta el contenido ocupa todo el ancho: solo queda la cuadrícula. */
+@media (max-width: 959px) {
+  .fondoAnimado,
+  .curvaDeFondo {
+    display: none;
+  }
 }
 
 /* Cabecera: solo la marca y el acceso (D-77 a), sin menú. */
@@ -69,9 +222,6 @@
 /* Hero: propuesta de valor, CTA y la pregunta de muestra, sin hacer scroll. */
 
 .hero {
-  background-color: var(--bg);
-  background-image: var(--papel-cuadriculado);
-  background-position: -1px -1px;
   border-block-end: 1px solid var(--border);
 }
 
@@ -570,7 +720,7 @@
 
 .vistaErrores {
   padding: 18px 22px 22px;
-  background: var(--bg);
+  background: var(--surface);
   border-block-start: 1px solid var(--border);
 }
 
@@ -659,9 +809,6 @@
   margin-block-start: clamp(80px, 11vw, 144px);
   padding-block: clamp(80px, 10vw, 128px);
   text-align: center;
-  background-color: var(--bg);
-  background-image: var(--papel-cuadriculado);
-  background-position: -1px -1px;
   border-block-start: 1px solid var(--border);
 }
 
@@ -718,7 +865,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .botonBorde:hover {
-    background: var(--bg);
+    background: color-mix(in srgb, var(--primary) 5%, var(--surface));
   }
 }
 
@@ -1054,7 +1201,7 @@
     z-index: 1;
     display: block;
     padding: var(--e3) var(--e4) max(var(--e3), env(safe-area-inset-bottom));
-    background: color-mix(in srgb, var(--bg) 96%, transparent);
+    background: color-mix(in srgb, var(--surface) 96%, transparent);
     border-block-start: 1px solid var(--border);
   }
 
@@ -1089,5 +1236,15 @@
   .trazo ellipse {
     animation: none;
     stroke-dashoffset: 0;
+  }
+
+  /* HU-122: la decoración quieta y completa. */
+  .curvaDeFondo path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+
+  .simboloDeFondo {
+    animation: none;
   }
 }
