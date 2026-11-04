@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
-// HU-122 (D-88): el fondo blanco con la cuadrícula y la capa de trazos, solo en las dos landings. Corre en `movil` (390x844) y
-// `escritorio` (1280x800). No necesita sesión: el alta anónima se bloquea para no dejar usuarios en el Supabase local.
+// HU-122 (D-88) y HU-125: el fondo blanco con la cuadrícula y los trazos que se dibujan con el scroll, solo en las dos landings. Corre
+// en `movil` (390x844) y `escritorio` (1280x800). No necesita sesión: el alta anónima se bloquea para no dejar usuarios en el Supabase local.
 
 const ESPERA = { timeout: 20_000 };
 const BLANCO = "rgb(255, 255, 255)";
@@ -19,6 +19,25 @@ async function abrir(page: Page, ruta: string) {
 const capa = (page: Page) => page.locator("[data-fondo-animado]");
 const curvas = (page: Page) => page.locator("[data-curva]");
 const esMovil = (page: Page) => (page.viewportSize()?.width ?? 0) < 960;
+
+/** Cuántos dibujos tienen todos sus trazos terminados. */
+const trazosCompletos = (page: Page) =>
+  page.evaluate(
+    () =>
+      [...document.querySelectorAll("[data-dibujo]")].filter((dibujo) =>
+        [...dibujo.querySelectorAll("path")].every((trazo) => parseFloat(getComputedStyle(trazo).strokeDashoffset) < 0.001),
+      ).length,
+  );
+
+async function bajarConLaRueda(page: Page) {
+  await page.mouse.move(640, 400);
+  await expect
+    .poll(async () => {
+      await page.mouse.wheel(0, 600);
+      return page.evaluate(() => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 1);
+    }, { timeout: 30_000, intervals: [50] })
+    .toBe(true);
+}
 
 for (const [nombre, ruta] of LANDINGS) {
   test.describe(`HU-122 · ${nombre}`, () => {
@@ -47,7 +66,7 @@ for (const [nombre, ruta] of LANDINGS) {
       }
     });
 
-    test("en escritorio las curvas se dibujan una vez y los símbolos flotan lento; en el teléfono la capa se esconde", async ({ page }) => {
+    test("HU-125: los trazos se dibujan al bajar y se borran al subir; en el teléfono la capa se esconde", async ({ page }) => {
       await abrir(page, ruta);
       if (esMovil(page)) {
         await expect(capa(page)).toBeHidden();
@@ -56,23 +75,36 @@ for (const [nombre, ruta] of LANDINGS) {
         expect(sinScroll).toBe(true);
         return;
       }
-      await expect(capa(page)).toBeAttached();
-      const curva = curvas(page).locator("path").first();
-      await expect(curva).toHaveCSS("animation-iteration-count", "1");
-      await expect(curva).toHaveCSS("stroke-dashoffset", "0px", ESPERA);
-      expect(await curvas(page).count()).toBeGreaterThanOrEqual(3);
+      const dibujos = page.locator("[data-simbolo], [data-curva]");
+      expect(await capa(page).locator("[data-simbolo]").count()).toBeGreaterThanOrEqual(30);
 
-      const simbolos = capa(page).locator("[data-simbolo]");
-      expect(await simbolos.count()).toBeGreaterThanOrEqual(4);
-      const animaciones = await simbolos.evaluateAll((els) =>
-        els.map((el) => {
-          const estilo = getComputedStyle(el);
-          return { segundos: parseFloat(estilo.animationDuration), vueltas: estilo.animationIterationCount };
-        }),
-      );
-      for (const a of animaciones) {
-        expect(a.segundos).toBeGreaterThanOrEqual(20);
-        expect(a.vueltas).toBe("infinite");
+      // Arriba, los de abajo de la página siguen en blanco.
+      await expect.poll(() => trazosCompletos(page)).toBeLessThan(await dibujos.count());
+      const alCargar = await trazosCompletos(page);
+
+      // Con la rueda, como un visitante: al final de la página todos quedaron completos.
+      await bajarConLaRueda(page);
+      await expect.poll(() => trazosCompletos(page)).toBe(await dibujos.count());
+
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+      await expect.poll(() => trazosCompletos(page)).toBe(alCargar);
+    });
+
+    test("HU-125: ningún dibujo pasa por detrás de un texto o un control, en 1280 y en 1920 px", async ({ page }) => {
+      if (esMovil(page)) return;
+      for (const [width, height] of [[1280, 800], [1920, 1080]] as const) {
+        await page.setViewportSize({ width, height });
+        await abrir(page, ruta);
+        const choques = await page.evaluate(() => {
+          const contenido = [...document.querySelectorAll("main h1, main h2, main h3, main p, main li, main a, main button, main input, main label, main table, main summary")];
+          const cajas = contenido.map((el) => el.getBoundingClientRect()).filter((c) => c.width > 0);
+          return [...document.querySelectorAll<SVGElement>("[data-dibujo]")].flatMap((dibujo) => {
+            const d = dibujo.getBoundingClientRect();
+            const choca = cajas.some((c) => d.left < c.right && d.right > c.left && d.top < c.bottom && d.bottom > c.top);
+            return choca ? [dibujo.dataset.dibujo] : [];
+          });
+        });
+        expect(choques).toEqual([]);
       }
     });
 
@@ -80,10 +112,10 @@ for (const [nombre, ruta] of LANDINGS) {
       await page.emulateMedia({ reducedMotion: "reduce" });
       await abrir(page, ruta);
       if (esMovil(page)) return;
-      const curva = curvas(page).locator("path").first();
-      await expect(curva).toHaveCSS("animation-name", "none");
-      await expect(curva).toHaveCSS("stroke-dashoffset", "0px");
-      await expect(capa(page).locator("[data-simbolo]").first()).toHaveCSS("animation-name", "none");
+      const trazo = curvas(page).locator("path").first();
+      await expect(trazo).toHaveCSS("animation-name", "none");
+      await expect(trazo).toHaveCSS("stroke-dashoffset", "0px");
+      expect(await trazosCompletos(page)).toBe(await page.locator("[data-simbolo], [data-curva]").count());
     });
   });
 }

@@ -49,7 +49,7 @@ export function PortadaDeMonitores({ materias, parametros, ganancia, solicitud }
 
       <main>
         <section className={`${estilos.hero} ${estilos.conCurva}`}>
-          <CurvaDeFondo forma="area" clase={estilos.curvaHero} />
+          <CurvaDeFondo forma="ofertaYDemanda" clase={estilos.curvaHero} />
           <div className={estilos.heroInterior}>
             <div className={estilos.propuesta}>
               <h1 className={`${estilos.titular} ${estilos.titularLargo}`}>Gana plata enseñando lo que ya dominas, y llega sabiendo qué explicar.</h1>
@@ -64,7 +64,7 @@ export function PortadaDeMonitores({ materias, parametros, ganancia, solicitud }
         </section>
 
         <section className={`${estilos.contenedor} ${estilos.seccion} ${estilos.conCurva}`} aria-labelledby="problema">
-          <CurvaDeFondo forma="seno" clase={estilos.curvaProblema} />
+          <CurvaDeFondo forma="adnLargo" clase={estilos.curvaProblema} />
           <div className={estilos.partido}>
             <h2 id="problema" className={estilos.tituloSeccion}>
               Dar monitorías por tu cuenta es más trabajo que enseñar.
@@ -141,7 +141,7 @@ export function PortadaDeMonitores({ materias, parametros, ganancia, solicitud }
         )}
 
         <section className={`${estilos.contenedor} ${estilos.seccion} ${estilos.conCurva}`} aria-labelledby="preguntas-frecuentes">
-          <CurvaDeFondo forma="parabola" clase={estilos.curvaPreguntas} />
+          <CurvaDeFondo forma="planoInclinado" clase={estilos.curvaPreguntas} />
           <div className={estilos.partido}>
             <h2 id="preguntas-frecuentes" className={estilos.tituloSeccion}>
               Preguntas frecuentes
@@ -165,7 +165,7 @@ export function PortadaDeMonitores({ materias, parametros, ganancia, solicitud }
         </section>
 
         <section className={`${estilos.cierre} ${estilos.conCurva}`} aria-labelledby="cierre">
-          <CurvaDeFondo forma="exponencial" clase={estilos.curvaCierre} />
+          <CurvaDeFondo forma="arbolGrande" clase={estilos.curvaCierre} />
           <div className={estilos.contenedor}>
             <h2 id="cierre" className={estilos.tituloCierre}>
               Tu primera monitoría empieza con una evaluación.
@@ -179,7 +179,7 @@ export function PortadaDeMonitores({ materias, parametros, ganancia, solicitud }
           className={`${estilos.contenedor} ${estilos.seccion} ${estilos.solicitud} ${estilos.cierreMonitores} ${estilos.conCurva}`}
           aria-labelledby="quiero-ser-monitor"
         >
-          <CurvaDeFondo forma="circulo" clase={estilos.curvaSolicitud} />
+          <CurvaDeFondo forma="circuloUnitario" clase={estilos.curvaSolicitud} />
           <div className={estilos.partido}>
             <div>
               <h2 id="quiero-ser-monitor" className={estilos.tituloSeccion}>
