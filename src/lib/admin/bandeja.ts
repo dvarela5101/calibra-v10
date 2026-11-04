@@ -86,6 +86,30 @@ export type CorreoSinEnviar = {
   error: string | null;
 };
 
+/** Un monitor con cuenta y sin ningún certificado (HU-124, D-90 a). Sale de la lista con su primer certificado (D-90 b). */
+export type MonitorPorCertificar = {
+  id: string;
+  nombre: string;
+  correo: string;
+  numeroTelefono: string;
+  registradoEn: Date;
+  /** Las materias de su solicitud más reciente con ese correo (HU-062). Vacía si no dejó ninguna. */
+  materias: string[];
+  /** La materia que escribió porque no estaba en la lista (HU-111), o `null`. */
+  otraMateria: string | null;
+};
+
+/** Una solicitud `nueva`, que todavía nadie ha contactado para la evaluación presencial (HU-124, D-90 a). */
+export type SolicitudPorContactar = {
+  id: string;
+  nombre: string;
+  correo: string;
+  numeroTelefono: string;
+  creadaEn: Date;
+  materias: string[];
+  otraMateria: string | null;
+};
+
 export type Bandeja = {
   /** Los pagos en revisión de los que este admin es el responsable, el que lleva más tiempo esperando arriba. */
   pagos: PagoPorRevisar[];
@@ -101,6 +125,10 @@ export type Bandeja = {
   desembolsos: DesembolsoEjecutable[];
   /** Correos que fallaron de forma definitiva o siguieron fallando 24 horas (HU-065). Los ven todos los admins. */
   correosSinEnviar: CorreoSinEnviar[];
+  /** HU-124: los ven todos los admins, el que lleva más tiempo esperando arriba. */
+  monitoresPorCertificar: MonitorPorCertificar[];
+  /** HU-124: los ven todos los admins, la más antigua arriba. */
+  solicitudesPorContactar: SolicitudPorContactar[];
   /** Cuántos hay en cada sección, contando los que no caben en la lista. */
   contadores: {
     /** Solo los propios: el título y la tarjeta de la bandeja suman `pagosDeOtros`. */
@@ -116,6 +144,8 @@ export type Bandeja = {
     reportes: number;
     desembolsos: number;
     correosSinEnviar: number;
+    monitoresPorCertificar: number;
+    solicitudesPorContactar: number;
   };
 };
 
@@ -183,6 +213,63 @@ async function cargarPagosPorCobrarOAsumir(cliente: Cliente, maxFilas: number) {
   return { filas, total: casos.total };
 }
 
+/** Los nombres de las materias de una solicitud, en orden alfabético, como en `/admin/solicitudes`. */
+function materiasDeLaSolicitud(fila: { solicitud_monitor_materia: { materia: { nombre: string } | null }[] | null }) {
+  return (fila.solicitud_monitor_materia ?? [])
+    .map((m) => m.materia?.nombre)
+    .filter((nombre): nombre is string => Boolean(nombre))
+    .sort((a, b) => a.localeCompare(b, "es"));
+}
+
+/**
+ * HU-124: los monitores sin certificado, el que se registró primero arriba, con lo que pidió en su solicitud más reciente
+ * con ese correo (HU-062). Quien no dejó solicitud sale igual, sin materias: al admin le basta su contacto.
+ */
+async function cargarMonitoresPorCertificar(cliente: Cliente, maxFilas: number) {
+  const seccion = "los monitores por certificar";
+  const monitores = exigir(
+    seccion,
+    await cliente
+      .from("monitores_por_certificar")
+      .select("id, nombre, correo, numero_telefono, registrado_en", { count: "exact" })
+      .order("registrado_en", { ascending: true })
+      .order("id", { ascending: true })
+      .limit(maxFilas),
+  );
+  // La vista marca todo como posiblemente nulo; una fila sin estos datos no es un monitor listable.
+  const completos = monitores.filas.flatMap((fila) =>
+    fila.id && fila.nombre && fila.correo && fila.numero_telefono && fila.registrado_en
+      ? [{ id: fila.id, nombre: fila.nombre, correo: fila.correo, numeroTelefono: fila.numero_telefono, registradoEn: new Date(fila.registrado_en) }]
+      : [],
+  );
+  if (completos.length === 0) return { filas: [], total: monitores.total };
+
+  const solicitudes = exigir(
+    seccion,
+    await cliente
+      .from("solicitud_monitor")
+      .select("correo, otra_materia, solicitud_monitor_materia(materia(nombre))", { count: "exact" })
+      .in("correo", completos.map((monitor) => monitor.correo))
+      // La más reciente de cada correo es la primera que se encuentra.
+      .order("creada_en", { ascending: false })
+      .order("id", { ascending: false }),
+  );
+  const masReciente = new Map<string, (typeof solicitudes.filas)[number]>();
+  for (const solicitud of solicitudes.filas) {
+    if (!masReciente.has(solicitud.correo)) masReciente.set(solicitud.correo, solicitud);
+  }
+
+  const filas = completos.map((monitor): MonitorPorCertificar => {
+    const solicitud = masReciente.get(monitor.correo);
+    return {
+      ...monitor,
+      materias: solicitud ? materiasDeLaSolicitud(solicitud) : [],
+      otraMateria: solicitud?.otra_materia ?? null,
+    };
+  });
+  return { filas, total: monitores.total };
+}
+
 /**
  * Lo que tiene asignado un admin (RN-07): pagos en revisión por antigüedad, reembolsos activos por estado, reportes en
  * revisión y desembolsos ejecutables. Los desembolsos no tienen admin hasta que se ejecutan (RN-80), así que todos ven los
@@ -216,7 +303,7 @@ export async function cargarBandeja(
   // El proceso de reintentos deja de intentar a las 24 horas: desde ahí, o si la falla fue definitiva, le toca al admin.
   const finDeReintentos = new Date(ahora.getTime() - VENTANA_DE_REINTENTO_MS).toISOString();
 
-  const [pagos, pagosDeOtros, porCobrar, esperandoLlave, pendientes, pendientesDeOtros, cerrados, reportes, desembolsos, correos] = await Promise.all([
+  const [pagos, pagosDeOtros, porCobrar, esperandoLlave, pendientes, pendientesDeOtros, cerrados, reportes, desembolsos, correos, porCertificar, porContactar] = await Promise.all([
     cliente
       .from("pago")
       .select("id, nombre_pagador, monto, fecha_pago", { count: "exact" })
@@ -278,6 +365,14 @@ export async function cargarBandeja(
       )
       .order("creado_en", { ascending: false })
       .limit(maxFilas),
+    cargarMonitoresPorCertificar(cliente, maxFilas),
+    cliente
+      .from("solicitud_monitor")
+      .select("id, nombre, correo, numero_telefono, creada_en, otra_materia, solicitud_monitor_materia(materia(nombre))", { count: "exact" })
+      .eq("estado", "nueva")
+      .order("creada_en", { ascending: true })
+      .order("id", { ascending: true })
+      .limit(maxFilas),
   ]);
 
   const p = exigir("los pagos por revisar", pagos);
@@ -289,6 +384,7 @@ export async function cargarBandeja(
   const i = exigir("los reportes de inasistencia", reportes);
   const d = exigir("los desembolsos", desembolsos);
   const c = exigir("los correos que no salieron", correos);
+  const s = exigir("las solicitudes por contactar", porContactar);
 
   const reembolso = (fila: { id: string; monto: number; motivo: string }): ReembolsoActivo => ({
     id: fila.id,
@@ -347,6 +443,16 @@ export async function cargarBandeja(
       creadoEn: new Date(fila.creado_en),
       error: fila.ultimo_error,
     })),
+    monitoresPorCertificar: porCertificar.filas,
+    solicitudesPorContactar: s.filas.map((fila) => ({
+      id: fila.id,
+      nombre: fila.nombre,
+      correo: fila.correo,
+      numeroTelefono: fila.numero_telefono,
+      creadaEn: new Date(fila.creada_en),
+      materias: materiasDeLaSolicitud(fila),
+      otraMateria: fila.otra_materia,
+    })),
     contadores: {
       pagos: p.total,
       pagosDeOtros: v.total,
@@ -359,6 +465,8 @@ export async function cargarBandeja(
       reportes: i.total,
       desembolsos: d.total,
       correosSinEnviar: c.total,
+      monitoresPorCertificar: porCertificar.total,
+      solicitudesPorContactar: s.total,
     },
   };
 }

@@ -68,6 +68,9 @@ describe("criterio 3: la semilla deja los admins iniciales con su orden de revis
       reportes: 0,
       desembolsos: bandeja.desembolsos.length, // los ejecutables son de todos: puede haber de otras pruebas
       correosSinEnviar: bandeja.correosSinEnviar.length, // los correos sin enviar también: puede haber de otras pruebas
+      // HU-124: son de todos los admins: puede haber de otras pruebas.
+      monitoresPorCertificar: bandeja.contadores.monitoresPorCertificar,
+      solicitudesPorContactar: bandeja.contadores.solicitudesPorContactar,
     });
   });
 });
@@ -399,6 +402,116 @@ describe("HU-082: los reembolsos listos para transferir de otros admins", () => 
   });
 });
 
+describe("HU-124: a quién contactar", () => {
+  const correosDeSolicitudes: string[] = [];
+
+  // Antes que `fx.limpiar`: las solicitudes tienen llave foránea a sus materias.
+  afterEach(async () => {
+    if (correosDeSolicitudes.length) {
+      await fx.admin.from("solicitud_monitor").delete().in("correo", correosDeSolicitudes.splice(0));
+    }
+  });
+
+  const nuevaSolicitud = async (datos: { correo?: string; materias: string[]; otraMateria?: string; nombre?: string }) => {
+    const correo = datos.correo ?? `aspirante-${randomUUID()}@calibra.test`;
+    correosDeSolicitudes.push(correo);
+    const { data, error } = await fx.admin.rpc("crear_solicitud_monitor", {
+      p_nombre: datos.nombre ?? "Aspirante de prueba",
+      p_correo: correo,
+      p_numero_telefono: `+573${String(Math.floor(Math.random() * 1_000_000_000)).padStart(9, "0")}`,
+      p_materias: datos.materias,
+      p_fecha_consentimiento: new Date().toISOString(),
+      ...(datos.otraMateria ? { p_otra_materia: datos.otraMateria } : {}),
+    });
+    if (error) throw new Error(`crear solicitud: ${error.message}`);
+    return { id: data as string, correo };
+  };
+
+  it("el monitor sin certificado sale con su contacto y las materias de su solicitud más reciente; con el primer certificado, sale", async () => {
+    const admin = await fx.crearAdmin();
+    const monitor = await fx.crearMonitor();
+    const vieja = await fx.crearMateria(`Materia vieja ${randomUUID().slice(0, 6)}`);
+    const reciente = await fx.crearMateria(`Materia reciente ${randomUUID().slice(0, 6)}`);
+    const primera = await nuevaSolicitud({ correo: monitor.correo, materias: [vieja.id] });
+    await fx.admin.from("solicitud_monitor").update({ estado: "descartada", creada_en: hace(600) }).eq("id", primera.id);
+    await nuevaSolicitud({ correo: monitor.correo, materias: [reciente.id], otraMateria: "Termodinámica" });
+
+    const cliente = await fx.iniciarSesion(admin);
+    const antes = await cargarBandeja(cliente, admin.id, AHORA, { maxFilas: 1000 });
+    const fila = antes.monitoresPorCertificar.find((m) => m.id === monitor.id);
+    expect(fila).toMatchObject({
+      correo: monitor.correo,
+      numeroTelefono: "3000000000",
+      materias: [reciente.nombre],
+      otraMateria: "Termodinámica",
+    });
+    expect(fila!.registradoEn).toBeInstanceOf(Date);
+
+    await fx.crearCertificado({ idMonitor: monitor.id, idMateria: reciente.id, idAdmin: admin.id });
+    const despues = await cargarBandeja(cliente, admin.id, AHORA, { maxFilas: 1000 });
+    expect(despues.monitoresPorCertificar.map((m) => m.id)).not.toContain(monitor.id);
+    expect(despues.contadores.monitoresPorCertificar).toBe(antes.contadores.monitoresPorCertificar - 1);
+  });
+
+  it("los ve cualquier admin, del que se registró primero al más reciente, y un monitor sin solicitud sale sin materias", async () => {
+    const admin = await fx.crearAdmin();
+    const otroAdmin = await fx.crearAdmin();
+    const reciente = await fx.crearMonitor();
+    const antiguo = await fx.crearMonitor();
+    await fx.admin.from("monitor_privado").update({ registrado_en: "2020-01-01T00:00:00Z" }).eq("id_monitor", antiguo.id);
+
+    const bandeja = await cargarBandeja(await fx.iniciarSesion(otroAdmin), admin.id, AHORA, { maxFilas: 1000 });
+    const ids = bandeja.monitoresPorCertificar.map((m) => m.id);
+    expect(ids.indexOf(antiguo.id)).toBeGreaterThanOrEqual(0);
+    expect(ids.indexOf(antiguo.id)).toBeLessThan(ids.indexOf(reciente.id));
+    expect(bandeja.monitoresPorCertificar.find((m) => m.id === antiguo.id)).toMatchObject({ materias: [], otraMateria: null });
+  });
+
+  it("corta la lista de monitores sin perder el total", async () => {
+    const admin = await fx.crearAdmin();
+    await fx.crearMonitor();
+    await fx.crearMonitor();
+    const cortada = await cargarBandeja(await fx.iniciarSesion(admin), admin.id, AHORA, { maxFilas: 1 });
+    expect(cortada.monitoresPorCertificar).toHaveLength(1);
+    expect(cortada.contadores.monitoresPorCertificar).toBeGreaterThanOrEqual(2);
+  });
+
+  it("solo salen las solicitudes nuevas: al marcarla, sale de la lista", async () => {
+    const admin = await fx.crearAdmin();
+    const materia = await fx.crearMateria(`Materia pedida ${randomUUID().slice(0, 6)}`);
+    const solicitud = await nuevaSolicitud({ materias: [materia.id], nombre: "Aspirante nueva" });
+    const cliente = await fx.iniciarSesion(admin);
+
+    const antes = await cargarBandeja(cliente, admin.id, AHORA, { maxFilas: 1000 });
+    expect(antes.solicitudesPorContactar.find((s) => s.id === solicitud.id)).toMatchObject({
+      nombre: "Aspirante nueva",
+      correo: solicitud.correo,
+      materias: [materia.nombre],
+      otraMateria: null,
+    });
+
+    for (const estado of ["contactada", "evaluada", "descartada"] as const) {
+      const { error } = await fx.admin.from("solicitud_monitor").update({ estado }).eq("id", solicitud.id);
+      expect(error).toBeNull();
+      const despues = await cargarBandeja(cliente, admin.id, AHORA, { maxFilas: 1000 });
+      expect(despues.solicitudesPorContactar.map((s) => s.id), estado).not.toContain(solicitud.id);
+    }
+  });
+
+  it("un Lead no lee las solicitudes ni el contacto de otros", async () => {
+    const monitor = await fx.crearMonitor();
+    const materia = await fx.crearMateria(`Materia pedida ${randomUUID().slice(0, 6)}`);
+    await nuevaSolicitud({ materias: [materia.id] });
+    const estudiante = await fx.crearUsuario();
+
+    const cliente = await fx.iniciarSesion(estudiante);
+    const vista = await cliente.from("monitores_por_certificar").select("id").eq("id", monitor.id);
+    expect(vista.data ?? []).toEqual([]);
+    const solicitudes = await cliente.from("solicitud_monitor").select("id");
+    expect(solicitudes.data ?? []).toEqual([]);
+  });
+});
+
 describe("quién puede leer la bandeja", () => {
   it("con la sesión de un monitor las cinco listas salen vacías (las políticas son solo de admins)", async () => {
     const m = await armarMundo();
@@ -426,7 +539,12 @@ describe("quién puede leer la bandeja", () => {
       reportes: 0,
       desembolsos: 0,
       correosSinEnviar: 0,
+      // HU-124: el monitor de esta prueba no tiene certificado: se ve a sí mismo y a nadie más.
+      monitoresPorCertificar: 1,
+      solicitudesPorContactar: 0,
     });
+    expect(bandeja.monitoresPorCertificar.map((fila) => fila.id)).toEqual([monitor.id]);
+    expect(bandeja.solicitudesPorContactar).toEqual([]);
   });
 
   it("las políticas dejan leer a todo admin: el filtro por admin lo pone quien llama (la página usa el id de la sesión)", async () => {

@@ -3,6 +3,7 @@ import formulario from "@/components/formulario.module.css";
 import type { Bandeja, PagoPorCobrarOAsumir, PagoPorRevisar, ReembolsoActivo } from "@/lib/admin/bandeja";
 import { formatearDia, formatearFechaHora } from "@/lib/fechas";
 import { formatearPesos } from "@/lib/moneda";
+import { enlaceDeCorreo } from "@/lib/solicitudes/reglas";
 import { reabrir } from "./acciones";
 import estilos from "./bandeja.module.css";
 
@@ -228,6 +229,37 @@ function ReembolsosCerrados({ bandeja }: { bandeja: Bandeja }) {
 }
 
 /**
+ * HU-124: lo que el admin necesita para contactar a alguien: qué pidió, su teléfono y su correo. El correo y el teléfono son
+ * enlaces propios, así que la fila no es un solo enlace como las demás.
+ */
+function DatosDeContacto({
+  materias,
+  otraMateria,
+  numeroTelefono,
+  correo,
+}: {
+  materias: string[];
+  otraMateria: string | null;
+  numeroTelefono: string;
+  correo: string;
+}) {
+  return (
+    <>
+      {materias.length > 0 && <span className={estilos.metaLarga}>Pidió {materias.join(", ")}</span>}
+      {otraMateria && <span className={estilos.metaLarga}>Otra materia: {otraMateria}</span>}
+      <span className={estilos.contacto}>
+        <a href={`tel:${numeroTelefono}`} className={formulario.enlace}>
+          {numeroTelefono}
+        </a>
+        <a href={enlaceDeCorreo(correo)} className={`${formulario.enlace} ${estilos.correo}`}>
+          {correo}
+        </a>
+      </span>
+    </>
+  );
+}
+
+/**
  * Lo que tiene asignado el admin: contadores arriba y una lista por sección. Sin JavaScript en el navegador: los casos
  * cerrados sin llave se reabren con un formulario común (HU-025).
  */
@@ -241,6 +273,8 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
     { id: "reembolsos", rotulo: "Reembolsos", cifra: contadores.reembolsos },
     { id: "reportes", rotulo: "Reportes en revisión", cifra: contadores.reportes },
     { id: "desembolsos", rotulo: "Desembolsos ejecutables", cifra: contadores.desembolsos },
+    { id: "por-certificar", rotulo: "Monitores por certificar", cifra: contadores.monitoresPorCertificar },
+    { id: "por-contactar", rotulo: "Solicitudes por contactar", cifra: contadores.solicitudesPorContactar },
     { id: "correos", rotulo: "Correos que no salieron", cifra: contadores.correosSinEnviar },
   ];
 
@@ -373,6 +407,68 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
           ))}
         </ul>
         <AvisoDeCorte mostrados={bandeja.desembolsos.length} total={contadores.desembolsos} />
+      </Seccion>
+
+      <Seccion
+        id="por-certificar"
+        titulo="Monitores por certificar"
+        total={contadores.monitoresPorCertificar}
+        ayuda="Crearon su cuenta y aún no tienen ningún certificado, así que no pueden abrir horarios. Salen de esta lista con su primer certificado. El que lleva más tiempo esperando va arriba. Son los mismos para todos los admins."
+        vacio="No hay monitores por certificar."
+      >
+        <ul className={estilos.lista}>
+          {bandeja.monitoresPorCertificar.map((monitor) => (
+            <li key={monitor.id} className={estilos.fila}>
+              <span id={`por-certificar-${monitor.id}`} className={estilos.nombre}>
+                {monitor.nombre}
+              </span>
+              <span className={estilos.meta}>
+                Se registró el <time dateTime={monitor.registradoEn.toISOString()}>{formatearFechaHora(monitor.registradoEn)}</time>
+              </span>
+              <DatosDeContacto
+                materias={monitor.materias}
+                otraMateria={monitor.otraMateria}
+                numeroTelefono={monitor.numeroTelefono}
+                correo={monitor.correo}
+              />
+              <a href="/admin/certificados" aria-describedby={`por-certificar-${monitor.id}`} className={formulario.enlace}>
+                Ir a certificar
+              </a>
+            </li>
+          ))}
+        </ul>
+        <AvisoDeCorte mostrados={bandeja.monitoresPorCertificar.length} total={contadores.monitoresPorCertificar} />
+      </Seccion>
+
+      <Seccion
+        id="por-contactar"
+        titulo="Solicitudes por contactar"
+        total={contadores.solicitudesPorContactar}
+        ayuda="Dejaron sus datos para ser monitor y nadie los ha contactado. Agenda su evaluación presencial y marca la solicitud como contactada: así sale de esta lista. La más antigua va arriba. Son las mismas para todos los admins."
+        vacio="No hay solicitudes por contactar."
+      >
+        <ul className={estilos.lista}>
+          {bandeja.solicitudesPorContactar.map((solicitud) => (
+            <li key={solicitud.id} className={estilos.fila}>
+              <span id={`por-contactar-${solicitud.id}`} className={estilos.nombre}>
+                {solicitud.nombre}
+              </span>
+              <span className={estilos.meta}>
+                Llegó el <time dateTime={solicitud.creadaEn.toISOString()}>{formatearFechaHora(solicitud.creadaEn)}</time>
+              </span>
+              <DatosDeContacto
+                materias={solicitud.materias}
+                otraMateria={solicitud.otraMateria}
+                numeroTelefono={solicitud.numeroTelefono}
+                correo={solicitud.correo}
+              />
+              <a href="/admin/solicitudes" aria-describedby={`por-contactar-${solicitud.id}`} className={formulario.enlace}>
+                Abrir las solicitudes
+              </a>
+            </li>
+          ))}
+        </ul>
+        <AvisoDeCorte mostrados={bandeja.solicitudesPorContactar.length} total={contadores.solicitudesPorContactar} />
       </Seccion>
 
       <Seccion

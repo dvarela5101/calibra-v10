@@ -155,6 +155,18 @@
   overflow-wrap: anywhere;
 }
 
+/* HU-124: el teléfono y el correo van en una línea si caben. Cada uno es un enlace de 44 px de alto. */
+.contacto {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--e4);
+}
+
+/* Un correo largo se parte en vez de salirse de la tarjeta. */
+.correo {
+  overflow-wrap: anywhere;
+}
+
 /* El botón para reabrir, separado de los datos del caso. */
 .accionDeFila {
   margin-block-start: var(--e2);

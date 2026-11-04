@@ -1,7 +1,16 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
-import type { Bandeja, PagoPorCobrarOAsumir, PagoDeOtro, PagoPorRevisar, ReembolsoCerrado, ReembolsoDeOtro } from "@/lib/admin/bandeja";
+import type {
+  Bandeja,
+  MonitorPorCertificar,
+  PagoPorCobrarOAsumir,
+  PagoDeOtro,
+  PagoPorRevisar,
+  ReembolsoCerrado,
+  ReembolsoDeOtro,
+  SolicitudPorContactar,
+} from "@/lib/admin/bandeja";
 import { BandejaAdmin } from "./BandejaAdmin";
 
 // La acción de reabrir (HU-025) vive en el servidor: aquí solo se pinta el formulario que la usa.
@@ -20,6 +29,8 @@ const VACIA: Bandeja = {
   reportes: [],
   desembolsos: [],
   correosSinEnviar: [],
+  monitoresPorCertificar: [],
+  solicitudesPorContactar: [],
   contadores: {
     pagos: 0,
     pagosDeOtros: 0,
@@ -32,6 +43,8 @@ const VACIA: Bandeja = {
     reportes: 0,
     desembolsos: 0,
     correosSinEnviar: 0,
+    monitoresPorCertificar: 0,
+    solicitudesPorContactar: 0,
   },
 };
 
@@ -62,16 +75,28 @@ describe("BandejaAdmin: secciones vacías", () => {
     expect(t).toContain("No tienes reportes en revisión.");
     expect(t).toContain("No hay desembolsos listos para ejecutar.");
     expect(t).toContain("Todos los correos salieron.");
+    expect(t).toContain("No hay monitores por certificar.");
+    expect(t).toContain("No hay solicitudes por contactar.");
   });
 
-  it("los seis contadores están arriba, en un nav con nombre, y cada uno lleva a su sección", () => {
+  it("los ocho contadores están arriba, en un nav con nombre, y cada uno lleva a su sección", () => {
     const html = pintar({
       ...VACIA,
-      contadores: { ...VACIA.contadores, pagos: 3, pagosPorCobrarOAsumir: 6, reembolsos: 2, reportes: 1, desembolsos: 5, correosSinEnviar: 4 },
+      contadores: {
+        ...VACIA.contadores,
+        pagos: 3,
+        pagosPorCobrarOAsumir: 6,
+        reembolsos: 2,
+        reportes: 1,
+        desembolsos: 5,
+        correosSinEnviar: 4,
+        monitoresPorCertificar: 7,
+        solicitudesPorContactar: 8,
+      },
     });
     expect(html).toContain('<nav aria-label="Resumen de tu bandeja">');
     // Ni uno más ni uno menos.
-    expect(html.match(/<a href="#/g)).toHaveLength(6);
+    expect(html.match(/<a href="#/g)).toHaveLength(8);
     for (const [id, cifra, rotulo] of [
       ["pagos", 3, "Pagos por revisar"],
       ["por-cobrar", 6, "Pagos por cobrar o asumir"],
@@ -79,10 +104,84 @@ describe("BandejaAdmin: secciones vacías", () => {
       ["reportes", 1, "Reportes en revisión"],
       ["desembolsos", 5, "Desembolsos ejecutables"],
       ["correos", 4, "Correos que no salieron"],
+      ["por-certificar", 7, "Monitores por certificar"],
+      ["por-contactar", 8, "Solicitudes por contactar"],
     ] as const) {
       expect(html).toMatch(new RegExp(`<a href="#${id}"[^>]*><span[^>]*>${cifra}</span><span[^>]*>${rotulo}</span></a>`));
       expect(html).toContain(`<section id="${id}" aria-labelledby="${id}-titulo"`);
     }
+  });
+});
+
+describe("BandejaAdmin: a quién contactar (HU-124)", () => {
+  const monitor: MonitorPorCertificar = {
+    id: "m-1",
+    nombre: "Laura Díaz",
+    correo: "laura@example.com",
+    numeroTelefono: "+573001112222",
+    registradoEn: new Date("2026-11-01T15:00:00.000Z"),
+    materias: ["Cálculo Diferencial", "Física I"],
+    otraMateria: "Termodinámica",
+  };
+  const solicitud: SolicitudPorContactar = {
+    id: "s-1",
+    nombre: "Santiago Ruiz",
+    correo: "santiago@example.com",
+    numeroTelefono: "+573003334444",
+    creadaEn: new Date("2026-11-02T15:00:00.000Z"),
+    materias: ["Álgebra Lineal"],
+    otraMateria: null,
+  };
+  const conMonitor: Bandeja = {
+    ...VACIA,
+    monitoresPorCertificar: [monitor],
+    contadores: { ...VACIA.contadores, monitoresPorCertificar: 1 },
+  };
+
+  it("el monitor sale con lo que pidió, cuándo se registró, su contacto en enlaces y el camino para certificarlo", () => {
+    const html = pintar(conMonitor);
+    const t = texto(html);
+    expect(t).toContain("Laura Díaz");
+    expect(t).toContain("Pidió Cálculo Diferencial, Física I");
+    expect(t).toContain("Otra materia: Termodinámica");
+    expect(t).toContain("Se registró el");
+    expect(html).toContain('dateTime="2026-11-01T15:00:00.000Z"');
+    expect(html).toContain('href="tel:+573001112222"');
+    expect(html).toContain('href="mailto:laura@example.com"');
+    expect(html).toMatch(/<a href="\/admin\/certificados" aria-describedby="por-certificar-m-1"[^>]*>Ir a certificar<\/a>/);
+    expect(html).toContain('id="por-certificar-m-1"');
+  });
+
+  it("un monitor sin solicitud sale con su contacto y sin la línea de materias", () => {
+    const t = texto(
+      pintar({
+        ...conMonitor,
+        monitoresPorCertificar: [{ ...monitor, materias: [], otraMateria: null }],
+      }),
+    );
+    expect(t).not.toContain("Pidió");
+    expect(t).not.toContain("Otra materia");
+    expect(t).toContain("laura@example.com");
+  });
+
+  it("la solicitud sale con su contacto y lleva a la lista de solicitudes", () => {
+    const html = pintar({
+      ...VACIA,
+      solicitudesPorContactar: [solicitud],
+      contadores: { ...VACIA.contadores, solicitudesPorContactar: 1 },
+    });
+    const t = texto(html);
+    expect(t).toContain("Santiago Ruiz");
+    expect(t).toContain("Pidió Álgebra Lineal");
+    expect(t).toContain("Llegó el");
+    expect(html).toContain('href="tel:+573003334444"');
+    expect(html).toContain('href="mailto:santiago@example.com"');
+    expect(html).toMatch(/<a href="\/admin\/solicitudes" aria-describedby="por-contactar-s-1"[^>]*>Abrir las solicitudes<\/a>/);
+  });
+
+  it("si la lista se cortó, lo dice", () => {
+    const t = texto(pintar({ ...conMonitor, contadores: { ...conMonitor.contadores, monitoresPorCertificar: 150 } }));
+    expect(t).toContain("Se muestran los primeros 1 de 150.");
   });
 });
 

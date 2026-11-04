@@ -184,6 +184,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "monitor"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "certificado_id_monitor_fkey"
+      columns: ["id_monitor"]
+isOneToOne: false
+      referencedRelation: "monitores_por_certificar"
+      referencedColumns: ["id"]
     }
                   ]
                 },"comprobante_revisado": {
@@ -434,6 +440,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "monitor"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "franja_id_monitor_fkey"
+      columns: ["id_monitor"]
+isOneToOne: false
+      referencedRelation: "monitores_por_certificar"
+      referencedColumns: ["id"]
     }
                   ]
                 },"franja_de_prueba": {
@@ -552,6 +564,12 @@ isOneToOne: false
       columns: ["id_monitor"]
 isOneToOne: false
       referencedRelation: "monitor"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "invitacion_monitor_id_monitor_fkey"
+      columns: ["id_monitor"]
+isOneToOne: false
+      referencedRelation: "monitores_por_certificar"
       referencedColumns: ["id"]
     }
                   ]
@@ -832,13 +850,13 @@ isOneToOne: false
                   ]
                 },"monitor_privado": {
                   Row: {
-                    "correo": string,"id_monitor": string,"llave": string,"numero_telefono": string
+                    "correo": string,"id_monitor": string,"llave": string,"numero_telefono": string,"registrado_en": string
                   }
                   Insert: {
-                    "correo": string,"id_monitor": string,"llave": string,"numero_telefono": string
+                    "correo": string,"id_monitor": string,"llave": string,"numero_telefono": string,"registrado_en"?: string
                   }
                   Update: {
-                    "correo"?: string,"id_monitor"?: string,"llave"?: string,"numero_telefono"?: string
+                    "correo"?: string,"id_monitor"?: string,"llave"?: string,"numero_telefono"?: string,"registrado_en"?: string
                   }
                   Relationships: [
                     {
@@ -846,6 +864,12 @@ isOneToOne: false
       columns: ["id_monitor"]
 isOneToOne: true
       referencedRelation: "monitor"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "monitor_privado_id_monitor_fkey"
+      columns: ["id_monitor"]
+isOneToOne: true
+      referencedRelation: "monitores_por_certificar"
       referencedColumns: ["id"]
     }
                   ]
@@ -1044,6 +1068,12 @@ isOneToOne: false
       columns: ["id_monitor"]
 isOneToOne: true
       referencedRelation: "monitor"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "perfil_monitor_id_monitor_fkey"
+      columns: ["id_monitor"]
+isOneToOne: true
+      referencedRelation: "monitores_por_certificar"
       referencedColumns: ["id"]
     }
                   ]
@@ -1351,6 +1381,13 @@ isOneToOne: false
       referencedRelation: "admin"
       referencedColumns: ["id"]
     }
+                  ]
+                },"monitores_por_certificar": {
+                  Row: {
+                    "correo": string | null,"id": string | null,"nombre": string | null,"numero_telefono": string | null,"registrado_en": string | null
+                  }
+                  Relationships: [
+                    
                   ]
                 },"monitoria_plazos": {
                   Row: {

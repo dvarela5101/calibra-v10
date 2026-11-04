@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-11-03 20:05. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-11-03 20:44. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -27,7 +27,6 @@ _Generado automaticamente: 2026-11-03 20:05. No editar a mano; usa `scripts/back
 | [HU-092](backlog/HU-092.md) | [Monitor] Marcar en mi perfil los temas en los que soy fuerte | Lista | P2 | M | HU-049 |
 | [HU-122](backlog/HU-122.md) | Fondo de las landings: quitar el beige y agregar una animación de fondo | Lista | P2 | M | HU-108, HU-109 |
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | En progreso | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056, HU-084, HU-089, HU-095, HU-096, HU-097, HU-091, HU-103 |
-| [HU-124](backlog/HU-124.md) | [Admin] Ver en mi bandeja a quién contactar para certificarlo | En progreso | P1 | M | HU-012, HU-013, HU-014, HU-062 |
 | [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
 | [HU-105](backlog/HU-105.md) | Selector del diagnóstico como el prototipo: tarjetas sin radio, elegir siempre la Evaluación y botón «Ver monitores sin hacer la prueba» | En revision | P0 | S | HU-009 |
 | [HU-106](backlog/HU-106.md) | Acceso visible en la cabecera (Iniciar sesión / Registrarse) e invitar a un monitor desde su solicitud | En revision | P0 | M |  |
@@ -47,6 +46,7 @@ _Generado automaticamente: 2026-11-03 20:05. No editar a mano; usa `scripts/back
 | [HU-117](backlog/HU-117.md) | Contenido: Introducción a la Programación (ISIS-1221), Evaluación del examen de nivel 3 | En revision | P1 | L |  |
 | [HU-118](backlog/HU-118.md) | Dibujar el código en línea (entre acentos graves) en el texto del banco | En revision | P1 | S |  |
 | [HU-119](backlog/HU-119.md) | Franja de prueba: el admin la marca y la reserva nace confirmada y gratis | En revision | P1 | M |  |
+| [HU-124](backlog/HU-124.md) | [Admin] Ver en mi bandeja a quién contactar para certificarlo | En revision | P1 | M | HU-012, HU-013, HU-014, HU-062 |
 | [HU-111](backlog/HU-111.md) | La solicitud para ser monitor deja escribir una materia que no está en la lista, y el admin la ve | En revision | P2 | XS | HU-062 |
 | [HU-112](backlog/HU-112.md) | El resumen del resultado deja abrir ahí mismo los errores detectados | En revision | P2 | XS | HU-110 |
 | [HU-001](backlog/HU-001.md) | [Técnica] Definir el stack y crear el esqueleto del proyecto nuevo | Hecha | P0 | M |  |
