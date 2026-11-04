@@ -7,12 +7,17 @@ import { AGENDA_DE_MUESTRA, textoDelError } from "@/lib/portada/agenda-de-muestr
 import { Trazo } from "./Trazo";
 import estilos from "./portada.module.css";
 
+type Props = {
+  /** HU-121: lo que se recibe, ya con formato; `null` si no se pudo calcular, y entonces la tarjeta no muestra montos. */
+  ganancia: { porMonitoria: Record<string, string>; porSemana: string } | null;
+};
+
 /**
  * HU-109 (D-78): el hero de la landing de monitores es su agenda. Cada monitoría es un botón con la forma de las opciones de la
  * pregunta de muestra y abre, debajo, el diagnóstico de quien agendó, como lo ve el monitor (HU-022): lo que no domina va
  * encerrado con el trazo. Solo estado local: no lee la base.
  */
-export function AgendaDeMuestra() {
+export function AgendaDeMuestra({ ganancia }: Props) {
   const [elegida, setElegida] = useState(AGENDA_DE_MUESTRA[0].clave);
   const monitoria = AGENDA_DE_MUESTRA.find((m) => m.clave === elegida) ?? AGENDA_DE_MUESTRA[0];
 
@@ -40,10 +45,24 @@ export function AgendaDeMuestra() {
                 <strong className={estilos.fuerte}>{m.estudiante}</strong> · {m.materia}
                 <span className={estilos.detalleMonitoria}>{m.detalle}</span>
               </span>
+              {ganancia && (
+                <span className={estilos.montoMonitoria}>
+                  <span className={estilos.rotuloMonto}>Recibes</span> {ganancia.porMonitoria[m.clave]}
+                </span>
+              )}
             </button>
           );
         })}
       </div>
+
+      {ganancia && (
+        <div className={estilos.totalDeMuestra}>
+          <p>
+            Por estas tres monitorías recibes <strong className={estilos.fuerte}>{ganancia.porSemana}</strong>
+          </p>
+          <p className={estilos.notaDeMuestra}>Ejemplo con precios de muestra</p>
+        </div>
+      )}
 
       <div aria-live="polite" className={estilos.diagnosticoDeMuestra}>
         <p className={estilos.contexto}>

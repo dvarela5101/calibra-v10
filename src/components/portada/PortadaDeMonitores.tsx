@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { EVENTOS, type UbicacionDelCtaDeMonitor } from "@/lib/analitica/eventos";
+import { formatearPesos } from "@/lib/moneda";
 import type { ParametrosNegocio } from "@/lib/plazos/parametros";
+import { AGENDA_DE_MUESTRA, type GananciaDeMuestra } from "@/lib/portada/agenda-de-muestra";
 import {
   respuestaDeCancelarParaMonitor,
   respuestaDeGrupalesParaMonitor,
@@ -19,6 +21,8 @@ type Props = {
   /** Las materias en que se puede certificar, de la base; `null` si no se pudieron leer. */
   materias: string[] | null;
   parametros: ParametrosNegocio | null;
+  /** HU-121: lo que se recibe en el ejemplo, calculado en el servidor; `null` si no se pudo: la página sale sin montos. */
+  ganancia: GananciaDeMuestra | null;
   /** El formulario de HU-062 (o el aviso de que no hay materias), que va al final. */
   solicitud: ReactNode;
 };
@@ -28,9 +32,15 @@ type Props = {
  * (docs/diseno/2026-10-28-landing-monitores.dc.html). Una sola acción: dejar los datos. Cada «Quiero ser monitor» baja al
  * formulario, que va al final. `data-landing` esconde el pie global: lleva el suyo.
  *
- * No da cifras ni dice la palabra de la comisión (D-78 c, `pruebas/comision-solo-en-desembolsos.test.ts`).
+ * HU-121 (D-87): muestra lo que recibe el monitor en un ejemplo con precios de muestra, solo el neto. No da el porcentaje, el tope
+ * ni un bruto al lado, y no dice la palabra de la comisión (D-78 c, `pruebas/comision-solo-en-desembolsos.test.ts`).
  */
-export function PortadaDeMonitores({ materias, parametros, solicitud }: Props) {
+export function PortadaDeMonitores({ materias, parametros, ganancia, solicitud }: Props) {
+  const montosDeLaTarjeta = ganancia && {
+    porMonitoria: Object.fromEntries(Object.entries(ganancia.porMonitoria).map(([clave, neto]) => [clave, formatearPesos(neto)])),
+    porSemana: formatearPesos(ganancia.porSemana),
+  };
+
   return (
     <div className={estilos.portada} data-landing="">
       <CabeceraDeLaPortada />
@@ -39,14 +49,14 @@ export function PortadaDeMonitores({ materias, parametros, solicitud }: Props) {
         <section className={estilos.hero}>
           <div className={estilos.heroInterior}>
             <div className={estilos.propuesta}>
-              <h1 className={estilos.titular}>Monitorías de ciclo básico donde ya sabes qué explicar.</h1>
+              <h1 className={`${estilos.titular} ${estilos.titularLargo}`}>Gana plata enseñando lo que ya dominas, y llega sabiendo qué explicar.</h1>
               <p className={estilos.bajada}>
-                Antes de la sesión ves el diagnóstico de tu estudiante: qué domina y en qué se equivoca. Calibra te certifica por
-                materia, tú pones horarios y precio, y el pago te llega a tu llave.
+                Tú pones tus horarios y tu precio. Los estudiantes te encuentran en Calibra, que revisa los pagos y te muestra el
+                diagnóstico antes de cada sesión.
               </p>
               <CtaDeMonitor ubicacion="hero" />
             </div>
-            <AgendaDeMuestra />
+            <AgendaDeMuestra ganancia={montosDeLaTarjeta} />
           </div>
         </section>
 
@@ -66,6 +76,8 @@ export function PortadaDeMonitores({ materias, parametros, solicitud }: Props) {
             </div>
           </div>
         </section>
+
+        {ganancia && <EjemploDeGanancia ganancia={ganancia} />}
 
         <section className={estilos.franjaPasos} aria-labelledby="como-funciona">
           <div className={estilos.contenedor}>
@@ -187,6 +199,45 @@ export function PortadaDeMonitores({ materias, parametros, solicitud }: Props) {
   );
 }
 
+/** HU-121 (D-87 a): la cuenta escrita como en el cuaderno, sin controles. No promete un ingreso: es un ejemplo y lo dice. */
+function EjemploDeGanancia({ ganancia }: { ganancia: GananciaDeMuestra }) {
+  return (
+    <section className={`${estilos.contenedor} ${estilos.seccion}`} aria-labelledby="ejemplo-de-ganancia">
+      <div className={estilos.partido}>
+        <div>
+          <h2 id="ejemplo-de-ganancia" className={estilos.tituloSeccion}>
+            Cuánto recibirías con tres monitorías a la semana
+          </h2>
+          <p className={`${estilos.parrafo} ${estilos.notaEjemplo}`}>
+            Los precios son de muestra y cada monitor pone los suyos. Lo que recibas depende de cuántos estudiantes te agenden. Estos
+            montos ya son lo que te llega a ti, después de la parte de Calibra.
+          </p>
+        </div>
+        <table className={estilos.cuenta}>
+          <tbody>
+            {AGENDA_DE_MUESTRA.map((m) => (
+              <tr key={m.clave}>
+                <th scope="row">
+                  {m.diaCompleto} · {m.materia}
+                </th>
+                <td>{formatearPesos(ganancia.porMonitoria[m.clave])}</td>
+              </tr>
+            ))}
+            <tr className={estilos.cuentaSuma}>
+              <th scope="row">A la semana</th>
+              <td>{formatearPesos(ganancia.porSemana)}</td>
+            </tr>
+            <tr className={estilos.cuentaTotal}>
+              <th scope="row">En cuatro semanas</th>
+              <td>{formatearPesos(ganancia.porCuatroSemanas)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 function CtaDeMonitor({ ubicacion, centrado = false }: { ubicacion: UbicacionDelCtaDeMonitor; centrado?: boolean }) {
   return (
     <div className={centrado ? estilos.ctaCentrado : estilos.cta}>
@@ -215,11 +266,6 @@ function ListaDeMaterias({ materias }: { materias: string[] }) {
 
 /** La pantalla de horarios del monitor como visual (F2, RN-30). Los precios son de ejemplo y lo dice. */
 function TusHorarios() {
-  const HORARIOS = [
-    { dia: "Martes, 4:00 p. m.", detalle: "60 min · Presencial", precio: "$25.000" },
-    { dia: "Miércoles, 6:00 p. m.", detalle: "90 min · Virtual", precio: "$35.000" },
-    { dia: "Domingo, 10:00 a. m.", detalle: "60 min · Presencial", precio: "$30.000" },
-  ];
   return (
     <figure className={estilos.figura}>
       <div className={estilos.vista}>
@@ -228,11 +274,13 @@ function TusHorarios() {
           <p className={estilos.vistaContexto}>Se repiten cada semana</p>
         </div>
         <ul className={estilos.horarios}>
-          {HORARIOS.map((h) => (
-            <li key={h.dia} className={estilos.horario}>
-              <span>{h.dia}</span>
-              <span className={estilos.precio}>{h.precio}</span>
-              <span className={estilos.detalleHorario}>{h.detalle}</span>
+          {AGENDA_DE_MUESTRA.map((m) => (
+            <li key={m.clave} className={estilos.horario}>
+              <span>
+                {m.diaCompleto}, {m.hora}
+              </span>
+              <span className={estilos.precio}>{formatearPesos(m.precio)}</span>
+              <span className={estilos.detalleHorario}>{m.detalle}</span>
             </li>
           ))}
         </ul>
