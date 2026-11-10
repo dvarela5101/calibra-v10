@@ -2,7 +2,7 @@
 
 Este documento lista las materias y las habilidades del banco a las que les falta material, para saber qué hay que conseguir. Lo crea y lo mantiene [HU-061](../backlog/HU-061.md) (D-49 c). [PROCESO.md](PROCESO.md#falta-de-material) dice cuándo se actualiza. No lleva nombres de archivos del material.
 
-Última actualización: corrida de HU-117 (Introducción a la Programación, nivel 3), 1-nov-2026.
+Última actualización: corrida de HU-126 (Precálculo, materia nueva), 10-nov-2026.
 
 ## 1. Habilidades sin preguntas sin ver o con una sola respuesta
 
@@ -75,6 +75,12 @@ Alcance de la corrida de HU-117 (examen de nivel 3 de Introducción a la Program
 - **Soluciones o exámenes de nivel 3:** el catálogo de errores sale del material (lo que advierte o provoca) y del criterio del modelo. Unos exámenes resueltos o notas de monitores permitirían confirmarlo.
 - **Trampas:** 10 de las 62 misconcepciones del nivel 3 salen como trampa en una sola pregunta (la meta es 2).
 
+Alcance de la corrida de HU-126 (Precálculo, materia nueva: los 4 parciales y el examen final acumulativo, D-92): las 31 habilidades llegan a la meta con 5 borradores cada una, así que no hay filas. Material: programa con cronograma, notas de clase del curso, cartillas de ejercicios de los cuatro módulos con sus respuestas, 15 talleres semanales y un repaso de parcial. Falta:
+
+- **Material escaneado:** las clases por sección y las soluciones de los talleres son escaneados sin texto y no se usaron. El catálogo de errores sale de las notas, las cartillas y el criterio del modelo; unos parciales resueltos o notas de monitores permitirían confirmarlo.
+- **Parciales de semestres anteriores:** no hay ninguno, solo un repaso de parcial con la notación incompleta.
+- **Examen final:** con 31 habilidades y un tope de 10 preguntas, cada intento deja sin medir dos tercios de las habilidades (D-92 c).
+
 ### De las marcas de HU-060
 
 Todavía no hay marcas. Al 5-oct-2026 el motor del diagnóstico (HU-060) está en progreso y el guardado de la marca (HU-081) tiene estado Lista, y esta corrida no usa la base de datos. Cuando haya diagnósticos guardados, aquí van las habilidades marcadas `sin_preguntas_sin_ver` o `tope_una_respuesta`, con su materia.
@@ -83,4 +89,4 @@ Todavía no hay marcas. Al 5-oct-2026 el motor del diagnóstico (HU-060) está e
 
 D-13 pide 3 preguntas revisadas en 2 dificultades por habilidad. Esta sección sale del reporte de `npm run contenido:validar` (cobertura por habilidad), que cuenta solo preguntas revisadas.
 
-Desde el 19-oct-2026 todas las habilidades de las 8 materias de entonces cumplen D-13 y sus 10 Evaluaciones están activas. TIC entró el 31-oct-2026 (HU-113) sin preguntas revisadas: sus 40 habilidades no cumplen D-13 y sus 4 Evaluaciones están inactivas. Las de los Parciales 3 y 4 se activan cuando un desarrollador revise sus 100 borradores; las de los Parciales 1 y 2 esperan preguntas. Las revisiones que las activaron son HU-099 (Álgebra Lineal, Cálculo Vectorial, Física I y Probabilidad y Estadística), HU-100 y HU-101 (Cálculo Diferencial) y HU-102 (Cálculo Integral).
+Desde el 19-oct-2026 todas las habilidades de las 8 materias de entonces cumplen D-13 y sus 10 Evaluaciones están activas. TIC entró el 31-oct-2026 (HU-113) sin preguntas revisadas: sus 40 habilidades no cumplen D-13 y sus 4 Evaluaciones están inactivas. Precálculo entró el 10-nov-2026 (HU-126) igual: sus 31 habilidades tienen 155 borradores y ninguna revisada, y sus 5 Evaluaciones quedan inactivas hasta la revisión. Las de los Parciales 3 y 4 se activan cuando un desarrollador revise sus 100 borradores; las de los Parciales 1 y 2 esperan preguntas. Las revisiones que las activaron son HU-099 (Álgebra Lineal, Cálculo Vectorial, Física I y Probabilidad y Estadística), HU-100 y HU-101 (Cálculo Diferencial) y HU-102 (Cálculo Integral).
