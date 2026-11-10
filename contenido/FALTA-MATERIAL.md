@@ -2,7 +2,7 @@
 
 Este documento lista las materias y las habilidades del banco a las que les falta material, para saber qué hay que conseguir. Lo crea y lo mantiene [HU-061](../backlog/HU-061.md) (D-49 c). [PROCESO.md](PROCESO.md#falta-de-material) dice cuándo se actualiza. No lleva nombres de archivos del material.
 
-Última actualización: corrida de HU-126 (Precálculo, materia nueva), 10-nov-2026.
+Última actualización: corrida de HU-127 (Cálculo Vectorial, reprocesada), 10-nov-2026.
 
 ## 1. Habilidades sin preguntas sin ver o con una sola respuesta
 
@@ -29,10 +29,6 @@ Material: HU-061 no registra material fuente para Álgebra Lineal, Cálculo Vect
 | Álgebra Lineal | `sistemas` | 4 (1 de dificultad 1, 3 de dificultad 2) | 1 pregunta más, de dificultad 3 |
 | Álgebra Lineal | `determinantes` | 4 (3 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
 | Álgebra Lineal | `espacios` | 4 (1 de dificultad 1, 3 de dificultad 2) | 1 pregunta más, de dificultad 3 |
-| Cálculo Vectorial | `parciales` | 4 (3 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
-| Cálculo Vectorial | `multiples` | 4 (3 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
-| Cálculo Vectorial | `linea` | 4 (1 de dificultad 1, 3 de dificultad 2) | 1 pregunta más, de dificultad 3 |
-| Cálculo Vectorial | `teoremas` | 4 (1 de dificultad 1, 3 de dificultad 2) | 1 pregunta más, de dificultad 3 |
 | Física I | `cinematica` | 4 (1 de dificultad 1, 3 de dificultad 2) | 1 pregunta más, de dificultad 3 |
 | Física I | `newton` | 4 (3 de dificultad 2, 1 de dificultad 3) | 1 pregunta más, de dificultad 1 o 3 |
 | Física I | `energia` | 4 (1 de dificultad 1, 3 de dificultad 2) | 1 pregunta más, de dificultad 3 |
@@ -81,6 +77,13 @@ Alcance de la corrida de HU-126 (Precálculo, materia nueva: los 4 parciales y e
 - **Parciales de semestres anteriores:** no hay ninguno, solo un repaso de parcial con la notación incompleta.
 - **Examen final:** con 31 habilidades y un tope de 10 preguntas, cada intento deja sin medir dos tercios de las habilidades (D-92 c).
 
+Alcance de la corrida de HU-127 (Cálculo Vectorial reprocesado: los 2 parciales del programa 2026-2 y el examen final acumulativo, D-92): las 22 habilidades llegan a la meta con 5 preguntas cada una, contando las 16 que ya existían, así que no hay filas. Esto reemplaza las 4 filas de Cálculo Vectorial de la corrida de HU-091, cuyas habilidades provisionales ya no existen. Material: programa de 2026-2 con cronograma, el Parcial 1 de 2026-1 en dos versiones con solucionario, un parcial y exámenes de práctica, y apuntes por tema. Falta:
+
+- **Parcial 2 resuelto:** los exámenes de práctica del Parcial 2 no traen solución. El catálogo de integrales múltiples, de línea y de superficie sale de los apuntes y del criterio del modelo.
+- **Teoremas:** no hay ningún examen final ni ejercicio resuelto de Green, Stokes y Gauss fuera de los apuntes.
+- **Trampas:** 9 de las 141 misconcepciones salen como trampa en una sola pregunta (la meta es 2).
+- **Examen final:** con 22 habilidades y un tope de 10 preguntas, cada intento deja sin medir más de la mitad (D-92 c).
+
 ### De las marcas de HU-060
 
 Todavía no hay marcas. Al 5-oct-2026 el motor del diagnóstico (HU-060) está en progreso y el guardado de la marca (HU-081) tiene estado Lista, y esta corrida no usa la base de datos. Cuando haya diagnósticos guardados, aquí van las habilidades marcadas `sin_preguntas_sin_ver` o `tope_una_respuesta`, con su materia.
@@ -89,4 +92,4 @@ Todavía no hay marcas. Al 5-oct-2026 el motor del diagnóstico (HU-060) está e
 
 D-13 pide 3 preguntas revisadas en 2 dificultades por habilidad. Esta sección sale del reporte de `npm run contenido:validar` (cobertura por habilidad), que cuenta solo preguntas revisadas.
 
-Desde el 19-oct-2026 todas las habilidades de las 8 materias de entonces cumplen D-13 y sus 10 Evaluaciones están activas. TIC entró el 31-oct-2026 (HU-113) sin preguntas revisadas: sus 40 habilidades no cumplen D-13 y sus 4 Evaluaciones están inactivas. Precálculo entró el 10-nov-2026 (HU-126) igual: sus 31 habilidades tienen 155 borradores y ninguna revisada, y sus 5 Evaluaciones quedan inactivas hasta la revisión. Las de los Parciales 3 y 4 se activan cuando un desarrollador revise sus 100 borradores; las de los Parciales 1 y 2 esperan preguntas. Las revisiones que las activaron son HU-099 (Álgebra Lineal, Cálculo Vectorial, Física I y Probabilidad y Estadística), HU-100 y HU-101 (Cálculo Diferencial) y HU-102 (Cálculo Integral).
+Desde el 19-oct-2026 todas las habilidades de las 8 materias de entonces cumplen D-13 y sus 10 Evaluaciones están activas. TIC entró el 31-oct-2026 (HU-113) sin preguntas revisadas: sus 40 habilidades no cumplen D-13 y sus 4 Evaluaciones están inactivas. Cálculo Vectorial salió de la cobertura el 10-nov-2026 (HU-127): sus 4 habilidades provisionales se partieron en 22 y sus 16 preguntas revisadas no alcanzan; sus 3 Evaluaciones quedan inactivas hasta revisar los 94 borradores y las 16 marcadas con ⚠. Precálculo entró el mismo día (HU-126) igual: sus 31 habilidades tienen 155 borradores y ninguna revisada, y sus 5 Evaluaciones quedan inactivas hasta la revisión. Las de los Parciales 3 y 4 se activan cuando un desarrollador revise sus 100 borradores; las de los Parciales 1 y 2 esperan preguntas. Las revisiones que las activaron son HU-099 (Álgebra Lineal, Cálculo Vectorial, Física I y Probabilidad y Estadística), HU-100 y HU-101 (Cálculo Diferencial) y HU-102 (Cálculo Integral).
