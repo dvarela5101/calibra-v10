@@ -69,7 +69,7 @@ Calcula $\int_C (x+y)\,ds$, donde C es el segmento parametrizado por r(t) = (3t,
 - C) 35/2 · CORRECTA
 - D) 5 · [linea-esc-solo-longitud] integras solo |r'(t)| = 5 y olvidas la función x + y
 
-solución: r'(t) = (3, 4), así que |r'(t)| = √(9 + 16) = 5. Sobre la curva x + y = 3t + 4t = 7t. Entonces $\int_C (x+y)\,ds = \int_0^1 7t\cdot 5\,dt = 35\cdot\frac{1}{2} = \frac{35}{2}$.
+solución: r'(t) = (3, 4), así que |r'(t)| = √(9 + 16) = 5. Sobre la curva x + y = 3t + 4t = 7t. Entonces $\int_C (x+y)\,ds$ = $\int_0^1 7t\cdot 5\,dt$ = $35\cdot\frac{1}{2}$ = $\frac{35}{2}$.
 Sin el factor 5 queda 7/2; evaluar en el extremo y multiplicar por la longitud da 35; integrar solo la rapidez da 5.
 
 ### P80 · dificultad 2 · kc: integral-linea-escalar · borrador · origen: ia (sonnet-5.5)
@@ -80,7 +80,7 @@ Calcula $\int_C xy\,ds$, donde C es el cuarto de la circunferencia x² + y² = 4
 - C) π · [linea-esc-solo-longitud] integras solo |r'(t)| = 2 entre 0 y π/2 y olvidas la función xy
 - D) 8/3 · [linea-esc-una-componente-de-velocidad] multiplicas por y'(t) = 2 cos t en lugar de por |r'(t)| = 2
 
-solución: r'(t) = (−2 sen t, 2 cos t), |r'(t)| = 2. Sobre la curva xy = 4 cos t sen t. Entonces $\int_C xy\,ds = \int_0^{\pi/2} 4\cos t\,\sen t\cdot 2\,dt = 8\int_0^{\pi/2}\sen t\cos t\,dt = 8\cdot\frac{1}{2} = 4$.
+solución: r'(t) = (−2 sen t, 2 cos t), |r'(t)| = 2. Sobre la curva xy = 4 cos t sen t. Entonces $\int_C xy\,ds$ = $\int_0^{\pi/2} 4\cos t\,\sen t\cdot 2\,dt$ = $8\int_0^{\pi/2}\sen t\cos t\,dt$ = $8\cdot\frac{1}{2}$ = $4$.
 Con 4 como factor sale 8; con solo |r'| sale la longitud π; con y'(t) sale $8\int_0^{\pi/2}\cos^2 t\,\sen t\,dt = 8/3$.
 
 ### P81 · dificultad 2 · kc: integral-linea-escalar · borrador · origen: ia (sonnet-5.5)
@@ -91,7 +91,7 @@ Sea C el arco de la parábola y = x² que va de (1, 1) a (0, 0). El valor de $\i
 - C) 3/2 · [linea-esc-norma-sin-raiz] usas 1 + 4t² como factor de longitud de arco en lugar de su raíz cuadrada √(1 + 4t²)
 - D) 2/3 · [linea-esc-una-componente-de-velocidad] multiplicas por y'(t) = 2t en lugar de por |r'(t)| = √(1 + 4t²)
 
-solución: la integral de una función escalar no depende del sentido, así que se parametriza con r(t) = (t, t²), 0 ≤ t ≤ 1. Entonces |r'(t)| = √(1 + 4t²) y $\int_C x\,ds = \int_0^1 t\sqrt{1+4t^2}\,dt$. Con u = 1 + 4t², du = 8t dt: $\frac{1}{8}\int_1^5 \sqrt{u}\,du = \frac{1}{8}\cdot\frac{2}{3}(5\sqrt{5}-1) = \frac{5\sqrt{5}-1}{12}$.
+solución: la integral de una función escalar no depende del sentido, así que se parametriza con r(t) = (t, t²), 0 ≤ t ≤ 1. Entonces |r'(t)| = √(1 + 4t²) y $\int_C x\,ds = \int_0^1 t\sqrt{1+4t^2}\,dt$. Con u = 1 + 4t², du = 8t dt: $\frac{1}{8}\int_1^5 \sqrt{u}\,du$ = $\frac{1}{8}\cdot\frac{2}{3}(5\sqrt{5}-1)$ = $\frac{5\sqrt{5}-1}{12}$.
 Sin la raíz queda $\int_0^1 t(1+4t^2)\,dt = 3/2$; con y'(t) queda $\int_0^1 2t^2\,dt = 2/3$.
 
 ### P82 · dificultad 2 · kc: integral-linea-escalar · borrador · origen: ia (sonnet-5.5)
@@ -102,7 +102,7 @@ Calcula $\int_C (x+y+z)\,ds$, donde C es el segmento parametrizado por r(t) = (2
 - C) 60 · [linea-esc-valor-extremo-por-longitud] evalúas x + y + z en el punto final (2, 4, 4), que da 10, y lo multiplicas por la longitud 6 del segmento en lugar de integrar
 - D) 30 · CORRECTA
 
-solución: r'(t) = (2, 4, 4), así que |r'(t)| = √(4 + 16 + 16) = 6. Sobre la curva x + y + z = 10t. Entonces $\int_C (x+y+z)\,ds = \int_0^1 10t\cdot 6\,dt = 60\cdot\frac{1}{2} = 30$.
+solución: r'(t) = (2, 4, 4), así que |r'(t)| = √(4 + 16 + 16) = 6. Sobre la curva x + y + z = 10t. Entonces $\int_C (x+y+z)\,ds$ = $\int_0^1 10t\cdot 6\,dt$ = $60\cdot\frac{1}{2}$ = $30$.
 Sin el factor 6 queda 5; con 36 queda 180; el valor en el extremo por la longitud da 60.
 
 ### P83 · dificultad 3 · kc: integral-linea-escalar · borrador · origen: ia (sonnet-5.5)
@@ -113,7 +113,7 @@ Sea C la curva r(t) = (cos t + t sen t, sen t − t cos t), con 0 ≤ t ≤ 2. E
 - C) −6 · [linea-esc-signo-por-sentido] crees que la integral cambia de signo por una convención de sentido, aunque una integral de función escalar no depende de él
 - D) 136/15 · [linea-esc-norma-sin-raiz] usas |r'(t)|² = t² como factor de longitud de arco en lugar de su raíz cuadrada t
 
-solución: r'(t) = (t cos t, t sen t), así que |r'(t)| = t. Además x² + y² = (cos t + t sen t)² + (sen t − t cos t)² = 1 + t² (los productos cruzados se cancelan). Entonces $\int_C (x^2+y^2)\,ds = \int_0^2 (1+t^2)\,t\,dt = \left[\frac{t^2}{2}+\frac{t^4}{4}\right]_0^2 = 2 + 4 = 6$.
+solución: r'(t) = (t cos t, t sen t), así que |r'(t)| = t. Además x² + y² = (cos t + t sen t)² + (sen t − t cos t)² = 1 + t² (los productos cruzados se cancelan). Entonces $\int_C (x^2+y^2)\,ds$ = $\int_0^2 (1+t^2)\,t\,dt$ = $\left[\frac{t^2}{2}+\frac{t^4}{4}\right]_0^2$ = $2 + 4$ = $6$.
 Sin el factor t queda 14/3; con t² queda 136/15.
 
 ### P84 · dificultad 3 · kc: integral-linea-vectorial · borrador · origen: ia (sonnet-5.5)

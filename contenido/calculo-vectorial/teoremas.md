@@ -130,7 +130,7 @@ Sea C la parábola y = x² recorrida de (0, 0) a (1, 1) y sea F = (3y + x, 5x). 
 - C) 25/6 · [teoremas-e2] tomas la curva cerrada con la orientación contraria, así que la integral cerrada sale −1/3 en vez de 1/3
 - D) 14/3 · [green-integrando-suma-de-parciales] integras ∂P/∂x + ∂Q/∂y = 1 sobre la región en vez de ∂Q/∂x − ∂P/∂y = 2
 
-solución: sea C′ el segmento de (1, 1) a (0, 0). La curva cerrada C + C′ es antihoraria y por Green $\oint P\,dx + Q\,dy = \iint_D \left(\frac{\partial Q}{\partial x} - \frac{\partial P}{\partial y}\right)dA = \iint_D (5 - 3)\,dA = 2·\frac{1}{6} = \frac{1}{3}$.
+solución: sea C′ el segmento de (1, 1) a (0, 0). La curva cerrada C + C′ es antihoraria y por Green $\oint P\,dx + Q\,dy$ = $\iint_D \left(\frac{\partial Q}{\partial x} - \frac{\partial P}{\partial y}\right)dA$ = $\iint_D (5 - 3)\,dA$ = $2·\frac{1}{6}$ = $\frac{1}{3}$.
 En C′, con x = y = t y t de 1 a 0, el integrando es (3t + t)dt + 5t dt = 9t dt y la integral vale −9/2.
 Entonces $\int_C = \frac{1}{3} - \left(-\frac{9}{2}\right) = \frac{29}{6}$.
 Comprobación directa con x = t, y = t²: (3t² + t)dt + 5t·2t dt = (13t² + t)dt, y su integral de 0 a 1 es 13/3 + 1/2 = 29/6.
@@ -153,7 +153,7 @@ Sea C la frontera de la región 1 ≤ x² + y² ≤ 4, orientada de modo que la 
 - C) 51π/2 · [teoremas-e2] recorres también la circunferencia interior en sentido antihorario, en vez de horario
 - D) −45π/2 · [green-integrando-resta-invertida] calculas ∂P/∂y − ∂Q/∂x = −3(x² + y²) en vez de ∂Q/∂x − ∂P/∂y
 
-solución: con P = −y³ y Q = x³, ∂Q/∂x − ∂P/∂y = 3x² + 3y² = 3r². Con la región a la izquierda, la circunferencia exterior se recorre en sentido antihorario y la interior en sentido horario, y Green vale para toda la región D entre ambas: $\iint_D 3r^2\,dA = \int_0^{2\pi}\int_1^2 3r^2\cdot r\,dr\,d\theta = 2\pi\cdot\frac{3}{4}(16 - 1) = \frac{45\pi}{2}$.
+solución: con P = −y³ y Q = x³, ∂Q/∂x − ∂P/∂y = 3x² + 3y² = 3r². Con la región a la izquierda, la circunferencia exterior se recorre en sentido antihorario y la interior en sentido horario, y Green vale para toda la región D entre ambas: $\iint_D 3r^2\,dA$ = $\int_0^{2\pi}\int_1^2 3r^2\cdot r\,dr\,d\theta$ = $2\pi\cdot\frac{3}{4}(16 - 1)$ = $\frac{45\pi}{2}$.
 Si solo se usa el disco de radio 2 sale 24π, y si la circunferencia interior se recorre antihoraria se suma 3π/2 en vez de restarse: 24π + 3π/2 = 51π/2.
 
 ### P103 · dificultad 1 · kc: stokes · borrador · origen: ia (sonnet-5.5)
