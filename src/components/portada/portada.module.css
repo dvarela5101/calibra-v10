@@ -48,8 +48,8 @@
   max-inline-size: none; /* globals.css limita todo svg al 100 % de su caja */
   fill: none;
   stroke: var(--marca);
-  stroke-opacity: 0.42;
-  stroke-width: 1.75;
+  stroke-opacity: 0.8;
+  stroke-width: 2.75;
   stroke-linecap: round;
   stroke-linejoin: round;
   overflow: visible;
@@ -57,7 +57,7 @@
 
 .trazoDeMargen {
   inline-size: calc(var(--ancho) * var(--escala) * 1px);
-  stroke-width: calc(1.75px / var(--escala));
+  stroke-width: calc(2.75px / var(--escala));
 }
 
 .margenIzquierdo {
@@ -105,7 +105,7 @@
     .trazoDeFondo {
       view-timeline: --dibujo block;
       --desde: 15vh;
-      --fin: min(75vh, 760px);
+      --fin: min(55vh, 560px);
       --tramo: calc(var(--fin) - var(--desde));
     }
 
@@ -121,7 +121,7 @@
 
     /* El último dibujo de la página: debajo de él solo quedan unos 660 px. */
     .curvaAlFinal {
-      --fin: min(75vh, 620px);
+      --fin: min(55vh, 520px);
     }
   }
 }
