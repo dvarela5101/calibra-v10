@@ -16,7 +16,7 @@ mc: write-agrega-salto · archivos · crees que write agrega el salto de línea 
 
 ## Preguntas
 
-### P58 · dificultad 1 · kc: archivos · borrador · origen: ia (sonnet-5.5)
+### P58 · dificultad 1 · kc: archivos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El archivo lecturas.txt contiene dos líneas, "ab" y "cd", cada una terminada con su salto de línea:
 ```
 ab
@@ -39,7 +39,7 @@ print(len(a), repr(c))
 
 solución: la primera readline devuelve ab con su salto de línea: 3 caracteres, porque conserva el salto. La segunda lee cd y no se guarda. La tercera ya está en el final del archivo y devuelve la cadena vacía "", no None; repr la muestra como ''. Imprime 3 ''.
 
-### P59 · dificultad 2 · kc: archivos · borrador · origen: ia (sonnet-5.5)
+### P59 · dificultad 2 · kc: archivos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El archivo prestamos.txt contiene, antes de correr el programa, las líneas "A1" y "B2" (cada una con su salto de línea):
 ```
 A1
@@ -64,7 +64,7 @@ print(linea.strip(), len(linea))
 
 solución: el modo "w" borra A1 y B2 al abrir. write no agrega saltos, así que el archivo queda con una sola línea: C3D4 seguido del salto de línea que trae el segundo write. readline la devuelve completa, con el salto al final, así que linea tiene 5 caracteres; strip() quita el salto solo para imprimir. Imprime C3D4 5.
 
-### P60 · dificultad 2 · kc: archivos · borrador · origen: ia (sonnet-5.5) · ⚠ revisar
+### P60 · dificultad 2 · kc: archivos · revisada · origen: ia (sonnet-5.5) · ⚠ revisar · revisó: dvarela5101
 El archivo catalogo.csv contiene un encabezado y un producto cuyo nombre lleva una coma entre comillas; cada una de las dos líneas termina con su salto de línea:
 ```
 producto,precio
@@ -87,7 +87,7 @@ print(len(campos), len(campos[-1]))
 
 solución: linea es la segunda línea completa, con su salto de línea al final. split(",") corta en cada coma, también en la que está dentro de las comillas, así que quedan 3 campos: "Tornillo, M4" partido en dos y el precio. El último campo es 150 más el salto de línea: 4 caracteres. Imprime 3 4.
 
-### P61 · dificultad 2 · kc: archivos · borrador · origen: ia (sonnet-5.5)
+### P61 · dificultad 2 · kc: archivos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El archivo equipos.txt contiene:
 ```
 equipo,activo
@@ -117,7 +117,7 @@ print(n)
 
 solución: el encabezado se lee antes del ciclo y no se cuenta. Las tres líneas de datos dan los campos "True", "False" y "False". bool aplicado a un texto no vacío siempre da True, sin importar lo que diga, así que las tres suman. Imprime 3.
 
-### P62 · dificultad 3 · kc: archivos · borrador · origen: ia (sonnet-5.5)
+### P62 · dificultad 3 · kc: archivos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El archivo estaciones.csv contiene un encabezado y dos registros, el primero con una coma dentro de comillas:
 ```
 estacion,alerta
@@ -145,7 +145,7 @@ print(total, repr(linea))
 
 solución: el encabezado se lee antes del ciclo y no suma. Primer registro: split(",") también corta la coma entre comillas y da 3 campos. Segundo registro: 2 campos. Total 5. Al salir del ciclo linea vale la cadena vacía, que es lo que devuelve readline al final del archivo, no None. Imprime 5 ''.
 
-### P63 · dificultad 3 · kc: archivos · borrador · origen: ia (sonnet-5.5)
+### P63 · dificultad 3 · kc: archivos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El archivo registro.txt contiene, antes de correr el programa, estas tres líneas (cada una con su salto de línea):
 ```
 dia,visitas

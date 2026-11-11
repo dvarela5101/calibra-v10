@@ -23,7 +23,7 @@ mc: flujo-con-una-sola-componente · flujo · multiplicas el área por una sola 
 
 ## Preguntas
 
-### P85 · dificultad 1 · kc: superficie-parametrizada · borrador · origen: ia (sonnet-5.5)
+### P85 · dificultad 1 · kc: superficie-parametrizada · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 La superficie S se parametriza con $r(u,v) = (u, v, u^2 + v^2)$. ¿Cuánto vale el vector normal $r_u \times r_v$ en el punto que corresponde a (u, v) = (1, 2)?
 
 - A) (−2, −4, 1) · CORRECTA
@@ -33,7 +33,7 @@ La superficie S se parametriza con $r(u,v) = (u, v, u^2 + v^2)$. ¿Cuánto vale 
 
 solución: r_u = (1, 0, 2u) = (1, 0, 2) y r_v = (0, 1, 2v) = (0, 1, 4) en (1, 2). El producto vectorial es r_u × r_v = (0·4 − 2·1, 2·0 − 1·4, 1·1 − 0·0) = (−2, −4, 1). En general es (−2u, −2v, 1).
 
-### P86 · dificultad 2 · kc: superficie-parametrizada · borrador · origen: ia (sonnet-5.5)
+### P86 · dificultad 2 · kc: superficie-parametrizada · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Cuál es el área de la parte del plano $z = 2x + 2y$ que queda sobre el disco $x^2 + y^2 \le 4$?
 
 - A) 12π · CORRECTA
@@ -43,7 +43,7 @@ solución: r_u = (1, 0, 2u) = (1, 0, 2) y r_v = (0, 1, 2v) = (0, 1, 4) en (1, 2)
 
 solución: para z = f(x, y) el elemento de área es √(1 + f_x² + f_y²) dA. Aquí f_x = 2 y f_y = 2, así que el factor es √(1 + 4 + 4) = 3, constante. El área es 3 · (área del disco) = 3 · π · 2² = 12π.
 
-### P87 · dificultad 2 · kc: superficie-parametrizada · borrador · origen: ia (sonnet-5.5)
+### P87 · dificultad 2 · kc: superficie-parametrizada · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 La superficie $r(u,v) = (u^2, u + v, v^2)$ pasa por el punto (1, 3, 4) cuando (u, v) = (1, 2). ¿Cuál es la ecuación de su plano tangente en ese punto?
 
 - A) 2x − 4y + z = −6 · CORRECTA
@@ -53,7 +53,7 @@ La superficie $r(u,v) = (u^2, u + v, v^2)$ pasa por el punto (1, 3, 4) cuando (u
 
 solución: r_u = (2u, 1, 0) = (2, 1, 0) y r_v = (0, 1, 2v) = (0, 1, 4). La normal es r_u × r_v = (1·4 − 0·1, 0·0 − 2·4, 2·1 − 1·0) = (4, −8, 2), que es paralela a (2, −4, 1). El plano por (1, 3, 4) es 2(x − 1) − 4(y − 3) + (z − 4) = 0, es decir, 2x − 4y + z = −6. Comprobación: 2 − 12 + 4 = −6.
 
-### P88 · dificultad 2 · kc: superficie-parametrizada · borrador · origen: ia (sonnet-5.5)
+### P88 · dificultad 2 · kc: superficie-parametrizada · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Halla el área de la parte del cono $z = 2\sqrt{x^2 + y^2}$ que queda por debajo del plano z = 6.
 
 - A) 9√5π · CORRECTA
@@ -63,7 +63,7 @@ Halla el área de la parte del cono $z = 2\sqrt{x^2 + y^2}$ que queda por debajo
 
 solución: la superficie es z = f(x, y) con f = 2r en polares, y |∇f| = 2 en todo punto, así que el factor de área es √(1 + 4) = √5. El corte z = 6 da 2r = 6, es decir, r = 3. El área es ∬ √5 dA = √5 · π · 3² = 9√5π.
 
-### P89 · dificultad 3 · kc: superficie-parametrizada · borrador · origen: ia (sonnet-5.5)
+### P89 · dificultad 3 · kc: superficie-parametrizada · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Cuál es el área de la parte del paraboloide $z = x^2 + y^2$ que queda por debajo del plano z = 6?
 
 - A) 62π/3 · CORRECTA
@@ -73,7 +73,7 @@ solución: la superficie es z = f(x, y) con f = 2r en polares, y |∇f| = 2 en t
 
 solución: con f = x² + y², el factor de área es √(1 + 4x² + 4y²) = √(1 + 4r²). El corte z = 6 da r² = 6, o sea 0 ≤ r ≤ √6. El área es ∫₀^{2π} ∫₀^{√6} r·√(1 + 4r²) dr dθ = 2π · [(1 + 4r²)^{3/2} / 12] entre 0 y √6 = 2π · (125 − 1)/12 = 62π/3.
 
-### P90 · dificultad 1 · kc: flujo · borrador · origen: ia (sonnet-5.5)
+### P90 · dificultad 1 · kc: flujo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea F(x, y, z) = (3, 1, 2). La superficie S es el cuadrado de la parte del plano x = 1 con 0 ≤ y ≤ 2 y 0 ≤ z ≤ 2, orientado con la normal que apunta hacia x positivo. ¿Cuánto vale el flujo de F a través de S?
 
 - A) 12 · CORRECTA
@@ -83,7 +83,7 @@ Sea F(x, y, z) = (3, 1, 2). La superficie S es el cuadrado de la parte del plano
 
 solución: la normal unitaria es n = (1, 0, 0), constante. Entonces F · n = 3 y el flujo es ∬ 3 dS = 3 · (área) = 3 · 4 = 12.
 
-### P91 · dificultad 2 · kc: flujo · borrador · origen: ia (sonnet-5.5)
+### P91 · dificultad 2 · kc: flujo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula $\iint_S z\, dS$, donde S es la parte del plano z = 3 − x con 0 ≤ x ≤ 2 y 0 ≤ y ≤ 1.
 
 - A) 4√2 · CORRECTA
@@ -93,7 +93,7 @@ Calcula $\iint_S z\, dS$, donde S es la parte del plano z = 3 − x con 0 ≤ x 
 
 solución: S es la gráfica de g(x, y) = 3 − x, con g_x = −1 y g_y = 0, así que dS = √(1 + 1 + 0) dA = √2 dA. Entonces ∬ z dS = √2 ∫₀¹ ∫₀² (3 − x) dx dy = √2 · (6 − 2) = 4√2.
 
-### P92 · dificultad 2 · kc: flujo · borrador · origen: ia (sonnet-5.5)
+### P92 · dificultad 2 · kc: flujo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea F(x, y, z) = (x, y, 3) y sea S la parte del paraboloide $z = 1 - x^2 - y^2$ con z ≥ 0, orientada hacia arriba (la normal tiene componente z positiva). ¿Cuánto vale el flujo de F a través de S?
 
 - A) 4π · CORRECTA
@@ -103,7 +103,7 @@ Sea F(x, y, z) = (x, y, 3) y sea S la parte del paraboloide $z = 1 - x^2 - y^2$ 
 
 solución: con g = 1 − x² − y², la normal hacia arriba es N = (−g_x, −g_y, 1) = (2x, 2y, 1) y dS = |N| dA, así que el flujo es ∬ F · N dA sobre el disco r ≤ 1. F · N = 2x² + 2y² + 3 = 2r² + 3. Entonces ∫₀^{2π} ∫₀¹ (2r² + 3) r dr dθ = 2π (1/2 + 3/2) = 4π.
 
-### P93 · dificultad 2 · kc: flujo · borrador · origen: ia (sonnet-5.5)
+### P93 · dificultad 2 · kc: flujo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula $\iint_S (x^2 + y^2)\, dS$, donde S es la parte del cilindro x² + y² = 4 con 0 ≤ z ≤ 3.
 
 - A) 48π · CORRECTA
@@ -113,7 +113,7 @@ Calcula $\iint_S (x^2 + y^2)\, dS$, donde S es la parte del cilindro x² + y² =
 
 solución: se parametriza r(θ, z) = (2 cos θ, 2 sen θ, z) con 0 ≤ θ ≤ 2π y 0 ≤ z ≤ 3. Entonces r_θ × r_z = (2 cos θ, 2 sen θ, 0), cuyo módulo es 2, y dS = 2 dθ dz. En S se cumple x² + y² = 4, así que la integral es ∫₀³ ∫₀^{2π} 4 · 2 dθ dz = 8 · 2π · 3 = 48π.
 
-### P94 · dificultad 3 · kc: flujo · borrador · origen: ia (sonnet-5.5)
+### P94 · dificultad 3 · kc: flujo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea F(x, y, z) = (x, y, 2) y sea S la parte del cono $z = \sqrt{x^2 + y^2}$ con 0 ≤ z ≤ 1, orientada con la normal que tiene componente z positiva. ¿Cuánto vale el flujo de F a través de S?
 
 - A) 4π/3 · CORRECTA

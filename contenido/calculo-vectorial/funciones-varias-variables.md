@@ -30,7 +30,7 @@ mc: indefinida-en-el-punto-sin-limite · limites-continuidad · como la expresi�
 
 ## Preguntas
 
-### P17 · dificultad 1 · kc: coordenadas · borrador · origen: ia (sonnet-5.5)
+### P17 · dificultad 1 · kc: coordenadas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El punto con coordenadas cartesianas (−2, 2, 1) tiene, en coordenadas cilíndricas (r, θ, z), con 0 ≤ θ < 2π, la forma:
 
 - A) (2√2, −π/4, 1) · [angulo-sin-ajuste-cuadrante] calculas θ = arctan(2/(−2)) = −π/4 y no lo llevas al segundo cuadrante, donde está el punto
@@ -40,7 +40,7 @@ El punto con coordenadas cartesianas (−2, 2, 1) tiene, en coordenadas cilíndr
 
 solución: r = √(x² + y²) = √(4 + 4) = 2√2. El ángulo cumple tan θ = y/x = −1 y el punto tiene x < 0 e y > 0, así que está en el segundo cuadrante: θ = 3π/4 (arctan(−1) = −π/4 cae en el cuarto cuadrante). La altura no cambia: z = 1.
 
-### P18 · dificultad 2 · kc: coordenadas · borrador · origen: ia (sonnet-5.5)
+### P18 · dificultad 2 · kc: coordenadas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El punto con coordenadas cartesianas (−1, 1, √6) tiene, en coordenadas esféricas (ρ, θ, φ), con φ medido desde el eje z positivo y 0 ≤ θ < 2π, la forma:
 
 - A) (√2, 3π/4, π/6) · [rho-ignora-z] tomas ρ = √(x² + y²) = √2 y olvidas la coordenada z
@@ -50,7 +50,7 @@ El punto con coordenadas cartesianas (−1, 1, √6) tiene, en coordenadas esfé
 
 solución: ρ = √(1 + 1 + 6) = √8 = 2√2. El ángulo φ cumple cos φ = z/ρ = √6/(2√2) = √3/2, así que φ = π/6. Para θ: tan θ = −1 con x < 0 e y > 0, es decir, segundo cuadrante, y θ = 3π/4.
 
-### P19 · dificultad 2 · kc: coordenadas · borrador · origen: ia (sonnet-5.5)
+### P19 · dificultad 2 · kc: coordenadas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué ecuación en variables (r, θ, z) describe la superficie esférica x² + y² + z² = 6y?
 
 - A) r² + z² = 6r sen θ · CORRECTA
@@ -60,7 +60,7 @@ solución: ρ = √(1 + 1 + 6) = √8 = 2√2. El ángulo φ cumple cos φ = z/�
 
 solución: se sustituye con x = r cos θ, y = r sen θ y z = z; la suma x² + y² vale r². La ecuación de la esfera pasa entonces a r² + z² = 6r sen θ. La opción B omite z²; la C no multiplica por r el término de y; la D deja r donde debía ir r².
 
-### P20 · dificultad 2 · kc: coordenadas · borrador · origen: ia (sonnet-5.5)
+### P20 · dificultad 2 · kc: coordenadas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El paraboloide z = x² + y² se escribe en coordenadas esféricas, para ρ > 0, como:
 
 - A) ρ = cos φ · [rho-ignora-z] reemplazas x² + y² por ρ², sin el factor sen²φ
@@ -70,7 +70,7 @@ El paraboloide z = x² + y² se escribe en coordenadas esféricas, para ρ > 0, 
 
 solución: en esféricas z = ρ cos φ y x² + y² = ρ² sen²φ. La ecuación queda ρ cos φ = ρ² sen²φ. Como ρ > 0, se divide entre ρ y se despeja: ρ = cos φ / sen²φ.
 
-### P21 · dificultad 3 · kc: coordenadas · borrador · origen: ia (sonnet-5.5)
+### P21 · dificultad 3 · kc: coordenadas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El hiperboloide x² + y² − z² = 1 se escribe en coordenadas esféricas como:
 
 - A) ρ² cos 2φ = 1 · [phi-desde-plano-xy] mides φ desde el plano xy, con x² + y² = ρ² cos²φ y z² = ρ² sen²φ, y el signo del resultado queda invertido
@@ -80,7 +80,7 @@ El hiperboloide x² + y² − z² = 1 se escribe en coordenadas esféricas como:
 
 solución: en esféricas x² + y² = ρ² sen²φ y z² = ρ² cos²φ. La ecuación queda ρ²(sen²φ − cos²φ) = 1. Como sen²φ − cos²φ = −cos 2φ, resulta −ρ² cos 2φ = 1, es decir, ρ² cos 2φ = −1.
 
-### P22 · dificultad 1 · kc: dominio-niveles · borrador · origen: ia (sonnet-5.5)
+### P22 · dificultad 1 · kc: dominio-niveles · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El dominio de $f(x,y) = \ln x + \sqrt{y}$ es:
 
 - A) x ≥ 0 e y ≥ 0 · [ln-admite-cero] aceptas x = 0, donde ln x no está definido
@@ -90,7 +90,7 @@ El dominio de $f(x,y) = \ln x + \sqrt{y}$ es:
 
 solución: ln x existe solo si x > 0. √y existe si y ≥ 0, y √0 = 0 sí está definido. Las dos condiciones valen a la vez: x > 0 e y ≥ 0.
 
-### P23 · dificultad 2 · kc: dominio-niveles · borrador · origen: ia (sonnet-5.5)
+### P23 · dificultad 2 · kc: dominio-niveles · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El dominio de $f(x,y) = \frac{1}{\sqrt{x^2 - y^2}}$ es:
 
 - A) |x| ≥ |y| · [radicando-cero-mal-tratado] incluyes los puntos donde x² − y² = 0, que anulan el denominador
@@ -100,7 +100,7 @@ El dominio de $f(x,y) = \frac{1}{\sqrt{x^2 - y^2}}$ es:
 
 solución: la raíz está en el denominador, así que el radicando debe ser estrictamente positivo: x² − y² > 0, es decir, x² > y². Al sacar raíz cuadrada a ambos lados queda |x| > |y|. Por ejemplo, (1, −5) cumple x > y pero no está en el dominio, porque 1 − 25 < 0.
 
-### P24 · dificultad 2 · kc: dominio-niveles · borrador · origen: ia (sonnet-5.5)
+### P24 · dificultad 2 · kc: dominio-niveles · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El dominio de $f(x,y) = \sqrt{x^2 - 1}\,\ln y$ es:
 
 - A) |x| ≥ 1 e y > 0 · CORRECTA
@@ -110,7 +110,7 @@ El dominio de $f(x,y) = \sqrt{x^2 - 1}\,\ln y$ es:
 
 solución: la raíz exige x² − 1 ≥ 0, es decir, |x| ≥ 1 (x ≥ 1 o x ≤ −1); el valor x = ±1 sí vale porque √0 = 0. El logaritmo exige y > 0. El dominio es |x| ≥ 1 e y > 0.
 
-### P25 · dificultad 2 · kc: dominio-niveles · borrador · origen: ia (sonnet-5.5)
+### P25 · dificultad 2 · kc: dominio-niveles · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea f(x, y) = 9x² + 9y². ¿Cómo son sus curvas de nivel f(x, y) = c?
 
 - A) Para c ≥ 0 son circunferencias centradas en el origen de radio c/3 · [radio-igual-a-la-constante] escribes el radio como c/3, sin sacarle la raíz a c
@@ -120,7 +120,7 @@ Sea f(x, y) = 9x² + 9y². ¿Cómo son sus curvas de nivel f(x, y) = c?
 
 solución: la igualdad 9x² + 9y² = c equivale a x² + y² = c/9, que tiene puntos solo si c ≥ 0. Con c > 0 se obtiene la circunferencia de radio √c/3 (por ejemplo, c = 36 da radio 2, no 12). Con c = 0 queda únicamente el origen, y con c < 0 no hay ningún punto. Las parábolas z = 9k² + 9y² son trazas en planos verticales, no curvas de nivel.
 
-### P26 · dificultad 3 · kc: dominio-niveles · borrador · origen: ia (sonnet-5.5)
+### P26 · dificultad 3 · kc: dominio-niveles · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sobre la superficie z = 9 − x² − y², ¿cuál afirmación es verdadera?
 
 - A) Hay una curva de nivel z = 10, y es una circunferencia · [nivel-fuera-del-rango] no ves que la función nunca supera 9, así que ese nivel no existe
@@ -130,7 +130,7 @@ Sobre la superficie z = 9 − x² − y², ¿cuál afirmación es verdadera?
 
 solución: con z = 0 queda 9 − x² − y² = 0, es decir x² + y² = 9, una circunferencia de radio 3. La función alcanza su máximo, 9, en el origen, así que el nivel z = 10 no tiene puntos. En el plano x = 2 la traza es z = 5 − y², que es una parábola y no una circunferencia.
 
-### P27 · dificultad 1 · kc: limites-continuidad · borrador · origen: ia (sonnet-5.5)
+### P27 · dificultad 1 · kc: limites-continuidad · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sobre $\lim_{(x,y)\to(0,0)} \frac{xy}{x^2 + y^2}$, ¿cuál afirmación es correcta?
 
 - A) No existe · CORRECTA
@@ -140,7 +140,7 @@ Sobre $\lim_{(x,y)\to(0,0)} \frac{xy}{x^2 + y^2}$, ¿cuál afirmación es correc
 
 solución: por el eje x (y = 0) la función vale 0 en todo punto, así que el límite por esa trayectoria es 0. Por la recta y = x queda x²/(2x²) = 1/2. Como dos trayectorias dan valores distintos, el límite no existe.
 
-### P28 · dificultad 2 · kc: limites-continuidad · borrador · origen: ia (sonnet-5.5)
+### P28 · dificultad 2 · kc: limites-continuidad · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sobre $\lim_{(x,y)\to(0,0)} \frac{x y^2}{x^2 + y^4}$, ¿cuál afirmación es correcta?
 
 - A) Vale 0 · [rectas-bastan] por cada recta y = mx el límite es 0 y concluyes que vale 0, sin probar curvas
@@ -150,7 +150,7 @@ Sobre $\lim_{(x,y)\to(0,0)} \frac{x y^2}{x^2 + y^4}$, ¿cuál afirmación es cor
 
 solución: por y = mx queda m²x³/(x² + m⁴x⁴) = m²x/(1 + m⁴x²), que tiende a 0 para todo m. Pero por la parábola x = y² queda y⁴/(y⁴ + y⁴) = 1/2. Dos trayectorias dan valores distintos (0 y 1/2), así que el límite no existe.
 
-### P29 · dificultad 2 · kc: limites-continuidad · borrador · origen: ia (sonnet-5.5)
+### P29 · dificultad 2 · kc: limites-continuidad · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea f(x, y) = x²y/(x² + y²) para (x, y) ≠ (0, 0), y f(0, 0) = 1. ¿Cuál afirmación es correcta?
 
 - A) El límite en (0, 0) es 1, porque al sustituir queda 0/0 y vale f(0, 0) · [cero-sobre-cero-es-el-limite] tomas el 0/0 como el valor que le asignan a f en el origen
@@ -160,7 +160,7 @@ Sea f(x, y) = x²y/(x² + y²) para (x, y) ≠ (0, 0), y f(0, 0) = 1. ¿Cuál af
 
 solución: en polares x²y/(x² + y²) = r³cos²θ sen θ / r² = r cos²θ sen θ. Como |cos²θ sen θ| ≤ 1, el valor absoluto es a lo sumo r, que tiende a 0, y por el teorema del encaje el límite es 0. Como f(0, 0) = 1 ≠ 0, f no es continua en el origen.
 
-### P30 · dificultad 2 · kc: limites-continuidad · borrador · origen: ia (sonnet-5.5)
+### P30 · dificultad 2 · kc: limites-continuidad · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea g(x, y) = (x² − y²)/(x − y) para x ≠ y. ¿Se puede definir g(1, 1) para que g sea continua en (1, 1)?
 
 - A) No, porque g no está definida en (1, 1) · [indefinida-en-el-punto-sin-limite] como la expresión no está definida allí, dices que el límite no existe
@@ -170,7 +170,7 @@ Sea g(x, y) = (x² − y²)/(x − y) para x ≠ y. ¿Se puede definir g(1, 1) p
 
 solución: para x ≠ y, (x² − y²)/(x − y) = (x − y)(x + y)/(x − y) = x + y. Cuando (x, y) tiende a (1, 1), x + y tiende a 2, así que el límite existe y vale 2. Para que g sea continua en (1, 1) hay que asignar g(1, 1) = 2. Sin ese valor g no está definida en el punto y no puede ser continua allí.
 
-### P31 · dificultad 3 · kc: limites-continuidad · borrador · origen: ia (sonnet-5.5)
+### P31 · dificultad 3 · kc: limites-continuidad · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea f(x, y) = 2x²y²/(x⁴ + y⁴) para (x, y) ≠ (0, 0), y f(0, 0) = 0. ¿Cuál justificación es correcta sobre la continuidad de f en (0, 0)?
 
 - A) No es continua: en polares queda $\frac{2\cos^2\theta\,\sen^2\theta}{\cos^4\theta + \sen^4\theta}$, que no depende de r y cambia con θ, así que el límite no existe · CORRECTA

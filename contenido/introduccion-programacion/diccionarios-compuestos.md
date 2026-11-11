@@ -21,7 +21,7 @@ mc: interno-es-copia · estructuras-compuestas · crees que el diccionario inter
 
 ## Preguntas
 
-### P48 · dificultad 1 · kc: recorrer-diccionarios · borrador · origen: ia (sonnet-5.5)
+### P48 · dificultad 1 · kc: recorrer-diccionarios · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 precios = {"te": 3, "cafe": 5, "jugo": 4}
@@ -39,7 +39,7 @@ print(vistos)
 solución: for p in precios recorre las llaves, en el orden en que se agregaron al diccionario.
 Se agregan 'te', 'cafe' y 'jugo', en ese orden, y la lista queda ['te', 'cafe', 'jugo'].
 
-### P49 · dificultad 2 · kc: recorrer-diccionarios · borrador · origen: ia (sonnet-5.5)
+### P49 · dificultad 2 · kc: recorrer-diccionarios · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 votos = {"sol": 30, "mar": 21, "luna": 30}
@@ -63,7 +63,7 @@ mar: 21 >= 30 es falso, no cambia nada.
 luna: 30 >= 30 es verdadero (el >= acepta el empate), entonces mejor = "luna".
 Se imprime la llave, luna, y no el conteo 30.
 
-### P50 · dificultad 2 · kc: recorrer-diccionarios · borrador · origen: ia (sonnet-5.5)
+### P50 · dificultad 2 · kc: recorrer-diccionarios · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 inventario = {"tuerca": 5}
@@ -81,7 +81,7 @@ solución: "tuerca" ya existe: 5 + 1 = 6.
 "perno" no existe todavía: inventario["perno"] += 1 primero lee inventario["perno"], y esa lectura da KeyError.
 El programa se detiene ahí y no llega al print. Para contar bien, primero hay que crear la llave (if pieza in inventario: ... else: inventario[pieza] = 1).
 
-### P51 · dificultad 3 · kc: recorrer-diccionarios · borrador · origen: ia (sonnet-5.5)
+### P51 · dificultad 3 · kc: recorrer-diccionarios · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 sala = {"p1": "verde", "p2": "rojo", "p3": "verde"}
@@ -101,7 +101,7 @@ solución: for puesto in sala recorre las llaves "p1", "p2", "p3". Con cada una,
 En la primera vuelta conteo está vacío y conteo["verde"] += 1 lee una llave que no existe: KeyError.
 El programa se detiene ahí. Faltaba el if color in conteo: ... else: conteo[color] = 1.
 
-### P52 · dificultad 3 · kc: recorrer-diccionarios · borrador · origen: ia (sonnet-5.5)
+### P52 · dificultad 3 · kc: recorrer-diccionarios · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 conteo = {}
@@ -129,7 +129,7 @@ Queda conteo = {'b': 1, 'a': 3, 'n': 2}.
 Segundo ciclo (k son las llaves): b tiene 1 > 0, mejor = "b"; a tiene 3 > 1, mejor = "a"; n tiene 2 > 3 es falso.
 Se imprime la llave con el mayor conteo, a, y no el conteo 3.
 
-### P53 · dificultad 1 · kc: estructuras-compuestas · borrador · origen: ia (sonnet-5.5)
+### P53 · dificultad 1 · kc: estructuras-compuestas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 cajas = {"c1": {"kg": "90"}, "c2": {"kg": "100"}}
@@ -147,7 +147,7 @@ print(total)
 solución: for c in cajas recorre las llaves externas "c1" y "c2"; cajas[c] es el diccionario interno y ["kg"] da su dato.
 Los pesos están guardados como texto: "90" y "100". Con + se concatenan: "" + "90" = "90" y luego "90" + "100" = "90100".
 
-### P54 · dificultad 2 · kc: estructuras-compuestas · borrador · origen: ia (sonnet-5.5)
+### P54 · dificultad 2 · kc: estructuras-compuestas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 tienda = {"t1": {"stock": 5}, "t2": {"stock": 9}}
@@ -168,7 +168,7 @@ solución: t = tienda["t2"] no copia el diccionario: t y tienda["t2"] son el mis
 t["stock"] = 4 cambia también tienda["t2"]["stock"], que pasa de 9 a 4.
 El ciclo suma tienda["t1"]["stock"] + tienda["t2"]["stock"] = 5 + 4 = 9.
 
-### P55 · dificultad 2 · kc: estructuras-compuestas · borrador · origen: ia (sonnet-5.5)
+### P55 · dificultad 2 · kc: estructuras-compuestas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 equipos = [{"nombre": "Rayos", "pts": "7"}, {"nombre": "Lobos", "pts": "10"}]
@@ -186,7 +186,7 @@ solución: e = equipos[0] es el mismo diccionario que está en la lista, no una 
 e["pts"] = "9" cambia equipos[0]["pts"] de "7" a "9".
 Los puntos son texto: "9" + "10" se concatena y da "910" (no 19).
 
-### P56 · dificultad 3 · kc: estructuras-compuestas · borrador · origen: ia (sonnet-5.5)
+### P56 · dificultad 3 · kc: estructuras-compuestas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 cajas = {"c1": {"kg": "90"}, "c2": {"kg": "100"}, "c3": {"kg": "25"}}
@@ -206,7 +206,7 @@ solución: los pesos son texto y las cadenas se comparan carácter por carácter
 "90" > "90" es falso. "100" > "90" es falso, porque "1" va antes que "9". "25" > "90" es falso, porque "2" va antes que "9".
 mayor nunca cambia y se imprime c1 (como números, el mayor sería c2).
 
-### P57 · dificultad 3 · kc: estructuras-compuestas · borrador · origen: ia (sonnet-5.5)
+### P57 · dificultad 3 · kc: estructuras-compuestas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 paquetes = [{"id": "p1", "peso": "90"}, {"id": "p2", "peso": "100"}, {"id": "p3", "peso": "25"}]

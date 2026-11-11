@@ -29,7 +29,7 @@ mc: rac-ignora-parte-del-exponente-fraccionario · exponentes-racionales · en a
 
 ## Preguntas
 
-### P1 · dificultad 1 · kc: jerarquia-operaciones · borrador · origen: ia (sonnet-5.5)
+### P1 · dificultad 1 · kc: jerarquia-operaciones · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula: −3² + 20 ÷ 5·2
 
 - A) −7 · [re-divide-por-el-producto] divides 20 entre el producto 5·2 y obtienes 2, en vez de dividir entre 5 y multiplicar por 2
@@ -39,7 +39,7 @@ Calcula: −3² + 20 ÷ 5·2
 
 solución: la potencia solo afecta al 3, así que −3² = −9. Luego 20 ÷ 5·2 se hace de izquierda a derecha: 20 ÷ 5 = 4 y 4·2 = 8. Entonces −9 + 8 = −1.
 
-### P2 · dificultad 2 · kc: jerarquia-operaciones · borrador · origen: ia (sonnet-5.5)
+### P2 · dificultad 2 · kc: jerarquia-operaciones · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula: 3·(−2)³ + 12 ÷ 4·3
 
 - A) 33 · [re-signo-en-potencia-de-negativo] tomas (−2)³ como 8 y pierdes el signo de la potencia impar
@@ -49,7 +49,7 @@ Calcula: 3·(−2)³ + 12 ÷ 4·3
 
 solución: (−2)³ = −8, así que 3·(−8) = −24. Después 12 ÷ 4·3 = 3·3 = 9, de izquierda a derecha. Entonces −24 + 9 = −15.
 
-### P3 · dificultad 2 · kc: jerarquia-operaciones · borrador · origen: ia (sonnet-5.5)
+### P3 · dificultad 2 · kc: jerarquia-operaciones · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula: $\frac{3}{4} - \frac{1}{6} \div \frac{1}{3}$
 
 - A) 25/36 · [re-division-de-fracciones-sin-invertir] calculas 1/6 ÷ 1/3 como 1/6·1/3 = 1/18 y restas 3/4 − 1/18
@@ -59,7 +59,7 @@ Calcula: $\frac{3}{4} - \frac{1}{6} \div \frac{1}{3}$
 
 solución: primero la división: 1/6 ÷ 1/3 = 1/6·3 = 1/2. Luego 3/4 − 1/2 = 3/4 − 2/4 = 1/4.
 
-### P4 · dificultad 2 · kc: jerarquia-operaciones · borrador · origen: ia (sonnet-5.5)
+### P4 · dificultad 2 · kc: jerarquia-operaciones · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula: $\frac{2}{\frac{1}{3} + \frac{1}{6}}$
 
 - A) 4 · CORRECTA
@@ -69,7 +69,7 @@ Calcula: $\frac{2}{\frac{1}{3} + \frac{1}{6}}$
 
 solución: el denominador es 1/3 + 1/6 = 2/6 + 1/6 = 1/2. Entonces 2 ÷ 1/2 = 2·2 = 4.
 
-### P5 · dificultad 3 · kc: jerarquia-operaciones · borrador · origen: ia (sonnet-5.5)
+### P5 · dificultad 3 · kc: jerarquia-operaciones · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula: $\frac{1 - \frac{1}{2}\,(3-5)^2}{-2^2 + \frac{3}{4}}$
 
 - A) −4/19 · [re-signo-en-potencia-de-negativo] tomas −2² como (−2)² = 4 y el denominador te queda 4 + 3/4 = 19/4
@@ -79,7 +79,7 @@ Calcula: $\frac{1 - \frac{1}{2}\,(3-5)^2}{-2^2 + \frac{3}{4}}$
 
 solución: numerador: (3 − 5)² = 4, 1/2·4 = 2 y 1 − 2 = −1. Denominador: −2² = −4 y −4 + 3/4 = −13/4. El cociente es (−1) ÷ (−13/4) = (−1)·(−4/13) = 4/13.
 
-### P6 · dificultad 1 · kc: exponentes-enteros · borrador · origen: ia (sonnet-5.5)
+### P6 · dificultad 1 · kc: exponentes-enteros · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula: 3⁻² + 4⁰
 
 - A) 1/9 · [ent-exponente-cero-da-cero] tomas 4⁰ como 0 y solo queda 3⁻² = 1/9
@@ -89,7 +89,7 @@ Calcula: 3⁻² + 4⁰
 
 solución: 3⁻² = 1/3² = 1/9 y 4⁰ = 1. La suma es 1/9 + 1 = 10/9.
 
-### P7 · dificultad 2 · kc: exponentes-enteros · borrador · origen: ia (sonnet-5.5)
+### P7 · dificultad 2 · kc: exponentes-enteros · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Simplifica: (2x³)²·x³
 
 - A) 4x¹⁸ · [ent-producto-bases-multiplica-exponentes] multiplicas los exponentes de x⁶·x³ en vez de sumarlos
@@ -99,7 +99,7 @@ Simplifica: (2x³)²·x³
 
 solución: (2x³)² = 2²·(x³)² = 4x⁶. Luego 4x⁶·x³ = 4x⁶⁺³ = 4x⁹.
 
-### P8 · dificultad 2 · kc: exponentes-enteros · borrador · origen: ia (sonnet-5.5)
+### P8 · dificultad 2 · kc: exponentes-enteros · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Simplifica, dejando solo exponentes positivos: $\frac{(2x^{-1})^{3}\,y^{2}}{4\,y^{-3}}$
 
 - A) $\frac{y^5}{2x^3}$ · [ent-coeficiente-sin-elevar] elevas al cubo solo x⁻¹ y dejas el 2 sin elevar
@@ -109,7 +109,7 @@ Simplifica, dejando solo exponentes positivos: $\frac{(2x^{-1})^{3}\,y^{2}}{4\,y
 
 solución: (2x⁻¹)³ = 8x⁻³. La expresión queda 8x⁻³y² / (4y⁻³) = 2x⁻³·y²⁻⁽⁻³⁾ = 2x⁻³y⁵. Con exponentes positivos: 2y⁵/x³.
 
-### P9 · dificultad 2 · kc: exponentes-enteros · borrador · origen: ia (sonnet-5.5)
+### P9 · dificultad 2 · kc: exponentes-enteros · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula: $\left(\frac{2}{3}\right)^{-2}\cdot(-5)^0$
 
 - A) 9/4 · CORRECTA
@@ -119,7 +119,7 @@ Calcula: $\left(\frac{2}{3}\right)^{-2}\cdot(-5)^0$
 
 solución: un exponente negativo invierte la fracción: (2/3)⁻² = (3/2)² = 9/4. Además (−5)⁰ = 1. El producto es 9/4·1 = 9/4.
 
-### P10 · dificultad 3 · kc: exponentes-enteros · borrador · origen: ia (sonnet-5.5)
+### P10 · dificultad 3 · kc: exponentes-enteros · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Simplifica, dejando solo exponentes positivos: $\frac{(x^{2}\cdot x^{3}\,y^{-1})^{-2}}{x^{-4}}$
 
 - A) $\frac{x^6}{y^2}$ · [ent-exponente-negativo-ignorado] tomas los exponentes −2 y −4 como si fueran positivos
@@ -129,7 +129,7 @@ Simplifica, dejando solo exponentes positivos: $\frac{(x^{2}\cdot x^{3}\,y^{-1})
 
 solución: dentro del paréntesis x²·x³ = x⁵, así que queda x⁵y⁻¹. Se eleva a −2 multiplicando los exponentes: x⁻¹⁰y². Dividir entre x⁻⁴ es restar −4: x⁻¹⁰⁻⁽⁻⁴⁾y² = x⁻⁶y². Con exponentes positivos: y²/x⁶.
 
-### P11 · dificultad 1 · kc: exponentes-racionales · borrador · origen: ia (sonnet-5.5)
+### P11 · dificultad 1 · kc: exponentes-racionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula: 64^(2/3)
 
 - A) 4096 · [rac-ignora-parte-del-exponente-fraccionario] elevas 64 al cuadrado y olvidas sacar la raíz cúbica
@@ -139,7 +139,7 @@ Calcula: 64^(2/3)
 
 solución: 64^(2/3) = (∛64)² = 4² = 16.
 
-### P12 · dificultad 2 · kc: exponentes-racionales · borrador · origen: ia (sonnet-5.5)
+### P12 · dificultad 2 · kc: exponentes-racionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Racionaliza el denominador: $\frac{4}{\sqrt{7} + \sqrt{3}}$
 
 - A) $\frac{4(\sqrt{7} + \sqrt{3})}{10 + 2\sqrt{21}}$ · [rac-conjugado-mismo-signo] multiplicas por √7 + √3, el mismo binomio, y el denominador sigue con raíces
@@ -149,7 +149,7 @@ Racionaliza el denominador: $\frac{4}{\sqrt{7} + \sqrt{3}}$
 
 solución: se multiplican numerador y denominador por el conjugado √7 − √3. El denominador queda (√7)² − (√3)² = 7 − 3 = 4. El numerador queda 4(√7 − √3). Entonces el cociente es 4(√7 − √3)/4 = √7 − √3.
 
-### P13 · dificultad 2 · kc: exponentes-racionales · borrador · origen: ia (sonnet-5.5)
+### P13 · dificultad 2 · kc: exponentes-racionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Escribe como un solo radical, con x > 0: $\sqrt{x}\cdot\sqrt[3]{x}$
 
 - A) $\sqrt[5]{x^6}$ · [rac-indice-y-potencia-intercambiados] sumas bien 5/6 pero lees el 5 como índice y el 6 como potencia
@@ -159,7 +159,7 @@ Escribe como un solo radical, con x > 0: $\sqrt{x}\cdot\sqrt[3]{x}$
 
 solución: √x = x^(1/2) y ∛x = x^(1/3). Al multiplicar se suman los exponentes: 1/2 + 1/3 = 3/6 + 2/6 = 5/6. Entonces x^(5/6) = ⁶√(x⁵).
 
-### P14 · dificultad 2 · kc: exponentes-racionales · borrador · origen: ia (sonnet-5.5)
+### P14 · dificultad 2 · kc: exponentes-racionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Racionaliza el denominador: $\frac{6}{\sqrt{5} - \sqrt{2}}$
 
 - A) $2\sqrt{3}$ · [rac-raiz-de-suma-separada] cambias √5 − √2 por √3 y racionalizas 6/√3
@@ -169,7 +169,7 @@ Racionaliza el denominador: $\frac{6}{\sqrt{5} - \sqrt{2}}$
 
 solución: se multiplican numerador y denominador por el conjugado √5 + √2. El denominador queda 5 − 2 = 3 y el numerador 6(√5 + √2). Entonces el cociente es 6(√5 + √2)/3 = 2√5 + 2√2.
 
-### P15 · dificultad 3 · kc: exponentes-racionales · borrador · origen: ia (sonnet-5.5)
+### P15 · dificultad 3 · kc: exponentes-racionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Simplifica, con x > 0: $\sqrt[3]{54\,x^{4}}\cdot\sqrt{x}$
 
 - A) $3\sqrt[3]{2}\,x^{11/6}$ · CORRECTA

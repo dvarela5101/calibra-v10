@@ -67,7 +67,7 @@ La dirección de P hacia Q es v = Q − P = (3, −4), con longitud |v| = 5, as�
 La derivada direccional es ∇f(P)·u = (2/5)(3/5) + (4/5)(−4/5) = 6/25 − 16/25 = −10/25 = −2/5.
 Las otras opciones salen de errores concretos: sin normalizar, (2/5)(3) + (4/5)(−4) = −2; la magnitud del gradiente es |∇f(P)| = 2√5/5; y (2/5, 4/5) es el gradiente mismo, no una derivada direccional.
 
-### P32 · dificultad 1 · kc: derivadas-parciales · borrador · origen: ia (sonnet-5.5)
+### P32 · dificultad 1 · kc: derivadas-parciales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Para f(x, y) = x²y³ − 4xy + 2y⁴, calcula $\frac{\partial f}{\partial y}$ evaluada en (1, 2). El resultado es:
 
 - A) 72 · CORRECTA
@@ -77,7 +77,7 @@ Para f(x, y) = x²y³ − 4xy + 2y⁴, calcula $\frac{\partial f}{\partial y}$ e
 
 solución: con x tratada como constante, $\frac{\partial f}{\partial y} = 3x^2y^2 - 4x + 8y^3$. Sustituyendo (1, 2): 3·1·4 − 4 + 8·8 = 12 − 4 + 64 = 72.
 
-### P33 · dificultad 2 · kc: derivadas-parciales · borrador · origen: ia (sonnet-5.5)
+### P33 · dificultad 2 · kc: derivadas-parciales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea f(x, y) = x²·e³ʸ. La derivada parcial mixta $\frac{\partial^2 f}{\partial y\,\partial x}$ (primero respecto a x, luego respecto a y) en el punto (1, 0) es:
 
 - A) 6 · CORRECTA
@@ -87,7 +87,7 @@ Sea f(x, y) = x²·e³ʸ. La derivada parcial mixta $\frac{\partial^2 f}{\partia
 
 solución: primero fₓ = 2x·e³ʸ. Luego se deriva respecto a y, y la derivada de e³ʸ es 3e³ʸ: f_xy = 6x·e³ʸ. En (1, 0) vale 6·1·1 = 6. Las otras opciones salen de omitir el factor 3 (2), de quedarse con f_y = 3x²e³ʸ = 3 y de dar el par (fₓ, f_y) = (2, 3).
 
-### P34 · dificultad 2 · kc: derivadas-parciales · borrador · origen: ia (sonnet-5.5)
+### P34 · dificultad 2 · kc: derivadas-parciales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea w = x·y², con x = t³ y y = 2t + 1. El valor de $\frac{dw}{dt}$ en t = 1 es:
 
 - A) 39 · CORRECTA
@@ -97,7 +97,7 @@ Sea w = x·y², con x = t³ y y = 2t + 1. El valor de $\frac{dw}{dt}$ en t = 1 e
 
 solución: en t = 1 se tiene x = 1 y y = 3. Las parciales son w_x = y² = 9 y w_y = 2xy = 6. Las derivadas intermedias son dx/dt = 3t² = 3 y dy/dt = 2. Entonces dw/dt = w_x·dx/dt + w_y·dy/dt = 9·3 + 6·2 = 27 + 12 = 39. Se puede comprobar con w = t³(2t + 1)², cuya derivada en t = 1 es 3·9 + 1·2·3·2 = 39.
 
-### P35 · dificultad 3 · kc: derivadas-parciales · borrador · origen: ia (sonnet-5.5)
+### P35 · dificultad 3 · kc: derivadas-parciales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea w = x²y, con x = s·t² y y = s² + t. El valor de $\frac{\partial w}{\partial t}$ en (s, t) = (1, 2) es:
 
 - A) 112 · CORRECTA
@@ -107,7 +107,7 @@ Sea w = x²y, con x = s·t² y y = s² + t. El valor de $\frac{\partial w}{\part
 
 solución: en (1, 2) se tiene x = 1·4 = 4 y y = 1 + 2 = 3. Las parciales son w_x = 2xy = 24 y w_y = x² = 16. Las derivadas respecto a t son ∂x/∂t = 2st = 4 y ∂y/∂t = 1. Entonces ∂w/∂t = 24·4 + 16·1 = 96 + 16 = 112.
 
-### P36 · dificultad 1 · kc: plano-tangente · borrador · origen: ia (sonnet-5.5)
+### P36 · dificultad 1 · kc: plano-tangente · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El plano tangente a la gráfica de f(x, y) = x² + 3y² en el punto (1, 1, 4) es:
 
 - A) z = 2x + 6y − 4 · CORRECTA
@@ -117,7 +117,7 @@ El plano tangente a la gráfica de f(x, y) = x² + 3y² en el punto (1, 1, 4) es
 
 solución: fₓ = 2x y f_y = 6y, que en (1, 1) valen 2 y 6. El plano es z = f(1, 1) + fₓ(x − 1) + f_y(y − 1) = 4 + 2(x − 1) + 6(y − 1) = 2x + 6y − 4.
 
-### P37 · dificultad 2 · kc: plano-tangente · borrador · origen: ia (sonnet-5.5)
+### P37 · dificultad 2 · kc: plano-tangente · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El plano tangente a la superficie xy + yz + zx = 11 en el punto (1, 2, 3) es:
 
 - A) 5x + 4y + 3z = 22 · CORRECTA
@@ -127,7 +127,7 @@ El plano tangente a la superficie xy + yz + zx = 11 en el punto (1, 2, 3) es:
 
 solución: con F = xy + yz + zx, el gradiente es (y + z, x + z, x + y), que en (1, 2, 3) vale (5, 4, 3). El plano es 5(x − 1) + 4(y − 2) + 3(z − 3) = 0, es decir 5x + 4y + 3z = 5 + 8 + 9 = 22. Comprobación: el punto cumple 5 + 8 + 9 = 22.
 
-### P38 · dificultad 2 · kc: plano-tangente · borrador · origen: ia (sonnet-5.5)
+### P38 · dificultad 2 · kc: plano-tangente · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Con la aproximación lineal de la función f(x, y) = √(y² + x²) cerca de (6, 8), estima f(6.1, 7.9). El resultado es:
 
 - A) 9.98 · CORRECTA
@@ -137,7 +137,7 @@ Con la aproximación lineal de la función f(x, y) = √(y² + x²) cerca de (6,
 
 solución: en (6, 8) se tiene f = 10, fₓ = x/√(x² + y²) = 3/5 y f_y = y/√(x² + y²) = 4/5. Los incrementos son Δx = 0.1 y Δy = −0.1. Entonces L = 10 + (3/5)(0.1) + (4/5)(−0.1) = 10 + 0.06 − 0.08 = 9.98.
 
-### P39 · dificultad 2 · kc: plano-tangente · borrador · origen: ia (sonnet-5.5)
+### P39 · dificultad 2 · kc: plano-tangente · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El plano tangente a la gráfica de f(x, y) = x²y − y³ en el punto (2, 1, 3) corta al eje z en el punto de altura:
 
 - A) −6 · CORRECTA
@@ -147,7 +147,7 @@ El plano tangente a la gráfica de f(x, y) = x²y − y³ en el punto (2, 1, 3) 
 
 solución: fₓ = 2xy = 4 y f_y = x² − 3y² = 1 en (2, 1). El plano es z = 3 + 4(x − 2) + (y − 1) = 4x + y − 6. El eje z es x = 0, y = 0, así que z = −6.
 
-### P40 · dificultad 3 · kc: plano-tangente · borrador · origen: ia (sonnet-5.5)
+### P40 · dificultad 3 · kc: plano-tangente · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 La superficie x²y + yz² = 4 pasa por el punto (1, 2, 1). Cerca de ese punto, z es función de x y de y. Usa el plano tangente para aproximar el valor de z en (x, y) = (1.1, 1.9):
 
 - A) 0.95 · CORRECTA
@@ -157,7 +157,7 @@ La superficie x²y + yz² = 4 pasa por el punto (1, 2, 1). Cerca de ese punto, z
 
 solución: con F = x²y + yz², el gradiente es (2xy, x² + z², 2yz), que en (1, 2, 1) vale (4, 2, 4). El plano tangente es 4(x − 1) + 2(y − 2) + 4(z − 1) = 0. Con x = 1.1 y y = 1.9: 4(0.1) + 2(−0.1) + 4(z − 1) = 0, así que 0.2 + 4(z − 1) = 0 y z = 1 − 0.05 = 0.95.
 
-### P41 · dificultad 1 · kc: gradiente-direccional · borrador · origen: ia (sonnet-5.5)
+### P41 · dificultad 1 · kc: gradiente-direccional · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea f(x, y) = x²y + y. La tasa máxima de crecimiento de f en el punto (2, 1) es:
 
 - A) √41 · CORRECTA
@@ -167,7 +167,7 @@ Sea f(x, y) = x²y + y. La tasa máxima de crecimiento de f en el punto (2, 1) e
 
 solución: ∇f = (2xy, x² + 1), que en (2, 1) vale (4, 5). La tasa máxima de crecimiento es |∇f| = √(16 + 25) = √41.
 
-### P42 · dificultad 2 · kc: gradiente-direccional · borrador · origen: ia (sonnet-5.5)
+### P42 · dificultad 2 · kc: gradiente-direccional · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea f(x, y) = x² − xy. El vector unitario en la dirección de máximo crecimiento de f en el punto (2, 1) es:
 
 - A) (3, −2)/√13 · CORRECTA

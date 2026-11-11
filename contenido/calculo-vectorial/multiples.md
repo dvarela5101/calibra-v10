@@ -74,7 +74,7 @@ solución: en coordenadas polares x = r cos θ, y = r sen θ, se tiene √(x² +
 Entonces $\iint_D \sqrt{x^2+y^2}\,dA = \int_0^{2\pi}\int_1^2 r\cdot r\,dr\,d\theta$. La integral en r vale $\left[\frac{r^3}{3}\right]_1^2 = \frac{7}{3}$, y la de θ multiplica por $2\pi$: el resultado es $\frac{14\pi}{3}$.
 Las otras opciones salen de errores concretos: sin el factor r del jacobiano, $2\pi\int_1^2 r\,dr = 3\pi$; con r entre 1 y 4, $2\pi\int_1^4 r^2\,dr = 42\pi$; con θ entre 0 y π, $\pi\int_1^2 r^2\,dr = \frac{7\pi}{3}$.
 
-### P63 · dificultad 1 · kc: doble-iterada · borrador · origen: ia (sonnet-5.5)
+### P63 · dificultad 1 · kc: doble-iterada · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula $\iint_R (x + y^2)\,dA$, donde R es el rectángulo [1,3] × [0,3]:
 
 - A) 81/2 · [evalua-solo-limite-superior] evalúas la antiderivada de la integral externa solo en x = 3 y no restas su valor en x = 1
@@ -85,7 +85,7 @@ Calcula $\iint_R (x + y^2)\,dA$, donde R es el rectángulo [1,3] × [0,3]:
 solución: la integral interna en y vale ∫₀³ (x + y²) dy = 3x + 9. Entonces $\int_1^3 (3x+9)\,dx$ = $\left[\frac{3x^2}{2} + 9x\right]_1^3$ = $\left(\frac{27}{2} + 27\right) - \left(\frac{3}{2} + 9\right)$ = $30$.
 Las otras salen de errores concretos: solo con el valor en x = 3 da 81/2; el producto (∫₁³ x dx)(∫₀³ y² dy) = 4 · 9 = 36 no es la integral de la suma; sin dividir entre el exponente queda [3x² + 27x] entre 1 y 3, que da 78.
 
-### P64 · dificultad 2 · kc: doble-iterada · borrador · origen: ia (sonnet-5.5)
+### P64 · dificultad 2 · kc: doble-iterada · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Al cambiar el orden de integración de $\int_0^1\int_x^{\sqrt{x}} f(x,y)\,dy\,dx$ se obtiene:
 
 - A) $\int_0^1\int_{y}^{y^2} f(x,y)\,dx\,dy$ · [curvas-superior-e-inferior-invertidas] intercambias los límites de x y pones y² como límite superior y y como inferior
@@ -96,7 +96,7 @@ Al cambiar el orden de integración de $\int_0^1\int_x^{\sqrt{x}} f(x,y)\,dy\,dx
 solución: la región es 0 ≤ x ≤ 1 con x ≤ y ≤ √x, es decir, entre la recta y = x y la curva y = √x (que equivale a x = y²). Para y entre 0 y 1, x va desde la curva x = y² (a la izquierda) hasta la recta x = y (a la derecha), porque y² ≤ y en [0,1]. La integral queda $\int_0^1\int_{y^2}^{y} f\,dx\,dy$.
 Las otras describen otra región: con y y y² intercambiados el límite inferior queda por encima del superior; con el cuadrado se agrega todo lo que está fuera de la región; con x = √y se usa la rama equivocada de la curva.
 
-### P65 · dificultad 2 · kc: doble-iterada · borrador · origen: ia (sonnet-5.5)
+### P65 · dificultad 2 · kc: doble-iterada · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula $\iint_D (x+y)\,dA$, donde D es el triángulo de vértices (0,0), (2,0) y (2,4):
 
 - A) 32/3 · CORRECTA
@@ -107,7 +107,7 @@ Calcula $\iint_D (x+y)\,dA$, donde D es el triángulo de vértices (0,0), (2,0) 
 solución: el lado que une (0,0) con (2,4) está en la recta y = 2x, así que D es 0 ≤ x ≤ 2 con 0 ≤ y ≤ 2x. La integral interna es $\int_0^{2x} (x+y)\,dy = x\cdot 2x + \frac{(2x)^2}{2} = 4x^2$. Entonces $\int_0^2 4x^2\,dx = \frac{32}{3}$.
 El rectángulo da ∫₀²(4x + 8) dx = 24, el producto de integrales da 16, y con los límites invertidos el resultado es −32/3.
 
-### P66 · dificultad 3 · kc: doble-iterada · borrador · origen: ia (sonnet-5.5)
+### P66 · dificultad 3 · kc: doble-iterada · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula $\int_0^1\int_{\sqrt{y}}^{1} e^{x^3}\,dx\,dy$ (conviene cambiar el orden de integración):
 
 - A) e/3 · [evalua-solo-limite-superior] al integrar x²·e^{x³} en x usas solo el valor de la antiderivada en x = 1 y no restas el de x = 0
@@ -117,7 +117,7 @@ Calcula $\int_0^1\int_{\sqrt{y}}^{1} e^{x^3}\,dx\,dy$ (conviene cambiar el orden
 
 solución: e^{x³} no tiene antiderivada elemental en x, así que se invierte el orden. La región es 0 ≤ y ≤ 1 con √y ≤ x ≤ 1, o sea 0 ≤ x ≤ 1 con 0 ≤ y ≤ x². Entonces la integral es $\int_0^1\int_0^{x^2} e^{x^3}\,dy\,dx$ = $\int_0^1 x^2 e^{x^3}\,dx$ = $\left[\frac{e^{x^3}}{3}\right]_0^1$ = $\frac{e-1}{3}$.
 
-### P67 · dificultad 1 · kc: polares-cambio · borrador · origen: ia (sonnet-5.5)
+### P67 · dificultad 1 · kc: polares-cambio · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula $\iint_D (x^2+y^2)^2\,dA$, donde D es el semicírculo x² + y² ≤ 4 con y ≥ 0:
 
 - A) 64π/3 · [angulo-completo-en-region-parcial] recorres θ de 0 a 2π aunque D es solo el semicírculo superior
@@ -128,7 +128,7 @@ Calcula $\iint_D (x^2+y^2)^2\,dA$, donde D es el semicírculo x² + y² ≤ 4 co
 solución: en polares (x² + y²)² = r⁴ y dA = r dr dθ. El semicírculo superior es 0 ≤ r ≤ 2, 0 ≤ θ ≤ π. Entonces $\int_0^\pi\int_0^2 r^5\,dr\,d\theta$ = $\pi\cdot\frac{32}{3}$ = $\frac{32\pi}{3}$.
 Con θ hasta 2π sale el doble; sin el factor r queda π · 32/5; con r⁴ como elemento de área queda π · 512/9.
 
-### P68 · dificultad 2 · kc: polares-cambio · borrador · origen: ia (sonnet-5.5)
+### P68 · dificultad 2 · kc: polares-cambio · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Evalúa $\iint_D \frac{2}{\sqrt{x^2+y^2}}\,dA$ sobre la mitad inferior (y ≤ 0) del anillo 4 ≤ x² + y² ≤ 25, llamada D:
 
 - A) 2π ln(5/2) · [multiples-e7] olvidas el factor r de dA y integras solo 2/r
@@ -139,7 +139,7 @@ Evalúa $\iint_D \frac{2}{\sqrt{x^2+y^2}}\,dA$ sobre la mitad inferior (y ≤ 0)
 solución: en polares la función vale 2/r y dA = r dr dθ. De 4 ≤ x² + y² ≤ 25 sale 2 ≤ r ≤ 5, y y ≤ 0 da π ≤ θ ≤ 2π. Entonces $\int_\pi^{2\pi}\int_2^5 \frac{2}{r}\,r\,dr\,d\theta$ = $\pi\cdot 2\int_2^5 dr$ = $6\pi$.
 Sin el factor r queda 2π ln(5/2); con θ hasta 2π queda 12π; con r entre 4 y 25 queda π · 2 · 21 = 42π.
 
-### P69 · dificultad 1 · kc: triples · borrador · origen: ia (sonnet-5.5)
+### P69 · dificultad 1 · kc: triples · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula $∭_E z\,dV$, donde E es el cilindro sólido x² + y² ≤ 9, 0 ≤ z ≤ 5:
 
 - A) 225π/2 · CORRECTA
@@ -150,7 +150,7 @@ Calcula $∭_E z\,dV$, donde E es el cilindro sólido x² + y² ≤ 9, 0 ≤ z �
 solución: en cilíndricas dV = r dr dθ dz, con 0 ≤ r ≤ 3, 0 ≤ θ ≤ 2π y 0 ≤ z ≤ 5. Entonces $\int_0^{2\pi}\int_0^3\int_0^5 z\,r\,dz\,dr\,d\theta$ = $2\pi\cdot\frac{9}{2}\cdot\frac{25}{2}$ = $\frac{225\pi}{2}$.
 Sin el factor r queda 2π · 3 · 25/2 = 75π; con r hasta 9 queda 2π · 81/2 · 25/2 = 2025π/2; con la caja queda 6 · 6 · 25/2 = 450.
 
-### P70 · dificultad 2 · kc: triples · borrador · origen: ia (sonnet-5.5)
+### P70 · dificultad 2 · kc: triples · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula $∭_B (x^2+y^2+z^2)\,dV$, donde B es la bola x² + y² + z² ≤ 4:
 
 - A) 32π/3 · [jacobiano-omitido-en-triples] pasas el integrando a ρ² pero no multiplicas por el jacobiano ρ² sen φ
@@ -161,7 +161,7 @@ Calcula $∭_B (x^2+y^2+z^2)\,dV$, donde B es la bola x² + y² + z² ≤ 4:
 solución: en esféricas x² + y² + z² = ρ² y dV = ρ² sen φ dρ dφ dθ, con 0 ≤ ρ ≤ 2, 0 ≤ φ ≤ π y 0 ≤ θ ≤ 2π. Entonces $\int_0^{2\pi}\int_0^\pi\int_0^2 \rho^4 \sen\varphi\,d\rho\,d\varphi\,d\theta$ = $2\pi\cdot 2\cdot\frac{32}{5}$ = $\frac{128\pi}{5}$.
 Sin el jacobiano queda 2π · 2 · 8/3 = 32π/3; sin sen φ queda 2π · π · 32/5 = 64π²/5; con ρ hasta 4 queda 2π · 2 · 1024/5 = 4096π/5.
 
-### P71 · dificultad 2 · kc: triples · borrador · origen: ia (sonnet-5.5)
+### P71 · dificultad 2 · kc: triples · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula $∭_E z\,dV$, donde E es el sólido entre el plano xy y el paraboloide z = 4 − x² − y²:
 
 - A) 256π/15 · [jacobiano-omitido-en-triples] en cilíndricas dejas dV = dz dr dθ y olvidas el factor r
@@ -172,7 +172,7 @@ Calcula $∭_E z\,dV$, donde E es el sólido entre el plano xy y el paraboloide 
 solución: el paraboloide corta al plano z = 0 en r = 2. En cilíndricas, 0 ≤ θ ≤ 2π, 0 ≤ r ≤ 2 y 0 ≤ z ≤ 4 − r². Entonces $\int_0^{2\pi}\int_0^2\int_0^{4-r^2} z\,r\,dz\,dr\,d\theta$ = $2\pi\int_0^2 \frac{r(4-r^2)^2}{2}\,dr$ = $\pi\int_0^2 (16r - 8r^3 + r^5)\,dr$ = $\pi\left(32 - 32 + \frac{32}{3}\right)$ = $\frac{32\pi}{3}$.
 Sin el factor r queda 256π/15; con r hasta 4 queda 896π/3; con el cilindro 2π · 2 · 8 = 32π.
 
-### P72 · dificultad 2 · kc: triples · borrador · origen: ia (sonnet-5.5)
+### P72 · dificultad 2 · kc: triples · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula $∭_E z\,dV$, donde E es la parte de la bola x² + y² + z² ≤ 9 que queda sobre el cono z = √(x² + y²):
 
 - A) 81π/4 · [cono-con-phi-recto] dejas φ llegar hasta π/2, como si el cono fuera el plano xy, en lugar de hasta π/4
@@ -183,7 +183,7 @@ Calcula $∭_E z\,dV$, donde E es la parte de la bola x² + y² + z² ≤ 9 que 
 solución: en esféricas z = ρ cos φ y dV = ρ² sen φ dρ dφ dθ. El cono z = √(x² + y²) corresponde a φ = π/4, y el sólido está sobre él: 0 ≤ φ ≤ π/4. Como además 0 ≤ ρ ≤ 3 y 0 ≤ θ ≤ 2π, $\int_0^{2\pi}\int_0^{\pi/4}\int_0^3 \rho^3 \cos\varphi\,\sen\varphi\,d\rho\,d\varphi\,d\theta$ = $2\pi\cdot\frac{1}{4}\cdot\frac{81}{4}$ = $\frac{81\pi}{8}$.
 Con φ hasta π/2 la integral en φ vale 1/2 y sale 81π/4; sin el jacobiano queda 2π · √2/2 · 9/2 = 9√2π/2; sin sen φ queda 2π · √2/2 · 81/4 = 81√2π/4.
 
-### P73 · dificultad 3 · kc: triples · borrador · origen: ia (sonnet-5.5)
+### P73 · dificultad 3 · kc: triples · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula $∭_E z^2\,dV$, donde E es el sólido con 4 ≤ x² + y² + z² ≤ 9 y z ≥ √(x² + y²):
 
 - A) 211π(4 − √2)/30 · CORRECTA
@@ -194,7 +194,7 @@ Calcula $∭_E z^2\,dV$, donde E es el sólido con 4 ≤ x² + y² + z² ≤ 9 y
 solución: en esféricas z² = ρ² cos² φ y dV = ρ² sen φ dρ dφ dθ. El cono z = √(x² + y²) es φ = π/4, así que 0 ≤ φ ≤ π/4; además 2 ≤ ρ ≤ 3 y 0 ≤ θ ≤ 2π. La integral es $2\pi\int_2^3\rho^4\,d\rho\int_0^{\pi/4}\cos^2\varphi\,\sen\varphi\,d\varphi$ = $2\pi\cdot\frac{211}{5}\cdot\frac{1}{3}\left(1-\frac{\sqrt{2}}{4}\right)$ = $\frac{211\pi(4-\sqrt{2})}{30}$.
 Con φ hasta π/2 la integral en φ vale 1/3 y sale 422π/15; sin sen φ la integral en φ es π/8 + 1/4; con ρ hasta 9 la integral en ρ vale 59017/5.
 
-### P74 · dificultad 1 · kc: aplicaciones-multiples · borrador · origen: ia (sonnet-5.5)
+### P74 · dificultad 1 · kc: aplicaciones-multiples · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El área de la región acotada por y = x² y y = x + 2 es:
 
 - A) 15/2 · [una-sola-frontera-sin-restar] integras solo la recta de arriba, y = x + 2, y no restas la parábola
@@ -205,7 +205,7 @@ El área de la región acotada por y = x² y y = x + 2 es:
 solución: las curvas se cortan donde x² = x + 2, es decir x² − x − 2 = (x − 2)(x + 1) = 0, o sea x = −1 y x = 2. En ese intervalo la recta queda arriba de la parábola. Entonces $A$ = $\int_{-1}^{2} (x + 2 - x^2)\,dx$ = $\left[\frac{x^2}{2} + 2x - \frac{x^3}{3}\right]_{-1}^{2}$ = $\frac{10}{3} + \frac{7}{6}$ = $\frac{9}{2}$.
 Solo con la recta sale 15/2; con la suma sale 21/2; con los límites −2 y 1 sale 3/2.
 
-### P75 · dificultad 2 · kc: aplicaciones-multiples · borrador · origen: ia (sonnet-5.5)
+### P75 · dificultad 2 · kc: aplicaciones-multiples · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El volumen del sólido limitado por el paraboloide z = x² + y² y el plano z = 3 es:
 
 - A) 9π · [una-sola-frontera-sin-restar] integras solo la altura del plano, 3, y no restas la del paraboloide
@@ -216,7 +216,7 @@ El volumen del sólido limitado por el paraboloide z = x² + y² y el plano z = 
 solución: el paraboloide corta al plano en r² = 3, o sea r = √3. El volumen es $V$ = $\int_0^{2\pi}\int_0^{\sqrt{3}} (3 - r^2)\,r\,dr\,d\theta$ = $2\pi\left[\frac{3r^2}{2} - \frac{r^4}{4}\right]_0^{\sqrt{3}}$ = $2\pi\left(\frac{9}{2} - \frac{9}{4}\right)$ = $\frac{9\pi}{2}$.
 Solo con el plano sale 2π · 9/2 = 9π; con la suma sale 2π · 27/4 = 27π/2; con θ hasta π sale la mitad, 9π/4.
 
-### P76 · dificultad 2 · kc: aplicaciones-multiples · borrador · origen: ia (sonnet-5.5)
+### P76 · dificultad 2 · kc: aplicaciones-multiples · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una lámina ocupa la región entre y = x² y y = x + 2 y tiene densidad δ(x,y) = y. Su masa es:
 
 - A) 36/5 · CORRECTA
@@ -227,7 +227,7 @@ Una lámina ocupa la región entre y = x² y y = x + 2 y tiene densidad δ(x,y) 
 solución: la masa es $\iint_D y\,dA$, con −1 ≤ x ≤ 2 y x² ≤ y ≤ x + 2 (se cortan en x = −1 y x = 2). La integral interna es $\int_{x^2}^{x+2} y\,dy = \frac{(x+2)^2 - x^4}{2}$. Entonces $m$ = $\frac{1}{2}\int_{-1}^{2}\left[(x+2)^2 - x^4\right]dx$ = $\frac{1}{2}\left(21 - \frac{33}{5}\right)$ = $\frac{36}{5}$.
 Con los límites −2 y 1 sale 6/5; sin la densidad sale el área, 9/2; con la suma en lugar de la resta sale ½(21 + 33/5) = 69/5.
 
-### P77 · dificultad 2 · kc: aplicaciones-multiples · borrador · origen: ia (sonnet-5.5)
+### P77 · dificultad 2 · kc: aplicaciones-multiples · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una lámina triangular con vértices (0,0), (3,0) y (0,6) tiene densidad δ(x,y) = y. La coordenada x̄ de su centro de masa es:
 
 - A) 3/2 · [masa-sin-densidad] divides el momento entre el área del triángulo, 9, en lugar de dividirlo entre la masa
@@ -238,7 +238,7 @@ Una lámina triangular con vértices (0,0), (3,0) y (0,6) tiene densidad δ(x,y)
 solución: la hipotenusa es y = 6 − 2x, así que D es 0 ≤ x ≤ 3 con 0 ≤ y ≤ 6 − 2x. La masa es $m = \iint y\,dA = \int_0^3 \frac{(6-2x)^2}{2}\,dx = 18$. El momento es $\iint x\,y\,dA = \int_0^3 \frac{x(6-2x)^2}{2}\,dx = \frac{27}{2}$. Entonces x̄ = (27/2)/18 = 3/4.
 Dividir entre el área 9 da 3/2; sin dividir queda 27/2; con el momento ∬ y² dA = 54 se obtiene 54/18 = 3, que es ȳ.
 
-### P78 · dificultad 3 · kc: aplicaciones-multiples · borrador · origen: ia (sonnet-5.5)
+### P78 · dificultad 3 · kc: aplicaciones-multiples · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una placa ocupa el semicírculo x² + y² ≤ 4 con y ≥ 0 y tiene densidad δ(x,y) = x² + y². La coordenada ȳ de su centro de masa es:
 
 - A) 8/(5π) · [simetria-sin-duplicar] calculas el momento solo en el primer cuadrante por simetría y no lo duplicas

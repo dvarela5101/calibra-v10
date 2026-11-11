@@ -15,7 +15,7 @@ mc: complemento-mal-usado · razones-triangulo · para el otro ángulo agudo usa
 
 ## Preguntas
 
-### P126 · dificultad 1 · kc: razones-triangulo · borrador · origen: ia (sonnet-5.5)
+### P126 · dificultad 1 · kc: razones-triangulo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un triángulo rectángulo tiene catetos de 5 y 12. Sea θ el ángulo agudo opuesto al cateto de 5. ¿Cuánto vale sen θ?
 
 - A) 5/13 · CORRECTA
@@ -25,7 +25,7 @@ Un triángulo rectángulo tiene catetos de 5 y 12. Sea θ el ángulo agudo opues
 
 solución: la hipotenusa es √(5² + 12²) = √169 = 13. El seno es cateto opuesto sobre hipotenusa: sen θ = 5/13.
 
-### P127 · dificultad 2 · kc: razones-triangulo · borrador · origen: ia (sonnet-5.5)
+### P127 · dificultad 2 · kc: razones-triangulo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un triángulo rectángulo tiene catetos de 7 y 24. Sea α el ángulo agudo que forma el cateto de 24 con la hipotenusa. ¿Cuánto vale cos α?
 
 - A) 24/25 · CORRECTA
@@ -35,7 +35,7 @@ Un triángulo rectángulo tiene catetos de 7 y 24. Sea α el ángulo agudo que f
 
 solución: la hipotenusa es √(7² + 24²) = √625 = 25. El coseno es cateto adyacente sobre hipotenusa: el cateto adyacente a α es el de 24, así que cos α = 24/25.
 
-### P128 · dificultad 2 · kc: razones-triangulo · borrador · origen: ia (sonnet-5.5)
+### P128 · dificultad 2 · kc: razones-triangulo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 En un triángulo rectángulo, la hipotenusa mide 14 y uno de los ángulos agudos mide 30°. ¿Cuánto mide el cateto opuesto a ese ángulo?
 
 - A) 7 · CORRECTA
@@ -45,7 +45,7 @@ En un triángulo rectángulo, la hipotenusa mide 14 y uno de los ángulos agudos
 
 solución: el cateto opuesto y la hipotenusa se relacionan con el seno: sen 30° = x/14. Como sen 30° = 1/2, x = 14·(1/2) = 7.
 
-### P129 · dificultad 2 · kc: razones-triangulo · borrador · origen: ia (sonnet-5.5)
+### P129 · dificultad 2 · kc: razones-triangulo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 En un triángulo rectángulo, un ángulo agudo mide 60° y la hipotenusa mide 12. ¿Cuánto mide el cateto opuesto al otro ángulo agudo?
 
 - A) 6 · CORRECTA
@@ -55,7 +55,7 @@ En un triángulo rectángulo, un ángulo agudo mide 60° y la hipotenusa mide 12
 
 solución: los ángulos agudos de un triángulo rectángulo suman 90°, así que el otro ángulo mide 90° − 60° = 30°. El cateto opuesto a 30° cumple sen 30° = x/12, y x = 12·(1/2) = 6.
 
-### P130 · dificultad 3 · kc: razones-triangulo · borrador · origen: ia (sonnet-5.5)
+### P130 · dificultad 3 · kc: razones-triangulo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 En un triángulo rectángulo, α y β son los dos ángulos agudos y tan α = 5/12. ¿Cuánto vale sen β?
 
 - A) 12/13 · CORRECTA

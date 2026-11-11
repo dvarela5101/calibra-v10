@@ -21,7 +21,7 @@ mc: angulo-multiple-sin-ampliar-intervalo · ecuaciones-trig · en una ecuación
 
 ## Preguntas
 
-### P146 · dificultad 1 · kc: inversas-trig · borrador · origen: ia (sonnet-5.5)
+### P146 · dificultad 1 · kc: inversas-trig · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El valor de arcsen(−√3/2) es:
 
 - A) −π/3 · CORRECTA
@@ -31,7 +31,7 @@ El valor de arcsen(−√3/2) es:
 
 solución: el arcoseno devuelve el único ángulo de [−π/2, π/2] cuyo seno es el valor dado. Como sen(π/3) = √3/2 y el valor buscado es negativo, el ángulo queda en la parte negativa del intervalo: −π/3. Se comprueba: sen(−π/3) = −√3/2. El ángulo 4π/3 también tiene seno −√3/2, pero está fuera del rango del arcoseno.
 
-### P147 · dificultad 2 · kc: inversas-trig · borrador · origen: ia (sonnet-5.5)
+### P147 · dificultad 2 · kc: inversas-trig · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El valor de arctan(−√3) es:
 
 - A) −π/3 · CORRECTA
@@ -41,7 +41,7 @@ El valor de arctan(−√3) es:
 
 solución: el arcotangente devuelve un ángulo del intervalo abierto (−π/2, π/2). Como tan(π/3) = √3, y la tangente es impar, tan(−π/3) = −√3, y −π/3 está en ese intervalo. Los ángulos 2π/3 y 5π/3 también tienen tangente −√3, pero no están en el rango.
 
-### P148 · dificultad 2 · kc: inversas-trig · borrador · origen: ia (sonnet-5.5)
+### P148 · dificultad 2 · kc: inversas-trig · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula arccos(cos(4π/3)).
 
 - A) 2π/3 · CORRECTA
@@ -51,7 +51,7 @@ Calcula arccos(cos(4π/3)).
 
 solución: cos(4π/3) = −1/2, así que se pide arccos(−1/2). El arcocoseno devuelve un ángulo del intervalo [0, π] con coseno −1/2. En ese intervalo el coseno es negativo solo en el segundo cuadrante, con ángulo de referencia π/3: π − π/3 = 2π/3. Como 4π/3 queda fuera de [0, π], la composición no devuelve el ángulo de entrada.
 
-### P149 · dificultad 2 · kc: inversas-trig · borrador · origen: ia (sonnet-5.5)
+### P149 · dificultad 2 · kc: inversas-trig · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula sen(arccos(−3/5)).
 
 - A) 4/5 · CORRECTA
@@ -61,7 +61,7 @@ Calcula sen(arccos(−3/5)).
 
 solución: sea θ = arccos(−3/5), con θ en [0, π] y cos θ = −3/5. Como el coseno es negativo, θ está en el segundo cuadrante, donde el seno es positivo. Con la identidad sen²θ + cos²θ = 1 se obtiene sen²θ = 1 − 9/25 = 16/25, y como sen θ ≥ 0, sen θ = 4/5.
 
-### P150 · dificultad 3 · kc: inversas-trig · borrador · origen: ia (sonnet-5.5)
+### P150 · dificultad 3 · kc: inversas-trig · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula sen(arctan(−3/4)).
 
 - A) −3/5 · CORRECTA
@@ -71,7 +71,7 @@ Calcula sen(arctan(−3/4)).
 
 solución: sea θ = arctan(−3/4), con θ en (−π/2, π/2) y tan θ = −3/4. Como la tangente es negativa, θ está en el cuarto cuadrante. Se arma un triángulo con cateto opuesto 3 (en valor absoluto) y cateto adyacente 4, así que la hipotenusa es √(9 + 16) = 5. El seno en el cuarto cuadrante es negativo: sen θ = −3/5.
 
-### P151 · dificultad 1 · kc: ecuaciones-trig · borrador · origen: ia (sonnet-5.5)
+### P151 · dificultad 1 · kc: ecuaciones-trig · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Las soluciones de 2 sen x + 3 = 4 en el intervalo [0, 2π) son:
 
 - A) π/6 y 5π/6 · CORRECTA
@@ -81,7 +81,7 @@ Las soluciones de 2 sen x + 3 = 4 en el intervalo [0, 2π) son:
 
 solución: al despejar queda sen x = 1/2. El seno es positivo en los cuadrantes primero y segundo y el ángulo de referencia es π/6, así que las soluciones son π/6 y π − π/6 = 5π/6. Se comprueba: 2 sen(5π/6) + 3 = 2(1/2) + 3 = 4.
 
-### P152 · dificultad 2 · kc: ecuaciones-trig · borrador · origen: ia (sonnet-5.5)
+### P152 · dificultad 2 · kc: ecuaciones-trig · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Las soluciones de 2 cos x + √3 = 0 en el intervalo [0, 2π) son:
 
 - A) 5π/6 y 7π/6 · CORRECTA
@@ -91,7 +91,7 @@ Las soluciones de 2 cos x + √3 = 0 en el intervalo [0, 2π) son:
 
 solución: al despejar queda cos x = −√3/2. El coseno es negativo en los cuadrantes segundo y tercero, y el ángulo de referencia es π/6. Las soluciones son π − π/6 = 5π/6 y π + π/6 = 7π/6. Se comprueba: cos(7π/6) = −√3/2.
 
-### P153 · dificultad 2 · kc: ecuaciones-trig · borrador · origen: ia (sonnet-5.5)
+### P153 · dificultad 2 · kc: ecuaciones-trig · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Las soluciones de 2 sen²x = sen x en el intervalo [0, 2π) son:
 
 - A) 0, π/6, 5π/6 y π · CORRECTA
@@ -101,7 +101,7 @@ Las soluciones de 2 sen²x = sen x en el intervalo [0, 2π) son:
 
 solución: se pasa todo a un lado y se saca sen x como factor: sen x (2 sen x − 1) = 0. Si sen x = 0, x = 0 o x = π. Si sen x = 1/2, el seno es positivo en los cuadrantes primero y segundo: x = π/6 o x = π − π/6 = 5π/6. Dividir entre sen x eliminaría 0 y π, que sí son soluciones.
 
-### P154 · dificultad 2 · kc: ecuaciones-trig · borrador · origen: ia (sonnet-5.5)
+### P154 · dificultad 2 · kc: ecuaciones-trig · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Las soluciones de sen 2x = √3/2 en el intervalo [0, 2π) son:
 
 - A) π/6, π/3, 7π/6 y 4π/3 · CORRECTA
@@ -111,7 +111,7 @@ Las soluciones de sen 2x = √3/2 en el intervalo [0, 2π) son:
 
 solución: si x está en [0, 2π), entonces 2x está en [0, 4π), es decir, dos vueltas. Se resuelve sen u = √3/2 con u = 2x: u = π/3, 2π/3, 7π/3 o 8π/3. Al dividir entre 2: x = π/6, π/3, 7π/6 o 4π/3.
 
-### P155 · dificultad 3 · kc: ecuaciones-trig · borrador · origen: ia (sonnet-5.5)
+### P155 · dificultad 3 · kc: ecuaciones-trig · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Las soluciones de 2 sen²(2x) = √3 sen 2x en el intervalo [0, π) son:
 
 - A) 0, π/6, π/3 y π/2 · CORRECTA

@@ -29,7 +29,7 @@ mc: iguala-exponentes-con-bases-distintas · ecuaciones-exp-log · igualas los e
 
 ## Preguntas
 
-### P111 · dificultad 1 · kc: exponenciales · borrador · origen: ia (sonnet-5.5)
+### P111 · dificultad 1 · kc: exponenciales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Se depositan 1000 dólares al 10 % anual con capitalización semestral. ¿Cuánto dinero hay en la cuenta después de 1 año?
 
 - A) 1102,50 dólares · CORRECTA
@@ -39,7 +39,7 @@ Se depositan 1000 dólares al 10 % anual con capitalización semestral. ¿Cuánt
 
 solución: cada semestre se aplica la mitad de la tasa anual: 10 %/2 = 5 %. En 1 año hay 2 semestres, así que el monto es 1000·(1,05)² = 1000·1,1025 = 1102,50 dólares.
 
-### P112 · dificultad 2 · kc: exponenciales · borrador · origen: ia (sonnet-5.5)
+### P112 · dificultad 2 · kc: exponenciales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea $m(x) = 4\cdot 3^{x-2} - 1$. ¿Cuál es su asíntota horizontal y su intercepto con el eje y?
 
 - A) Asíntota y = −1; intercepto −5/9 · CORRECTA
@@ -49,7 +49,7 @@ Sea $m(x) = 4\cdot 3^{x-2} - 1$. ¿Cuál es su asíntota horizontal y su interce
 
 solución: 3ˣ⁻² tiende a 0 cuando x tiende a −∞, así que m(x) tiende a −1 y la asíntota es y = −1. El intercepto es m(0) = 4·3⁻² − 1 = 4/9 − 1 = −5/9.
 
-### P113 · dificultad 2 · kc: exponenciales · borrador · origen: ia (sonnet-5.5)
+### P113 · dificultad 2 · kc: exponenciales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea $k(x) = 3\cdot 2^{x-2} + 5$. ¿Cuál es su asíntota horizontal y cuánto vale k(4)?
 
 - A) Asíntota y = 5; k(4) = 17 · CORRECTA
@@ -59,7 +59,7 @@ Sea $k(x) = 3\cdot 2^{x-2} + 5$. ¿Cuál es su asíntota horizontal y cuánto va
 
 solución: 2ˣ⁻² tiende a 0 cuando x tiende a −∞, así que k(x) tiende a 5 y la asíntota es y = 5. Además k(4) = 3·2² + 5 = 12 + 5 = 17.
 
-### P114 · dificultad 2 · kc: exponenciales · borrador · origen: ia (sonnet-5.5)
+### P114 · dificultad 2 · kc: exponenciales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una muestra de 640 g de una sustancia radiactiva tiene una vida media de 5 días. ¿Cuántos gramos quedan después de 15 días?
 
 - A) 80 g · CORRECTA
@@ -69,7 +69,7 @@ Una muestra de 640 g de una sustancia radiactiva tiene una vida media de 5 días
 
 solución: en 15 días pasan 15/5 = 3 vidas medias. La cantidad es 640·(1/2)³ = 640/8 = 80 g.
 
-### P115 · dificultad 3 · kc: exponenciales · borrador · origen: ia (sonnet-5.5)
+### P115 · dificultad 3 · kc: exponenciales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Se depositan 4000 dólares al 9 % anual con capitalización mensual durante 2,5 años. ¿Cuál expresión da el monto final?
 
 - A) $4000\left(1+\frac{0.09}{12}\right)^{30}$ · CORRECTA
@@ -79,7 +79,7 @@ Se depositan 4000 dólares al 9 % anual con capitalización mensual durante 2,5 
 
 solución: la tasa mensual es 0,09/12 = 0,0075 y en 2,5 años hay 12·2,5 = 30 meses. El monto es 4000(1 + 0,09/12)³⁰. El capital multiplica a la potencia, no entra en la base.
 
-### P116 · dificultad 1 · kc: propiedades-log · borrador · origen: ia (sonnet-5.5)
+### P116 · dificultad 1 · kc: propiedades-log · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Para x > 0 y y > 0, ¿cuál de estas igualdades es verdadera?
 
 - A) $\log(xy) = \log x + \log y$ · CORRECTA
@@ -89,7 +89,7 @@ Para x > 0 y y > 0, ¿cuál de estas igualdades es verdadera?
 
 solución: la ley del producto dice que log(xy) = log x + log y. En B, por ejemplo, con x = y = 10 queda log 20 ≈ 1,30 y log 10 + log 10 = 2. En C, con x = 100 y y = 10 queda log 10 = 1 y log 100 / log 10 = 2. En D, la fórmula correcta es log₂ x = log x / log 2; con x = 8 queda 3, mientras que log 8 / 2 ≈ 0,45.
 
-### P117 · dificultad 2 · kc: propiedades-log · borrador · origen: ia (sonnet-5.5)
+### P117 · dificultad 2 · kc: propiedades-log · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Para calcular $\log_5 3$ con una calculadora que solo tiene el logaritmo natural, ¿cuál expresión usas?
 
 - A) $\frac{\ln 3}{\ln 5}$ · CORRECTA
@@ -99,7 +99,7 @@ Para calcular $\log_5 3$ con una calculadora que solo tiene el logaritmo natural
 
 solución: la fórmula de cambio de base es log_b a = ln a / ln b. Con a = 3 y b = 5 queda ln 3 / ln 5 ≈ 0,68. La opción B da el inverso, 1,46. La opción C da ≈ 0,22. La opción D da ln 0,6 ≈ −0,51, que ni siquiera es positivo.
 
-### P118 · dificultad 2 · kc: propiedades-log · borrador · origen: ia (sonnet-5.5)
+### P118 · dificultad 2 · kc: propiedades-log · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Al expandir $\ln\frac{x^2 y}{z^3}$, con x, y y z positivos, se obtiene:
 
 - A) $2\ln x + \ln y - 3\ln z$ · CORRECTA
@@ -109,7 +109,7 @@ Al expandir $\ln\frac{x^2 y}{z^3}$, con x, y y z positivos, se obtiene:
 
 solución: ln(x²y/z³) = ln(x²y) − ln(z³) = ln x² + ln y − ln z³ = 2 ln x + ln y − 3 ln z. Los exponentes bajan como coeficientes, y el cociente se vuelve una resta.
 
-### P119 · dificultad 2 · kc: propiedades-log · borrador · origen: ia (sonnet-5.5)
+### P119 · dificultad 2 · kc: propiedades-log · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Con a, b y c positivos, la expresión $2\ln a + 3\ln b - \ln c$ es igual a:
 
 - A) $\ln\frac{a^2 b^3}{c}$ · CORRECTA
@@ -119,7 +119,7 @@ Con a, b y c positivos, la expresión $2\ln a + 3\ln b - \ln c$ es igual a:
 
 solución: los coeficientes suben como exponentes: 2 ln a = ln a² y 3 ln b = ln b³. La suma se vuelve un producto: ln(a²b³). La resta de ln c se vuelve división entre c: ln(a²b³/c).
 
-### P120 · dificultad 3 · kc: propiedades-log · borrador · origen: ia (sonnet-5.5)
+### P120 · dificultad 3 · kc: propiedades-log · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Si $\log_2 3 = p$, ¿cuánto vale $\log_9 8$ en términos de p?
 
 - A) $\frac{3}{2p}$ · CORRECTA
@@ -129,7 +129,7 @@ Si $\log_2 3 = p$, ¿cuánto vale $\log_9 8$ en términos de p?
 
 solución: por cambio de base a base 2, log₉ 8 = log₂ 8 / log₂ 9. Como 8 = 2³, log₂ 8 = 3. Como 9 = 3², log₂ 9 = 2·log₂ 3 = 2p. Entonces log₉ 8 = 3/(2p).
 
-### P121 · dificultad 1 · kc: ecuaciones-exp-log · borrador · origen: ia (sonnet-5.5)
+### P121 · dificultad 1 · kc: ecuaciones-exp-log · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Cuál de estas afirmaciones sobre la solución de cada ecuación es correcta?
 
 - A) La solución de log₃ x = 4 es x = 3⁴ = 81 · CORRECTA
@@ -139,7 +139,7 @@ solución: por cambio de base a base 2, log₉ 8 = log₂ 8 / log₂ 9. Como 8 =
 
 solución: log₃ x = 4 significa 3⁴ = x, o sea x = 81. En B se invirtieron base y valor. En C, 3ˣ = 20 se resuelve con logaritmos, x = log₃ 20 ≈ 2,73, mientras que 3x = 20 da 6,67. En D, la suma de logaritmos se convierte en el producto de los argumentos: x(x − 2) = 8.
 
-### P122 · dificultad 2 · kc: ecuaciones-exp-log · borrador · origen: ia (sonnet-5.5)
+### P122 · dificultad 2 · kc: ecuaciones-exp-log · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve $9^{x+1} = 27^{x-1}$.
 
 - A) x = 5 · CORRECTA
@@ -149,7 +149,7 @@ Resuelve $9^{x+1} = 27^{x-1}$.
 
 solución: se escribe 9 = 3² y 27 = 3³: 3²⁽ˣ⁺¹⁾ = 3³⁽ˣ⁻¹⁾. Con la misma base, los exponentes son iguales: 2x + 2 = 3x − 3, así que x = 5. Se comprueba: 9⁶ = 3¹² = 531441 y 27⁴ = 3¹² = 531441.
 
-### P123 · dificultad 2 · kc: ecuaciones-exp-log · borrador · origen: ia (sonnet-5.5)
+### P123 · dificultad 2 · kc: ecuaciones-exp-log · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve $25^{x} = 125^{x-1}$.
 
 - A) x = 3 · CORRECTA
@@ -159,7 +159,7 @@ Resuelve $25^{x} = 125^{x-1}$.
 
 solución: se escribe 25 = 5² y 125 = 5³: 5²ˣ = 5³⁽ˣ⁻¹⁾. Los exponentes son iguales: 2x = 3x − 3, así que x = 3. Se comprueba: 25³ = 5⁶ y 125² = 5⁶.
 
-### P124 · dificultad 2 · kc: ecuaciones-exp-log · borrador · origen: ia (sonnet-5.5)
+### P124 · dificultad 2 · kc: ecuaciones-exp-log · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve $\log x + \log(x-3) = 1$ (logaritmo en base 10).
 
 - A) x = 5 · CORRECTA
@@ -169,7 +169,7 @@ Resuelve $\log x + \log(x-3) = 1$ (logaritmo en base 10).
 
 solución: log x + log(x − 3) = log(x(x − 3)) = 1, así que x(x − 3) = 10¹ = 10. Queda x² − 3x − 10 = 0, que se factoriza como (x − 5)(x + 2) = 0. Con x = −2, los argumentos x y x − 3 son negativos, así que no sirve. Con x = 5 queda log 5 + log 2 = log 10 = 1.
 
-### P125 · dificultad 3 · kc: ecuaciones-exp-log · borrador · origen: ia (sonnet-5.5)
+### P125 · dificultad 3 · kc: ecuaciones-exp-log · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve $\log_2(x+1) + \log_2(x-3) = 5$.
 
 - A) x = 7 · CORRECTA

@@ -23,7 +23,7 @@ mc: trinomio-irreducible-factorizado · factorizar-avanzado · sigues factorizan
 
 ## Preguntas
 
-### P26 · dificultad 1 · kc: factorizar-basico · borrador · origen: ia (sonnet-5.5)
+### P26 · dificultad 1 · kc: factorizar-basico · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Factoriza por completo 6x² + 3x.
 
 - A) 3(2x² + x) · [factor-comun-solo-numero] sacas solo el 3 y dejas una x dentro del paréntesis
@@ -33,7 +33,7 @@ Factoriza por completo 6x² + 3x.
 
 solución: el máximo común divisor de 6 y 3 es 3, y la menor potencia de x es x, así que el factor común es 3x. Se divide cada término: 6x² ÷ 3x = 2x y 3x ÷ 3x = 1. Queda 3x(2x + 1). En A y en C el paréntesis conserva un factor común (x en A, 3 en C). En D falta el término 1: 3x·2x = 6x², que no es el polinomio.
 
-### P27 · dificultad 2 · kc: factorizar-basico · borrador · origen: ia (sonnet-5.5)
+### P27 · dificultad 2 · kc: factorizar-basico · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Factoriza por completo 4x³ − 16x.
 
 - A) 4(x³ − 4x) · [factor-comun-solo-numero] sacas solo el 4 y dejas la x dentro del paréntesis
@@ -43,7 +43,7 @@ Factoriza por completo 4x³ − 16x.
 
 solución: el factor común de 4x³ y 16x es 4x. Queda 4x(x² − 4). Ahora x² − 4 = x² − 2² es una diferencia de cuadrados y vale (x + 2)(x − 2). La factorización completa es 4x(x + 2)(x − 2). Las opciones A, B y D son productos iguales al polinomio, pero ninguna está completa: en A sobra una x común, en B queda una diferencia de cuadrados y en D los dos factores de grado 1 todavía se pueden dividir entre 2.
 
-### P28 · dificultad 2 · kc: factorizar-basico · borrador · origen: ia (sonnet-5.5)
+### P28 · dificultad 2 · kc: factorizar-basico · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Factoriza por completo 3x⁴ − 48.
 
 - A) 3(x + 2)²(x − 2)² · [suma-cuadrados-como-diferencia] factorizas x² + 4 como (x + 2)(x − 2), igual que una diferencia de cuadrados
@@ -53,7 +53,7 @@ Factoriza por completo 3x⁴ − 48.
 
 solución: se saca el factor común 3: 3x⁴ − 48 = 3(x⁴ − 16). Luego x⁴ − 16 = (x²)² − 4² = (x² + 4)(x² − 4). El factor x² − 4 es otra diferencia de cuadrados: (x + 2)(x − 2). El factor x² + 4 es una suma de cuadrados y no se puede factorizar. Resultado: 3(x² + 4)(x + 2)(x − 2). En A, (x + 2)(x − 2) = x² − 4, no x² + 4, así que el producto no da el polinomio.
 
-### P29 · dificultad 2 · kc: factorizar-basico · borrador · origen: ia (sonnet-5.5)
+### P29 · dificultad 2 · kc: factorizar-basico · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Factoriza por completo 2x² + 10x + 12.
 
 - A) 2(x + 2)(x + 3) · CORRECTA
@@ -63,7 +63,7 @@ Factoriza por completo 2x² + 10x + 12.
 
 solución: el 2 divide a los tres términos, así que 2x² + 10x + 12 = 2(x² + 5x + 6). Dentro del paréntesis hay que hallar dos números con producto 6 y suma 5, que son 2 y 3. El resultado es 2(x + 2)(x + 3). En B falta el 2: al multiplicar (x + 3)(x + 2) se obtiene x² + 5x + 6, que es la mitad del polinomio. En C, (x − 2)(x − 3) tiene suma −5. En D, (2x + 4)(2x + 6) = 4x² + 20x + 24, que es el doble del polinomio, porque faltó dividir entre 2.
 
-### P30 · dificultad 3 · kc: factorizar-basico · borrador · origen: ia (sonnet-5.5)
+### P30 · dificultad 3 · kc: factorizar-basico · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Factoriza por completo 4x⁴ + 17x² + 4.
 
 - A) (2x² + 1)(2x² + 4) · [trinomio-sin-comprobar-termino-medio] los extremos dan 4x⁴ y 4, pero no compruebas el término medio: sale 10x² y no 17x²
@@ -73,7 +73,7 @@ Factoriza por completo 4x⁴ + 17x² + 4.
 
 solución: la expresión es un trinomio cuadrático en x². Sea z = 4x²; entonces 4x⁴ + 17x² + 4 equivale a (z² + 17z + 16)/4, que es (z + 16)(z + 1)/4. Al volver a x queda (4x² + 16)(4x² + 1)/4 = (x² + 4)(4x² + 1). Al multiplicar se recupera 4x⁴ + x² + 16x² + 4 = 4x⁴ + 17x² + 4. Ninguno de los dos factores se descompone más, porque ambos son sumas de cuadrados. En A, (2x² + 1)(2x² + 4) = 4x⁴ + 10x² + 4, y el término medio sale 10x² en vez de 17x². En B, (2x − 1)(x − 2)(2x + 1)(x + 2) = 4x⁴ − 17x² + 4, que tiene el signo contrario. En C falta dividir entre 4.
 
-### P31 · dificultad 1 · kc: factorizar-avanzado · borrador · origen: ia (sonnet-5.5)
+### P31 · dificultad 1 · kc: factorizar-avanzado · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Factoriza por completo x³ + 27.
 
 - A) (x + 3)³ · [cubos-como-binomio-al-cubo] factorizas la suma de cubos como el binomio (x + 3) elevado al cubo
@@ -83,7 +83,7 @@ Factoriza por completo x³ + 27.
 
 solución: como 27 = 3³, el polinomio x³ + 27 es una suma de cubos con A = x y B = 3. Se aplica la identidad A³ + B³ = (A + B)(B² − AB + A²) y resulta el producto de x + 3 por x² − 3x + 9. El trinomio x² − 3x + 9 no tiene raíces reales (su discriminante es 9 − 36 < 0), así que no se factoriza más. En A, (x + 3)³ = x³ + 9x² + 27x + 27. En C, (x + 3)(x² + 3x + 9) = x³ + 6x² + 18x + 27. En D, (x − 3)² = x² − 6x + 9, que no es el trinomio.
 
-### P32 · dificultad 2 · kc: factorizar-avanzado · borrador · origen: ia (sonnet-5.5)
+### P32 · dificultad 2 · kc: factorizar-avanzado · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Factoriza por completo 8x³ − 125.
 
 - A) (2x − 5)³ · [cubos-como-binomio-al-cubo] factorizas la diferencia de cubos como el binomio (2x − 5) elevado al cubo
@@ -93,7 +93,7 @@ Factoriza por completo 8x³ − 125.
 
 solución: 8x³ − 125 se escribe como (2x)³ − 5³, diferencia de cubos con A = 2x y B = 5. La identidad es A³ − B³ = (A − B)(B² + AB + A²), con A² = (2x)² = 4x², AB = 10x y B² = 25. Así se obtiene (2x − 5)(4x² + 10x + 25). El trinomio no tiene raíces reales (discriminante 100 − 400 < 0), por lo que no admite más factores. En B se olvidó elevar el 2 al cuadrado, y en C el signo del término medio es el de la suma de cubos.
 
-### P33 · dificultad 2 · kc: factorizar-avanzado · borrador · origen: ia (sonnet-5.5)
+### P33 · dificultad 2 · kc: factorizar-avanzado · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Factoriza por completo 2x³ − 5x² − 8x + 20.
 
 - A) (2x − 5)(x² + 4) · [agrupacion-signo-segundo-grupo] al sacar 4 de −8x + 20 ignoras el signo menos y escribes 4(2x − 5) en vez de −4(2x − 5)
@@ -103,7 +103,7 @@ Factoriza por completo 2x³ − 5x² − 8x + 20.
 
 solución: se agrupa: (2x³ − 5x²) + (−8x + 20). Del primer grupo sale x²: x²(2x − 5). Del segundo sale −4: −4(2x − 5). Entonces x²(2x − 5) − 4(2x − 5) = (2x − 5)(x² − 4). Como x² − 4 es una diferencia de cuadrados, queda (2x − 5)(x − 2)(x + 2). La opción A cambia el signo del segundo grupo: (2x − 5)(x² + 4) = 2x³ − 5x² + 8x − 20. La opción C es igual al polinomio, pero le falta un paso. La opción D es igual al polinomio, pero sigue siendo una resta y no un producto.
 
-### P34 · dificultad 2 · kc: factorizar-avanzado · borrador · origen: ia (sonnet-5.5)
+### P34 · dificultad 2 · kc: factorizar-avanzado · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Factoriza por completo 27x⁴ − x.
 
 - A) x(3x − 1)(9x² + 3x + 1) · CORRECTA
@@ -113,7 +113,7 @@ Factoriza por completo 27x⁴ − x.
 
 solución: el factor común de 27x⁴ y x es x: 27x⁴ − x = x(27x³ − 1). Ahora 27x³ − 1 = (3x)³ − 1³ es una diferencia de cubos con A = 3x y B = 1: (3x − 1)(9x² + 3x + 1). El trinomio no tiene raíces reales (discriminante 9 − 36 < 0). Resultado: x(3x − 1)(9x² + 3x + 1). En C, (3x + 1)² = 9x² + 6x + 1, que no es el trinomio. En D falta la x, así que el producto es 27x³ − 1.
 
-### P35 · dificultad 3 · kc: factorizar-avanzado · borrador · origen: ia (sonnet-5.5)
+### P35 · dificultad 3 · kc: factorizar-avanzado · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Factoriza por completo x⁴ + 8x − x³ − 8.
 
 - A) x(x³ + 8) − (x³ + 8) · [agrupacion-sin-binomio-comun] sacas el factor común de cada grupo pero no sacas el binomio x³ + 8 que se repite

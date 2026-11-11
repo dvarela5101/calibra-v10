@@ -31,7 +31,7 @@ mc: eleva-solo-un-lado-en-ecuacion-radical · ecuaciones-radicales-abs · elevas
 
 ## Preguntas
 
-### P46 · dificultad 1 · kc: ecuaciones-lineales · borrador · origen: ia (sonnet-5.5)
+### P46 · dificultad 1 · kc: ecuaciones-lineales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve la ecuación $\frac{3}{4}(x - 8) = 6$.
 
 - A) x = 25/2 · [despeja-coeficiente-fraccionario-al-reves] multiplicas 6 por 3/4 en vez de por 4/3 y llegas a x − 8 = 9/2
@@ -41,7 +41,7 @@ Resuelve la ecuación $\frac{3}{4}(x - 8) = 6$.
 
 solución: se multiplican ambos lados por 4/3: x − 8 = 8, y entonces x = 16. Comprobación: (3/4)(16 − 8) = (3/4)·8 = 6.
 
-### P47 · dificultad 2 · kc: ecuaciones-lineales · borrador · origen: ia (sonnet-5.5)
+### P47 · dificultad 2 · kc: ecuaciones-lineales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve $\frac{x}{x-4} = \frac{4}{x-4} + 2$.
 
 - A) x = 4 · [no-descarta-solucion-extrana-racional] llegas a x = 4 y no ves que ese valor anula el denominador x − 4
@@ -51,7 +51,7 @@ Resuelve $\frac{x}{x-4} = \frac{4}{x-4} + 2$.
 
 solución: la ecuación solo tiene sentido si x ≠ 4. Se multiplica todo por x − 4: x = 4 + 2(x − 4), es decir, x = 2x − 4, y entonces x = 4. Ese valor anula el denominador, así que se descarta y la ecuación no tiene solución.
 
-### P48 · dificultad 2 · kc: ecuaciones-lineales · borrador · origen: ia (sonnet-5.5)
+### P48 · dificultad 2 · kc: ecuaciones-lineales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Cuál es el conjunto solución de $\frac{5}{x-3} - 2 = \frac{11-2x}{x-3}$?
 
 - A) Todos los números reales · [no-descarta-solucion-extrana-racional] la ecuación se reduce a una identidad y olvidas que x = 3 anula el denominador
@@ -61,7 +61,7 @@ solución: la ecuación solo tiene sentido si x ≠ 4. Se multiplica todo por x 
 
 solución: la ecuación exige x ≠ 3. Se multiplica todo por x − 3: 5 − 2(x − 3) = 11 − 2x, es decir, 11 − 2x = 11 − 2x. Es una identidad: se cumple para todo x del dominio, o sea, para todo real distinto de 3.
 
-### P49 · dificultad 2 · kc: ecuaciones-lineales · borrador · origen: ia (sonnet-5.5)
+### P49 · dificultad 2 · kc: ecuaciones-lineales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve $\frac{3}{5}x - 4 = 2x + 3$.
 
 - A) x = −49/5 · [despeja-coeficiente-fraccionario-al-reves] llegas a −(7/5)x = 7 y multiplicas 7 por −7/5 en vez de por −5/7
@@ -71,7 +71,7 @@ Resuelve $\frac{3}{5}x - 4 = 2x + 3$.
 
 solución: se pasan las x a la izquierda y los números a la derecha: (3/5)x − 2x = 3 + 4, es decir, −(7/5)x = 7. Se multiplica por −5/7 y x = −5. Comprobación: (3/5)(−5) − 4 = −7 y 2(−5) + 3 = −7.
 
-### P50 · dificultad 3 · kc: ecuaciones-lineales · borrador · origen: ia (sonnet-5.5)
+### P50 · dificultad 3 · kc: ecuaciones-lineales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve $\frac{x+1}{2} - \frac{2x-3}{3} = 1$.
 
 - A) x = −6 · [distribuye-solo-primer-termino-ecuacion] al multiplicar por 6 escribes −2(2x − 3) como −4x − 3 y queda 3x + 3 − 4x − 3 = 6
@@ -81,7 +81,7 @@ Resuelve $\frac{x+1}{2} - \frac{2x-3}{3} = 1$.
 
 solución: el denominador común es 6. Multiplicando todo por 6: 3(x + 1) − 2(2x − 3) = 6, es decir, 3x + 3 − 4x + 6 = 6, o sea, −x + 9 = 6. Entonces −x = −3 y x = 3. Comprobación: (3 + 1)/2 − (6 − 3)/3 = 2 − 1 = 1.
 
-### P51 · dificultad 1 · kc: ecuaciones-cuadraticas · borrador · origen: ia (sonnet-5.5)
+### P51 · dificultad 1 · kc: ecuaciones-cuadraticas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Al resolver x² − 4x − 5 = 0 con la fórmula cuadrática, ¿cuáles son las soluciones?
 
 - A) x = 7 y x = 1 · [formula-divide-solo-la-raiz-entre-2a] divides entre 2 solo la raíz: x = 4 ± 6/2 = 4 ± 3
@@ -91,7 +91,7 @@ Al resolver x² − 4x − 5 = 0 con la fórmula cuadrática, ¿cuáles son las 
 
 solución: a = 1, b = −4, c = −5. El discriminante es (−4)² − 4·1·(−5) = 16 + 20 = 36. Entonces x = (4 ± 6)/2, que da x = 5 y x = −1. Comprobación: 25 − 20 − 5 = 0 y 1 + 4 − 5 = 0.
 
-### P52 · dificultad 2 · kc: ecuaciones-cuadraticas · borrador · origen: ia (sonnet-5.5)
+### P52 · dificultad 2 · kc: ecuaciones-cuadraticas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Al resolver x² − 6x − 1 = 0 completando el cuadrado, ¿cuáles son las soluciones?
 
 - A) x = 3 + √10 · [cuadrado-igual-d-solo-raiz-positiva] de (x − 3)² = 10 tomas solo x − 3 = +√10
@@ -101,7 +101,7 @@ Al resolver x² − 6x − 1 = 0 completando el cuadrado, ¿cuáles son las solu
 
 solución: x² − 6x = 1. La mitad de −6 es −3 y su cuadrado es 9, que se suma a los dos lados: x² − 6x + 9 = 10, es decir, (x − 3)² = 10. Entonces x − 3 = ±√10 y x = 3 ± √10.
 
-### P53 · dificultad 2 · kc: ecuaciones-cuadraticas · borrador · origen: ia (sonnet-5.5)
+### P53 · dificultad 2 · kc: ecuaciones-cuadraticas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve x(x − 3) = 10.
 
 - A) x = 10 y x = 13 · [producto-no-cero-iguala-factores-a-constante] igualas cada factor a 10: x = 10 y x − 3 = 10
@@ -111,7 +111,7 @@ Resuelve x(x − 3) = 10.
 
 solución: el producto es 10, no 0, así que primero se lleva a cero: x² − 3x − 10 = 0. Se factoriza: (x − 5)(x + 2) = 0, y entonces x = 5 o x = −2. Comprobación: 5·2 = 10 y (−2)(−5) = 10.
 
-### P54 · dificultad 2 · kc: ecuaciones-cuadraticas · borrador · origen: ia (sonnet-5.5)
+### P54 · dificultad 2 · kc: ecuaciones-cuadraticas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve 2x² − 7x + 3 = 0.
 
 - A) No tiene soluciones reales · [discriminante-con-b-negativo-mal-elevado] calculas (−7)² como −49 y el discriminante queda −49 − 24 = −73
@@ -121,7 +121,7 @@ Resuelve 2x² − 7x + 3 = 0.
 
 solución: a = 2, b = −7, c = 3. El discriminante es (−7)² − 4·2·3 = 49 − 24 = 25. Entonces x = (7 ± 5)/4, que da x = 3 y x = 1/2. Comprobación: 18 − 21 + 3 = 0 y 1/2 − 7/2 + 3 = 0.
 
-### P55 · dificultad 3 · kc: ecuaciones-cuadraticas · borrador · origen: ia (sonnet-5.5)
+### P55 · dificultad 3 · kc: ecuaciones-cuadraticas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve (x + 2)(x − 6) = −3.
 
 - A) x = 2 ± √13 · CORRECTA
@@ -131,7 +131,7 @@ Resuelve (x + 2)(x − 6) = −3.
 
 solución: se desarrolla y se lleva a cero: x² − 4x − 12 = −3, es decir, x² − 4x − 9 = 0. No factoriza con enteros, así que se completa el cuadrado: x² − 4x = 9, y se suma 4 a los dos lados: (x − 2)² = 13. Entonces x = 2 ± √13. Comprobación: (4 + √13)(√13 − 4) = 13 − 16 = −3.
 
-### P56 · dificultad 1 · kc: ecuaciones-radicales-abs · borrador · origen: ia (sonnet-5.5)
+### P56 · dificultad 1 · kc: ecuaciones-radicales-abs · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve 2|x − 1| + 3 = 11.
 
 - A) x = 5 y x = −5 · [abs-rama-negativa-sin-distribuir-el-menos] con |x − 1| = 4 escribes la rama negativa como −x − 1 = 4
@@ -141,7 +141,7 @@ Resuelve 2|x − 1| + 3 = 11.
 
 solución: primero se aísla el valor absoluto: 2|x − 1| = 8, es decir, |x − 1| = 4. Hay dos ramas: x − 1 = 4, que da x = 5, y x − 1 = −4, que da x = −3. Comprobación: 2·4 + 3 = 11 en los dos casos.
 
-### P57 · dificultad 2 · kc: ecuaciones-radicales-abs · borrador · origen: ia (sonnet-5.5)
+### P57 · dificultad 2 · kc: ecuaciones-radicales-abs · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve |x − 3| = 2x − 1.
 
 - A) x = −2 · [abs-ecuacion-solo-una-rama] planteas solo la rama x − 3 = 2x − 1
@@ -151,7 +151,7 @@ Resuelve |x − 3| = 2x − 1.
 
 solución: como |x − 3| ≥ 0, hace falta 2x − 1 ≥ 0. Rama x − 3 = 2x − 1: x = −2, que da 2x − 1 = −5 < 0, así que se descarta. Rama −(x − 3) = 2x − 1: 3 − x = 2x − 1, es decir, x = 4/3. Comprobación: |4/3 − 3| = 5/3 y 2·(4/3) − 1 = 5/3.
 
-### P58 · dificultad 2 · kc: ecuaciones-radicales-abs · borrador · origen: ia (sonnet-5.5)
+### P58 · dificultad 2 · kc: ecuaciones-radicales-abs · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve $\sqrt{x+5} = x - 1$.
 
 - A) x = −1 y x = 4 · [no-comprueba-solucion-extrana-radical-o-abs] resuelves bien la cuadrática pero no compruebas que x = −1 da √4 = −2
@@ -161,7 +161,7 @@ Resuelve $\sqrt{x+5} = x - 1$.
 
 solución: al elevar ambos lados al cuadrado queda x + 5 = x² − 2x + 1, o sea x² − 3x − 4 = 0, que se factoriza como (x − 4)(x + 1) = 0. Hay que probar cada candidata en la ecuación original. Con x = 4: √9 = 3 y 4 − 1 = 3, sirve. Con x = −1: √4 = 2 pero −1 − 1 = −2, así que es extraña y se descarta.
 
-### P59 · dificultad 2 · kc: ecuaciones-radicales-abs · borrador · origen: ia (sonnet-5.5)
+### P59 · dificultad 2 · kc: ecuaciones-radicales-abs · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve x⁴ − 13x² + 36 = 0.
 
 - A) x = 4 y x = 9 · [sustitucion-sin-volver-a-x] con u = x² resuelves u² − 13u + 36 = 0 y das los valores de u como si fueran los de x
@@ -171,7 +171,7 @@ Resuelve x⁴ − 13x² + 36 = 0.
 
 solución: con u = x² la ecuación queda u² − 13u + 36 = 0, es decir, (u − 4)(u − 9) = 0, y entonces u = 4 o u = 9. Se vuelve a x: x² = 4 da x = ±2 y x² = 9 da x = ±3. Son cuatro soluciones. Comprobación: 16 − 52 + 36 = 0 y 81 − 117 + 36 = 0.
 
-### P60 · dificultad 3 · kc: ecuaciones-radicales-abs · borrador · origen: ia (sonnet-5.5)
+### P60 · dificultad 3 · kc: ecuaciones-radicales-abs · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resuelve x − 3√x − 4 = 0.
 
 - A) x = 4 · [sustitucion-sin-volver-a-x] con u = √x llegas a u = 4 (descartas u = −1) y das u = 4 como valor de x
