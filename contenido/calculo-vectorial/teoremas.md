@@ -72,7 +72,7 @@ Aquí ∂Q/∂x = 2 y ∂P/∂y = −1, así que el integrando vale 2 − (−1)
 Comprobación directa con x = cos t, y = sen t: el integrando queda sen²t + 2cos²t + sen t cos t y su integral de 0 a 2π es π + 2π + 0 = 3π.
 Las otras opciones salen de errores concretos: −3π es el resultado con la orientación horaria; 0 solo valdría si ∂Q/∂x = ∂P/∂y, y aquí la diferencia es 3; 7π sale de integrar ∂P/∂x + ∂Q/∂y = 3 + 4 sobre el disco.
 
-### P95 · dificultad 1 · kc: campos-conservativos · borrador · origen: ia (sonnet-5.5)
+### P95 · dificultad 1 · kc: campos-conservativos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Cuál de estos campos de R² es conservativo?
 
 - A) F = (y², x) · [conservativo-sin-comparar-cruzadas] lo das por conservativo porque sus dos componentes son polinomios sencillos, sin comparar ∂P/∂y con ∂Q/∂x
@@ -82,7 +82,7 @@ Las otras opciones salen de errores concretos: −3π es el resultado con la ori
 
 solución: un campo F = (P, Q) definido en todo R² es conservativo exactamente cuando ∂P/∂y = ∂Q/∂x. En C, ∂P/∂y = 2x y ∂Q/∂x = 2x, así que lo es. En A, ∂P/∂y = 2y y ∂Q/∂x = 1, que no coinciden. En B, ∂P/∂y = 0 y ∂Q/∂x = 2y, que no coinciden; la igualdad ∂P/∂x = ∂Q/∂y no es el criterio. En D, ∂P/∂y = 1 y ∂Q/∂x = −1; que la divergencia valga 0 no dice nada sobre si es conservativo.
 
-### P96 · dificultad 2 · kc: campos-conservativos · borrador · origen: ia (sonnet-5.5)
+### P96 · dificultad 2 · kc: campos-conservativos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El campo F = (2xy + 3, x² + 6y) es conservativo. ¿Cuál es una función potencial f, es decir, una f con ∇f = F?
 
 - A) f = x²y + 3x · [potencial-sin-funcion-de-las-otras-variables] integras 2xy + 3 respecto de x y no añades la función de y que sale de comparar ∂f/∂y con x² + 6y
@@ -92,7 +92,7 @@ El campo F = (2xy + 3, x² + 6y) es conservativo. ¿Cuál es una función potenc
 
 solución: ∂P/∂y = 2x = ∂Q/∂x, así que F es conservativo. Se integra P respecto de x: f = x²y + 3x + g(y). Se deriva respecto de y: ∂f/∂y = x² + g′(y), y debe valer Q = x² + 6y, así que g′(y) = 6y y g(y) = 3y². Entonces f = x²y + 3x + 3y². Comprobación: ∂f/∂x = 2xy + 3 y ∂f/∂y = x² + 6y.
 
-### P97 · dificultad 2 · kc: campos-conservativos · borrador · origen: ia (sonnet-5.5)
+### P97 · dificultad 2 · kc: campos-conservativos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea F = (y² + 2x, 2xy + 3) y sea C una curva suave cualquiera que va de (1, 1) a (2, 3). El valor de $\int_C F\cdot dr$ es:
 
 - A) 20 · [potencial-sin-funcion-de-las-otras-variables] usas f = xy² + x², que viene de integrar solo la primera componente, y te falta el término 3y
@@ -102,7 +102,7 @@ Sea F = (y² + 2x, 2xy + 3) y sea C una curva suave cualquiera que va de (1, 1) 
 
 solución: ∂P/∂y = 2y = ∂Q/∂x, así que F es conservativo y la integral solo depende de los extremos. Integrando P respecto de x: f = xy² + x² + g(y); como ∂f/∂y = 2xy + g′(y) debe valer 2xy + 3, g′(y) = 3 y g(y) = 3y. Entonces f = xy² + x² + 3y. El valor es f(2, 3) − f(1, 1) = (18 + 4 + 9) − (1 + 1 + 3) = 31 − 5 = 26.
 
-### P98 · dificultad 2 · kc: campos-conservativos · borrador · origen: ia (sonnet-5.5)
+### P98 · dificultad 2 · kc: campos-conservativos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Para qué valor de k el campo F = (kxy + 2y, 3x² + 2x + y²) es conservativo?
 
 - A) k = −2 · [divergencia-nula-como-criterio-conservativo] igualas a cero la divergencia, ky + 2y = 0, y despejas k
@@ -112,7 +112,7 @@ solución: ∂P/∂y = 2y = ∂Q/∂x, así que F es conservativo y la integral 
 
 solución: se necesita ∂P/∂y = ∂Q/∂x en todo punto. ∂P/∂y = kx + 2 y ∂Q/∂x = 6x + 2. Son iguales para todo x solo si k = 6. Con k = 2 se igualan ∂P/∂x y ∂Q/∂y, que no es el criterio; con k = −2 se anula la divergencia, que tampoco lo es.
 
-### P99 · dificultad 3 · kc: campos-conservativos · borrador · origen: ia (sonnet-5.5)
+### P99 · dificultad 3 · kc: campos-conservativos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea F = (yz + 2x, xz + 3y², xy + 2z) y sea C la curva r(t) = (t, t², t³) con 1 ≤ t ≤ 2. El valor de $\int_C F\cdot dr$ es:
 
 - A) 66 · [potencial-sin-funcion-de-las-otras-variables] usas f = xyz + x², que viene de integrar solo la primera componente, y te faltan los términos y³ y z²
@@ -122,7 +122,7 @@ Sea F = (yz + 2x, xz + 3y², xy + 2z) y sea C la curva r(t) = (t, t², t³) con 
 
 solución: el rotacional de F tiene componentes (x − x, y − y, z − z) = (0, 0, 0), así que F es conservativo en R³. Integrando la primera componente respecto de x: f = xyz + x² + g(y, z). Derivando respecto de y: xz + ∂g/∂y debe valer xz + 3y², así que g = y³ + h(z). Derivando respecto de z: xy + h′(z) debe valer xy + 2z, así que h = z². Entonces f = xyz + x² + y³ + z². La curva va de (1, 1, 1) a (2, 4, 8), y el valor es f(2, 4, 8) − f(1, 1, 1) = (64 + 4 + 64 + 64) − (1 + 1 + 1 + 1) = 196 − 4 = 192.
 
-### P100 · dificultad 2 · kc: green · borrador · origen: ia (sonnet-5.5)
+### P100 · dificultad 2 · kc: green · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea C la parábola y = x² recorrida de (0, 0) a (1, 1) y sea F = (3y + x, 5x). Se cierra C con el segmento recto de (1, 1) a (0, 0), de modo que la curva cerrada resultante encierra la región entre y = x² y y = x, que tiene área 1/6 y queda a la izquierda al recorrerla. El valor de $\int_C F\cdot dr$ es:
 
 - A) 1/3 · [teoremas-e1] aplicas Green directamente a C, que no es cerrada, sin restar la integral sobre el segmento que la cierra
@@ -135,7 +135,7 @@ En C′, con x = y = t y t de 1 a 0, el integrando es (3t + t)dt + 5t dt = 9t dt
 Entonces $\int_C = \frac{1}{3} - \left(-\frac{9}{2}\right) = \frac{29}{6}$.
 Comprobación directa con x = t, y = t²: (3t² + t)dt + 5t·2t dt = (13t² + t)dt, y su integral de 0 a 1 es 13/3 + 1/2 = 29/6.
 
-### P101 · dificultad 2 · kc: green · borrador · origen: ia (sonnet-5.5)
+### P101 · dificultad 2 · kc: green · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea C el borde del rectángulo con vértices (0, 0), (2, 0), (2, 3), (0, 3), recorrido en ese orden. El valor de $\oint_C (x^2 + 3y)\,dx + (2x + y^2)\,dy$ es:
 
 - A) 6 · [green-integrando-resta-invertida] calculas ∂P/∂y − ∂Q/∂x = 1 en vez de ∂Q/∂x − ∂P/∂y = −1, y el resultado sale con el signo contrario
@@ -145,7 +145,7 @@ Sea C el borde del rectángulo con vértices (0, 0), (2, 0), (2, 3), (0, 3), rec
 
 solución: el recorrido (0, 0), (2, 0), (2, 3), (0, 3) es antihorario, así que la región D = [0, 2] × [0, 3] queda a la izquierda y se puede aplicar Green. Con P = x² + 3y y Q = 2x + y²: ∂Q/∂x − ∂P/∂y = 2 − 3 = −1. Entonces $\oint_C = \iint_D (-1)\,dA = -1·6 = -6$.
 
-### P102 · dificultad 3 · kc: green · borrador · origen: ia (sonnet-5.5)
+### P102 · dificultad 3 · kc: green · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea C la frontera de la región 1 ≤ x² + y² ≤ 4, orientada de modo que la región quede siempre a la izquierda. El valor de $\oint_C -y^3\,dx + x^3\,dy$ es:
 
 - A) 45π/2 · CORRECTA
@@ -156,7 +156,7 @@ Sea C la frontera de la región 1 ≤ x² + y² ≤ 4, orientada de modo que la 
 solución: con P = −y³ y Q = x³, ∂Q/∂x − ∂P/∂y = 3x² + 3y² = 3r². Con la región a la izquierda, la circunferencia exterior se recorre en sentido antihorario y la interior en sentido horario, y Green vale para toda la región D entre ambas: $\iint_D 3r^2\,dA$ = $\int_0^{2\pi}\int_1^2 3r^2\cdot r\,dr\,d\theta$ = $2\pi\cdot\frac{3}{4}(16 - 1)$ = $\frac{45\pi}{2}$.
 Si solo se usa el disco de radio 2 sale 24π, y si la circunferencia interior se recorre antihoraria se suma 3π/2 en vez de restarse: 24π + 3π/2 = 51π/2.
 
-### P103 · dificultad 1 · kc: stokes · borrador · origen: ia (sonnet-5.5)
+### P103 · dificultad 1 · kc: stokes · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea C la circunferencia x² + y² = 4 en el plano z = 0, recorrida en sentido antihorario visto desde arriba (desde z positivo). Con F = (−y, x, 5), el valor de $\oint_C F\cdot dr$ es:
 
 - A) 20π · [stokes-flujo-de-f-no-del-rotacional] integras F·n = 5 sobre el disco x² + y² ≤ 4 en vez de integrar el rotacional de F
@@ -166,7 +166,7 @@ Sea C la circunferencia x² + y² = 4 en el plano z = 0, recorrida en sentido an
 
 solución: C es la frontera del disco D: x² + y² ≤ 4 en z = 0. El recorrido antihorario visto desde arriba corresponde, por la regla de la mano derecha, a la normal n = k. El rotacional es rot F = (0, 0, 1 − (−1)) = (0, 0, 2), y rot F·n = 2. Por Stokes, $\oint_C F\cdot dr = \iint_D 2\,dA = 2·4\pi = 8\pi$.
 
-### P104 · dificultad 2 · kc: stokes · borrador · origen: ia (sonnet-5.5)
+### P104 · dificultad 2 · kc: stokes · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea C el triángulo de vértices (1, 0, 0), (0, 1, 0), (0, 0, 1), recorrido en ese orden, y sea F = (z, x, y). El valor de $\oint_C F\cdot dr$ es:
 
 - A) 1/2 · [rotacional-signo-componente-j] al calcular el rotacional usas ∂R/∂x − ∂P/∂z en la componente j y te queda (1, −1, 1)
@@ -177,7 +177,7 @@ Sea C el triángulo de vértices (1, 0, 0), (0, 1, 0), (0, 0, 1), recorrido en e
 solución: C es la frontera del triángulo S del plano x + y + z = 1 en el primer octante. Con ese orden de vértices, la normal que da la regla de la mano derecha apunta hacia arriba: (1, 1, 1) multiplicado por un positivo. El rotacional es rot F = (∂R/∂y − ∂Q/∂z, ∂P/∂z − ∂R/∂x, ∂Q/∂x − ∂P/∂y) = (1 − 0, 1 − 0, 1 − 0) = (1, 1, 1).
 Con z = 1 − x − y, el vector n dS es (1, 1, 1) dx dy, así que rot F·n dS = 3 dx dy, y la proyección sobre el plano xy es un triángulo de área 1/2. Por Stokes, el valor es 3·(1/2) = 3/2.
 
-### P105 · dificultad 2 · kc: stokes · borrador · origen: ia (sonnet-5.5)
+### P105 · dificultad 2 · kc: stokes · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea C la curva en que el plano z = y corta al cilindro x² + y² = 1, recorrida en sentido antihorario visto desde arriba. Con F = (2z, x, y²), el valor de $\oint_C F\cdot dr$ es:
 
 - A) 3π · [rotacional-signo-componente-j] pones el signo contrario en la componente j del rotacional y usas (2y, −2, 1) en vez de (2y, 2, 1)
@@ -189,7 +189,7 @@ solución: se toma como superficie S la parte del plano z = y dentro del cilindr
 El rotacional es rot F = (∂R/∂y − ∂Q/∂z, ∂P/∂z − ∂R/∂x, ∂Q/∂x − ∂P/∂y) = (2y − 0, 2 − 0, 1 − 0) = (2y, 2, 1). Entonces rot F·n dS = (−2 + 1) dx dy = −dx dy y la integral es −área(D) = −π.
 Comprobación directa con r(t) = (cos t, sen t, sen t): F·r′ = −2 sen²t + cos²t + sen²t·cos t, y su integral de 0 a 2π es −2π + π + 0 = −π.
 
-### P106 · dificultad 3 · kc: stokes · borrador · origen: ia (sonnet-5.5)
+### P106 · dificultad 3 · kc: stokes · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Considera la mitad superior (z ≥ 0) de la esfera unitaria, llamada S, orientada con normal exterior, y el campo F = (y + z², 3x, xy + z). El valor de $\iint_S (\mathrm{rot}\,F)\cdot n\,dS$ es:
 
 - A) 2π · CORRECTA
@@ -201,7 +201,7 @@ solución: la frontera de S es la circunferencia x² + y² = 1, z = 0, y la norm
 El rotacional es rot F = (∂R/∂y − ∂Q/∂z, ∂P/∂z − ∂R/∂x, ∂Q/∂x − ∂P/∂y) = (x, 2z − y, 3 − 1). Sobre el disco, rot F·k = 2, y el flujo es 2·π = 2π.
 La opción C no vale: div(rot F) = 0 daría flujo 0 solo sobre una superficie cerrada, y aquí el flujo por el hemisferio es 2π, igual al del disco; el flujo total por la superficie cerrada (hemisferio más disco con normal hacia abajo) sí vale 2π − 2π = 0.
 
-### P107 · dificultad 1 · kc: gauss · borrador · origen: ia (sonnet-5.5)
+### P107 · dificultad 1 · kc: gauss · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 La superficie esférica S, de ecuación x² + y² + z² = 4, está orientada hacia afuera, y el campo es F = (2x, y, z). El flujo $\iint_S F\cdot n\,dS$ es:
 
 - A) 64π · [gauss-divergencia-por-area] multiplicas div F = 4 por el área de la esfera, 16π, en vez de por el volumen de la bola
@@ -211,7 +211,7 @@ La superficie esférica S, de ecuación x² + y² + z² = 4, está orientada hac
 
 solución: S es cerrada y encierra la bola V de radio 2. Por el teorema de la divergencia, $\iint_S F\cdot n\,dS = ∭_V \mathrm{div}\,F\,dV$. Aquí div F = 2 + 1 + 1 = 4, y el volumen de la bola es (4/3)π·8 = 32π/3, así que el flujo es 4·32π/3 = 128π/3. Que F sea conservativo (es el gradiente de x² + (y² + z²)/2) no implica div F = 0.
 
-### P108 · dificultad 2 · kc: gauss · borrador · origen: ia (sonnet-5.5)
+### P108 · dificultad 2 · kc: gauss · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea S la frontera de la caja [0, 1] × [0, 2] × [0, 3], con la normal exterior, y sea F = (2x + yz, 3y, z + x²). El flujo $\iint_S F\cdot n\,dS$ es:
 
 - A) 132 · [gauss-divergencia-por-area] multiplicas div F = 6 por el área total de las seis caras, 22, en vez de por el volumen de la caja
@@ -221,7 +221,7 @@ Sea S la frontera de la caja [0, 1] × [0, 2] × [0, 3], con la normal exterior,
 
 solución: S es cerrada y encierra la caja V, así que $\iint_S F\cdot n\,dS = ∭_V \mathrm{div}\,F\,dV$. Con P = 2x + yz, Q = 3y y R = z + x²: div F = 2 + 3 + 1 = 6. El volumen de la caja es 1·2·3 = 6, y el flujo es 6·6 = 36.
 
-### P109 · dificultad 2 · kc: gauss · borrador · origen: ia (sonnet-5.5)
+### P109 · dificultad 2 · kc: gauss · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea S la parte del paraboloide z = 4 − x² − y² con z ≥ 0, con la normal que apunta hacia arriba y hacia afuera, y sea F = (x, y, z + 1). El flujo $\iint_S F\cdot n\,dS$ es:
 
 - A) 24π · [gauss-superficie-abierta-sin-tapas] usas Gauss como si S fuera cerrada y no restas el flujo por el disco x² + y² ≤ 4 en z = 0 que cierra el sólido
@@ -232,7 +232,7 @@ Sea S la parte del paraboloide z = 4 − x² − y² con z ≥ 0, con la normal 
 solución: S no es cerrada, así que se le agrega la tapa D: x² + y² ≤ 4 en z = 0, con la normal exterior −k. Sea V el sólido entre D y S. Por Gauss, el flujo total vale $∭_V \mathrm{div}\,F\,dV$ con div F = 3 y volumen $\int_0^{2\pi}\int_0^2 (4 - r^2)\,r\,dr\,d\theta = 8\pi$, es decir, 24π. El flujo por la tapa es $\iint_D F\cdot(-k)\,dA = -\iint_D (0 + 1)\,dA = -4\pi$. Entonces el flujo por S es 24π − (−4π) = 28π.
 Comprobación directa: con n dS = (2x, 2y, 1) dx dy y z = 4 − r², F·n dS = (2r² + 5 − r²) dx dy = (r² + 5) dx dy, cuya integral sobre el disco de radio 2 es 2π(4 + 10) = 28π.
 
-### P110 · dificultad 3 · kc: gauss · borrador · origen: ia (sonnet-5.5)
+### P110 · dificultad 3 · kc: gauss · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea S la superficie lateral del cilindro x² + y² = 1, 0 ≤ z ≤ 2 (sin las tapas), con la normal que apunta hacia afuera del eje, y sea F = (x³, y³, z²). El flujo $\iint_S F\cdot n\,dS$ es:
 
 - A) 3π · CORRECTA

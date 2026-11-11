@@ -23,7 +23,7 @@ mc: desfase-signo-invertido · graficas-trig · das el desfase con el signo cont
 
 ## Preguntas
 
-### P131 · dificultad 1 · kc: angulo-referencia · borrador · origen: ia (sonnet-5.5)
+### P131 · dificultad 1 · kc: angulo-referencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El valor exacto de sec 150° es:
 
 - A) −2√3/3 · CORRECTA
@@ -33,7 +33,7 @@ El valor exacto de sec 150° es:
 
 solución: 150° está en el segundo cuadrante y su ángulo de referencia es 180° − 150° = 30°. Ahí el coseno es negativo, así que cos 150° = −√3/2. La secante es el inverso del coseno: sec 150° = 1/(−√3/2) = −2/√3 = −2√3/3.
 
-### P132 · dificultad 2 · kc: angulo-referencia · borrador · origen: ia (sonnet-5.5)
+### P132 · dificultad 2 · kc: angulo-referencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El valor exacto de tan(7π/6) es:
 
 - A) √3/3 · CORRECTA
@@ -43,7 +43,7 @@ El valor exacto de tan(7π/6) es:
 
 solución: 7π/6 está en el tercer cuadrante y su ángulo de referencia es 7π/6 − π = π/6. Ahí sen(7π/6) = −1/2 y cos(7π/6) = −√3/2. La tangente es el cociente: (−1/2)/(−√3/2) = 1/√3 = √3/3. En el tercer cuadrante la tangente es positiva.
 
-### P133 · dificultad 2 · kc: angulo-referencia · borrador · origen: ia (sonnet-5.5)
+### P133 · dificultad 2 · kc: angulo-referencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El valor exacto de csc(5π/3) es:
 
 - A) −2√3/3 · CORRECTA
@@ -53,7 +53,7 @@ El valor exacto de csc(5π/3) es:
 
 solución: 5π/3 está en el cuarto cuadrante y su ángulo de referencia es 2π − 5π/3 = π/3. Ahí el seno es negativo: sen(5π/3) = −√3/2. La cosecante es el inverso del seno: csc(5π/3) = 1/(−√3/2) = −2/√3 = −2√3/3.
 
-### P134 · dificultad 2 · kc: angulo-referencia · borrador · origen: ia (sonnet-5.5)
+### P134 · dificultad 2 · kc: angulo-referencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El valor exacto de cot 120° es:
 
 - A) −√3/3 · CORRECTA
@@ -63,7 +63,7 @@ El valor exacto de cot 120° es:
 
 solución: 120° está en el segundo cuadrante y su ángulo de referencia es 180° − 120° = 60°. Ahí cos 120° = −1/2 y sen 120° = √3/2. La cotangente es cos/sen: (−1/2)/(√3/2) = −1/√3 = −√3/3.
 
-### P135 · dificultad 3 · kc: angulo-referencia · borrador · origen: ia (sonnet-5.5)
+### P135 · dificultad 3 · kc: angulo-referencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El valor exacto de cot(35π/6) es:
 
 - A) −√3 · CORRECTA
@@ -73,7 +73,7 @@ El valor exacto de cot(35π/6) es:
 
 solución: la cotangente tiene periodo π, y 35π/6 = 5π + 5π/6, así que cot(35π/6) = cot(5π/6). El ángulo 5π/6 está en el segundo cuadrante y su ángulo de referencia es π − 5π/6 = π/6. Ahí cos(5π/6) = −√3/2 y sen(5π/6) = 1/2. Entonces cot(5π/6) = (−√3/2)/(1/2) = −√3.
 
-### P136 · dificultad 1 · kc: graficas-trig · borrador · origen: ia (sonnet-5.5)
+### P136 · dificultad 1 · kc: graficas-trig · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Cuál es la amplitud de f(x) = −3 cos(2x) + 1?
 
 - A) 3 · CORRECTA
@@ -83,7 +83,7 @@ solución: la cotangente tiene periodo π, y 35π/6 = 5π + 5π/6, así que cot(
 
 solución: la amplitud de a·cos(bx) + d es |a|, la distancia de la línea media y = 1 al máximo. Aquí |−3| = 3. El signo negativo solo refleja la gráfica, el 2 acorta el periodo y el +1 desplaza la gráfica hacia arriba.
 
-### P137 · dificultad 2 · kc: graficas-trig · borrador · origen: ia (sonnet-5.5)
+### P137 · dificultad 2 · kc: graficas-trig · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Para f(x) = 2 sen(3x − π), ¿cuáles son la amplitud, el periodo y el desfase?
 
 - A) amplitud 2, periodo 2π/3, desfase π/3 · CORRECTA
@@ -93,7 +93,7 @@ Para f(x) = 2 sen(3x − π), ¿cuáles son la amplitud, el periodo y el desfase
 
 solución: la amplitud es |a| = 2. El periodo es 2π/|b| = 2π/3. Para el desfase se factoriza el coeficiente de x: 3x − π = 3(x − π/3), así que la gráfica del seno se desplaza π/3 unidades a la derecha y el desfase es π/3.
 
-### P138 · dificultad 2 · kc: graficas-trig · borrador · origen: ia (sonnet-5.5)
+### P138 · dificultad 2 · kc: graficas-trig · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 La gráfica de f se obtiene de la de y = sen x comprimiéndola horizontalmente hasta que su periodo se reduce a la mitad y desplazándola después π/4 unidades a la derecha. ¿Cuál es f?
 
 - A) f(x) = sen(2x − π/2) · CORRECTA
@@ -103,7 +103,7 @@ La gráfica de f se obtiene de la de y = sen x comprimiéndola horizontalmente h
 
 solución: reducir el periodo de 2π a π exige b = 2π/π = 2, es decir, sen(2x). Para desplazar π/4 a la derecha se cambia x por x − π/4 en la función ya comprimida: sen(2(x − π/4)) = sen(2x − π/2). El desfase es π/4 y no π/2: el término π/2 del paréntesis aparece porque se distribuye el 2.
 
-### P139 · dificultad 2 · kc: graficas-trig · borrador · origen: ia (sonnet-5.5)
+### P139 · dificultad 2 · kc: graficas-trig · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Para f(x) = −2 sen(4x) + 3, ¿cuáles son la amplitud y el periodo?
 
 - A) amplitud 2, periodo π/2 · CORRECTA
@@ -113,7 +113,7 @@ Para f(x) = −2 sen(4x) + 3, ¿cuáles son la amplitud y el periodo?
 
 solución: la amplitud es |−2| = 2, la distancia de la línea media y = 3 al máximo 5. El periodo es 2π/4 = π/2. El signo negativo solo refleja la gráfica y el +3 solo la sube.
 
-### P140 · dificultad 3 · kc: graficas-trig · borrador · origen: ia (sonnet-5.5)
+### P140 · dificultad 3 · kc: graficas-trig · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 La gráfica de f(x) = a cos(bx) + d, con a y b positivos, tiene valor máximo 7 y valor mínimo −1. Dos máximos consecutivos están en x = 0 y x = 4π/3. ¿Cuáles son a y b?
 
 - A) a = 4, b = 3/2 · CORRECTA

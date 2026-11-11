@@ -16,7 +16,7 @@ mc: intercepto-y-como-vertice · forma-normal · confundes el intercepto con el 
 
 ## Preguntas
 
-### P96 · dificultad 1 · kc: forma-normal · borrador · origen: ia (sonnet-5.5)
+### P96 · dificultad 1 · kc: forma-normal · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Cuál es el vértice de la parábola $f(x) = x^2 - 6x + 5$?
 
 - A) (−3, −4) · [vertice-signo-invertido] escribes f(x) = (x − 3)² − 4 y lees la abscisa del vértice como −3, con el signo al revés
@@ -26,7 +26,7 @@ mc: intercepto-y-como-vertice · forma-normal · confundes el intercepto con el 
 
 solución: x² − 6x + 5 = (x² − 6x + 9) − 9 + 5 = (x − 3)² − 4. En la forma a(x − h)² + k el vértice es (h, k) = (3, −4).
 
-### P97 · dificultad 2 · kc: forma-normal · borrador · origen: ia (sonnet-5.5)
+### P97 · dificultad 2 · kc: forma-normal · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea $f(x) = x^2 + 4x - 1$. ¿Cuál afirmación sobre su valor extremo es correcta?
 
 - A) Tiene un valor máximo igual a −5 · [extremo-con-signo-de-a-invertido] crees que con a = 1 > 0 la parábola tiene un máximo
@@ -36,7 +36,7 @@ Sea $f(x) = x^2 + 4x - 1$. ¿Cuál afirmación sobre su valor extremo es correct
 
 solución: x² + 4x − 1 = (x² + 4x + 4) − 4 − 1 = (x + 2)² − 5. Como a = 1 > 0, la parábola abre hacia arriba y el mínimo ocurre en x = −2 con valor −5. El valor −2 es la abscisa del vértice y −1 es f(0).
 
-### P98 · dificultad 2 · kc: forma-normal · borrador · origen: ia (sonnet-5.5)
+### P98 · dificultad 2 · kc: forma-normal · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 La forma normal de $f(x) = 2x^2 - 12x + 7$ es:
 
 - A) 2(x − 3)² − 11 · CORRECTA
@@ -46,7 +46,7 @@ La forma normal de $f(x) = 2x^2 - 12x + 7$ es:
 
 solución: se saca el 2 de los términos con x: 2(x² − 6x) + 7. Se completa el cuadrado: x² − 6x + 9 = (x − 3)², y al sumar 9 dentro del paréntesis se está sumando 2·9 = 18, así que se resta 18: 2(x − 3)² − 18 + 7 = 2(x − 3)² − 11.
 
-### P99 · dificultad 2 · kc: forma-normal · borrador · origen: ia (sonnet-5.5)
+### P99 · dificultad 2 · kc: forma-normal · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea $f(x) = -2x^2 + 12x - 13$. ¿Cuál afirmación sobre su valor extremo es correcta?
 
 - A) Tiene un valor mínimo igual a 5 · [extremo-con-signo-de-a-invertido] crees que con a = −2 < 0 la parábola tiene un mínimo
@@ -56,7 +56,7 @@ Sea $f(x) = -2x^2 + 12x - 13$. ¿Cuál afirmación sobre su valor extremo es cor
 
 solución: −2x² + 12x − 13 = −2(x² − 6x) − 13 = −2(x − 3)² + 18 − 13 = −2(x − 3)² + 5. Como a = −2 < 0, abre hacia abajo y el máximo ocurre en x = 3 con valor 5. Comprobación: f(3) = −18 + 36 − 13 = 5.
 
-### P100 · dificultad 3 · kc: forma-normal · borrador · origen: ia (sonnet-5.5)
+### P100 · dificultad 3 · kc: forma-normal · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea $f(x) = -2x^2 + 8x - 6$. ¿Cuál afirmación sobre su gráfica es correcta?
 
 - A) Vértice (−2, 2), corta el eje x en −3 y en −1, y el eje y en −6 · [vertice-signo-invertido] escribes f(x) = −2(x − 2)² + 2 y lees el vértice como (−2, 2), con la abscisa al revés

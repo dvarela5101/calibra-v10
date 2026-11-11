@@ -15,7 +15,7 @@ mc: suma-resta-signo-equivocado · identidades-basicas · en la fórmula de suma
 
 ## Preguntas
 
-### P141 · dificultad 1 · kc: identidades-basicas · borrador · origen: ia (sonnet-5.5)
+### P141 · dificultad 1 · kc: identidades-basicas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Al simplificar sen x · sec x, con x donde la expresión está definida, se obtiene:
 
 - A) 1 · [reciproca-mal-asignada] tomas sec x como 1/sen x y el producto sen x·(1/sen x) queda en 1
@@ -25,7 +25,7 @@ Al simplificar sen x · sec x, con x donde la expresión está definida, se obti
 
 solución: por definición, la secante es el recíproco del coseno. Al sustituirla en el producto queda el cociente sen x / cos x, que es tan x.
 
-### P142 · dificultad 2 · kc: identidades-basicas · borrador · origen: ia (sonnet-5.5)
+### P142 · dificultad 2 · kc: identidades-basicas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Cuál de estas expresiones es idéntica a csc x − sen x en todos los x donde ambas están definidas?
 
 - A) cos x · cot x · CORRECTA
@@ -35,7 +35,7 @@ solución: por definición, la secante es el recíproco del coseno. Al sustituir
 
 solución: csc x − sen x = 1/sen x − sen x = (1 − sen²x)/sen x. Por la identidad pitagórica, 1 − sen²x = cos²x, así que queda cos²x / sen x = cos x · (cos x / sen x) = cos x · cot x. Con x = π/6: csc − sen = 2 − 1/2 = 3/2 y cos x · cot x = (√3/2)(√3) = 3/2.
 
-### P143 · dificultad 2 · kc: identidades-basicas · borrador · origen: ia (sonnet-5.5)
+### P143 · dificultad 2 · kc: identidades-basicas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El valor exacto de sen 15° es:
 
 - A) $\frac{\sqrt6+\sqrt2}{4}$ · [suma-resta-signo-equivocado] escribes 15° = 45° − 30° pero usas sen(a − b) = sen a cos b + cos a sen b, con + en lugar de −
@@ -45,7 +45,7 @@ El valor exacto de sen 15° es:
 
 solución: 15° = 45° − 30°. Entonces sen 15° = sen 45° cos 30° − cos 45° sen 30° = (√2/2)(√3/2) − (√2/2)(1/2) = (√6 − √2)/4. Numéricamente da cerca de 0,2588, que coincide con sen 15°.
 
-### P144 · dificultad 2 · kc: identidades-basicas · borrador · origen: ia (sonnet-5.5)
+### P144 · dificultad 2 · kc: identidades-basicas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Si x es un ángulo agudo con sen x = 3/5, el valor de cos 2x es:
 
 - A) 1 · [suma-resta-signo-equivocado] escribes cos 2x = cos(x + x) con un + entre los productos: cos²x + sen²x = 16/25 + 9/25 = 1
@@ -55,7 +55,7 @@ Si x es un ángulo agudo con sen x = 3/5, el valor de cos 2x es:
 
 solución: de sen x = 3/5 se tiene cos²x = 16/25, y por ser agudo cos x = 4/5. Con la fórmula del ángulo doble, cos 2x resulta 16/25 − 9/25 = 7/25. Otra vía da el mismo valor: 1 − 2·(9/25) = 7/25.
 
-### P145 · dificultad 3 · kc: identidades-basicas · borrador · origen: ia (sonnet-5.5)
+### P145 · dificultad 3 · kc: identidades-basicas · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Al simplificar $\frac{\sen\left(x+\frac{\pi}{2}\right)}{\csc x}$, con x donde la expresión está definida, se obtiene:
 
 - A) sen²x + sen x · [suma-angulos-distribuye-funcion] tomas sen(x + π/2) como sen x + sen(π/2) = sen x + 1 y lo multiplicas por sen x

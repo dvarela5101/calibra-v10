@@ -22,7 +22,7 @@ mc: inversa-rama-contraria · inversa · al despejar x con una raíz eliges el s
 
 ## Preguntas
 
-### P101 · dificultad 1 · kc: composicion · borrador · origen: ia (sonnet-5.5)
+### P101 · dificultad 1 · kc: composicion · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Si f(x) = x² y g(x) = 2x + 1, ¿cuál es (f∘g)(x)?
 
 - A) 2x² + 1 · [composicion-orden-invertido] calculas g(f(x)) en vez de f(g(x)): aplicas primero el cuadrado y después duplicas y sumas 1
@@ -32,7 +32,7 @@ Si f(x) = x² y g(x) = 2x + 1, ¿cuál es (f∘g)(x)?
 
 solución: (f∘g)(x) = f(g(x)) = f(2x + 1) = (2x + 1)². El cuadrado del binomio da (2x)² + 2·(2x)·1 + 1 = 4x² + 4x + 1.
 
-### P102 · dificultad 2 · kc: composicion · borrador · origen: ia (sonnet-5.5)
+### P102 · dificultad 2 · kc: composicion · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sean f(x) = x² + 1 y g(x) = √(x − 2). La función f∘g, ya simplificada, y su dominio son:
 
 - A) (f∘g)(x) = x − 1, con dominio todos los reales · [dominio-composicion-ignora-interna] la fórmula simplificada x − 1 existe para todo x y olvidas que g exige x ≥ 2
@@ -42,7 +42,7 @@ Sean f(x) = x² + 1 y g(x) = √(x − 2). La función f∘g, ya simplificada, y
 
 solución: (f∘g)(x) = f(√(x − 2)) = (√(x − 2))² + 1 = (x − 2) + 1 = x − 1. Para evaluar f∘g, x debe estar en el dominio de g, que pide x − 2 ≥ 0, es decir x ≥ 2. La fórmula x − 1 sola no lo muestra, pero el dominio de f∘g sigue siendo x ≥ 2.
 
-### P103 · dificultad 2 · kc: composicion · borrador · origen: ia (sonnet-5.5)
+### P103 · dificultad 2 · kc: composicion · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Considera f(x) = √(x + 3) y g(x) = x² − 6x + 8. ¿Dónde está definido el cociente f/g?
 
 - A) x ≥ −3 · [dominio-cociente-sin-ceros-del-divisor] tomas el dominio de f y no excluyes los ceros de g, que son x = 2 y x = 4
@@ -52,7 +52,7 @@ Considera f(x) = √(x + 3) y g(x) = x² − 6x + 8. ¿Dónde está definido el 
 
 solución: para f/g se necesitan tres condiciones. Primero, x + 3 ≥ 0, es decir x ≥ −3. Segundo, nada que pedir a g, que existe para todo real. Tercero, el divisor no puede anularse: g(x) = (x − 2)(x − 4) vale cero en x = 2 y en x = 4. Queda [−3, 2) ∪ (2, 4) ∪ (4, ∞).
 
-### P104 · dificultad 2 · kc: composicion · borrador · origen: ia (sonnet-5.5)
+### P104 · dificultad 2 · kc: composicion · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sean f(x) = √(6 − x) y g(x) = √(x + 2). El dominio de f/g es:
 
 - A) −2 ≤ x ≤ 6 · [dominio-cociente-sin-ceros-del-divisor] intersecas los dominios de f y g, pero no excluyes x = −2, donde g vale 0
@@ -62,7 +62,7 @@ Sean f(x) = √(6 − x) y g(x) = √(x + 2). El dominio de f/g es:
 
 solución: f necesita 6 − x ≥ 0, o sea x ≤ 6. g necesita x + 2 ≥ 0, o sea x ≥ −2. Para el cociente, x está en ambos dominios y además g(x) ≠ 0. g(x) = 0 cuando x = −2, así que se excluye. El dominio es (−2, 6].
 
-### P105 · dificultad 3 · kc: composicion · borrador · origen: ia (sonnet-5.5)
+### P105 · dificultad 3 · kc: composicion · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sean f(x) = x² − 4x y g(x) = √(x + 1) + 2. La función f∘g, simplificada al máximo, y su dominio son:
 
 - A) (f∘g)(x) = √(x² − 4x + 1) + 2, con dominio x ≤ 2 − √3 o x ≥ 2 + √3 · [composicion-orden-invertido] calculas g(f(x)) en vez de f(g(x))
@@ -72,7 +72,7 @@ Sean f(x) = x² − 4x y g(x) = √(x + 1) + 2. La función f∘g, simplificada 
 
 solución: (f∘g)(x) = f(g(x)) = g² − 4g = g·(g − 4), con g = √(x + 1) + 2. Entonces g − 4 = √(x + 1) − 2 y el producto (√(x + 1) + 2)(√(x + 1) − 2) es una diferencia de cuadrados: (x + 1) − 4 = x − 3. El dominio sale de g: x + 1 ≥ 0, o sea x ≥ −1 (f no restringe nada). Por eso el dominio de f∘g es x ≥ −1 aunque la fórmula x − 3 exista para todo x.
 
-### P106 · dificultad 1 · kc: inversa · borrador · origen: ia (sonnet-5.5)
+### P106 · dificultad 1 · kc: inversa · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 La función inversa de f(x) = 3x + 2 es:
 
 - A) f⁻¹(x) = $\frac{1}{3x + 2}$ · [inversa-como-reciproco] tomas la inversa como el recíproco 1/f(x)
@@ -82,7 +82,7 @@ La función inversa de f(x) = 3x + 2 es:
 
 solución: f multiplica por 3 y después suma 2. Para deshacerlo se hace lo contrario en orden contrario: primero restar 2 y después dividir entre 3. Con y = 3x + 2: x = (y − 2)/3, así que f⁻¹(x) = (x − 2)/3. Comprobación: f((x − 2)/3) = x − 2 + 2 = x.
 
-### P107 · dificultad 2 · kc: inversa · borrador · origen: ia (sonnet-5.5)
+### P107 · dificultad 2 · kc: inversa · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea f(x) = x² − 6x, con dominio todos los reales. ¿Cuál afirmación es correcta?
 
 - A) Es uno a uno, porque a cada valor de x le corresponde un único valor de f(x) · [uno-a-uno-confunde-con-funcion] confundes ser función con ser uno a uno: eso solo dice que cada entrada tiene una salida
@@ -92,7 +92,7 @@ Sea f(x) = x² − 6x, con dominio todos los reales. ¿Cuál afirmación es corr
 
 solución: una función es uno a uno cuando no hay dos entradas distintas con la misma salida. Aquí f(1) = 1 − 6 = −5 y f(5) = 25 − 30 = −5, o sea dos entradas distintas dan −5. Entonces f no es uno a uno en ℝ y no tiene inversa allí (la gráfica es una parábola y una recta horizontal la corta en dos puntos).
 
-### P108 · dificultad 2 · kc: inversa · borrador · origen: ia (sonnet-5.5)
+### P108 · dificultad 2 · kc: inversa · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea $f(x) = \frac{2x + 1}{x - 3}$, con x ≠ 3. Su inversa y el dominio de esta son:
 
 - A) $f^{-1}(x) = \frac{x - 3}{2x + 1}$, con x ≠ −1/2 · [inversa-como-reciproco] tomas la inversa como el recíproco de f
@@ -102,7 +102,7 @@ Sea $f(x) = \frac{2x + 1}{x - 3}$, con x ≠ 3. Su inversa y el dominio de esta 
 
 solución: se escribe y = (2x + 1)/(x − 3) y se despeja x: y(x − 3) = 2x + 1, luego xy − 3y = 2x + 1, luego x(y − 2) = 3y + 1, así que x = (3y + 1)/(y − 2). Cambiando los nombres, f⁻¹(x) = (3x + 1)/(x − 2). El dominio de f⁻¹ es el rango de f. El valor 2 nunca es salida de f, porque (2x + 1)/(x − 3) = 2 lleva a 2x + 1 = 2x − 6, que es imposible. Por eso el dominio de f⁻¹ es x ≠ 2.
 
-### P109 · dificultad 2 · kc: inversa · borrador · origen: ia (sonnet-5.5)
+### P109 · dificultad 2 · kc: inversa · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea f(x) = x² − 4, con dominio x ≥ 0. La función inversa y su dominio son:
 
 - A) f⁻¹(x) = √x + 4, con x ≥ 0 · [inversa-sin-invertir-orden] deshaces en el mismo orden de f: sacas la raíz y luego sumas 4, en vez de sumar 4 y luego sacar la raíz
@@ -112,7 +112,7 @@ Sea f(x) = x² − 4, con dominio x ≥ 0. La función inversa y su dominio son:
 
 solución: con y = x² − 4 y x ≥ 0: x² = y + 4, y como x no es negativo, x = √(y + 4). Entonces f⁻¹(x) = √(x + 4). El dominio de f⁻¹ es el rango de f: para x ≥ 0, x² − 4 ≥ −4 y toma todos los valores de −4 en adelante. Por eso el dominio de f⁻¹ es x ≥ −4.
 
-### P110 · dificultad 3 · kc: inversa · borrador · origen: ia (sonnet-5.5)
+### P110 · dificultad 3 · kc: inversa · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea f(x) = x² − 4x + 7, con dominio x ≤ 2. La función inversa y su dominio son:
 
 - A) f⁻¹(x) = 2 + √(x − 3), con x ≥ 3 · [inversa-rama-contraria] tomas la raíz positiva aunque la restricción x ≤ 2 exige que la inversa dé valores menores o iguales que 2

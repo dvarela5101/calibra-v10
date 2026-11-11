@@ -20,7 +20,7 @@ mc: range-paso-negativo · for-range · con un paso negativo crees que range cue
 
 ## Preguntas
 
-### P13 · dificultad 1 · kc: while-ciclo · borrador · origen: ia (sonnet-5.5)
+### P13 · dificultad 1 · kc: while-ciclo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 cajas = 0
@@ -36,7 +36,7 @@ print(cajas)
 
 solución: cajas arranca en 0 y el cuerpo la sube de uno en uno mientras cajas < 4. Valores al evaluar la condición: 0, 1, 2, 3 (cumple, entra) y 4 (no cumple, sale). Al salir, cajas vale 4: el primer valor que no cumple la condición, no el último que la cumplió (3). Imprime 4.
 
-### P14 · dificultad 2 · kc: while-ciclo · borrador · origen: ia (sonnet-5.5)
+### P14 · dificultad 2 · kc: while-ciclo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué pasa al ejecutar este programa?
 ```
 ronda = 0
@@ -51,7 +51,7 @@ while ronda < 3:
 
 solución: ronda vale 0 y el cuerpo solo imprime; nada dentro del while modifica ronda. La condición 0 < 3 se cumple siempre, así que el ciclo imprime 0 sin parar. A diferencia de un for, el while no avanza la variable por su cuenta.
 
-### P15 · dificultad 2 · kc: while-ciclo · borrador · origen: ia (sonnet-5.5)
+### P15 · dificultad 2 · kc: while-ciclo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 turno = 0
@@ -67,7 +67,7 @@ while turno < 3:
 
 solución: la condición se revisa solo al inicio de cada vuelta, no entre las instrucciones del cuerpo. Vuelta 1: turno 0 pasa a 1, imprime 1. Vuelta 2: pasa a 2, imprime 2. Vuelta 3: turno valía 2 (cumple), pasa a 3 e imprime 3 aunque 3 ya no cumpla turno < 3. Se revisa la condición con turno = 3, falla y sale. Imprime 1 2 3.
 
-### P16 · dificultad 3 · kc: while-ciclo · borrador · origen: ia (sonnet-5.5)
+### P16 · dificultad 3 · kc: while-ciclo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 saldo = 100
@@ -85,7 +85,7 @@ print(meses, saldo)
 
 solución: rastreo al evaluar la condición (saldo, meses): (100, 0) entra; (120, 1) entra; (140, 2) entra; (160, 3) no cumple 160 < 160 y sale. Al salir, saldo vale 160 (el primer valor que no cumple) y meses vale 3, porque la vuelta que llevó saldo a 160 también alcanzó a sumar el mes. Imprime 3 160.
 
-### P17 · dificultad 3 · kc: while-ciclo · borrador · origen: ia (sonnet-5.5)
+### P17 · dificultad 3 · kc: while-ciclo · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué pasa al ejecutar este programa?
 ```
 paso = 0
@@ -102,7 +102,7 @@ print(paso)
 
 solución: la instrucción paso = paso + 1 existe, pero está dentro de un if que pide paso == 5. Como paso vale 0 y nunca cambia, ese if nunca se cumple y paso nunca avanza. La condición 0 < 3 siempre es verdadera: el ciclo no termina y el print final nunca se ejecuta.
 
-### P18 · dificultad 1 · kc: for-range · borrador · origen: ia (sonnet-5.5)
+### P18 · dificultad 1 · kc: for-range · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 for vagon in range(4):
@@ -116,7 +116,7 @@ for vagon in range(4):
 
 solución: range(4) genera 0, 1, 2, 3: empieza en 0 y se detiene justo antes del 4. Son 4 valores y el for los recorre en orden. Imprime 0 1 2 3.
 
-### P19 · dificultad 2 · kc: for-range · borrador · origen: ia (sonnet-5.5)
+### P19 · dificultad 2 · kc: for-range · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 notas = [3, 5, 4]
@@ -133,7 +133,7 @@ for i in range(2):
 
 solución: en el primer for, n toma los elementos de la lista: 3, 5 y 4 (no las posiciones 0, 1, 2). En el segundo, range(2) genera 0 y 1: empieza en 0 y no incluye el 2. Imprime 3 5 4 0 1.
 
-### P20 · dificultad 2 · kc: for-range · borrador · origen: ia (sonnet-5.5)
+### P20 · dificultad 2 · kc: for-range · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 for i in range(4):
@@ -148,7 +148,7 @@ for i in range(4):
 
 solución: en cada vuelta el for le asigna a i el siguiente valor de range(4): 0, 1, 2, 3. Lo que i = i + 2 hace dentro del cuerpo solo vale para esa vuelta, y la siguiente vuelta empieza otra vez con el valor que entrega range. Vueltas: i = 0 pasa a 2, imprime 2; i = 1 pasa a 3; i = 2 pasa a 4; i = 3 pasa a 5. Imprime 2 3 4 5.
 
-### P21 · dificultad 3 · kc: for-range · borrador · origen: ia (sonnet-5.5)
+### P21 · dificultad 3 · kc: for-range · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 for nivel in range(6, 0, -2):
@@ -163,7 +163,7 @@ for nivel in range(6, 0, -2):
 
 solución: range(6, 0, -2) cuenta hacia abajo de 2 en 2 desde 6 y se detiene antes de llegar a 0: genera 6, 4, 2. En cada vuelta nivel se reasigna con el siguiente valor del range, y restarle 1 en el cuerpo no cambia la vuelta siguiente. Imprime 5 (de 6), 3 (de 4) y 1 (de 2).
 
-### P22 · dificultad 3 · kc: for-range · borrador · origen: ia (sonnet-5.5)
+### P22 · dificultad 3 · kc: for-range · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 v = ["a", "b", "c"]

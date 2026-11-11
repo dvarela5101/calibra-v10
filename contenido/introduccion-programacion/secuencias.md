@@ -33,7 +33,7 @@ mc: reasignar-parametro · listas-referencias · crees que asignar una lista nue
 
 ## Preguntas
 
-### P23 · dificultad 1 · kc: strings-indices · borrador · origen: ia (sonnet-5.5)
+### P23 · dificultad 1 · kc: strings-indices · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 placa = "KXR905"
@@ -47,7 +47,7 @@ print(placa[-1], placa[1])
 
 solución: placa[-1] es el último carácter, 5. placa[1] es el segundo, X, porque el primero tiene índice 0. Imprime 5 X.
 
-### P24 · dificultad 2 · kc: strings-indices · borrador · origen: ia (sonnet-5.5)
+### P24 · dificultad 2 · kc: strings-indices · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 serie = "ZXQ-4821"
@@ -61,7 +61,7 @@ print(serie[-4:], serie[:4])
 
 solución: serie[-4:] toma desde el cuarto carácter contando desde el final: 4821. serie[:4] toma los índices 0 a 3 y se detiene antes del 4: ZXQ-. Imprime 4821 ZXQ-.
 
-### P25 · dificultad 2 · kc: strings-indices · borrador · origen: ia (sonnet-5.5)
+### P25 · dificultad 2 · kc: strings-indices · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 cod = "A1B2C3D4E5"
@@ -75,7 +75,7 @@ print(cod[1:7:2])
 
 solución: El corte empieza en el índice 1 y se detiene antes del 7, saltando de 2 en 2: índices 1, 3 y 5, que son 1, 2 y 3. Imprime 123.
 
-### P26 · dificultad 3 · kc: strings-indices · borrador · origen: ia (sonnet-5.5)
+### P26 · dificultad 3 · kc: strings-indices · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 nombre = "informe_final_v2"
@@ -91,7 +91,7 @@ print(i, j, nombre[j])
 
 solución: find("final") da 8, el índice donde empieza. "v3" no está, así que find da -1. nombre[-1] es el último carácter, 2. Imprime 8 -1 2.
 
-### P27 · dificultad 3 · kc: strings-indices · borrador · origen: ia (sonnet-5.5)
+### P27 · dificultad 3 · kc: strings-indices · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 ruta = "datos/2026/enero"
@@ -106,7 +106,7 @@ print(ruta.count("/"), nueva[-5:], ruta[6:10])
 
 solución: ruta.count("/") da 2. replace devuelve una cadena nueva (nueva) y ruta no cambia. nueva[-5:] es enero. ruta[6:10] toma los índices 6 a 9 de la original: 2026. Imprime 2 enero 2026.
 
-### P28 · dificultad 1 · kc: listas-operaciones · borrador · origen: ia (sonnet-5.5)
+### P28 · dificultad 1 · kc: listas-operaciones · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 notas = [3, 5, 4]
@@ -121,7 +121,7 @@ print(notas.append(2), notas)
 
 solución: insert(1, 9) mete el 9 en la posición 1 y corre el 5 y el 4 a la derecha: [3, 9, 5, 4]. append(2) agrega al final y devuelve None. Los argumentos se evalúan en orden, así que print recibe None y la lista ya con el 2. Imprime None [3, 9, 5, 4, 2].
 
-### P29 · dificultad 2 · kc: listas-operaciones · borrador · origen: ia (sonnet-5.5)
+### P29 · dificultad 2 · kc: listas-operaciones · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 a = [1, 2]
@@ -138,7 +138,7 @@ print(r, a, len(a))
 
 solución: a.append(b) agrega b entera como un solo elemento y devuelve None, así que r es None. Después extend([9]) agrega el 9. La lista queda [1, 2, [7, 8], 9], con 4 elementos. Imprime None [1, 2, [7, 8], 9] 4.
 
-### P30 · dificultad 2 · kc: listas-operaciones · borrador · origen: ia (sonnet-5.5)
+### P30 · dificultad 2 · kc: listas-operaciones · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 letras = ["b", "C", "a", "D"]
@@ -153,7 +153,7 @@ print(orden, letras)
 
 solución: sort ordena la lista en su lugar y devuelve None, así que orden es None. Las mayúsculas van antes que las minúsculas: ['C', 'D', 'a', 'b']. Imprime None ['C', 'D', 'a', 'b'].
 
-### P31 · dificultad 3 · kc: listas-operaciones · borrador · origen: ia (sonnet-5.5)
+### P31 · dificultad 3 · kc: listas-operaciones · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 fila = [10, 20, 30, 40, 20]
@@ -169,7 +169,7 @@ print(x, y, fila)
 
 solución: pop(2) quita la posición 2 y devuelve 30: queda [10, 20, 40, 20]. remove(20) quita el primer 20 que encuentra y devuelve None: queda [10, 40, 20]. Imprime 30 None [10, 40, 20].
 
-### P32 · dificultad 3 · kc: listas-operaciones · borrador · origen: ia (sonnet-5.5)
+### P32 · dificultad 3 · kc: listas-operaciones · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 texto = "uno,dos,tres"
@@ -185,7 +185,7 @@ print("-".join(partes), len(partes))
 
 solución: split(",") da ['uno', 'dos', 'tres'] sin las comas. reverse la invierte en su lugar. join pone el guion solo entre elementos: tres-dos-uno. La lista tiene 3 elementos. Imprime tres-dos-uno 3.
 
-### P33 · dificultad 1 · kc: listas-referencias · borrador · origen: ia (sonnet-5.5)
+### P33 · dificultad 1 · kc: listas-referencias · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 pedido = [8, 3]
@@ -201,7 +201,7 @@ print(pedido is respaldo, pedido == respaldo, vista is pedido)
 
 solución: pedido y respaldo son dos listas distintas con el mismo contenido: pedido is respaldo da False y pedido == respaldo da True. vista = pedido no copia, así que vista is pedido da True. Imprime False True True.
 
-### P34 · dificultad 2 · kc: listas-referencias · borrador · origen: ia (sonnet-5.5)
+### P34 · dificultad 2 · kc: listas-referencias · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 a = [1, 2, 3]
@@ -217,7 +217,7 @@ print(a is b, a is c, a == c)
 
 solución: b = a hace que b sea la misma lista que a: a is b da True. c = a[:] es una copia: a is c da False, pero tiene el mismo contenido y a == c da True. Imprime True False True.
 
-### P35 · dificultad 2 · kc: listas-referencias · borrador · origen: ia (sonnet-5.5)
+### P35 · dificultad 2 · kc: listas-referencias · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 def agregar(v):
@@ -236,7 +236,7 @@ print(a, b, a is b)
 
 solución: b = a no copia: a y b son la misma lista. agregar recibe esa misma lista y le agrega el 0, y el cambio se ve afuera en a y en b. a is b da True. Imprime [1, 0] [1, 0] True.
 
-### P36 · dificultad 3 · kc: listas-referencias · borrador · origen: ia (sonnet-5.5)
+### P36 · dificultad 3 · kc: listas-referencias · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 def f(v):
@@ -256,7 +256,7 @@ print(a, b)
 
 solución: a = b hace que a y b sean la misma lista. f recibe esa lista y v.append(1) la modifica, así que se ve en a y en b: [4, 5, 1]. Después v = [0, 0] solo hace que v apunte a otra lista; ni a ni b cambian. Imprime [4, 5, 1] [4, 5, 1].
 
-### P37 · dificultad 3 · kc: listas-referencias · borrador · origen: ia (sonnet-5.5)
+### P37 · dificultad 3 · kc: listas-referencias · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 orig = [1, 2, 3]
@@ -274,7 +274,7 @@ print(orig, c, orig is alias)
 
 solución: c = orig[:] es una copia: el append la deja en [1, 2, 3, 4] y no toca a orig. alias = orig es la misma lista, así que alias[0] = 9 también cambia orig: [9, 2, 3]. orig is alias da True. Imprime [9, 2, 3] [1, 2, 3, 4] True.
 
-### P64 · dificultad 2 · kc: strings-indices · borrador · origen: ia (sonnet-5.5)
+### P64 · dificultad 2 · kc: strings-indices · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 dia = "lunes7"
@@ -289,7 +289,7 @@ print(dia)
 
 solución: Las cadenas no se pueden modificar: dia[...] = "8" da TypeError sin importar el índice, aunque len(dia) tampoco sea un índice válido. El programa no llega al print. Da TypeError.
 
-### P65 · dificultad 3 · kc: strings-indices · borrador · origen: ia (sonnet-5.5)
+### P65 · dificultad 3 · kc: strings-indices · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 palabra = "sol"
@@ -304,7 +304,7 @@ print(palabra)
 
 solución: Python evalúa primero el lado derecho: palabra[len(palabra)] es palabra[3], que no existe en una cadena de 3 caracteres, y da IndexError antes de intentar asignar. Si el índice fuera válido, la asignación daría TypeError porque las cadenas no se pueden modificar. Da IndexError.
 
-### P66 · dificultad 2 · kc: listas-operaciones · borrador · origen: ia (sonnet-5.5)
+### P66 · dificultad 2 · kc: listas-operaciones · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Qué imprime este programa?
 ```
 cola = ["a", "b", "c"]

@@ -61,7 +61,7 @@ solución: con r(t) = (2t, t) se tiene r'(t) = (2, 1) y F(r(t)) = (t, 2t). Enton
 Comprobación: F = ∇(xy), así que la integral es el valor de xy en (2, 1) menos su valor en (0, 0), es decir, 2 − 0 = 2.
 No vale 0 porque ese resultado es para curvas cerradas, y este segmento va de (0, 0) a (2, 1). Si al producto punto se le agrega el factor |r'(t)| = √5 de la longitud de arco, que corresponde a la integral de un campo escalar, se obtiene $\int_0^1 4\sqrt{5}\,t\,dt = 2\sqrt{5}$; con la orientación contraria se obtiene −2.
 
-### P79 · dificultad 1 · kc: integral-linea-escalar · borrador · origen: ia (sonnet-5.5)
+### P79 · dificultad 1 · kc: integral-linea-escalar · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula $\int_C (x+y)\,ds$, donde C es el segmento parametrizado por r(t) = (3t, 4t), con 0 ≤ t ≤ 1:
 
 - A) 7/2 · [linea-esc-sin-factor-arco] integras x + y = 7t entre 0 y 1 sin multiplicar por |r'(t)| = 5
@@ -72,7 +72,7 @@ Calcula $\int_C (x+y)\,ds$, donde C es el segmento parametrizado por r(t) = (3t,
 solución: r'(t) = (3, 4), así que |r'(t)| = √(9 + 16) = 5. Sobre la curva x + y = 3t + 4t = 7t. Entonces $\int_C (x+y)\,ds$ = $\int_0^1 7t\cdot 5\,dt$ = $35\cdot\frac{1}{2}$ = $\frac{35}{2}$.
 Sin el factor 5 queda 7/2; evaluar en el extremo y multiplicar por la longitud da 35; integrar solo la rapidez da 5.
 
-### P80 · dificultad 2 · kc: integral-linea-escalar · borrador · origen: ia (sonnet-5.5)
+### P80 · dificultad 2 · kc: integral-linea-escalar · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula $\int_C xy\,ds$, donde C es el cuarto de la circunferencia x² + y² = 4 en el primer cuadrante, parametrizado por r(t) = (2 cos t, 2 sen t), con 0 ≤ t ≤ π/2:
 
 - A) 4 · CORRECTA
@@ -83,7 +83,7 @@ Calcula $\int_C xy\,ds$, donde C es el cuarto de la circunferencia x² + y² = 4
 solución: r'(t) = (−2 sen t, 2 cos t), |r'(t)| = 2. Sobre la curva xy = 4 cos t sen t. Entonces $\int_C xy\,ds$ = $\int_0^{\pi/2} 4\cos t\,\sen t\cdot 2\,dt$ = $8\int_0^{\pi/2}\sen t\cos t\,dt$ = $8\cdot\frac{1}{2}$ = $4$.
 Con 4 como factor sale 8; con solo |r'| sale la longitud π; con y'(t) sale $8\int_0^{\pi/2}\cos^2 t\,\sen t\,dt = 8/3$.
 
-### P81 · dificultad 2 · kc: integral-linea-escalar · borrador · origen: ia (sonnet-5.5)
+### P81 · dificultad 2 · kc: integral-linea-escalar · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea C el arco de la parábola y = x² que va de (1, 1) a (0, 0). El valor de $\int_C x\,ds$ es:
 
 - A) $\frac{5\sqrt{5}-1}{12}$ · CORRECTA
@@ -94,7 +94,7 @@ Sea C el arco de la parábola y = x² que va de (1, 1) a (0, 0). El valor de $\i
 solución: la integral de una función escalar no depende del sentido, así que se parametriza con r(t) = (t, t²), 0 ≤ t ≤ 1. Entonces |r'(t)| = √(1 + 4t²) y $\int_C x\,ds = \int_0^1 t\sqrt{1+4t^2}\,dt$. Con u = 1 + 4t², du = 8t dt: $\frac{1}{8}\int_1^5 \sqrt{u}\,du$ = $\frac{1}{8}\cdot\frac{2}{3}(5\sqrt{5}-1)$ = $\frac{5\sqrt{5}-1}{12}$.
 Sin la raíz queda $\int_0^1 t(1+4t^2)\,dt = 3/2$; con y'(t) queda $\int_0^1 2t^2\,dt = 2/3$.
 
-### P82 · dificultad 2 · kc: integral-linea-escalar · borrador · origen: ia (sonnet-5.5)
+### P82 · dificultad 2 · kc: integral-linea-escalar · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Calcula $\int_C (x+y+z)\,ds$, donde C es el segmento parametrizado por r(t) = (2t, 4t, 4t), con 0 ≤ t ≤ 1:
 
 - A) 5 · [linea-esc-sin-factor-arco] integras x + y + z = 10t entre 0 y 1 sin multiplicar por |r'(t)| = 6
@@ -105,7 +105,7 @@ Calcula $\int_C (x+y+z)\,ds$, donde C es el segmento parametrizado por r(t) = (2
 solución: r'(t) = (2, 4, 4), así que |r'(t)| = √(4 + 16 + 16) = 6. Sobre la curva x + y + z = 10t. Entonces $\int_C (x+y+z)\,ds$ = $\int_0^1 10t\cdot 6\,dt$ = $60\cdot\frac{1}{2}$ = $30$.
 Sin el factor 6 queda 5; con 36 queda 180; el valor en el extremo por la longitud da 60.
 
-### P83 · dificultad 3 · kc: integral-linea-escalar · borrador · origen: ia (sonnet-5.5)
+### P83 · dificultad 3 · kc: integral-linea-escalar · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea C la curva r(t) = (cos t + t sen t, sen t − t cos t), con 0 ≤ t ≤ 2. El valor de $\int_C (x^2+y^2)\,ds$ es:
 
 - A) 14/3 · [linea-esc-sin-factor-arco] integras x² + y² = 1 + t² entre 0 y 2 sin multiplicar por |r'(t)| = t
@@ -116,7 +116,7 @@ Sea C la curva r(t) = (cos t + t sen t, sen t − t cos t), con 0 ≤ t ≤ 2. E
 solución: r'(t) = (t cos t, t sen t), así que |r'(t)| = t. Además x² + y² = (cos t + t sen t)² + (sen t − t cos t)² = 1 + t² (los productos cruzados se cancelan). Entonces $\int_C (x^2+y^2)\,ds$ = $\int_0^2 (1+t^2)\,t\,dt$ = $\left[\frac{t^2}{2}+\frac{t^4}{4}\right]_0^2$ = $2 + 4$ = $6$.
 Sin el factor t queda 14/3; con t² queda 136/15.
 
-### P84 · dificultad 3 · kc: integral-linea-vectorial · borrador · origen: ia (sonnet-5.5)
+### P84 · dificultad 3 · kc: integral-linea-vectorial · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea F(x, y, z) = (2xy + z², x², 2xz) y sea C el segmento parametrizado por r(t) = (t, 2t, 2t), con 1 ≤ t ≤ 2. El valor de $\int_C F\cdot dr$ es:
 
 - A) −42 · [linea-e1] recorres el segmento de (2, 4, 4) a (1, 2, 2), contra el sentido en que crece t

@@ -23,7 +23,7 @@ mc: multiplica-por-factor-equivocado · sumar-racionales · al pasar cada fracci
 
 ## Preguntas
 
-### P36 · dificultad 1 · kc: simplificar-racionales · borrador · origen: ia (sonnet-5.5)
+### P36 · dificultad 1 · kc: simplificar-racionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Simplifica $\frac{x^2 - 25}{x^2 + 3x - 10}$ y da las restricciones de x. ¿Cuál afirmación es correcta?
 
 - A) $\frac{x-5}{x-2}$, con x ≠ −5 y x ≠ 2 · CORRECTA
@@ -33,7 +33,7 @@ Simplifica $\frac{x^2 - 25}{x^2 + 3x - 10}$ y da las restricciones de x. ¿Cuál
 
 solución: se factoriza x² − 25 = (x − 5)(x + 5) y x² + 3x − 10 = (x + 5)(x − 2). El cociente es (x − 5)(x + 5) / ((x + 5)(x − 2)) = (x − 5)/(x − 2). Las restricciones salen del denominador original: x + 5 ≠ 0 y x − 2 ≠ 0, es decir x ≠ −5 y x ≠ 2, aunque el factor x + 5 se cancele.
 
-### P37 · dificultad 2 · kc: simplificar-racionales · borrador · origen: ia (sonnet-5.5)
+### P37 · dificultad 2 · kc: simplificar-racionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Simplifica $\frac{4 - x^2}{x^2 - x - 2}$ y da las restricciones de x. ¿Cuál afirmación es correcta?
 
 - A) $-\frac{x+2}{x+1}$, con x ≠ −1 y x ≠ 2 · CORRECTA
@@ -43,7 +43,7 @@ Simplifica $\frac{4 - x^2}{x^2 - x - 2}$ y da las restricciones de x. ¿Cuál af
 
 solución: el denominador se factoriza como (x + 1)(x − 2) y el numerador como (2 + x)(2 − x). Como 2 − x es lo mismo que −(x − 2), el factor x − 2 se cancela y el resultado es −(x + 2)/(x + 1). Las restricciones salen de la expresión de partida: el denominador se anula con x = 2 y con x = −1.
 
-### P38 · dificultad 2 · kc: simplificar-racionales · borrador · origen: ia (sonnet-5.5)
+### P38 · dificultad 2 · kc: simplificar-racionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Multiplica y simplifica $\frac{x^2 - 4}{x^2 + x} \cdot \frac{x^2 - x}{x^2 - 4x + 4}$. ¿Cuál afirmación es correcta sobre el resultado y sus restricciones?
 
 - A) $\frac{(x+2)(x-1)}{(x+1)(x-2)}$, con x ≠ 0, x ≠ −1 y x ≠ 2 · CORRECTA
@@ -53,7 +53,7 @@ Multiplica y simplifica $\frac{x^2 - 4}{x^2 + x} \cdot \frac{x^2 - x}{x^2 - 4x +
 
 solución: se factoriza todo: (x − 2)(x + 2) / (x(x + 1)) · x(x − 1) / (x − 2)². Se cancela x y se cancela un factor (x − 2), y queda (x + 2)(x − 1) / ((x + 1)(x − 2)). Como el producto original no está definido cuando x = 0, x = −1 o x = 2, esas son las restricciones, aunque x = 0 ya no aparezca en el resultado.
 
-### P39 · dificultad 2 · kc: simplificar-racionales · borrador · origen: ia (sonnet-5.5)
+### P39 · dificultad 2 · kc: simplificar-racionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Divide y simplifica $\frac{x^2 - x - 6}{x^2 - 1} \div \frac{x^2 - 9}{x^2 + 2x + 1}$.
 
 - A) $\frac{(x+1)(x+2)}{(x-1)(x+3)}$ · CORRECTA
@@ -63,7 +63,7 @@ Divide y simplifica $\frac{x^2 - x - 6}{x^2 - 1} \div \frac{x^2 - 9}{x^2 + 2x + 
 
 solución: dividir es multiplicar por la inversa de la segunda: (x − 3)(x + 2) / ((x − 1)(x + 1)) · (x + 1)² / ((x − 3)(x + 3)). Se cancela x − 3 y un factor x + 1 (el cuadrado queda en x + 1), y queda (x + 1)(x + 2) / ((x − 1)(x + 3)).
 
-### P40 · dificultad 3 · kc: simplificar-racionales · borrador · origen: ia (sonnet-5.5)
+### P40 · dificultad 3 · kc: simplificar-racionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Simplifica $\frac{9 - x^2}{x^2 + x - 2} \div \frac{x^2 - x - 6}{x^2 + 4x + 4}$.
 
 - A) $-\frac{x+3}{x-1}$ · CORRECTA
@@ -73,7 +73,7 @@ Simplifica $\frac{9 - x^2}{x^2 + x - 2} \div \frac{x^2 - x - 6}{x^2 + 4x + 4}$.
 
 solución: factorizando los cuatro polinomios se tiene (3 − x)(3 + x), (x + 2)(x − 1), (x − 3)(x + 2) y (x + 2)². Dividir equivale a multiplicar por el recíproco del divisor: (3 − x)(3 + x) / ((x + 2)(x − 1)) · (x + 2)² / ((x − 3)(x + 2)). Tras eliminar dos factores x + 2 resta (3 − x)(3 + x) / ((x − 1)(x − 3)), y como 3 − x = −(x − 3), el resultado final es −(x + 3)/(x − 1).
 
-### P41 · dificultad 1 · kc: sumar-racionales · borrador · origen: ia (sonnet-5.5)
+### P41 · dificultad 1 · kc: sumar-racionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Suma $\frac{2}{x+3} + \frac{5}{x-1}$.
 
 - A) $\frac{7x+13}{(x+3)(x-1)}$ · CORRECTA
@@ -83,7 +83,7 @@ Suma $\frac{2}{x+3} + \frac{5}{x-1}$.
 
 solución: el denominador común es (x + 3)(x − 1). A la primera fracción le falta el factor x − 1 y a la segunda le falta x + 3: 2(x − 1) + 5(x + 3) = 2x − 2 + 5x + 15 = 7x + 13. El resultado es (7x + 13) / ((x + 3)(x − 1)).
 
-### P42 · dificultad 2 · kc: sumar-racionales · borrador · origen: ia (sonnet-5.5)
+### P42 · dificultad 2 · kc: sumar-racionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Resta $\frac{3}{(x-2)^2} - \frac{1}{x-2}$.
 
 - A) $\frac{5-x}{(x-2)^2}$ · CORRECTA
@@ -93,7 +93,7 @@ Resta $\frac{3}{(x-2)^2} - \frac{1}{x-2}$.
 
 solución: el denominador común es (x − 2)², el mayor exponente del factor x − 2. A la segunda fracción le falta un factor x − 2: 3/(x − 2)² − (x − 2)/(x − 2)². Se resta todo el numerador: 3 − (x − 2) = 3 − x + 2 = 5 − x. El resultado es (5 − x)/(x − 2)².
 
-### P43 · dificultad 2 · kc: sumar-racionales · borrador · origen: ia (sonnet-5.5)
+### P43 · dificultad 2 · kc: sumar-racionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Suma $\frac{5}{x^2(x+2)} + \frac{4}{x(x+2)^2}$.
 
 - A) $\frac{9x+10}{x^2(x+2)^2}$ · CORRECTA
@@ -103,7 +103,7 @@ Suma $\frac{5}{x^2(x+2)} + \frac{4}{x(x+2)^2}$.
 
 solución: el denominador común es x²(x + 2)², con el mayor exponente de cada factor. A la primera fracción le falta x + 2 y a la segunda le falta x: 5(x + 2) + 4x = 9x + 10. El resultado es (9x + 10) / (x²(x + 2)²).
 
-### P44 · dificultad 2 · kc: sumar-racionales · borrador · origen: ia (sonnet-5.5)
+### P44 · dificultad 2 · kc: sumar-racionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Simplifica $\frac{1}{\frac{1}{x} + \frac{1}{x+2}}$.
 
 - A) $\frac{x(x+2)}{2x+2}$ · CORRECTA
@@ -113,7 +113,7 @@ Simplifica $\frac{1}{\frac{1}{x} + \frac{1}{x+2}}$.
 
 solución: el denominador común de la suma de abajo es x(x + 2), así que el numerador resulta (x + 2) + x = 2x + 2 y la suma queda (2x + 2)/(x² + 2x). Como arriba hay un 1, la respuesta es el recíproco de ese cociente: x(x + 2)/(2x + 2).
 
-### P45 · dificultad 3 · kc: sumar-racionales · borrador · origen: ia (sonnet-5.5)
+### P45 · dificultad 3 · kc: sumar-racionales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Simplifica $\frac{1}{\frac{2}{x-1} - \frac{3}{x+1}}$.
 
 - A) $\frac{x^2-1}{5-x}$ · CORRECTA

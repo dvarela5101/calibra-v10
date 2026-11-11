@@ -24,7 +24,7 @@ mc: gradiente-de-f-cero-ignora-restriccion · lagrange · resuelves ∇f = 0 com
 
 ## Preguntas
 
-### P43 · dificultad 1 · kc: extremos-libres · borrador · origen: ia (sonnet-5.5)
+### P43 · dificultad 1 · kc: extremos-libres · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El punto (0, 0) es crítico de f(x, y) = x² + 3xy + y². Según el criterio de la segunda derivada, ¿cómo se clasifica?
 
 - A) Punto de silla, porque D = 2·2 − 3² = −5 < 0 · CORRECTA
@@ -34,7 +34,7 @@ El punto (0, 0) es crítico de f(x, y) = x² + 3xy + y². Según el criterio de 
 
 solución: fx = 2x + 3y y fy = 3x + 2y se anulan en (0, 0). Las segundas derivadas son fxx = 2, fyy = 2 y fxy = 3. D = fxx·fyy − (fxy)² = 4 − 9 = −5. Como D < 0, el punto es de silla, sin importar el signo de fxx.
 
-### P44 · dificultad 2 · kc: extremos-libres · borrador · origen: ia (sonnet-5.5)
+### P44 · dificultad 2 · kc: extremos-libres · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea f(x, y) = xy(6 − x − y). ¿Cuál afirmación es correcta sobre sus puntos críticos?
 
 - A) Tiene 4 puntos críticos y (2, 2) es un máximo local · CORRECTA
@@ -44,7 +44,7 @@ Sea f(x, y) = xy(6 − x − y). ¿Cuál afirmación es correcta sobre sus punto
 
 solución: fx = 6y − 2xy − y² = y(6 − 2x − y) y fy = 6x − x² − 2xy = x(6 − x − 2y). Si y = 0, fy = 0 da x = 0 o x = 6. Si x = 0, fx = 0 da y = 0 o y = 6. Si x y y son distintos de 0, 2x + y = 6 y x + 2y = 6 dan (2, 2). Los puntos críticos son (0, 0), (6, 0), (0, 6) y (2, 2). En (2, 2): fxx = −2y = −4, fyy = −2x = −4 y fxy = 6 − 2x − 2y = −2, así que D = 16 − 4 = 12 > 0 y fxx < 0: máximo local.
 
-### P45 · dificultad 2 · kc: extremos-libres · borrador · origen: ia (sonnet-5.5)
+### P45 · dificultad 2 · kc: extremos-libres · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El punto (0, 0) es crítico de f(x, y) = x² + 4xy + 4y². ¿Qué se puede afirmar usando solo el criterio de la segunda derivada en ese punto?
 
 - A) D = 0, así que el criterio no permite concluir nada · CORRECTA
@@ -54,7 +54,7 @@ El punto (0, 0) es crítico de f(x, y) = x² + 4xy + 4y². ¿Qué se puede afirm
 
 solución: fxx = 2, fyy = 8 y fxy = 4. D = fxx·fyy − (fxy)² = 16 − 16 = 0. Cuando D = 0 el criterio no decide: puede ser máximo, mínimo o silla. Hay que mirar la función directamente; aquí f = (x + 2y)² ≥ 0, pero eso ya no es el criterio de la segunda derivada.
 
-### P46 · dificultad 2 · kc: extremos-libres · borrador · origen: ia (sonnet-5.5)
+### P46 · dificultad 2 · kc: extremos-libres · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sea f(x, y) = x³ − 3x + y² − 2y. ¿Qué dice el criterio de la segunda derivada sobre sus puntos críticos?
 
 - A) (1, 1) es un mínimo local y (−1, 1) es un punto de silla · CORRECTA
@@ -64,7 +64,7 @@ Sea f(x, y) = x³ − 3x + y² − 2y. ¿Qué dice el criterio de la segunda der
 
 solución: fx = 3x² − 3 = 0 da x = 1 o x = −1, y fy = 2y − 2 = 0 da y = 1. Los puntos críticos son (1, 1) y (−1, 1). Las segundas derivadas son fxx = 6x, fyy = 2 y fxy = 0. En (1, 1): D = 12 > 0 y fxx = 6 > 0, mínimo local. En (−1, 1): D = −12 < 0, punto de silla.
 
-### P47 · dificultad 3 · kc: extremos-libres · borrador · origen: ia (sonnet-5.5) · ⚠ revisar
+### P47 · dificultad 3 · kc: extremos-libres · revisada · origen: ia (sonnet-5.5) · ⚠ revisar · revisó: dvarela5101
 Sea f(x, y) = x³ + y⁴ − 6x². ¿Cuál afirmación es correcta?
 
 - A) Tiene dos puntos críticos, (0, 0) y (4, 0), y en ambos D = 0, así que el criterio no decide en ninguno · CORRECTA
@@ -74,7 +74,7 @@ Sea f(x, y) = x³ + y⁴ − 6x². ¿Cuál afirmación es correcta?
 
 solución: las parciales son fx = 3x² − 12x = 3x(x − 4) y fy = 4y³. La condición fy = 0 da y = 0, y fx = 0 da x = 0 o x = 4, de modo que los puntos críticos son (0, 0) y (4, 0). Las segundas derivadas son fxx = 6x − 12, fyy = 12y² y fxy = 0. En (0, 0) se anula fyy, luego D = (−12)(0) − 0 = 0. En (4, 0) también fyy = 0 y D = 12·0 − 0 = 0. Como D = 0 en ambos, el criterio no concluye nada. Mirando la función: cerca de (0, 0), f(x, 0) ≈ −6x² baja y f(0, y) = y⁴ sube, así que es silla; cerca de (4, 0), x³ − 6x² tiene un mínimo en x = 4 y y⁴ ≥ 0, así que es un mínimo local. Por eso B y C son falsas.
 
-### P48 · dificultad 1 · kc: lagrange · borrador · origen: ia (sonnet-5.5)
+### P48 · dificultad 1 · kc: lagrange · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Cuál es el valor máximo de f(x, y) = x + y sujeto a x² + y² = 8?
 
 - A) 4 · CORRECTA
@@ -84,7 +84,7 @@ solución: las parciales son fx = 3x² − 12x = 3x(x − 4) y fy = 4y³. La con
 
 solución: ∇f = (1, 1) y ∇g = (2x, 2y) para g = x² + y². De ∇f = λ∇g sale 1 = 2λx y 1 = 2λy, así que x = y. Con x² + y² = 8 queda 2x² = 8, x = ±2. Los candidatos son (2, 2) con f = 4 y (−2, −2) con f = −4. El máximo es 4.
 
-### P49 · dificultad 2 · kc: lagrange · borrador · origen: ia (sonnet-5.5)
+### P49 · dificultad 2 · kc: lagrange · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Cuál es el valor mínimo de f(x, y) = x² − 2y² sujeto a x² + y² = 9?
 
 - A) −18 · CORRECTA
@@ -94,7 +94,7 @@ solución: ∇f = (1, 1) y ∇g = (2x, 2y) para g = x² + y². De ∇f = λ∇g 
 
 solución: ∇f = (2x, −4y) y ∇g = (2x, 2y). De ∇f = λ∇g: 2x = 2λx, o sea x(1 − λ) = 0, y −4y = 2λy, o sea y(−2 − λ) = 0. Si x = 0, entonces y = ±3 (con λ = −2) y f = −18. Si y = 0, entonces x = ±3 (con λ = 1) y f = 9. El mínimo es −18; el máximo es 9.
 
-### P50 · dificultad 2 · kc: lagrange · borrador · origen: ia (sonnet-5.5)
+### P50 · dificultad 2 · kc: lagrange · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Cuál es el valor mínimo de f(x, y) = x² + 2y² sujeto a x + y = 6?
 
 - A) 24 · CORRECTA
@@ -104,7 +104,7 @@ solución: ∇f = (2x, −4y) y ∇g = (2x, 2y). De ∇f = λ∇g: 2x = 2λx, o 
 
 solución: con g = x + y, ∇g = (1, 1) y ∇f = (2x, 4y). La condición ∇f = λ∇g da 2x = λ y 4y = λ, o sea x = 2y. Al imponer x + y = 6 resulta 3y = 6, y = 2 y x = 4. El valor es f(4, 2) = 16 + 8 = 24. Es el mínimo porque f crece sin límite sobre la recta al alejarse.
 
-### P51 · dificultad 2 · kc: lagrange · borrador · origen: ia (sonnet-5.5)
+### P51 · dificultad 2 · kc: lagrange · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 ¿Cuál es el valor máximo de f(x, y) = xy sujeto a x² + 9y² = 18?
 
 - A) 3 · CORRECTA
@@ -114,7 +114,7 @@ solución: con g = x + y, ∇g = (1, 1) y ∇f = (2x, 4y). La condición ∇f = 
 
 solución: con g = x² + 9y², ∇f = (y, x) y ∇g = (2x, 18y). La condición ∇f = λ∇g da y = 2λx y x = 18λy, de donde y = 36λ²y. Como y = 0 obligaría a x = 0, que no está en la elipse, λ = ±1/6. Con λ = 1/6, x = 3y y la restricción da 9y² + 9y² = 18, o sea y = ±1: los puntos (3, 1) y (−3, −1) con f = 3. Con λ = −1/6, x = −3y y salen (3, −1) y (−3, 1) con f = −3. El máximo es 3.
 
-### P52 · dificultad 3 · kc: lagrange · borrador · origen: ia (sonnet-5.5)
+### P52 · dificultad 3 · kc: lagrange · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Halla el máximo de f(x, y) = y² + x² − 2x en la elipse x² + 9y² = 9. ¿Cuál es?
 
 - A) 15 · CORRECTA
