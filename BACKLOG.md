@@ -1,6 +1,6 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-11-10 12:42. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-11-12 13:57. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
@@ -24,6 +24,7 @@ _Generado automaticamente: 2026-11-10 12:42. No editar a mano; usa `scripts/back
 | [HU-085](backlog/HU-085.md) | [Sistema] Borrar o anonimizar los datos de un Lead o aspirante que retiró su autorización o lleva 24 meses sin actividad | Lista | P2 | L | HU-056, HU-006, HU-062, HU-068 |
 | [HU-092](backlog/HU-092.md) | [Monitor] Marcar en mi perfil los temas en los que soy fuerte | Lista | P2 | M | HU-049 |
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | En progreso | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056, HU-084, HU-089, HU-095, HU-096, HU-097, HU-091, HU-103 |
+| [HU-128](backlog/HU-128.md) | Contenido: Probabilidad y Estadística (IIND-2106) con el Parcial 2 del programa 2026-2 y el examen final | En progreso | P0 | L |  |
 | [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
 | [HU-121](backlog/HU-121.md) | Landing de monitores: mostrar cuánto puede ganar el monitor | En revision | P1 | M | HU-109 |
 | [HU-124](backlog/HU-124.md) | [Admin] Ver en mi bandeja a quién contactar para certificarlo | En revision | P1 | M | HU-012, HU-013, HU-014, HU-062 |
