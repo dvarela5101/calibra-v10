@@ -28,7 +28,7 @@ mc: cov-signo-mal · covarianza-correlacion · te equivocas de signo: restas E[X
 
 ## Preguntas
 
-### P16 · dificultad 1 · kc: conjunta-marginal · borrador · origen: ia (sonnet-5.5)
+### P16 · dificultad 1 · kc: conjunta-marginal · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 En una línea de empaque, X es el número de paros de la banda en un turno y Y es el número de rechazos de calidad en ese turno. La distribución conjunta es: p(0,0) = 0,10, p(0,1) = 0,15, p(0,2) = 0,05, p(1,0) = 0,25, p(1,1) = 0,20, p(1,2) = 0,05, p(2,0) = 0,05, p(2,1) = 0,10 y p(2,2) = 0,05. ¿Cuál es P(Y = 1)?
 
 - A) 0,50 · [conj-marginal-eje-equivocado] sumas la fila X = 1 y obtienes P(X = 1) en vez de P(Y = 1)
@@ -38,7 +38,7 @@ En una línea de empaque, X es el número de paros de la banda en un turno y Y e
 
 solución: la marginal de Y en y = 1 suma la columna completa sobre todos los valores de X: p(0,1) + p(1,1) + p(2,1) = 0,15 + 0,20 + 0,10 = 0,45. Con la fila X = 1 se obtiene P(X = 1) = 0,50; la celda p(1,1) sola vale 0,20; y sin la fila X = 2 queda 0,35.
 
-### P17 · dificultad 2 · kc: conjunta-marginal · borrador · origen: ia (sonnet-5.5)
+### P17 · dificultad 2 · kc: conjunta-marginal · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Para una bomba, X es el tiempo total de uso (en miles de horas) y Y es el tiempo hasta su primera revisión, con 0 ≤ y ≤ x ≤ 1. La densidad conjunta es f(x,y) = k·x en esa región y cero fuera. Calcula P(Y ≤ 0,5).
 
 - A) 0,6875 · CORRECTA
@@ -48,7 +48,7 @@ Para una bomba, X es el tiempo total de uso (en miles de horas) y Y es el tiempo
 
 solución: la densidad integra 1: ∫₀¹ ∫₀ˣ k·x dy dx = k∫₀¹ x² dx = k/3, así que k = 3. La marginal de Y integra x desde y hasta 1: f_Y(y) = ∫ᵧ¹ 3x dx = 1,5(1 − y²). Entonces P(Y ≤ 0,5) = ∫₀^0,5 1,5(1 − y²) dy = 1,5(0,5 − 0,125/3) = 0,6875. Con x de 0 a 1 saldría f_Y = 1,5 y 0,75; con la marginal de X (f_X = 3x²) saldría 0,125; con k = 1 saldría 0,2292.
 
-### P18 · dificultad 2 · kc: conjunta-marginal · borrador · origen: ia (sonnet-5.5)
+### P18 · dificultad 2 · kc: conjunta-marginal · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 X es el número de fallas de la máquina A (0 o 1) y Y es el de la máquina B (0, 1 o 2) en un turno. Distribución conjunta: p(0,0) = 0,20, p(0,1) = 0,20, p(0,2) = 0,05, p(1,0) = 0,10, p(1,1) = 0,25 y p(1,2) = 0,20. Calcula P(X = 1 o Y = 2).
 
 - A) 0,6625 · [conj-producto-de-marginales] restas P(X = 1)·P(Y = 2) en vez de la celda p(1,2), como si fueran independientes
@@ -58,7 +58,7 @@ X es el número de fallas de la máquina A (0 o 1) y Y es el de la máquina B (0
 
 solución: las marginales salen de sumar filas y columnas: P(X = 1) = 0,10 + 0,25 + 0,20 = 0,55 y P(Y = 2) = 0,05 + 0,20 = 0,25. La celda p(1,2) = 0,20 está en los dos eventos, así que P(X = 1 o Y = 2) = 0,55 + 0,25 − 0,20 = 0,60. Restar el producto 0,55·0,25 da 0,6625; la celda sola da 0,20; y sin p(1,0) las celdas suman 0,50.
 
-### P19 · dificultad 3 · kc: conjunta-marginal · borrador · origen: ia (sonnet-5.5)
+### P19 · dificultad 3 · kc: conjunta-marginal · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Dos esfuerzos X e Y de una viga cumplen x ≥ 0, y ≥ 0 y x + y ≤ 1, con densidad conjunta f(x,y) = k(2x + y) en esa región y cero fuera. Calcula P(X > 0,5).
 
 - A) 0,2500 · [conj-marginal-eje-equivocado] integras sobre x, obtienes la marginal de Y y calculas P(Y > 0,5)
@@ -68,7 +68,7 @@ Dos esfuerzos X e Y de una viga cumplen x ≥ 0, y ≥ 0 y x + y ≤ 1, con dens
 
 solución: primero k: ∫₀¹ ∫₀^(1−x) (2x + y) dy dx = ∫₀¹ (0,5 + x − 1,5x²) dx = 0,5, así que k = 2. La marginal de X integra y de 0 a 1 − x: f_X(x) = 2[2x(1 − x) + (1 − x)²/2] = 1 + 2x − 3x². Entonces P(X > 0,5) = ∫₀,₅¹ (1 + 2x − 3x²) dx = [x + x² − x³] de 0,5 a 1 = 1 − 0,625 = 0,375. La marginal de Y es 2(1 − y) y da 0,25; con límites de 0 a 1 para y se obtiene k = 2/3 y 0,6667; con k = 1 se obtiene 0,1875.
 
-### P20 · dificultad 3 · kc: conjunta-marginal · borrador · origen: ia (sonnet-5.5)
+### P20 · dificultad 3 · kc: conjunta-marginal · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 X es el número de turnos extra (0, 1 o 2) y Y el número de entregas tardías (0, 1 o 2) en una semana. Distribución conjunta: p(0,0) = 0,12, p(0,1) = 0,08, p(0,2) = 0,02, p(1,0) = 0,10, p(1,2) = 0,10, p(2,0) = 0,03, p(2,1) = 0,12 y p(2,2) = 0,15. La celda p(1,1) no está escrita. Calcula P(X + Y = 2).
 
 - A) 0,3648 · [conj-producto-de-marginales] sumas P(X = i)·P(Y = 2 − i), como si fueran independientes
@@ -78,7 +78,7 @@ X es el número de turnos extra (0, 1 o 2) y Y el número de entregas tardías (
 
 solución: la tabla debe sumar 1; las ocho celdas dadas suman 0,72, así que p(1,1) = 0,28. El evento X + Y = 2 reúne las celdas (0,2), (1,1) y (2,0): 0,02 + 0,28 + 0,03 = 0,33. Con las marginales P(X) = (0,22; 0,48; 0,30) y P(Y) = (0,25; 0,48; 0,27), el producto 0,22·0,27 + 0,48·0,48 + 0,30·0,25 da 0,3648. La celda p(1,1) sola da 0,28 y sin p(2,0) quedan 0,30.
 
-### P21 · dificultad 1 · kc: condicional-independencia · borrador · origen: ia (sonnet-5.5)
+### P21 · dificultad 1 · kc: condicional-independencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un sensor tiene X = 1 si activa la alarma y X = 0 si no, y Y es el nivel de vibración (0 bajo, 1 medio, 2 alto). Distribución conjunta: p(0,0) = 0,12, p(0,1) = 0,18, p(0,2) = 0,10, p(1,0) = 0,08, p(1,1) = 0,32 y p(1,2) = 0,20. Si la vibración es media, ¿cuál es la probabilidad de que la alarma esté activa? Es decir, P(X = 1 | Y = 1).
 
 - A) 0,64 · CORRECTA
@@ -88,7 +88,7 @@ Un sensor tiene X = 1 si activa la alarma y X = 0 si no, y Y es el nivel de vibr
 
 solución: P(Y = 1) = 0,18 + 0,32 = 0,50, y P(X = 1 | Y = 1) = p(1,1) / P(Y = 1) = 0,32 / 0,50 = 0,64. Sin dividir queda 0,32; dividiendo entre P(X = 1) = 0,60 queda 0,53 (es la condicional contraria); y P(X = 1) = 0,60 ignora la información.
 
-### P22 · dificultad 2 · kc: condicional-independencia · borrador · origen: ia (sonnet-5.5)
+### P22 · dificultad 2 · kc: condicional-independencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 En un taller, X es el número de operarios ausentes (0, 1 o 2) y Y el número de órdenes retrasadas (0, 1 o 2). Distribución conjunta: p(0,0) = 0,05, p(0,1) = 0,10, p(0,2) = 0,05, p(1,0) = 0,05, p(1,1) = 0,20, p(1,2) = 0,15, p(2,0) = 0,15, p(2,1) = 0,10 y p(2,2) = 0,15. Calcula el número esperado de órdenes retrasadas cuando hay exactamente un operario ausente, E[Y | X = 1].
 
 - A) 1,00 · [cond-al-reves] calculas E[X | Y = 1], condicionando en la variable contraria
@@ -98,7 +98,7 @@ En un taller, X es el número de operarios ausentes (0, 1 o 2) y Y el número de
 
 solución: P(X = 1) = 0,05 + 0,20 + 0,15 = 0,40, así que P(Y = y | X = 1) = (0,125; 0,50; 0,375) para y = 0, 1, 2. Entonces E[Y | X = 1] = 0·0,125 + 1·0,50 + 2·0,375 = 1,25. Sin dividir entre 0,40 se obtiene 0,50; la media marginal E[Y] vale 1,10; y E[X | Y = 1] = (0·0,10 + 1·0,20 + 2·0,10) / 0,40 = 1,00.
 
-### P23 · dificultad 2 · kc: condicional-independencia · borrador · origen: ia (sonnet-5.5)
+### P23 · dificultad 2 · kc: condicional-independencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Las tensiones X e Y (normalizadas) de dos cables de un puente tienen densidad conjunta f(x,y) = 2 − x − y para 0 ≤ x ≤ 1 y 0 ≤ y ≤ 1, y cero fuera. Sus marginales son f_X(x) = 1,5 − x y f_Y(y) = 1,5 − y. ¿Son independientes? Elige la justificación correcta.
 
 - A) Sí son independientes: en el punto (0,5; 0,2) la densidad vale 1,3 y f_X(0,5)·f_Y(0,2) = 1·1,3 = 1,3 · [indep-igualdad-en-un-punto] verificas la igualdad en un solo punto y la tomas como prueba para todos los puntos
@@ -108,7 +108,7 @@ Las tensiones X e Y (normalizadas) de dos cables de un puente tienen densidad co
 
 solución: X y Y son independientes solo si f(x,y) = f_X(x)·f_Y(y) en todos los puntos del soporte. Basta un punto donde falle: en (0,1; 0,2), f = 1,70 y el producto de marginales es 1,4·1,3 = 1,82. La igualdad sí se cumple en (0,5; 0,2), pero un punto no prueba independencia. Comparar f con una sola marginal no sirve (siempre difieren), y el soporte rectangular es necesario pero no suficiente.
 
-### P24 · dificultad 3 · kc: condicional-independencia · borrador · origen: ia (sonnet-5.5)
+### P24 · dificultad 3 · kc: condicional-independencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un punto (X,Y) se reparte de manera uniforme en el triángulo 0 ≤ y ≤ x ≤ 1, con densidad f(x,y) = 2 dentro y cero fuera. Sus marginales son f_X(x) = 2x y f_Y(y) = 2(1 − y). ¿Son independientes? Elige la justificación correcta.
 
 - A) Sí son independientes, porque la densidad constante f(x,y) = 2 se escribe como producto de una constante por otra · [indep-decide-por-la-forma] te basas en que la fórmula se factoriza y no revisas que la región no es un rectángulo
@@ -118,7 +118,7 @@ Un punto (X,Y) se reparte de manera uniforme en el triángulo 0 ≤ y ≤ x ≤ 
 
 solución: independencia exige f(x,y) = f_X(x)·f_Y(y) en todo punto. El punto (0,2; 0,6) queda fuera del triángulo (y > x), así que f = 0, mientras que f_X(0,2)·f_Y(0,6) = 0,4·0,8 = 0,32 ≠ 0. Que la fórmula sea constante no basta, porque el soporte triangular liga a x con y. La igualdad en (1; 0,5) es casual y comparar con una sola marginal no es la prueba.
 
-### P25 · dificultad 3 · kc: condicional-independencia · borrador · origen: ia (sonnet-5.5)
+### P25 · dificultad 3 · kc: condicional-independencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Sean X el tiempo de secado e Y el tiempo de curado de una pieza (en horas, con 0 ≤ y ≤ x ≤ 1). Su densidad conjunta es f(x,y) = 2(x + y) dentro de esa región y cero fuera. Calcula el valor esperado condicional E[Y | X = 0,5], con tres decimales.
 
 - A) 0,278 · CORRECTA
@@ -128,7 +128,7 @@ Sean X el tiempo de secado e Y el tiempo de curado de una pieza (en horas, con 0
 
 solución: la marginal es f_X(x) = ∫₀ˣ 2(x + y) dy = 3x², así que f(y | x) = 2(x + y) / (3x²) para 0 ≤ y ≤ x. Entonces E[Y | X = x] = ∫₀ˣ y·2(x + y)/(3x²) dy = 5x/9, y en x = 0,5 vale 5/18 ≈ 0,278. Sin dividir entre f_X(0,5) = 0,75 se obtiene 0,2083. La media marginal, con f_Y(y) = 1 + 2y − 3y², es E[Y] = 5/12 ≈ 0,417. Y E[X | Y = 0,5] = ∫ x·2(x + 0,5) dx de 0,5 a 1, dividido entre f_Y(0,5) = 1,25, vale 0,9583/1,25 ≈ 0,767.
 
-### P26 · dificultad 1 · kc: covarianza-correlacion · borrador · origen: ia (sonnet-5.5)
+### P26 · dificultad 1 · kc: covarianza-correlacion · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Para dos tiempos de proceso X e Y (en minutos) se sabe que E[X] = 3, E[Y] = 5 y E[XY] = 16,5. ¿Cuánto vale Cov(X,Y)?
 
 - A) 16,5 · [cov-exy-sin-restar-medias] das E[XY] como covarianza y no restas E[X]E[Y]
@@ -138,7 +138,7 @@ Para dos tiempos de proceso X e Y (en minutos) se sabe que E[X] = 3, E[Y] = 5 y 
 
 solución: Cov(X,Y) = E[XY] − E[X]E[Y] = 16,5 − 3·5 = 1,5. Dar E[XY] = 16,5 omite la resta; suponer E[XY] = E[X]E[Y] = 15 solo vale con independencia y daría cero; y restar al revés cambia el signo a −1,5.
 
-### P27 · dificultad 2 · kc: covarianza-correlacion · borrador · origen: ia (sonnet-5.5)
+### P27 · dificultad 2 · kc: covarianza-correlacion · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Los pedidos semanales (en cientos) de dos productos son X (0 o 2) y Y (0, 2 o 4), con distribución conjunta p(0,0) = 0,20, p(0,2) = 0,15, p(0,4) = 0,05, p(2,0) = 0,10, p(2,2) = 0,25 y p(2,4) = 0,25. Calcula el coeficiente de correlación ρ entre X y Y, con tres decimales.
 
 - A) −0,395 · [cov-signo-mal] restas al revés, E[X]E[Y] − E[XY], y la correlación sale con el signo cambiado
@@ -148,7 +148,7 @@ Los pedidos semanales (en cientos) de dos productos son X (0 o 2) y Y (0, 2 o 4)
 
 solución: P(X = 2) = 0,60, así que E[X] = 1,2 y E[X²] = 2,4, de donde Var(X) = 2,4 − 1,44 = 0,96. Para Y: P(Y = 0, 2, 4) = (0,30; 0,40; 0,30), E[Y] = 2,0, E[Y²] = 6,4 y Var(Y) = 6,4 − 4 = 2,4. E[XY] = 2·(2·0,25 + 4·0,25) = 3,0, y Cov = 3,0 − 1,2·2,0 = 0,6. Entonces ρ = 0,6 / √(0,96·2,4) = 0,6 / 1,518 ≈ 0,395. Con el producto de varianzas, 0,6/2,304 ≈ 0,260.
 
-### P28 · dificultad 2 · kc: covarianza-correlacion · borrador · origen: ia (sonnet-5.5)
+### P28 · dificultad 2 · kc: covarianza-correlacion · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 En una muestra de 2 piezas, X es el número de defectuosas, con P(X = 0) = 0,25, P(X = 1) = 0,50 y P(X = 2) = 0,25. Se define el costo de ajuste Y = (X − 1)². ¿Cuál afirmación sobre Cov(X,Y) es correcta?
 
 - A) Cov(X,Y) = 0, así que X y Y son independientes · [cov-cero-implica-independencia] pasas de covarianza cero a independencia, cuando Y queda fijada por X
@@ -158,7 +158,7 @@ En una muestra de 2 piezas, X es el número de defectuosas, con P(X = 0) = 0,25,
 
 solución: Y toma el valor 1 cuando X = 0 o X = 2, y 0 cuando X = 1. Entonces E[X] = 1, E[Y] = 0,5 y E[XY] = 0·1·0,25 + 1·0·0,50 + 2·1·0,25 = 0,5, de modo que Cov(X,Y) = 0,5 − 1·0,5 = 0. Aun así Y es función de X, así que son dependientes: covarianza cero no implica independencia. Dar E[XY] = 0,50 omite la resta, y sumar da 1,00.
 
-### P29 · dificultad 3 · kc: covarianza-correlacion · borrador · origen: ia (sonnet-5.5)
+### P29 · dificultad 3 · kc: covarianza-correlacion · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Dos señales X e Y tienen E[X] = 2, E[Y] = 3, Var(X) = 4, Var(Y) = 9 y correlación ρ = −0,5. Calcula E[(X − Y)²].
 
 - A) 1 · [cov-g-en-las-medias] evalúas (E[X] − E[Y])² y olvidas la variabilidad de X − Y
@@ -168,7 +168,7 @@ Dos señales X e Y tienen E[X] = 2, E[Y] = 3, Var(X) = 4, Var(Y) = 9 y correlaci
 
 solución: Cov(X,Y) = ρ·σ_X·σ_Y = −0,5·2·3 = −3. Entonces Var(X − Y) = 4 + 9 − 2(−3) = 19 y E[X − Y] = −1, de modo que E[(X − Y)²] = Var(X − Y) + (E[X − Y])² = 19 + 1 = 20. Evaluar en las medias da 1; con +2Cov queda 7 + 1 = 8; y con Cov = −18 queda 49 + 1 = 50.
 
-### P30 · dificultad 3 · kc: covarianza-correlacion · borrador · origen: ia (sonnet-5.5)
+### P30 · dificultad 3 · kc: covarianza-correlacion · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Dos magnitudes X e Y cumplen Cov(X,Y) = 0, Var(X) = 9 y Var(Y) = 4. Se definen U = X + Y y V = X − Y. ¿Cuánto vale la correlación entre U y V, con tres decimales?
 
 - A) −0,385 · [cov-signo-mal] restas al revés en Cov(U,V) y obtienes Var(Y) − Var(X)

@@ -40,7 +40,7 @@ En una prueba de hipótesis, un p-valor de 0,03 con α = 0,05 indica que:
 - C) Hay 3% de probabilidad de que H₀ sea cierta · [inferencia-e5]
 - D) El error tipo I es 3% · [inferencia-e6]
 
-### P51 · dificultad 1 · kc: ph-conceptos · borrador · origen: ia (sonnet-5.5)
+### P51 · dificultad 1 · kc: ph-conceptos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una llenadora debe entregar μ = 50 g. Se prueba H₀: μ = 50 frente a H₁: μ > 50 con la regla "rechazar H₀ si x̄ > 52", con n = 36 y σ = 6. Una muestra dio x̄ = 52,5 y, si la máquina se desajustara, la media real sería μ = 53. Usa P(Z > 1) = 0,1587, P(Z > 2) = 0,0228 y P(Z > 2,5) = 0,0062. ¿Cuál es la probabilidad de error de tipo I de esta regla?
 
 - A) 0,1587 · [ph-tipos-i-ii-intercambiados] calculas la probabilidad de no rechazar cuando la media real es 53, que es el error de tipo II
@@ -50,7 +50,7 @@ Una llenadora debe entregar μ = 50 g. Se prueba H₀: μ = 50 frente a H₁: μ
 
 solución: el error de tipo I es rechazar H₀ siendo cierta, así que se calcula con μ = 50. El error estándar es 6/√36 = 1, y rechazar significa x̄ > 52, o sea z = (52 − 50)/1 = 2. Entonces α = P(Z > 2) = 0,0228. El 0,1587 es β con μ = 53 (P(x̄ ≤ 52) = P(Z ≤ −1)); el 0,0062 es el p-valor de x̄ = 52,5; el 0,8413 es la potencia en μ = 53.
 
-### P52 · dificultad 2 · kc: ph-conceptos · borrador · origen: ia (sonnet-5.5)
+### P52 · dificultad 2 · kc: ph-conceptos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una ingeniera quiere comprobar si el diámetro medio de los tornillos de una línea se alejó del valor de diseño de 8,0 mm, en cualquier dirección. Mide 36 tornillos y obtiene x̄ = 8,05 mm. ¿Qué formulación y qué lectura del resultado son correctas?
 
 - A) H₀: μ ≠ 8,0 frente a H₁: μ = 8,0; si no rechazas H₀, solo concluyes que no hay evidencia suficiente de que el diámetro medio se alejó de 8,0 · [ph-igualdad-en-h1] pones el signo igual en la alterna y la desigualdad en la nula
@@ -60,7 +60,7 @@ Una ingeniera quiere comprobar si el diámetro medio de los tornillos de una lí
 
 solución: las hipótesis se plantean sobre el parámetro poblacional μ, no sobre x̄, que es un dato de la muestra. La nula lleva la igualdad (μ = 8,0) y la alterna es la afirmación que se quiere respaldar; como se busca cualquier desvío, es bilateral (μ ≠ 8,0). No rechazar H₀ significa que la muestra no aporta evidencia suficiente en su contra, no que H₀ esté demostrada.
 
-### P53 · dificultad 2 · kc: ph-conceptos · borrador · origen: ia (sonnet-5.5)
+### P53 · dificultad 2 · kc: ph-conceptos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una planta de moldeo prueba H₀: μ = 80 frente a H₁: μ > 80, donde μ es la resistencia media (en MPa) de un nuevo lote de piezas. Se conoce σ = 6, se toman n = 36 piezas y se usa α = 0,05 (z₀,₀₅ = 1,645). La muestra dio x̄ = 81,0. Si la resistencia media real fuera μ = 83, ¿cuánto vale β? Redondea a dos decimales.
 
 - A) 0,91 · [ph-potencia-como-error] das la probabilidad de rechazar cuando μ = 83, que es la potencia y no β
@@ -70,7 +70,7 @@ Una planta de moldeo prueba H₀: μ = 80 frente a H₁: μ > 80, donde μ es la
 
 solución: el error estándar es 6/√36 = 1. Con α = 0,05 se rechaza H₀ si x̄ > 80 + 1,645·1 = 81,645. β es la probabilidad de no rechazar cuando μ = 83: β = P(x̄ ≤ 81,645 | μ = 83) = P(Z ≤ (81,645 − 83)/1) = P(Z ≤ −1,355) ≈ 0,09. La potencia es 1 − β ≈ 0,91; el 0,05 es α; el 0,16 es el p-valor de x̄ = 81,0, P(Z > 1,0).
 
-### P54 · dificultad 3 · kc: ph-conceptos · borrador · origen: ia (sonnet-5.5)
+### P54 · dificultad 3 · kc: ph-conceptos · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un proveedor asegura que el tiempo medio de respuesta de su servidor es de a lo sumo 2,0 s. Sospechas que es mayor. Con 25 mediciones obtienes x̄ = 2,3 s y un p-valor de 0,03. ¿Cuál formulación y lectura son correctas?
 
 - A) H₀: μ = 2,0 frente a H₁: μ > 2,0; concluir que es mayor cuando en realidad no lo es sería un error de tipo I, y el p-valor 0,03 es la probabilidad de un resultado tan extremo como el observado si H₀ es cierta · CORRECTA
@@ -80,7 +80,7 @@ Un proveedor asegura que el tiempo medio de respuesta de su servidor es de a lo 
 
 solución: el parámetro es μ y la nula lleva la igualdad (se puede escribir μ = 2,0 o μ ≤ 2,0); la alterna recoge la sospecha, μ > 2,0. Declarar "mayor" cuando en realidad no lo es significa rechazar una H₀ verdadera: error de tipo I, de probabilidad α. El p-valor es la probabilidad, calculada suponiendo H₀ cierta, de obtener un resultado al menos tan extremo como el observado; no es la probabilidad de que H₀ sea cierta.
 
-### P55 · dificultad 1 · kc: ph-parametros · borrador · origen: ia (sonnet-5.5)
+### P55 · dificultad 1 · kc: ph-parametros · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un taller quiere saber si una herramienta nueva reduce el tiempo de ensamble, que hoy tiene media de 120 s. Se prueba H₀: μ = 120 frente a H₁: μ < 120, con σ = 15 s conocida, n = 25 piezas, x̄ = 116,4 s y α = 0,05 (z₀,₀₅ = 1,645). Usa P(Z < −1,20) = 0,1151. ¿Cuál es el estadístico, el p-valor y la conclusión?
 
 - A) z = −1,20, p-valor = 0,12: rechazas H₀ porque −1,20 es menor que α = 0,05 · [ph-compara-estadistico-con-alfa] comparas el estadístico con α, cuando hay que compararlo con el valor crítico o comparar el p-valor con α
@@ -90,7 +90,7 @@ Un taller quiere saber si una herramienta nueva reduce el tiempo de ensamble, qu
 
 solución: el error estándar es σ/√n = 15/5 = 3, así que z = (116,4 − 120)/3 = −1,20. Como H₁ es μ < 120, el p-valor es el área a la izquierda: P(Z < −1,20) = 0,1151 ≈ 0,12. Como 0,12 > 0,05, no se rechaza H₀. Equivalente: −1,20 no está por debajo de −1,645.
 
-### P56 · dificultad 2 · kc: ph-parametros · borrador · origen: ia (sonnet-5.5)
+### P56 · dificultad 2 · kc: ph-parametros · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El estándar de una línea de empaque admite 10% de piezas defectuosas. En una muestra de 200 piezas aparecen 28 defectuosas. Se prueba H₀: p = 0,10 frente a H₁: p ≠ 0,10 con α = 0,05. Usa P(Z > 1,89) = 0,0294 y P(Z > 1,63) = 0,0516. ¿Cuál es el estadístico, el p-valor y la conclusión?
 
 - A) z = 1,89, p-valor = 0,03: rechazas H₀ · [ph-pvalor-sin-duplicar-bilateral] tomas el área de una sola cola como p-valor aunque la prueba es bilateral
@@ -100,7 +100,7 @@ El estándar de una línea de empaque admite 10% de piezas defectuosas. En una m
 
 solución: p̂ = 28/200 = 0,14. Bajo H₀ el error estándar usa p₀: √(0,10·0,90/200) = 0,02121, así que z = (0,14 − 0,10)/0,02121 = 1,89. La prueba es bilateral: p-valor = 2·P(Z > 1,89) = 2·0,0294 = 0,0588 ≈ 0,06. Como 0,06 > 0,05, no se rechaza H₀. Con p̂ en el error estándar saldría z = 1,63 (p-valor 0,10); con una sola cola, 0,03.
 
-### P57 · dificultad 2 · kc: ph-parametros · borrador · origen: ia (sonnet-5.5)
+### P57 · dificultad 2 · kc: ph-parametros · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Se midió el tiempo de montaje de 8 operarios antes y después de una capacitación, siempre los mismos 8. Con las diferencias (antes − después) se obtuvo d̄ = 0,60 min y s_d = 0,80 min; las desviaciones de los tiempos antes y después, por separado, son 1,9 y 2,1 min. Se prueba H₀: μ_D = 0 frente a H₁: μ_D ≠ 0 con α = 0,05. Valores: t₀,₀₂₅ = 2,365 con 7 g.l., t₀,₀₂₅ = 2,145 con 14 g.l. y z₀,₀₂₅ = 1,96. ¿Cuál es el procedimiento correcto y su conclusión?
 
 - A) t = 2,12 con 7 g.l.; |t| < 2,365, no rechazas H₀ · CORRECTA
@@ -110,7 +110,7 @@ Se midió el tiempo de montaje de 8 operarios antes y después de una capacitaci
 
 solución: los datos son pareados, así que se trabaja con las diferencias: n = 8, g.l. = 7. El error estándar es 0,80/√8 = 0,2828, y t = 0,60/0,2828 = 2,12. Como σ es desconocida y n es pequeño se usa t con 7 g.l.: |2,12| < 2,365, no se rechaza H₀. Con z (1,96) se rechazaría por error; tratándolos como independientes, el error estándar sería √((1,9² + 2,1²)/8) = 1,0 y t = 0,60.
 
-### P58 · dificultad 3 · kc: ph-parametros · borrador · origen: ia (sonnet-5.5)
+### P58 · dificultad 3 · kc: ph-parametros · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 En un sondeo a 150 usuarios, 48 prefieren la versión nueva de una aplicación. La meta es p = 0,40. Se prueba H₀: p = 0,40 frente a H₁: p ≠ 0,40 con α = 0,04. Usa P(Z < −2,00) = 0,0228 y P(Z < −2,10) = 0,0179. ¿Cuál es el estadístico, el p-valor y la conclusión?
 
 - A) z = −2,10, p-valor = 0,0357: rechazas H₀ porque 0,0357 < 0,04 · [ph-phat-en-error-estandar] calculas el error estándar con p̂ = 0,32 en lugar de con p₀ = 0,40
@@ -120,7 +120,7 @@ En un sondeo a 150 usuarios, 48 prefieren la versión nueva de una aplicación. 
 
 solución: p̂ = 48/150 = 0,32. Bajo H₀, el error estándar es √(0,40·0,60/150) = 0,04, así que z = (0,32 − 0,40)/0,04 = −2,00. El estadístico cayó en la cola izquierda, con área 0,0228; como la prueba es bilateral se duplica: p-valor = 0,0455. Como 0,0455 > 0,04, no se rechaza H₀. Con p̂ = 0,32 en el error estándar saldría z = −2,10 y p-valor 0,0357, que sí rechazaría.
 
-### P59 · dificultad 3 · kc: ph-parametros · borrador · origen: ia (sonnet-5.5)
+### P59 · dificultad 3 · kc: ph-parametros · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Para 8 máquinas se midió el desperdicio de material (kg por turno) antes y después de un ajuste, siempre las mismas 8 máquinas. Con las diferencias (antes − después): d̄ = 0,48 y s_d = 0,80; las desviaciones de antes y después, por separado, son 1,9 y 2,1. Se prueba H₀: μ_D = 0 frente a H₁: μ_D > 0 con α = 0,05. Datos de tabla: P(T > 1,70) = 0,0667 con 7 g.l.; P(T > 0,48) = 0,3195 con 14 g.l.; P(Z > 1,70) = 0,0448. ¿Cuál es el estadístico, el p-valor y la conclusión?
 
 - A) t = 1,70 con 7 g.l., p-valor = 0,9333: no rechazas H₀ · [ph-cola-contraria] tomas el área de la cola izquierda, que es la contraria a la de H₁
@@ -130,7 +130,7 @@ Para 8 máquinas se midió el desperdicio de material (kg por turno) antes y des
 
 solución: son datos pareados, así que se usan las diferencias: n = 8, g.l. = 7, error estándar 0,80/√8 = 0,2828 y t = 0,48/0,2828 = 1,70. H₁ es μ_D > 0, así que el p-valor es el área a la derecha: P(T > 1,70) = 0,0667 > 0,05, no se rechaza H₀. Con la normal el p-valor sería 0,0448 y se rechazaría por error; con la cola izquierda saldría 0,9333; tratando las muestras como independientes saldría t = 0,48 con 14 g.l.
 
-### P60 · dificultad 1 · kc: bondad-ajuste · borrador · origen: ia (sonnet-5.5)
+### P60 · dificultad 1 · kc: bondad-ajuste · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una planta registró 100 paros de máquina en una semana, repartidos de lunes a viernes así: 24, 18, 15, 20 y 23. Se prueba H₀: los paros se reparten por igual entre los 5 días. ¿Cuál es el valor del estadístico χ² y cuántos grados de libertad tiene?
 
 - A) χ² = 2,95 con 4 g.l. · [ba-divide-entre-observado] divides cada (O − E)² entre la frecuencia observada y no entre la esperada
@@ -140,7 +140,7 @@ Una planta registró 100 paros de máquina en una semana, repartidos de lunes a 
 
 solución: bajo H₀ cada día espera 100/5 = 20 paros. χ² = (24−20)²/20 + (18−20)²/20 + (15−20)²/20 + (20−20)²/20 + (23−20)²/20 = (16 + 4 + 25 + 0 + 9)/20 = 54/20 = 2,70. Hay 5 categorías, así que g.l. = 5 − 1 = 4.
 
-### P61 · dificultad 2 · kc: bondad-ajuste · borrador · origen: ia (sonnet-5.5)
+### P61 · dificultad 2 · kc: bondad-ajuste · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una línea de pintura clasifica el acabado de las piezas en 4 categorías que, según el proveedor, ocurren con proporciones 40%, 30%, 20% y 10%. En 200 piezas se observaron 100, 50, 30 y 20. Se prueba el ajuste con α = 0,05. Valores: χ²₀,₀₅ = 7,815 y χ²₀,₉₅ = 0,352, ambos con 3 g.l. ¿Cuál es el estadístico y la decisión?
 
 - A) χ² = 9,17: no cae por debajo de 0,352, no rechazas H₀ · [ba-rechazo-cola-izquierda] rechazas solo si χ² es muy pequeño, en la cola izquierda
@@ -150,7 +150,7 @@ Una línea de pintura clasifica el acabado de las piezas en 4 categorías que, s
 
 solución: multiplicando 200 por cada proporción salen los esperados 80, 60, 40 y 20. Sumando (O − E)²/E por categoría: 400/80 + 100/60 + 100/40 + 0/20 = 5 + 1,667 + 2,5 + 0 = 9,17. Son 4 categorías sin parámetros estimados, así que hay 3 g.l., y esta prueba rechaza solo por la derecha, cuando χ² > 7,815. Como 9,17 > 7,815, se rechaza H₀.
 
-### P62 · dificultad 2 · kc: bondad-ajuste · borrador · origen: ia (sonnet-5.5)
+### P62 · dificultad 2 · kc: bondad-ajuste · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un fabricante afirma que sus fallas se reparten 50% eléctricas, 30% mecánicas y 20% de software. En 80 fallas se observaron 36 eléctricas, 30 mecánicas y 14 de software. Se prueba el ajuste con α = 0,05 y χ²₀,₀₅ = 5,991 con 2 g.l. ¿Cuál es el estadístico, los grados de libertad y la decisión?
 
 - A) χ² = 6413 con 2 g.l.: rechazas H₀ · [ba-proporciones-sin-multiplicar-n] usas 0,5, 0,3 y 0,2 como frecuencias esperadas, sin multiplicarlas por n = 80
@@ -160,7 +160,7 @@ Un fabricante afirma que sus fallas se reparten 50% eléctricas, 30% mecánicas 
 
 solución: las frecuencias esperadas son 80·(0,5; 0,3; 0,2) = 40, 24 y 16. χ² = (36−40)²/40 + (30−24)²/24 + (14−16)²/16 = 0,40 + 1,50 + 0,25 = 2,15, con 3 − 1 = 2 g.l. Como 2,15 < 5,991, no se rechaza H₀.
 
-### P63 · dificultad 3 · kc: bondad-ajuste · borrador · origen: ia (sonnet-5.5)
+### P63 · dificultad 3 · kc: bondad-ajuste · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 En 100 días se contó el número de caídas de un servidor por día: 0 caídas en 18 días, 1 en 45, 2 en 26, 3 en 6 y 4 o más en 5 (esos 5 días tuvieron exactamente 4). El total fue de 135 caídas, así que se estimó λ̂ = 1,35 por día y se ajustó una Poisson. Con λ̂ = 1,35: P(0) = 0,2592, P(1) = 0,3500, P(2) = 0,2362, P(3) = 0,1063 y P(≥4) = 0,0482. Valores con α = 0,05: χ²₀,₀₅ = 5,991 (2 g.l.) y 7,815 (3 g.l.); χ²₀,₉₅ = 0,103 (2 g.l.). ¿Cuál es el procedimiento correcto y su decisión?
 
 - A) χ² = 6,80 con 2 g.l.: cae por encima de 0,103, no rechazas H₀ · [ba-rechazo-cola-izquierda] rechazas solo si χ² es muy pequeño, en la cola izquierda
@@ -170,7 +170,7 @@ En 100 días se contó el número de caídas de un servidor por día: 0 caídas 
 
 solución: las esperadas con n = 100 son 25,92; 35,00; 23,62; 10,63 y 4,82. La última es menor que 5, así que se agrupa "3" y "4 o más": esperado 15,45 y observado 11. Quedan 4 categorías: χ² = (18−25,92)²/25,92 + (45−35)²/35 + (26−23,62)²/23,62 + (11−15,45)²/15,45 = 2,42 + 2,86 + 0,24 + 1,28 = 6,80. Los g.l. son 4 − 1 − 1 = 2 (se estimó λ). Como 6,80 > 5,991, se rechaza H₀. Sin restar el parámetro (3 g.l.) o sin agrupar (χ² = 7,54 con 3 g.l.) no se rechazaría.
 
-### P64 · dificultad 3 · kc: bondad-ajuste · borrador · origen: ia (sonnet-5.5)
+### P64 · dificultad 3 · kc: bondad-ajuste · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 De 200 lotes de 4 piezas se contó cuántas son defectuosas: 0 en 71 lotes, 1 en 70, 2 en 50, 3 en 6 y 4 en 3. Hubo 200 piezas defectuosas de 800, así que se estimó p̂ = 0,25 y se ajustó una binomial(4; 0,25), con P(0) = 0,3164, P(1) = 0,4219, P(2) = 0,2109, P(3) = 0,0469 y P(4) = 0,0039. Valores con α = 0,05: χ²₀,₀₅ = 5,991 (2 g.l.) y 7,815 (3 g.l.). ¿Cuál es el procedimiento correcto y su decisión?
 
 - A) χ² = 12,35 con 3 g.l.: supera 7,815, rechazas H₀ · [ba-no-agrupa-categorias] dejas la categoría 4, con esperado 0,78, sin agrupar con la 3

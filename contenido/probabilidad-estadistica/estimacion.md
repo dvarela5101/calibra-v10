@@ -16,7 +16,7 @@ mc: mle-derivada-pierde-n · estimacion-puntual · al derivar la log-verosimilit
 
 ## Preguntas
 
-### P41 · dificultad 1 · kc: estimacion-puntual · borrador · origen: ia (sonnet-5.5)
+### P41 · dificultad 1 · kc: estimacion-puntual · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un servidor de reservas registró siete tiempos de respuesta, en milisegundos, en el orden en que llegaron las peticiones: 14, 6, 40, 16, 13, 8, 11. La mediana de la muestra, en milisegundos, es:
 
 - A) 16 · [mediana-sin-ordenar] tomas el cuarto dato de la lista tal como llegó, sin ordenar los tiempos de menor a mayor
@@ -27,7 +27,7 @@ Un servidor de reservas registró siete tiempos de respuesta, en milisegundos, e
 solución: se ordenan los datos de menor a mayor: 6, 8, 11, 13, 14, 16, 40. Con n = 7 (impar) la mediana es el dato en la posición (n + 1)/2 = 4, que vale 13.
 Las otras opciones salen de errores concretos: el cuarto dato sin ordenar es 16; la media es 108/7 ≈ 15,43; el tercer dato ordenado es 11.
 
-### P42 · dificultad 2 · kc: estimacion-puntual · borrador · origen: ia (sonnet-5.5)
+### P42 · dificultad 2 · kc: estimacion-puntual · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un laboratorio midió la resistencia, en MPa, de ocho probetas de concreto, en este orden: 52, 38, 61, 45, 90, 41, 47, 56. La mediana de la muestra, en MPa, es:
 
 - A) 53,75 · [confunde-media-y-mediana] das el promedio de las ocho mediciones en lugar de la mediana
@@ -38,7 +38,7 @@ Un laboratorio midió la resistencia, en MPa, de ocho probetas de concreto, en e
 solución: ordenados, los datos son 38, 41, 45, 47, 52, 56, 61, 90. Con n = 8 (par) la mediana es el promedio de los datos en las posiciones n/2 = 4 y n/2 + 1 = 5: (47 + 52)/2 = 49,5.
 Las otras opciones: la media es 430/8 = 53,75; el promedio del tercer y el cuarto dato ordenados es (45 + 47)/2 = 46; el promedio del cuarto y el quinto de la lista sin ordenar es (45 + 90)/2 = 67,5.
 
-### P43 · dificultad 2 · kc: estimacion-puntual · borrador · origen: ia (sonnet-5.5)
+### P43 · dificultad 2 · kc: estimacion-puntual · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un sensor de vibración entrega lecturas normales con varianza σ² desconocida, y se dispone de 8 lecturas independientes. El estimador σ̂² = (1/n)·Σ(Xᵢ − X̄)² tiene sesgo −σ²/n y varianza 2(n − 1)σ⁴/n². El estimador S² = (1/(n − 1))·Σ(Xᵢ − X̄)² es insesgado y tiene varianza 2σ⁴/(n − 1). Con n = 8, el error cuadrático medio de σ̂², en unidades de σ⁴ y redondeado a dos decimales, es:
 
 - A) 0,29 · [insesgado-implica-menor-ecm] tomas el estimador insesgado S² por ser insesgado y das su error, 2/(n − 1)
@@ -49,7 +49,7 @@ Un sensor de vibración entrega lecturas normales con varianza σ² desconocida,
 solución: ECM = varianza + sesgo². La varianza vale 2(n − 1)/n² = 2·7/64 ≈ 0,2188 (en unidades de σ⁴) y el sesgo al cuadrado vale (1/n)² = 1/64 ≈ 0,0156. Entonces ECM ≈ 0,2188 + 0,0156 = 0,2344σ⁴ ≈ 0,23σ⁴.
 Las otras opciones: 2/7 ≈ 0,29 es el error de S²; 2/8 + 1/64 ≈ 0,27 usa n en la varianza; 0,22 omite el sesgo.
 
-### P44 · dificultad 2 · kc: estimacion-puntual · borrador · origen: ia (sonnet-5.5)
+### P44 · dificultad 2 · kc: estimacion-puntual · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El número de fallas diarias de una máquina se modela como Poisson con parámetro λ desconocido. En ocho días se observaron, en este orden, 4, 2, 7, 3, 9, 3, 5 y 3 fallas. La estimación de máxima verosimilitud de λ es:
 
 - A) 4 · [mle-una-sola-observacion] maximizas la probabilidad de la primera observación sola, cuyo máximo está en λ = 4
@@ -60,7 +60,7 @@ El número de fallas diarias de una máquina se modela como Poisson con parámet
 solución: la verosimilitud es L(λ) = Π e^(−λ) λ^(xᵢ)/xᵢ!, así que ln L = −nλ + (Σxᵢ)·ln λ − Σ ln(xᵢ!). Derivando: −n + Σxᵢ/λ = 0, de donde λ̂ = Σxᵢ/n = x̄. Aquí Σxᵢ = 36 y n = 8, entonces λ̂ = 4,5.
 Las otras opciones: la primera observación vale 4; la suma sin dividir entre n es 36; la mediana ordenada es (3 + 4)/2 = 3,5.
 
-### P45 · dificultad 3 · kc: estimacion-puntual · borrador · origen: ia (sonnet-5.5)
+### P45 · dificultad 3 · kc: estimacion-puntual · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El caudal de una bomba, en L/min, varía de un ciclo a otro con media μ = 4 (desconocida para quien estima) y varianza σ² = 64. Con 16 ciclos independientes se proponen los estimadores μ̂₁ = X̄ y μ̂₂ = 0,9·X̄ para μ. El estimador con menor error cuadrático medio y el valor de ese error son:
 
 - A) μ̂₁, con ECM = 4 · [insesgado-implica-menor-ecm] eliges μ̂₁ porque es insesgado, sin comparar los dos errores cuadráticos medios
@@ -72,7 +72,7 @@ solución: Var(X̄) = σ²/n = 64/16 = 4, así que ECM(μ̂₁) = 4 porque no ti
 Para μ̂₂: Var(0,9·X̄) = 0,9²·4 = 3,24 y el sesgo es E[μ̂₂] − μ = 0,9·4 − 4 = −0,4, cuyo cuadrado es 0,16. Entonces ECM(μ̂₂) = 3,24 + 0,16 = 3,40, menor que 4: aunque está sesgado, μ̂₂ gana.
 Las otras opciones: 3,24 omite el sesgo; con σ²/(n − 1) = 64/15 se obtiene 0,81·(64/15) + 0,16 ≈ 3,62.
 
-### P46 · dificultad 3 · kc: estimacion-puntual · borrador · origen: ia (sonnet-5.5)
+### P46 · dificultad 3 · kc: estimacion-puntual · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una balanza produce lecturas normales con media 10 g, que es el valor real conocido de la pesa, y desviación estándar σ desconocida. En cinco lecturas se obtuvo 12, 7, 11, 9 y 16 g. La estimación de máxima verosimilitud de σ, redondeada a dos decimales, es:
 
 - A) 3,19 · CORRECTA

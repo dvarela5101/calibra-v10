@@ -23,7 +23,7 @@ mc: dm-razon-invertida · distribuciones-muestrales · pones el cociente de vari
 
 ## Preguntas
 
-### P31 · dificultad 1 · kc: suma-tlc · borrador · origen: ia (sonnet-5.5)
+### P31 · dificultad 1 · kc: suma-tlc · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un sensor registra dos señales independientes, X e Y, con desviaciones estándar 3 y 2. La lectura corregida es R = 2X − Y. ¿Cuál es la desviación estándar de R? Redondea a dos decimales.
 
 - A) 6,32 · CORRECTA
@@ -33,7 +33,7 @@ Un sensor registra dos señales independientes, X e Y, con desviaciones estánda
 
 solución: las señales son independientes, así que Var(R) = 2²·Var(X) + (−1)²·Var(Y) = 4·9 + 1·4 = 40. La desviación estándar es √40 ≈ 6,32. La resta no cambia el signo de la varianza, porque el coeficiente −1 queda al cuadrado.
 
-### P32 · dificultad 2 · kc: suma-tlc · borrador · origen: ia (sonnet-5.5)
+### P32 · dificultad 2 · kc: suma-tlc · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 En una línea de empaque, el peso de un lote es S = X₁ + X₂ + X₃ + X₄, con las Xᵢ independientes y de varianza 5 cada una. A S se le suma una carga W = 2Y, donde Y tiene varianza 3 y es independiente de las Xᵢ. ¿Cuál es la desviación estándar de S + W? Redondea a dos decimales.
 
 - A) 5,66 · CORRECTA
@@ -43,7 +43,7 @@ En una línea de empaque, el peso de un lote es S = X₁ + X₂ + X₃ + X₄, c
 
 solución: Var(S) = 4·5 = 20, por independencia. Var(W) = 2²·Var(Y) = 4·3 = 12. Como S y W son independientes, Var(S + W) = 20 + 12 = 32 y la desviación estándar es √32 ≈ 5,66.
 
-### P33 · dificultad 2 · kc: suma-tlc · borrador · origen: ia (sonnet-5.5)
+### P33 · dificultad 2 · kc: suma-tlc · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 El tiempo de atención de un cliente en una caja tiene media 20 minutos y desviación estándar 5 minutos, con una distribución que no se conoce. Los tiempos de 9 clientes son independientes. Con el teorema del límite central, ¿cuál es la probabilidad de que el tiempo total de atención de los 9 clientes supere 195 minutos? Redondea z a dos decimales y usa la tabla normal estándar.
 
 - A) 0,1587 · CORRECTA
@@ -53,7 +53,7 @@ El tiempo de atención de un cliente en una caja tiene media 20 minutos y desvia
 
 solución: el total T tiene media 9·20 = 180 y varianza 9·25 = 225, o sea desviación estándar 15. z = (195 − 180)/15 = 1,00 y P(T > 195) = 1 − Φ(1,00) = 1 − 0,8413 = 0,1587.
 
-### P34 · dificultad 3 · kc: suma-tlc · borrador · origen: ia (sonnet-5.5)
+### P34 · dificultad 3 · kc: suma-tlc · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un kit de ensamblaje lleva 4 piezas de tipo A y 3 piezas de tipo B, todas distintas e independientes entre sí. El peso en gramos de una pieza A tiene media 40 y varianza 7; el de una pieza B tiene media 25 y varianza 24. Los pesos siguen una distribución normal. ¿Cuál es la probabilidad de que el kit pese más de 250 g? Redondea z a dos decimales y usa la tabla normal estándar.
 
 - A) 0,0668 · CORRECTA
@@ -63,7 +63,7 @@ Un kit de ensamblaje lleva 4 piezas de tipo A y 3 piezas de tipo B, todas distin
 
 solución: media del kit = 4·40 + 3·25 = 235. Las piezas son independientes y distintas, así que Var = 4·7 + 3·24 = 28 + 72 = 100 y la desviación estándar es 10. El peso es normal, entonces z = (250 − 235)/10 = 1,50 y P(W > 250) = 1 − 0,9332 = 0,0668.
 
-### P35 · dificultad 3 · kc: suma-tlc · borrador · origen: ia (sonnet-5.5)
+### P35 · dificultad 3 · kc: suma-tlc · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Dos líneas de producción son independientes. El tiempo de ciclo de la línea 1 tiene media 40 min y varianza 36; el de la línea 2 tiene media 38 min y varianza 18. Ninguna distribución se conoce. Se observan 36 ciclos de la línea 1 y 32 ciclos de la línea 2, y se calculan los promedios X̄₁ y X̄₂. Con el teorema del límite central, ¿cuál es la probabilidad de que X̄₁ − X̄₂ supere 3,25 min? Redondea z a dos decimales y usa la tabla normal estándar.
 
 - A) 0,1587 · CORRECTA
@@ -73,7 +73,7 @@ Dos líneas de producción son independientes. El tiempo de ciclo de la línea 1
 
 solución: E[X̄₁ − X̄₂] = 40 − 38 = 2. Las muestras son independientes, así que Var(X̄₁ − X̄₂) = 36/36 + 18/32 = 1 + 0,5625 = 1,5625 y la desviación estándar es 1,25. Con tamaños mayores que 30 el TLC permite usar la normal: z = (3,25 − 2)/1,25 = 1,00 y P = 1 − 0,8413 = 0,1587.
 
-### P36 · dificultad 1 · kc: distribuciones-muestrales · borrador · origen: ia (sonnet-5.5)
+### P36 · dificultad 1 · kc: distribuciones-muestrales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 De una población normal se toma una muestra de n = 12 mediciones y resulta una varianza muestral s² = 14. Se supone que σ² = 9. ¿Cuál es el valor observado del estadístico que sigue una distribución chi-cuadrado? Redondea a dos decimales.
 
 - A) 17,11 · CORRECTA
@@ -83,7 +83,7 @@ De una población normal se toma una muestra de n = 12 mediciones y resulta una 
 
 solución: el estadístico es (n − 1)S²/σ² = 11·14/9 ≈ 17,11, que sigue una chi-cuadrado con n − 1 = 11 grados de libertad.
 
-### P37 · dificultad 2 · kc: distribuciones-muestrales · borrador · origen: ia (sonnet-5.5)
+### P37 · dificultad 2 · kc: distribuciones-muestrales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un sensor de temperatura de un horno industrial registró n = 11 lecturas, de una población normal, con desviación estándar muestral s = 1,8 °C (así que s² = 3,24). Con 10 grados de libertad: χ²₀,₀₂₅ = 20,483 y χ²₀,₉₇₅ = 3,247. Con 11 grados de libertad: χ²₀,₀₂₅ = 21,920 y χ²₀,₉₇₅ = 3,816. Construye un intervalo al 95% de confianza para la desviación estándar poblacional σ. Redondea a dos decimales.
 
 - A) (1,26; 3,16) · CORRECTA
@@ -93,7 +93,7 @@ Un sensor de temperatura de un horno industrial registró n = 11 lecturas, de un
 
 solución: el intervalo de σ² es (10·3,24/20,483; 10·3,24/3,247) = (1,58; 9,98), con n − 1 = 10 grados de libertad. Como piden σ se saca la raíz de cada extremo: (√1,58; √9,98) = (1,26; 3,16).
 
-### P38 · dificultad 2 · kc: distribuciones-muestrales · borrador · origen: ia (sonnet-5.5)
+### P38 · dificultad 2 · kc: distribuciones-muestrales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Se toman dos muestras independientes de poblaciones normales con la misma varianza: n₁ = 7 y n₂ = 11. Sean S₁² y S₂² sus varianzas muestrales. Se busca el valor c tal que P(S₁²/S₂² < c) = 0,05. Valores de tabla para F₀,₀₅ (cola superior) según los grados de libertad (numerador, denominador): (6, 10): 3,22; (10, 6): 4,06; (7, 11): 3,01; (11, 7): 3,60. Redondea c a tres decimales.
 
 - A) 0,246 · CORRECTA
@@ -103,7 +103,7 @@ Se toman dos muestras independientes de poblaciones normales con la misma varian
 
 solución: S₁²/S₂² sigue una F con (n₁ − 1, n₂ − 1) = (6, 10) grados de libertad. El cuantil de cola inferior se obtiene con el recíproco del cuantil de cola superior con los grados de libertad intercambiados: c = 1/F₀,₀₅(10, 6) = 1/4,06 ≈ 0,246.
 
-### P39 · dificultad 3 · kc: distribuciones-muestrales · borrador · origen: ia (sonnet-5.5)
+### P39 · dificultad 3 · kc: distribuciones-muestrales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Dos muestras independientes de poblaciones normales dan n₁ = 9, s₁² = 18 y n₂ = 13, s₂² = 6. Para un intervalo de confianza del 90% de σ₁²/σ₂², los valores de tabla son F₀,₀₅ (cola superior) con (8, 12) grados de libertad: 2,85, y con (12, 8): 3,28. ¿Cuál es el intervalo? Redondea a dos decimales.
 
 - A) (1,05; 9,84) · CORRECTA
@@ -113,7 +113,7 @@ Dos muestras independientes de poblaciones normales dan n₁ = 9, s₁² = 18 y 
 
 solución: el cociente de las varianzas muestrales es 18/6 = 3. Con 8 y 12 grados de libertad, el extremo inferior es 3/F₀,₀₅(8, 12) = 3/2,85 ≈ 1,05 y el superior es 3·F₀,₀₅(12, 8) = 3·3,28 ≈ 9,84. El intervalo de σ₁²/σ₂² es (1,05; 9,84).
 
-### P40 · dificultad 3 · kc: distribuciones-muestrales · borrador · origen: ia (sonnet-5.5)
+### P40 · dificultad 3 · kc: distribuciones-muestrales · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Una muestra de n = 25 diámetros de una población normal tiene s = 3 (s² = 9). Con 24 grados de libertad: χ²₀,₀₅ = 36,415 y χ²₀,₉₅ = 13,848. ¿Cuál es el límite superior del intervalo de confianza del 90% para la desviación estándar poblacional σ? Redondea a dos decimales.
 
 - A) 3,95 · CORRECTA

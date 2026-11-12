@@ -32,7 +32,7 @@ Para construir un intervalo de confianza para μ cuando σ es desconocida y n < 
 - C) No se puede construir el intervalo · [inferencia-e8]
 - D) Usas la distribución chi-cuadrado · [inferencia-e9]
 
-### P47 · dificultad 1 · kc: inferencia · borrador · origen: ia (sonnet-5.5)
+### P47 · dificultad 1 · kc: inferencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un ingeniero de procesos mide 40 ciclos de una máquina y construye un intervalo de confianza del 95% para el tiempo medio de ciclo: (12,4; 15,6) minutos. ¿Cuál afirmación es correcta?
 
 - A) La probabilidad de que μ esté entre 12,4 y 15,6 es 0,95, porque el intervalo ya está calculado · [inferencia-e1] tratas el 95% como la probabilidad de que μ caiga dentro de este intervalo ya calculado
@@ -42,7 +42,7 @@ Un ingeniero de procesos mide 40 ciclos de una máquina y construye un intervalo
 
 solución: el intervalo es x̄ ± margen, así que x̄ = (12,4 + 15,6)/2 = 14,0 y el margen de error es (15,6 − 12,4)/2 = 1,6. El 95% describe el método (de muchos intervalos construidos así, cerca del 95% contiene a μ), no la probabilidad de este intervalo ni la proporción de datos que cubre, y μ sigue siendo desconocida.
 
-### P48 · dificultad 2 · kc: inferencia · borrador · origen: ia (sonnet-5.5)
+### P48 · dificultad 2 · kc: inferencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Un taller mide la resistencia a la tracción de 25 cables de acero de un mismo lote, con distribución aproximadamente normal, y obtiene x̄ = 48,3 kN y s = 3,5 kN. La desviación estándar de la población no se conoce. Calcula el IC al 95% de la resistencia media del lote (redondea a dos decimales; usa t₀,₀₂₅ = 2,064 con 24 grados de libertad; para comparar: z₀,₀₂₅ = 1,96 y t₀,₀₅ = 1,711 con 24 grados de libertad):
 
 - A) (47,10; 49,50) · [ic-cuantil-una-cola-en-bilateral] usas t₀,₀₅ = 1,711, el cuantil de una cola, en un intervalo que deja 2,5% en cada cola
@@ -52,7 +52,7 @@ Un taller mide la resistencia a la tracción de 25 cables de acero de un mismo l
 
 solución: σ es desconocida y n = 25, así que se usa t con n − 1 = 24 grados de libertad. El error estándar es s/√n = 3,5/5 = 0,7 y el margen es 2,064 × 0,7 = 1,4448. El intervalo es 48,3 ± 1,4448 = (46,86; 49,74). Con z saldría ±1,372 y con t₀,₀₅ saldría ±1,198.
 
-### P49 · dificultad 3 · kc: inferencia · borrador · origen: ia (sonnet-5.5)
+### P49 · dificultad 3 · kc: inferencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 Dos máquinas llenan frascos con un reactivo. Las poblaciones son normales y las desviaciones estándar se conocen por calibración: σ₁ = 3 mL y σ₂ = 4 mL. Con 8 frascos de la máquina 1 se obtuvo x̄₁ = 54,2 mL y con 10 frascos de la máquina 2, x̄₂ = 51,6 mL. El intervalo de confianza del 90% para μ₁ − μ₂ es (redondea a dos decimales; z₀,₀₅ = 1,645, z₀,₁₀ = 1,282 y t₀,₀₅ = 1,746 con 16 grados de libertad):
 
 - A) (−0,12; 5,32) · CORRECTA
@@ -62,7 +62,7 @@ Dos máquinas llenan frascos con un reactivo. Las poblaciones son normales y las
 
 solución: con σ conocidas se usa Z. La diferencia de medias es 54,2 − 51,6 = 2,6. El error estándar es √(σ₁²/n₁ + σ₂²/n₂) = √(9/8 + 16/10) = √2,725 = 1,6508. Para 90%, z₀,₀₅ = 1,645, así que el margen es 1,645 × 1,6508 = 2,7155 y el intervalo es 2,6 ± 2,7155 = (−0,12; 5,32). Como contiene el 0, con este nivel no se puede afirmar que las medias difieran.
 
-### P50 · dificultad 3 · kc: inferencia · borrador · origen: ia (sonnet-5.5)
+### P50 · dificultad 3 · kc: inferencia · revisada · origen: ia (sonnet-5.5) · revisó: dvarela5101
 En un lote se inspeccionan 40 rodamientos y 12 resultan defectuosos. El intervalo de confianza del 99% para la proporción p de defectuosos del lote es (redondea a tres decimales; z₀,₀₀₅ = 2,576, z₀,₀₁ = 2,326 y t₀,₀₀₅ = 2,708 con 39 grados de libertad):
 
 - A) (0,104; 0,496) · [inferencia-e9] usas el cuantil t con n − 1 grados de libertad, que es de una media, para una proporción
