@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { TEXTOS_DE_ERROR, datosDelRegistro } from "@/components/textosDeError";
+import { reportarError } from "@/lib/monitoreo/reportar";
 
 /**
  * HU-133: lo que se ve cuando una página falla al renderizarse. Envuelve la página y sus hijos, no el layout raíz (eso es
@@ -13,6 +14,7 @@ import { TEXTOS_DE_ERROR, datosDelRegistro } from "@/components/textosDeError";
 export default function ErrorDePagina({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   useEffect(() => {
     console.error("Error al mostrar la página", datosDelRegistro(error));
+    reportarError(error); // HU-138: sin DSN no hace nada
   }, [error]);
 
   return (

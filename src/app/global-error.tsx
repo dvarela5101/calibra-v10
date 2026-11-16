@@ -5,6 +5,7 @@ import formulario from "@/components/formulario.module.css";
 import estilos from "@/components/pantalla.module.css";
 import { TEXTOS_DE_ERROR, datosDelRegistro } from "@/components/textosDeError";
 import { IDIOMA } from "@/config/regional";
+import { reportarError } from "@/lib/monitoreo/reportar";
 // Reemplaza al layout raíz, así que trae sus propios estilos (la guía de Next: `global-error` define su `<html>`, estilos y
 // dependencias). Sin la fuente Inter: si el layout falló, el texto sale en la del sistema (el cuerpo ya la lista de respaldo).
 import "@/styles/tokens.css";
@@ -17,6 +18,7 @@ import "./globals.css";
 export default function ErrorGlobal({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   useEffect(() => {
     console.error("Error en el layout raíz", datosDelRegistro(error));
+    reportarError(error); // HU-138: sin DSN no hace nada
   }, [error]);
 
   return (
