@@ -7,6 +7,7 @@ import { exigirRol } from "@/lib/auth/sesion";
 import { RUTA_PERFIL } from "@/lib/monitores/perfil";
 import { RUTA_AVISO } from "@/lib/privacidad/consentimiento";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { FormularioLlave } from "./FormularioLlave";
 import { FormularioPerfil } from "./FormularioPerfil";
 import estilos from "./perfil.module.css";
 
@@ -19,9 +20,11 @@ export const metadata: Metadata = { title: "Mi perfil · Calibra" };
 export default async function MiPerfil() {
   const sesion = await exigirRol("monitor", RUTA_PERFIL);
   const supabase = await crearClienteServidor();
-  const [{ data: monitor }, { data: perfil, error }] = await Promise.all([
+  const [{ data: monitor }, { data: perfil, error }, { data: privado }] = await Promise.all([
     supabase!.from("monitor").select("nombre").eq("id", sesion.idUsuario).maybeSingle(),
     supabase!.from("perfil_monitor").select("carrera, semestre, presentacion").eq("id_monitor", sesion.idUsuario).maybeSingle(),
+    // HU-123 (D-89 c): la llave vive aquí. Si no carga, el perfil funciona y esa sección no se pinta.
+    supabase!.from("monitor_privado").select("llave").eq("id_monitor", sesion.idUsuario).maybeSingle(),
   ]);
   if (error) console.error("[monitor] no se pudo leer el perfil:", error.code);
 
@@ -65,9 +68,19 @@ export default async function MiPerfil() {
         </>
       )}
 
-      <Link href="/monitor" className={formulario.enlace}>
-        Volver a mi panel
-      </Link>
+      {!privado && (
+        <p role="alert" className={formulario.error}>
+          No pudimos cargar tu llave de pago. Recarga la página; si sigue igual, avisa al equipo.
+        </p>
+      )}
+      {privado && (
+        <section aria-labelledby="llave-de-pago" className={estilos.seccion}>
+          <h2 id="llave-de-pago" className={estilos.titulo}>
+            Dónde recibes tus pagos
+          </h2>
+          <FormularioLlave llave={privado.llave} />
+        </section>
+      )}
     </Pantalla>
   );
 }

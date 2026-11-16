@@ -440,7 +440,7 @@ test.describe("El monitor abre Mis desembolsos desde su panel y ve cada situaci�
     await test.step("desde su panel toca «Mis desembolsos», junto a «Mi agenda»", async () => {
       await entrar(page, "/monitor", monitor);
       const enlaces = page.getByRole("link", { name: /^(Mi agenda|Mis desembolsos|Mis franjas)$/ });
-      await expect(enlaces).toHaveText(["Mi agenda", "Mis desembolsos", "Mis franjas"]);
+      await expect(enlaces).toHaveText(["Mi agenda", "Mis franjas", "Mis desembolsos"]);
       await expectReglasDelProducto(page, "el panel con el enlace a Mis desembolsos");
       await page.getByRole("link", { name: "Mis desembolsos" }).click();
       await expect(page).toHaveURL(RUTA, ESPERA);
@@ -744,7 +744,8 @@ test.describe("Otro monitor, sin desembolsos, solo ve el mensaje de que todavía
     await expect(page.getByRole("status").filter({ hasText: "Todavía no tienes desembolsos. Aparece uno cuando una monitoría tuya queda realizada." })).toBeVisible();
     await expect(page.getByRole("heading", { level: 2 })).toHaveCount(0);
     await expect(page.locator("dl")).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "Volver a mi panel" })).toBeVisible();
+    // HU-123: la navegación fija reemplaza a «Volver a mi panel».
+    await expect(page.getByRole("link", { name: "Volver a mi panel" })).toHaveCount(0);
     await expect(page.locator("body")).not.toContainText("Por transferir");
 
     await expectSinComision(page, del, "Mis desembolsos de otro monitor");
@@ -753,7 +754,7 @@ test.describe("Otro monitor, sin desembolsos, solo ve el mensaje de que todavía
     expect(html).not.toContain(escenario.llave);
     await expectReglasDelProducto(page, "Mis desembolsos de un monitor sin desembolsos");
 
-    await page.getByRole("link", { name: "Volver a mi panel" }).click();
+    await page.getByRole("navigation", { name: "Secciones del monitor" }).getByRole("link", { name: "Inicio" }).click();
     await expect(page).toHaveURL("/monitor", ESPERA);
   });
 });

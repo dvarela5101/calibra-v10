@@ -105,10 +105,6 @@ export default async function MisFranjas({ searchParams }: PageProps<"/monitor/f
           </ul>
         </section>
       )}
-
-      <Link href="/monitor" className={formulario.enlace}>
-        Volver a mi panel
-      </Link>
     </Pantalla>
   );
 }

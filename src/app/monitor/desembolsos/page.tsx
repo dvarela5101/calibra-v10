@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
 import { exigirRol } from "@/lib/auth/sesion";
@@ -32,9 +31,6 @@ export default async function MisDesembolsos() {
         <p role="alert" className={formulario.error}>
           No pudimos cargar tus desembolsos. Recarga la página; si sigue igual, avisa al equipo.
         </p>
-        <Link href="/monitor" className={formulario.enlace}>
-          Volver a mi panel
-        </Link>
       </Pantalla>
     );
   }
@@ -99,10 +95,6 @@ export default async function MisDesembolsos() {
           )}
         </>
       )}
-
-      <Link href="/monitor" className={formulario.enlace}>
-        Volver a mi panel
-      </Link>
     </Pantalla>
   );
 }

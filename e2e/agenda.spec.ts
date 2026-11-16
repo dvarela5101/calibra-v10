@@ -351,8 +351,8 @@ test.describe("Criterios 1, 2 y 4 · próximas y pasadas, cada tarjeta con su de
       await expectReglasDelProducto(page, "mi agenda con todos los estados");
     });
 
-    await test.step("Volver a mi panel lleva al panel", async () => {
-      await page.getByRole("link", { name: "Volver a mi panel" }).click();
+    await test.step("«Inicio», en la navegación fija, lleva al panel (HU-123)", async () => {
+      await page.getByRole("navigation", { name: "Secciones del monitor" }).getByRole("link", { name: "Inicio" }).click();
       await expect(page).toHaveURL("/monitor", ESPERA);
       // El panel ahora tiene el enlace a la agenda: sus áreas táctiles también cuentan.
       await expect(page.getByRole("link", { name: "Mi agenda" })).toBeVisible();

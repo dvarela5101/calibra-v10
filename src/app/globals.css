@@ -66,6 +66,13 @@ body:has([data-barra-fija]) {
   overflow-x: clip;
 }
 
+/* HU-123: la barra del monitor va pegada abajo hasta 1023 px: al llevar algo a la vista (foco, ancla) se deja ese espacio libre. */
+@media (max-width: 1023px) {
+  html:has([data-menu-monitor]) {
+    scroll-padding-block-end: 72px;
+  }
+}
+
 :focus-visible {
   outline: 3px solid var(--primary);
   outline-offset: 2px;

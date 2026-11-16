@@ -382,7 +382,7 @@ test.describe("Criterio 1 y D-15 · el monitor finaliza una confirmada cuyo inic
     });
 
     await test.step("D-15: de vuelta en el panel ya no hay recordatorio", async () => {
-      await page.getByRole("link", { name: "Volver a mi panel" }).click();
+      await page.getByRole("navigation", { name: "Secciones del monitor" }).getByRole("link", { name: "Inicio" }).click();
       await expect(page).toHaveURL("/monitor", ESPERA);
       await expect(page.getByRole("heading", { level: 1, name: `Hola, ${monitor.nombre}` })).toBeVisible(ESPERA);
       await expect(page.getByRole("link", { name: "Mi agenda" })).toBeVisible();
