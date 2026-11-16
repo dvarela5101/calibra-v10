@@ -1448,6 +1448,11 @@ isOneToOne: false
 "cierre_automatico_desde":
 { Args: { "p_fin_programado": string }; Returns: string
                            },
+"cifras_del_banco":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "errores": number,"materias": number,"preguntas": number
+            }[]
+                           },
 "cita_por_token":
 { Args: { "p_token": string }; Returns: {
               "cancelable_hasta": string,"codigo_materia": string,"duracion_min": number,"enlace": string,"estado": Database["public"]['Enums']["estado_monitoria"],"estado_pago": string,"estado_reembolso": string,"estado_reporte": string,"fecha": string,"fin_programado": string,"gratis": boolean,"hora": string,"id_monitoria": string,"inicio": string,"lugar": string,"motivo_cancelacion": Database["public"]['Enums']["motivo_cancelacion"],"nombre_materia": string,"nombre_monitor": string,"observaciones_reporte": string,"presencial": boolean,"reporte_hasta": string,"valor_total": number
