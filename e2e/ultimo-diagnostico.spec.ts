@@ -535,7 +535,7 @@ test("Vuelve · desde el mismo navegador ve su último diagnóstico con las cifr
   expect(primera?.status()).toBe(200);
   exigirSinCachePublico(primera, "la primera visita, sin sesión");
   await expectInicioNormal(page, "la primera visita");
-  await expect(page).toHaveTitle("Calibra");
+  await expect(page).toHaveTitle("Calibra · Monitorías de ciclo básico que empiezan por tu error");
   const sesion = await esperarSesion(context);
 
   const sembrado = await sembrarElDeEjemplo(siembra, sesion.id, evaluacion);

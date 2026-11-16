@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { connection } from "next/server";
 import { AccesoDeCabecera } from "@/components/AccesoDeCabecera";
 import { ResultadoDelDiagnostico } from "@/components/diagnostico/ResultadoDelDiagnostico";
@@ -7,6 +8,20 @@ import type { ResultadoParaMostrar } from "@/lib/diagnostico/mostrar";
 import { ultimoDiagnosticoDeLaSesion } from "@/lib/diagnostico/ultimo";
 import { cifrasDelBancoParaLaPortada } from "@/lib/portada/cifras-del-banco";
 import { parametrosParaLaPortada } from "@/lib/portada/parametros";
+import { DESCRIPCION_DEL_SITIO, NOMBRE_DEL_SITIO, TITULO_DEL_SITIO } from "@/lib/sitio";
+
+// HU-135: la portada fija su `og:url` (el `openGraph` de una página reemplaza al del layout, por eso repite los demás campos).
+export const metadata: Metadata = {
+  title: TITULO_DEL_SITIO,
+  openGraph: {
+    title: TITULO_DEL_SITIO,
+    description: DESCRIPCION_DEL_SITIO,
+    url: "/",
+    siteName: NOMBRE_DEL_SITIO,
+    locale: "es_CO",
+    type: "website",
+  },
+};
 
 /**
  * HU-011: la portada. Quien ya hizo un diagnóstico desde este navegador ve el último (D-53 d: uno solo, el más reciente, de

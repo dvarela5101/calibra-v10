@@ -19,7 +19,8 @@ import estilos from "../../agendar.module.css";
 import { ResumenDeCita } from "../../ResumenDeCita";
 import { PagoPorLlave, ReservaExpirada } from "./PagoPorLlave";
 
-export const metadata: Metadata = { title: "Tu reserva · Calibra" };
+// Datos de una reserva: que no quede en buscadores.
+export const metadata: Metadata = { title: "Tu reserva · Calibra", robots: { index: false, follow: false } };
 
 const EYEBROW = "Tu reserva";
 
