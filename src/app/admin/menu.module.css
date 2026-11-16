@@ -28,20 +28,18 @@
   cursor: pointer;
 }
 
+/* Un triángulo hecho con bordes: girado no ocupa más que su caja, así el botón no se desborda. */
 .flecha {
   flex: none;
-  inline-size: 9px;
-  block-size: 9px;
-  margin-block-end: 4px;
-  border-inline-end: 2px solid var(--muted);
-  border-block-end: 2px solid var(--muted);
-  transform: rotate(45deg);
+  inline-size: 0;
+  block-size: 0;
+  border-inline: 5px solid transparent;
+  border-block-start: 6px solid var(--muted);
   transition: transform var(--transicion);
 }
 
 .boton[aria-expanded="true"] .flecha {
-  margin-block-end: -4px;
-  transform: rotate(225deg);
+  transform: rotate(180deg);
 }
 
 .secciones {
