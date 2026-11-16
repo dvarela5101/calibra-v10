@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { BotonSalir } from "@/components/BotonSalir";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
@@ -48,30 +47,6 @@ export default async function PanelAdmin({ searchParams }: PageProps<"/admin">) 
           No pudimos cargar tu bandeja. Recarga la página; si sigue igual, avisa al equipo.
         </p>
       )}
-      <Link href="/admin/citas" className={formulario.enlace}>
-        Citas sin plazo para cancelar
-      </Link>
-      <Link href="/admin/monitores" className={formulario.enlace}>
-        Invitar a un monitor
-      </Link>
-      <Link href="/admin/certificados" className={formulario.enlace}>
-        Certificar monitores
-      </Link>
-      <Link href="/admin/materias" className={formulario.enlace}>
-        Materias y evaluaciones
-      </Link>
-      <Link href="/admin/franjas" className={formulario.enlace}>
-        Franjas de oferta
-      </Link>
-      <Link href="/admin/solicitudes" className={formulario.enlace}>
-        Solicitudes para ser monitor
-      </Link>
-      <Link href="/admin/leads" className={formulario.enlace}>
-        Leads
-      </Link>
-      <Link href="/admin/equipo" className={formulario.enlace}>
-        Equipo de admins
-      </Link>
       <BotonSalir />
     </Pantalla>
   );

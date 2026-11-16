@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { enviarCredenciales, expect, test, type Cuenta } from "./utilidades";
+import { enviarCredenciales, irASeccionDelPanel, expect, test, type Cuenta } from "./utilidades";
 
 // HU-054: el equipo de admins en /admin/equipo. Corre contra el Supabase local con admins que crea y borra cada
 // prueba. Otras pruebas crean admins en paralelo y la lista es de todos: solo se miran las tarjetas propias.
@@ -12,7 +12,7 @@ async function entrar(page: Page, cuenta: Cuenta): Promise<void> {
   await expect(page).toHaveURL(`/ingresar?siguiente=${encodeURIComponent("/admin")}`, ESPERA);
   await enviarCredenciales(page, cuenta.correo, cuenta.contrasena);
   await expect(page).toHaveURL("/admin", ESPERA);
-  await page.getByRole("link", { name: "Equipo de admins" }).click();
+  await irASeccionDelPanel(page, "Equipo");
   await expect(page).toHaveURL(RUTA, ESPERA);
 }
 

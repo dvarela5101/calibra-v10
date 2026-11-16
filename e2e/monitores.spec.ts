@@ -1,4 +1,4 @@
-import { expect, test, enviarCredenciales, contrasenaAleatoria, correoUnico, type Cuenta, type Cuentas } from "./utilidades";
+import { expect, test, enviarCredenciales, irASeccionDelPanel, contrasenaAleatoria, correoUnico, type Cuenta, type Cuentas } from "./utilidades";
 
 // HU-013: cuenta de monitor por invitación. Corre contra el Supabase local (Auth, base y Mailpit)
 // con cuentas que crea y borra cada prueba.
@@ -35,7 +35,7 @@ test.describe("Criterios 1 a 3 y 7 · invitar y registrarse", () => {
     await expect(page).toHaveURL("/ingresar?siguiente=%2Fadmin", ESPERA);
     await enviarCredenciales(page, admin.correo, admin.contrasena);
     await expect(page).toHaveURL("/admin", ESPERA);
-    await page.getByRole("link", { name: "Invitar a un monitor" }).click();
+    await irASeccionDelPanel(page, "Monitores");
     await expect(page).toHaveURL("/admin/monitores", ESPERA);
 
     await page.getByLabel("Correo del aspirante").fill(correo);

@@ -1,0 +1,51 @@
+/* Menú del panel del admin (HU-137): una franja arriba de todas las páginas de /admin, con la columna de siempre. */
+
+.barra {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 10;
+  background: var(--bg);
+  border-block-end: 1px solid var(--border);
+}
+
+.carril {
+  display: flex;
+  gap: var(--e1);
+  max-inline-size: var(--col);
+  margin-inline: auto;
+  padding-inline: max(var(--pad-x), env(safe-area-inset-left)) max(var(--pad-x), env(safe-area-inset-right));
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.carril::-webkit-scrollbar {
+  display: none;
+}
+
+.enlace {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--toque-min);
+  padding-inline: var(--e3);
+  font-size: var(--texto-min);
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--muted);
+  text-decoration: none;
+  border-block-end: 3px solid transparent;
+  transition: color var(--transicion);
+}
+
+.enlace[aria-current="page"] {
+  color: var(--primary);
+  font-weight: 700;
+  border-block-end-color: var(--primary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .enlace:not([aria-current="page"]):hover {
+    color: var(--text);
+  }
+}

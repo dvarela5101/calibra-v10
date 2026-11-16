@@ -4,6 +4,7 @@ import {
   contrasenaAleatoria,
   correoUnico,
   enviarCredenciales,
+  irASeccionDelPanel,
   expect,
   test,
   usarTurnstileDePrueba,
@@ -28,7 +29,7 @@ async function entrar(page: Page, cuenta: Cuenta): Promise<void> {
   await expect(page).toHaveURL(`/ingresar?siguiente=${encodeURIComponent("/admin")}`, ESPERA);
   await enviarCredenciales(page, cuenta.correo, cuenta.contrasena);
   await expect(page).toHaveURL("/admin", ESPERA);
-  await page.getByRole("link", { name: "Equipo de admins" }).click();
+  await irASeccionDelPanel(page, "Equipo");
   await expect(page).toHaveURL(RUTA, ESPERA);
 }
 
