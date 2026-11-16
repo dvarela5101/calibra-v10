@@ -1,11 +1,10 @@
 # Backlog de HUs
 
-_Generado automaticamente: 2026-11-16 01:21. No editar a mano; usa `scripts/backlog.py`._
+_Generado automaticamente: 2026-11-16 02:22. No editar a mano; usa `scripts/backlog.py`._
 
 | ID | Titulo | Estado | Prio | Talla | Depende de |
 |---|---|---|---|---|---|
 | [HU-086](backlog/HU-086.md) | [Estudiante] Ligar a mi cita un diagnóstico hecho después de agendar | Backlog | P1 | M | HU-022, HU-019 |
-| [HU-123](backlog/HU-123.md) | [Monitor] Rediseñar mi panel: dejar la lista de enlaces y ver lo importante de un vistazo | Backlog | P1 | L | HU-021, HU-049, HU-050 |
 | [HU-088](backlog/HU-088.md) | [Estudiante] Ver la calificación y las reseñas del monitor en su tarjeta | Backlog | P2 | M | HU-049, HU-035 |
 | [HU-090](backlog/HU-090.md) | [Admin] Registrar desde la gestión de leads el retiro de la autorización de datos | Backlog | P2 | S | HU-053, HU-085 |
 | [HU-033](backlog/HU-033.md) | [Estudiante] Gestionar mis citas y diagnósticos desde mi cuenta | Lista | P1 | M | HU-032, HU-019, HU-024, HU-029, HU-009, HU-081 |
@@ -24,6 +23,7 @@ _Generado automaticamente: 2026-11-16 01:21. No editar a mano; usa `scripts/back
 | [HU-085](backlog/HU-085.md) | [Sistema] Borrar o anonimizar los datos de un Lead o aspirante que retiró su autorización o lleva 24 meses sin actividad | Lista | P2 | L | HU-056, HU-006, HU-062, HU-068 |
 | [HU-092](backlog/HU-092.md) | [Monitor] Marcar en mi perfil los temas en los que soy fuerte | Lista | P2 | M | HU-049 |
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | En progreso | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056, HU-084, HU-089, HU-095, HU-096, HU-097, HU-091, HU-103 |
+| [HU-123](backlog/HU-123.md) | [Monitor] Rediseñar mi panel: dejar la lista de enlaces y ver lo importante de un vistazo | En progreso | P1 | L | HU-021, HU-049, HU-050 |
 | [HU-139](backlog/HU-139.md) | [Todos] Las acciones se ven como botones y no como enlaces de texto | En progreso | P1 | S |  |
 | [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
 | [HU-128](backlog/HU-128.md) | Contenido: Probabilidad y Estadística (IIND-2106) con el Parcial 2 del programa 2026-2 y el examen final | En revision | P0 | L |  |
