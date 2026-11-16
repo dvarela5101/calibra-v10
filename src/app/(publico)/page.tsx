@@ -5,6 +5,7 @@ import { Pantalla } from "@/components/Pantalla";
 import { Portada } from "@/components/portada/Portada";
 import type { ResultadoParaMostrar } from "@/lib/diagnostico/mostrar";
 import { ultimoDiagnosticoDeLaSesion } from "@/lib/diagnostico/ultimo";
+import { cifrasDelBancoParaLaPortada } from "@/lib/portada/cifras-del-banco";
 import { parametrosParaLaPortada } from "@/lib/portada/parametros";
 
 /**
@@ -20,7 +21,9 @@ export default async function Inicio() {
   const ultimo = await ultimoDiagnosticoDeLaSesion();
   if (ultimo) return <PortadaConResultado resultado={ultimo} />;
   // HU-108: la landing. Los plazos que citan las preguntas frecuentes se leen aquí, no dentro de un componente asíncrono.
-  return <Portada parametros={await parametrosParaLaPortada()} />;
+  // HU-134: las cifras del banco, también aquí y en paralelo; si no se leen, la portada sale sin números.
+  const [parametros, cifras] = await Promise.all([parametrosParaLaPortada(), cifrasDelBancoParaLaPortada()]);
+  return <Portada parametros={parametros} cifras={cifras} />;
 }
 
 /**
