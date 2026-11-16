@@ -504,6 +504,15 @@ Todavía no. Se hace una sola vez, cuando el flujo principal esté listo, y lo g
   - Revisa si los **eventos personalizados** (`clic_cta_diagnostico` con su `ubicacion`, `clic_iniciar_sesion`, `diagnostico_terminado` con la `materia` y `contacto_dejado`) están en tu plan de Vercel: en el plan gratuito pueden no estar. Sin ellos se cuentan las visitas, pero no la conversión.
   - La tasa de conversión de la portada es `clic_cta_diagnostico` ÷ visitantes únicos de `/`, en **Analytics**, **Events**.
   - Antes de mandar tráfico, revisa a mano las cifras del banco de la landing contra lo activo en producción (D-77 d): «8 materias, más de 250 preguntas y más de 400 errores típicos» (el 28-oct, el banco de `main` tenía 263 preguntas y 445 errores revisados).
+- [ ] **Monitoreo de errores con Sentry (HU-138), deuda técnica (D-18).** La app ya trae el código, apagado: sin las variables no se inicializa nada ni sale ninguna petición. Para encenderlo:
+  - Crea la cuenta en sentry.io (plan **Developer**, gratis) y, en **Projects**, **Create Project**, la plataforma **Next.js**, con el nombre «calibra». Salta el asistente de instalación: el código ya está.
+  - Copia el **DSN** (**Settings**, **Projects**, calibra, **Client Keys (DSN)**). No es secreto.
+  - En Vercel, **Settings**, **Environment Variables**, carga en **Production** `SENTRY_DSN` y `NEXT_PUBLIC_SENTRY_DSN`, las dos con el mismo DSN, y vuelve a desplegar (la pública se incorpora al compilar). No las cargues en Preview ni Development salvo que quieras ver también los errores de los previews.
+  - Alerta por correo: en Sentry, **Alerts**, **Create Alert**, **Issues**, condición «A new issue is created» (y, si quieres, «Issue changes state from resolved to unresolved»), acción **Send a notification to** tu correo. El plan gratis permite una alerta así.
+  - Probar que llega: ya con las variables y el despliegue en producción, abre el sitio y en la consola del navegador escribe `setTimeout(() => { throw new Error("Prueba de Sentry") })`. En un minuto debe aparecer en **Issues**, con el entorno `production` y la versión (el SHA del despliegue). Si no aparece, revisa que el DSN esté en las dos variables y que se haya vuelto a desplegar.
+  - Qué se envía y qué no: solo errores, sin trazas de rendimiento ni grabación de sesión. Antes de salir de la app, el código quita correos, teléfonos, números largos, llaves, tokens, la cadena de consulta de las URL y los ids de las rutas. No se envían cookies, cabeceras ni cuerpos de petición, ni la IP.
+  - **Decisión tuya:** Sentry recibe los errores (mensaje, pila, ruta y navegador) y es un encargado fuera del país (sus servidores están en EE. UU.). Si el aviso de privacidad (`/privacidad`) debe mencionarlo, como ya menciona a Cloudflare, está pendiente; no se tocó en HU-138.
+  - Siguiente paso, fuera de HU-138: subir los source maps para ver la pila con el código original; necesita `SENTRY_AUTH_TOKEN` en el build.
 
 ---
 
