@@ -71,11 +71,19 @@
   flex-direction: column;
 }
 
+/* HU-139: «Agendar» con forma de botón dentro de la fila; toda la fila sigue siendo el enlace. */
 .agendar {
+  display: inline-flex;
   flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 40px;
+  padding: 6px 14px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: var(--r-chico);
   font-size: 15px;
   font-weight: 600;
-  color: var(--primary);
 }
 
 .dia {

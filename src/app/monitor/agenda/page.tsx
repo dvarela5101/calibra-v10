@@ -185,7 +185,7 @@ function ListaDeMonitorias({ monitorias, lugares, ahora }: { monitorias: Monitor
 function EnlaceDelDiagnostico({ monitoria: m, ahora }: { monitoria: MonitoriaDeAgenda; ahora: Date }) {
   if (!sePuedeVerDiagnostico(m.estado, finDeSesionDe(m), ahora)) return null;
   return (
-    <Link href={rutaDelDiagnosticoDeLaCita(m.idMonitoria)} aria-describedby={`cabeza-${m.idMonitoria}`} className={formulario.enlace}>
+    <Link href={rutaDelDiagnosticoDeLaCita(m.idMonitoria)} aria-describedby={`cabeza-${m.idMonitoria}`} className={`${formulario.enlace} ${estilos.accion}`}>
       {TEXTOS.verDiagnostico}
     </Link>
   );

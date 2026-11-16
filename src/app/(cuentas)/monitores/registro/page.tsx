@@ -58,7 +58,7 @@ export default async function RegistroMonitor({ searchParams }: PageProps<"/moni
         titulo="Necesitas una invitación vigente"
         subtitulo="Las cuentas de monitor se crean con una invitación del equipo de Calibra, después de la evaluación presencial. Este enlace no sirve: ya se usó, venció o está incompleto. Pide otra invitación al equipo."
       >
-        <Link href="/ingresar" className={formulario.enlace}>
+        <Link href="/ingresar" className={formulario.enlaceDeTexto}>
           ¿Ya tienes cuenta? Inicia sesión
         </Link>
       </Pantalla>

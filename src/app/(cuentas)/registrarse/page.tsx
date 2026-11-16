@@ -44,7 +44,7 @@ export default async function Registrarse() {
           Enviar mi solicitud
         </Link>
       </section>
-      <Link href={RUTA_DE_INGRESO} className={formulario.enlace}>
+      <Link href={RUTA_DE_INGRESO} className={formulario.enlaceDeTexto}>
         ¿Ya tienes cuenta? Inicia sesión
       </Link>
     </Pantalla>
