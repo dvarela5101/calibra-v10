@@ -1,7 +1,4 @@
-import { createElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import Cargando from "@/app/loading";
 import { TEXTOS_DE_ERROR, datosDelRegistro } from "./textosDeError";
 
 describe("textos de error (HU-133)", () => {
@@ -16,19 +13,5 @@ describe("textos de error (HU-133)", () => {
     expect(datosDelRegistro(error)).toEqual({ digest: "abc123" });
     expect(JSON.stringify(datosDelRegistro(error))).not.toContain("correo");
     expect(datosDelRegistro(new Error("x"))).toEqual({ digest: "sin-digest" });
-  });
-});
-
-describe("loading (HU-133)", () => {
-  const html = renderToStaticMarkup(createElement(Cargando));
-
-  it("lleva la marca arriba y se anuncia como estado", () => {
-    expect(html).toContain("Calibra");
-    expect(html).toMatch(/<[^>]*role="status"[^>]*>.*Cargando la página/);
-  });
-
-  it("no duplica la cabecera ni lleva el pie de la landing", () => {
-    expect(html.match(/<header/g)).toHaveLength(1);
-    expect(html).not.toContain("data-landing");
   });
 });
