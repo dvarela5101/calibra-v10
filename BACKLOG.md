@@ -21,11 +21,11 @@ _Generado automaticamente: 2026-11-15 21:17. No editar a mano; usa `scripts/back
 | [HU-045](backlog/HU-045.md) | [Estudiante] Reportar inasistencia del monitor en mi grupal | Lista | P1 | XS | HU-029, HU-036 |
 | [HU-046](backlog/HU-046.md) | [Monitor] Finalizar una grupal y entregar el enlace de reseña | Lista | P1 | S | HU-023, HU-036 |
 | [HU-047](backlog/HU-047.md) | [Integrante] Reseñar la sesión grupal eligiendo mi nombre | Lista | P1 | M | HU-046, HU-038, HU-035 |
-| [HU-138](backlog/HU-138.md) | [Técnica] Monitoreo de errores en producción con alertas | Lista | P1 | M | HU-131, HU-132, HU-133 |
 | [HU-085](backlog/HU-085.md) | [Sistema] Borrar o anonimizar los datos de un Lead o aspirante que retiró su autorización o lleva 24 meses sin actividad | Lista | P2 | L | HU-056, HU-006, HU-062, HU-068 |
 | [HU-092](backlog/HU-092.md) | [Monitor] Marcar en mi perfil los temas en los que soy fuerte | Lista | P2 | M | HU-049 |
 | [HU-057](backlog/HU-057.md) | [Técnica] Corte a producción: publicar en GitHub y Vercel, archivar el prototipo y migrar datos | En progreso | P0 | L | HU-011, HU-027, HU-031, HU-034, HU-048, HU-049, HU-050, HU-051, HU-052, HU-053, HU-054, HU-055, HU-056, HU-084, HU-089, HU-095, HU-096, HU-097, HU-091, HU-103 |
 | [HU-137](backlog/HU-137.md) | [Admin] Moverme entre las secciones del panel con un menú siempre visible | En progreso | P1 | M |  |
+| [HU-138](backlog/HU-138.md) | [Técnica] Monitoreo de errores en producción con alertas | En progreso | P1 | M | HU-131, HU-132, HU-133 |
 | [HU-094](backlog/HU-094.md) | [Técnica] Estabilizar la e2e del recorrido de cancelar con reembolso (asignación rotativa de admins) | En progreso | P2 | S |  |
 | [HU-128](backlog/HU-128.md) | Contenido: Probabilidad y Estadística (IIND-2106) con el Parcial 2 del programa 2026-2 y el examen final | En revision | P0 | L |  |
 | [HU-131](backlog/HU-131.md) | [Técnica] Actualizar Next.js y nodemailer por avisos de seguridad | En revision | P0 | S |  |
