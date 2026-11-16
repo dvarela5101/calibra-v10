@@ -23,15 +23,7 @@
   }
 }
 
-/* Desde 1024 px el calendario necesita más que la columna de contenido: ocupa el ancho libre junto al menú (200 px) y queda
-   centrado en esa columna. Sin 100vw de más: se le restan los dos márgenes laterales, que cubren una barra de desplazamiento. */
-@media (min-width: 1024px) {
-  .calendario {
-    --ancho: min(1100px, calc(100vw - 200px - 2 * var(--pad-x)));
-    inline-size: var(--ancho);
-    margin-inline-start: calc(50% - var(--ancho) / 2);
-  }
-}
+/* El ancho extra que necesita la rejilla por horas lo da la pantalla (`Pantalla ancha`), no el calendario: nada se sale de su caja. */
 
 .tituloDelCalendario {
   font-size: 17px;
@@ -147,10 +139,11 @@
   min-inline-size: 0;
 }
 
-@media (min-width: 1024px) {
+/* El panel del día va al lado solo cuando la rejilla conserva columnas donde cabe «Reservada»; antes, debajo. */
+@media (min-width: 1280px) {
   .cuerpo {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-columns: minmax(0, 1fr) 260px;
     align-items: start;
   }
 }
@@ -322,19 +315,14 @@
   flex-direction: column;
   gap: 0;
   min-block-size: var(--toque-min);
-  padding: 2px var(--e1);
+  padding: 2px;
   overflow: hidden;
   font-size: 14px;
   line-height: 1.25;
   text-decoration: none;
   border-radius: var(--r-chico);
-}
-
-/* Cada renglón del bloque en una línea: si no cabe se corta con puntos, no parte la palabra («Reservada»). */
-.bloque > span {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  /* Último recurso: si una palabra no cabe, parte antes que salirse de su caja. */
+  overflow-wrap: anywhere;
 }
 
 .bloqueHora {

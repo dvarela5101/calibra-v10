@@ -194,15 +194,14 @@ describe("criterio 1: el monitor certificado abre franjas", () => {
     expect(await franjaEnLaBase(franja.id)).toMatchObject({ enlace: "https://meet.example.com/abc-defg", lugar: null });
   });
 
-  it("la fecha de apertura no la escribe el monitor: la pone la base (hoy en Bogotá)", async () => {
+  it("HU-140 (D-94): el monitor puede fijar la fecha de apertura, pero no en el pasado", async () => {
     const monitor = await crearMonitorCertificado();
 
-    // abierta_desde no tiene permiso de escritura para el monitor.
     const { error } = await monitor.cliente
       .from("franja")
       .insert({ ...presencial(monitor.usuario.id), abierta_desde: sumarDias(hoy(), -30) });
 
-    expect(error).toMatchObject({ code: "42501" });
+    expect(error).toMatchObject({ code: "P0001", message: "Una franja no puede empezar en una fecha que ya pasó." });
     expect(exito(await fx.admin.from("franja").select("id").eq("id_monitor", monitor.usuario.id), "franjas")).toEqual([]);
   });
 

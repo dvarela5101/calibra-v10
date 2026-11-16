@@ -90,6 +90,7 @@ export default async function PanelMonitor({ searchParams }: PageProps<"/monitor
 
   return (
     <Pantalla
+      ancha={conCertificados}
       eyebrow="Panel del monitor"
       titulo={monitor ? `Hola, ${monitor.nombre}` : "Hola"}
       subtitulo={

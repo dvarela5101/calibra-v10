@@ -7,6 +7,13 @@
   padding-block-end: var(--e5);
 }
 
+/* HU-140: el panel del monitor, con su calendario por horas, usa más ancho que la columna de siempre en pantallas anchas. */
+@media (min-width: 1024px) {
+  .ancha {
+    max-inline-size: 1100px;
+  }
+}
+
 /* Con el carril del estudiante (D-74 d), en pantallas anchas: la marca arriba de todo, el carril a la izquierda y la columna de
    siempre a la derecha, del mismo ancho que sin carril. */
 @media (min-width: 1024px) {
