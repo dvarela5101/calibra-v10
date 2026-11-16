@@ -136,7 +136,7 @@ describe("Mis desembolsos (HU-050): la sesión y el error", () => {
     datos.falla = new Error("No se pudo leer los desembolsos: 42501 sin permiso");
     const html = renderToStaticMarkup(await MisDesembolsosPagina());
     expect(html).toMatch(/<p role="alert"[^>]*>No pudimos cargar tus desembolsos\. Recarga la página; si sigue igual, avisa al equipo\.<\/p>/);
-    expect(html).toMatch(/<a [^>]*href="\/monitor"[^>]*>Volver a mi panel<\/a>/);
+    expect(html).not.toContain("Volver a mi panel");
     const t = texto(html);
     expect(t).not.toContain("Todavía no tienes desembolsos");
     expect(t).not.toContain("Ninguno por ahora");
@@ -159,7 +159,7 @@ describe("Mis desembolsos: los grupos (criterios 1, 13 y 15)", () => {
   it("sin desembolsos dice cómo aparece el primero y no pinta grupos", async () => {
     const html = await pintar([]);
     expect(html).toMatch(/<p role="status"[^>]*>Todavía no tienes desembolsos\. Aparece uno cuando una monitoría tuya queda realizada\.<\/p>/);
-    expect(html).toMatch(/<a [^>]*href="\/monitor"[^>]*>Volver a mi panel<\/a>/);
+    expect(html).not.toContain("Volver a mi panel");
     expect(html).not.toContain("<section");
     expect(html).not.toContain("<h2");
     expect(html).not.toContain("Ninguno por ahora");

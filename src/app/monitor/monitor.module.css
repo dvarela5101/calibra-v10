@@ -1,4 +1,4 @@
-/* Panel del monitor: sus materias certificadas (HU-014) y el recordatorio de finalizar (HU-023). */
+/* Panel del monitor: recordatorio de finalizar (HU-023), su próxima monitoría, cuatro tarjetas y sus materias certificadas (HU-014, HU-123). */
 
 .seccion {
   display: flex;
@@ -26,6 +26,10 @@
 
 /* D-15: el recordatorio de finalizar. --warn es solo relleno: el texto va en --text. */
 .recordatorio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e1);
   margin-block-start: var(--e3);
   padding: var(--e3) var(--e4);
   font-size: 16px;
@@ -33,4 +37,128 @@
   border: 1px solid var(--border);
   border-inline-start: 6px solid var(--warn);
   border-radius: var(--r);
+}
+
+.accionDelRecordatorio {
+  font-weight: 600;
+}
+
+/* HU-123: la próxima monitoría. */
+.proxima {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  padding: var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+.cuando {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.detalle {
+  font-size: 16px;
+}
+
+.boton {
+  margin-block-start: var(--e2);
+  text-decoration: none;
+}
+
+/* Los tres pasos de quien aún no tiene certificados: el actual va con borde y peso, no solo con color. */
+.pasos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.paso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e1);
+  min-block-size: var(--toque-min);
+  padding: var(--e2) var(--e3);
+  font-size: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+.pasoActual {
+  font-weight: 700;
+  border-color: var(--primary);
+}
+
+/* Las cuatro tarjetas: una columna en el teléfono, dos desde 640 px. El enlace cubre toda la tarjeta con ::after. */
+.tarjetas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--e3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 640px) {
+  .tarjetas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.tarjeta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--e1);
+  min-block-size: 72px;
+  padding: var(--e3) var(--e4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tarjeta:hover {
+    border-color: var(--primary);
+  }
+}
+
+.tarjeta:has(:focus-visible) {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.enlaceDeTarjeta {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--toque-min);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+/* El contorno lo da la tarjeta entera. */
+.enlaceDeTarjeta:focus-visible {
+  outline: none;
+}
+
+.enlaceDeTarjeta::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.dato {
+  font-size: 15px;
+  color: var(--muted);
 }

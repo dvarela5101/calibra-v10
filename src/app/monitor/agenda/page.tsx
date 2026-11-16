@@ -68,9 +68,6 @@ export default async function MiAgenda({ searchParams }: PageProps<"/monitor/age
         <p role="alert" className={formulario.error}>
           No pudimos cargar tu agenda. Recarga la página; si sigue igual, avisa al equipo.
         </p>
-        <Link href="/monitor" className={formulario.enlace}>
-          Volver a mi panel
-        </Link>
       </Pantalla>
     );
   }
@@ -152,10 +149,6 @@ export default async function MiAgenda({ searchParams }: PageProps<"/monitor/age
           </>
         )}
       </section>
-
-      <Link href="/monitor" className={formulario.enlace}>
-        Volver a mi panel
-      </Link>
     </Pantalla>
   );
 }

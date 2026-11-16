@@ -1,0 +1,93 @@
+/* Navegación fija del monitor (HU-123). En el DOM el menú va antes que el contenido; en el teléfono se ve abajo (order) y desde
+   1024 px a la izquierda. */
+
+.contenedor {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+}
+
+.contenido {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/* Teléfono y tableta: una barra pegada abajo, en una fila que reparte el ancho por igual. */
+.menu {
+  order: 1;
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 10;
+  display: flex;
+  background: var(--bg);
+  border-block-start: 1px solid var(--border);
+  padding-block-end: env(safe-area-inset-bottom);
+}
+
+.enlace {
+  flex: 1 1 0;
+  min-inline-size: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 56px;
+  padding-inline: 2px;
+  font-size: var(--texto-min);
+  line-height: 1.2;
+  font-weight: 600;
+  text-align: center;
+  /* En 375 px cada enlace tiene 75 px: las etiquetas son cortas para caber («Pagos» y no «Desembolsos»); si una no cabe, parte antes que desbordar. */
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  text-decoration: none;
+  border-block-start: 3px solid transparent;
+  transition: color var(--transicion);
+}
+
+.enlace[aria-current="page"] {
+  color: var(--primary);
+  font-weight: 700;
+  border-block-start-color: var(--primary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .enlace:not([aria-current="page"]):hover {
+    color: var(--text);
+  }
+}
+
+/* Escritorio: columna a la izquierda, pegada arriba, con el contenido (y su columna centrada) a la derecha. */
+@media (min-width: 1024px) {
+  .contenedor {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    min-block-size: 0;
+  }
+
+  .menu {
+    order: 0;
+    position: sticky;
+    inset-block-start: 0;
+    inset-block-end: auto;
+    align-self: start;
+    flex-direction: column;
+    border-block-start: 0;
+    padding-block: var(--e4) 0;
+    padding-inline-start: max(var(--pad-x), env(safe-area-inset-left));
+  }
+
+  .enlace {
+    flex: none;
+    justify-content: flex-start;
+    min-block-size: 48px;
+    padding-inline: var(--e3);
+    text-align: start;
+    border-block-start: 0;
+    border-inline-start: 3px solid transparent;
+  }
+
+  .enlace[aria-current="page"] {
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
+    border-inline-start-color: var(--primary);
+  }
+}

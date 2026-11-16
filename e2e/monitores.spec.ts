@@ -140,6 +140,11 @@ test.describe("Criterio 5 · el monitor cambia su llave", () => {
     await enviarCredenciales(page, monitor.correo, monitor.contrasena);
     await expect(page).toHaveURL("/monitor", ESPERA);
 
+    // HU-123 (D-89 c): la llave está en «Mi perfil», no en el panel.
+    await expect(page.getByLabel("Tu llave para recibir pagos")).toHaveCount(0);
+    await page.getByRole("link", { name: "Mi perfil" }).click();
+    await expect(page).toHaveURL("/monitor/perfil", ESPERA);
+
     const llave = page.getByLabel("Tu llave para recibir pagos");
     await expect(llave).toHaveValue("llave-anterior", ESPERA);
     await llave.fill("llave-nueva-e2e");
