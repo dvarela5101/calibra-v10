@@ -120,7 +120,11 @@ export async function esperarSesion(context: BrowserContext, timeout = 20_000): 
 
 /** HU-137: el enlace de una sección en el menú del panel del admin (`/admin/**`), por el nombre que lleva en el menú. */
 export async function irASeccionDelPanel(page: Page, seccion: string): Promise<void> {
-  await page.getByRole("navigation", { name: "Secciones del panel" }).getByRole("link", { name: seccion, exact: true }).click();
+  const menu = page.getByRole("navigation", { name: "Secciones del panel" });
+  // En el celular las secciones están plegadas tras un botón; desde 768 px el botón no existe.
+  const boton = menu.getByRole("button", { name: /^Secciones/ });
+  if ((await boton.isVisible()) && (await boton.getAttribute("aria-expanded")) !== "true") await boton.click();
+  await menu.getByRole("link", { name: seccion, exact: true }).click();
 }
 
 /** Escribe las credenciales en /ingresar (donde esté la página) y pulsa Entrar. */
