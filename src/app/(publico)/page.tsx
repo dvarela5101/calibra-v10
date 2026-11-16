@@ -8,9 +8,10 @@ import type { ResultadoParaMostrar } from "@/lib/diagnostico/mostrar";
 import { ultimoDiagnosticoDeLaSesion } from "@/lib/diagnostico/ultimo";
 import { cifrasDelBancoParaLaPortada } from "@/lib/portada/cifras-del-banco";
 import { parametrosParaLaPortada } from "@/lib/portada/parametros";
-import { DESCRIPCION_DEL_SITIO, NOMBRE_DEL_SITIO, TITULO_DEL_SITIO } from "@/lib/sitio";
+import { ALT_DE_LA_VISTA_PREVIA, DESCRIPCION_DEL_SITIO, NOMBRE_DEL_SITIO, TITULO_DEL_SITIO } from "@/lib/sitio";
 
 // HU-135: la portada fija su `og:url` (el `openGraph` de una página reemplaza al del layout, por eso repite los demás campos).
+// También la imagen: `opengraph-image.tsx` es del segmento raíz y, al reemplazar el `openGraph`, la portada se quedaba sin ella.
 export const metadata: Metadata = {
   title: TITULO_DEL_SITIO,
   openGraph: {
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
     siteName: NOMBRE_DEL_SITIO,
     locale: "es_CO",
     type: "website",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, type: "image/png", alt: ALT_DE_LA_VISTA_PREVIA }],
   },
 };
 

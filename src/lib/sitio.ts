@@ -26,3 +26,4 @@ export const NOMBRE_DEL_SITIO = "Calibra";
 export const TITULO_DEL_SITIO = "Calibra · Monitorías de ciclo básico que empiezan por tu error";
 export const DESCRIPCION_DEL_SITIO =
   "Un diagnóstico corto te dice en qué habilidad fallas y te conecta con un monitor certificado de tu materia.";
+export const ALT_DE_LA_VISTA_PREVIA = "Calibra: monitorías de ciclo básico que empiezan por tu error";
