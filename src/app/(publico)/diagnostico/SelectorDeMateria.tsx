@@ -17,7 +17,7 @@ function EnlaceAMonitores() {
   return (
     <p className={estilos.lineaDeMonitores}>
       {`${TEXTOS.noVesTuMateria} `}
-      <Link href={rutaDeMonitores()} className={formulario.enlace}>
+      <Link href={rutaDeMonitores()} className={formulario.enlaceDeTexto}>
         {TEXTOS.enlaceAMonitores}
       </Link>
     </p>

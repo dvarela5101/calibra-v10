@@ -248,10 +248,10 @@ function DatosDeContacto({
       {materias.length > 0 && <span className={estilos.metaLarga}>Pidió {materias.join(", ")}</span>}
       {otraMateria && <span className={estilos.metaLarga}>Otra materia: {otraMateria}</span>}
       <span className={estilos.contacto}>
-        <a href={`tel:${numeroTelefono}`} className={formulario.enlace}>
+        <a href={`tel:${numeroTelefono}`} className={formulario.enlaceDeTexto}>
           {numeroTelefono}
         </a>
-        <a href={enlaceDeCorreo(correo)} className={`${formulario.enlace} ${estilos.correo}`}>
+        <a href={enlaceDeCorreo(correo)} className={`${formulario.enlaceDeTexto} ${estilos.correo}`}>
           {correo}
         </a>
       </span>
@@ -431,7 +431,7 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
                 numeroTelefono={monitor.numeroTelefono}
                 correo={monitor.correo}
               />
-              <a href="/admin/certificados" aria-describedby={`por-certificar-${monitor.id}`} className={formulario.enlace}>
+              <a href="/admin/certificados" aria-describedby={`por-certificar-${monitor.id}`} className={`${formulario.enlace} ${estilos.accionDeFila}`}>
                 Ir a certificar
               </a>
             </li>
@@ -462,7 +462,7 @@ export function BandejaAdmin({ bandeja }: { bandeja: Bandeja }) {
                 numeroTelefono={solicitud.numeroTelefono}
                 correo={solicitud.correo}
               />
-              <a href="/admin/solicitudes" aria-describedby={`por-contactar-${solicitud.id}`} className={formulario.enlace}>
+              <a href="/admin/solicitudes" aria-describedby={`por-contactar-${solicitud.id}`} className={`${formulario.enlace} ${estilos.accionDeFila}`}>
                 Abrir las solicitudes
               </a>
             </li>

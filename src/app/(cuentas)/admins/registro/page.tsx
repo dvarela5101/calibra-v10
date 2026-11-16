@@ -28,7 +28,7 @@ export default async function RegistroDeAdmin({ searchParams }: PageProps<"/admi
         titulo="Necesitas una invitación vigente"
         subtitulo="Las cuentas de admin se crean con una invitación del equipo de Calibra. Este enlace no sirve: ya se usó, venció, se canceló o está incompleto. Pide otra invitación al equipo."
       >
-        <Link href="/ingresar" className={formulario.enlace}>
+        <Link href="/ingresar" className={formulario.enlaceDeTexto}>
           ¿Ya tienes cuenta? Inicia sesión
         </Link>
       </Pantalla>

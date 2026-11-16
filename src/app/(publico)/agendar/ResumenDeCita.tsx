@@ -79,7 +79,7 @@ export function ResumenDeCita({ cita }: { cita: DatosDeCita }) {
         <>
           <dt className={estilos.dato}>Enlace de la videollamada</dt>
           <dd className={estilos.valor}>
-            <a href={cita.enlace!} target="_blank" rel="noopener noreferrer" className={formulario.enlace}>
+            <a href={cita.enlace!} target="_blank" rel="noopener noreferrer" className={formulario.enlaceDeTexto}>
               Abrir la videollamada
             </a>
           </dd>

@@ -28,11 +28,11 @@ export default async function Ingresar({ searchParams }: PageProps<"/ingresar">)
         </p>
       )}
       <FormularioIngreso siguiente={rutaInternaSegura(typeof siguiente === "string" ? siguiente : "", "")} />
-      <Link href="/restablecer" className={formulario.enlace}>
+      <Link href="/restablecer" className={formulario.enlaceDeTexto}>
         ¿Olvidaste tu contraseña?
       </Link>
       {/* D-75 b */}
-      <Link href={RUTA_DE_REGISTRO} className={formulario.enlace}>
+      <Link href={RUTA_DE_REGISTRO} className={formulario.enlaceDeTexto}>
         ¿No tienes cuenta? Regístrate
       </Link>
     </Pantalla>

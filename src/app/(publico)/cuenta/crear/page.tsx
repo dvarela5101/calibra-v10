@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 /** «¿Ya tienes cuenta? Inicia sesión»: a `/ingresar` con la misma ruta de regreso. */
 function EnlaceDeIngreso({ siguiente }: { siguiente: string }) {
   return (
-    <Link href={rutaParaIngresar(siguiente)} className={formulario.enlace}>
+    <Link href={rutaParaIngresar(siguiente)} className={formulario.enlaceDeTexto}>
       {TEXTOS.yaTienesCuenta} {TEXTOS.iniciarSesion}
     </Link>
   );
@@ -69,7 +69,7 @@ export default async function CrearCuenta({ searchParams }: PageProps<"/cuenta/c
             <Link href={rutaParaIngresar(siguiente)} className={formulario.enlace}>
               Iniciar sesión
             </Link>
-            <Link href="/restablecer" className={formulario.enlace}>
+            <Link href="/restablecer" className={formulario.enlaceDeTexto}>
               {TEXTOS.olvideMiContrasena}
             </Link>
           </div>

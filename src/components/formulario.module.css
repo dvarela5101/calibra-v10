@@ -70,12 +70,44 @@
   font-size: 16px;
 }
 
+/* HU-139: una acción suelta que lleva a otra página. Se ve como botón (borde, fondo y relleno), más liviano que .boton. */
 .enlace {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 48px;
+  padding: 10px 16px;
+  background: var(--surface);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: var(--r);
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition:
+    background-color var(--transicion),
+    color var(--transicion);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .enlace:hover {
+    background: var(--primary);
+    color: #fff;
+  }
+}
+
+/* HU-139: un enlace que sigue siendo texto (un dato como el teléfono, o una pregunta como «¿Ya tienes cuenta?»). Subrayado: no depende solo del color. */
+.enlaceDeTexto {
   display: inline-flex;
   align-items: center;
   min-block-size: var(--toque-min);
   font-size: 15px;
   color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
 }
 
 .error {
