@@ -10,7 +10,7 @@ test.describe("página de inicio", () => {
 
     await page.goto("/");
 
-    await expect(page).toHaveTitle("Calibra");
+    await expect(page).toHaveTitle("Calibra · Monitorías de ciclo básico que empiezan por tu error");
     await expect(page.locator("html")).toHaveAttribute("lang", "es");
     await expect(
       page.getByRole("heading", { level: 1, name: "Monitorías de ciclo básico que empiezan por tu error." }),

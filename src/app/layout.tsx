@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { PieDePagina } from "@/components/PieDePagina";
 import { IDIOMA } from "@/config/regional";
+import { baseDelSitio, DESCRIPCION_DEL_SITIO, NOMBRE_DEL_SITIO, TITULO_DEL_SITIO } from "@/lib/sitio";
 import "@/styles/tokens.css";
 import "./globals.css";
 import "@/styles/contenido.css";
@@ -31,10 +32,21 @@ const notoSansMath = localFont({
   adjustFontFallback: false,
 });
 
+// HU-135: `metadataBase` sale de SITIO_URL (sin ella, Next usa su respaldo y avisa); la imagen la pone `opengraph-image.tsx`.
+// Los títulos de cada página ya vienen completos («X · Calibra»), por eso no hay `title.template`. `openGraph.url` no va aquí: heredada,
+// todas las páginas dirían que son la portada; la fija la portada.
 export const metadata: Metadata = {
-  title: "Calibra",
-  description:
-    "Un diagnóstico corto te dice en qué habilidad fallas y te conecta con un monitor certificado de tu materia.",
+  metadataBase: baseDelSitio() ?? undefined,
+  title: TITULO_DEL_SITIO,
+  description: DESCRIPCION_DEL_SITIO,
+  openGraph: {
+    title: TITULO_DEL_SITIO,
+    description: DESCRIPCION_DEL_SITIO,
+    siteName: NOMBRE_DEL_SITIO,
+    locale: "es_CO",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image", title: TITULO_DEL_SITIO, description: DESCRIPCION_DEL_SITIO },
 };
 
 export const viewport: Viewport = {
