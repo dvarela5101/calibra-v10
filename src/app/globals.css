@@ -61,6 +61,11 @@ body:has([data-landing]) {
   overflow-x: clip;
 }
 
+/* HU-136: lo mismo con la barra fija de «Empezar» del diagnóstico: `sticky` no funciona si `body` es contenedor de scroll. */
+body:has([data-barra-fija]) {
+  overflow-x: clip;
+}
+
 :focus-visible {
   outline: 3px solid var(--primary);
   outline-offset: 2px;

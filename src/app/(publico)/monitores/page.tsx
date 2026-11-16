@@ -14,6 +14,7 @@ import {
   type MonitorConFechas,
 } from "@/lib/disponibilidad/reglas";
 import { cargarFechasLibres, cargarMaterias, cargarPerfiles, type MateriaDeLaLista } from "@/lib/disponibilidad/servidor";
+import { agruparMateriasPorArea } from "@/lib/materias/areas";
 import { rutaDeAgendar } from "@/lib/agendar/reglas";
 import { formatearDiaConSemana } from "@/lib/fechas";
 import { horaCorta, horaDeFin } from "@/lib/franjas/reglas";
@@ -115,16 +116,25 @@ function ElegirMateria({ materias, noEncontrada }: { materias: MateriaDeLaLista[
           Todavía no hay monitores certificados. Vuelve pronto.
         </p>
       ) : (
-        <ul className={estilos.materias}>
-          {materias.map((m) => (
-            <li key={m.codigo}>
-              <Link href={rutaDeMonitores(m.codigo)} className={estilos.materia}>
-                <span className={estilos.nombre}>{m.nombre}</span>
-                <span className={estilos.detalle}>{m.codigo}</span>
-              </Link>
-            </li>
+        <div className={estilos.areas}>
+          {agruparMateriasPorArea(materias).map((grupo, i) => (
+            <section key={grupo.area} aria-labelledby={`area-${i}`} className={estilos.area}>
+              <h2 id={`area-${i}`} className={estilos.encabezadoDeArea}>
+                {grupo.area}
+              </h2>
+              <ul className={estilos.materias}>
+                {grupo.materias.map((m) => (
+                  <li key={m.codigo}>
+                    <Link href={rutaDeMonitores(m.codigo)} className={estilos.materia}>
+                      <span className={estilos.nombre}>{m.nombre}</span>
+                      <span className={estilos.detalle}>{m.codigo}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
           ))}
-        </ul>
+        </div>
       )}
     </Pantalla>
   );

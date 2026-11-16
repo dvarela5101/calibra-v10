@@ -58,7 +58,7 @@ describe("SelectorDeMateria: con materias", () => {
   it("una tarjeta con radio por materia, con el código como valor, y ninguna elegida", () => {
     const radios = [...html.matchAll(/<input[^>]*type="radio"[^>]*name="materia"[^>]*>/g)].map(([radio]) => radio);
     expect(radios).toHaveLength(2);
-    expect(radios.map((radio) => radio.match(/value="([^"]+)"/)?.[1])).toEqual(["FISI-1528", "MATE-1214"]);
+    expect(radios.map((radio) => radio.match(/value="([^"]+)"/)?.[1])).toEqual(["MATE-1214", "FISI-1528"]); // agrupadas por área: Matemáticas antes que Física
     expect(html).not.toContain("checked");
     expect(texto(html)).toContain("Física II");
     expect(texto(html)).toContain("Cálculo Integral");
@@ -79,10 +79,25 @@ describe("SelectorDeMateria: con materias", () => {
   });
 
   it("las materias son tarjetas en cuadrícula con el radio encima, sin el punto a la vista (D-74 a)", () => {
-    const grupo = html.match(/<div role="radiogroup" aria-labelledby="grupo-de-materias" class="([^"]*)"/)?.[1] ?? "";
-    expect(grupo).toContain("cuadricula");
+    expect(html).toMatch(/<div role="radiogroup" aria-labelledby="grupo-de-materias"/);
+    expect(html).toMatch(/<div class="[^"]*cuadricula[^"]*"><label/);
     const radios = [...html.matchAll(/<input[^>]*name="materia"[^>]*>/g)].map(([radio]) => radio);
     for (const radio of radios) expect(radio).toMatch(/class="[^"]*radioEncima[^"]*"/);
+  });
+
+  it("HU-136: un encabezado por área, dentro de un solo grupo de radios, sin romper su nombre", () => {
+    const encabezados = [...html.matchAll(/<h2[^>]*>([^<]*)<\/h2>/g)].map(([, nombre]) => nombre);
+    expect(encabezados).toEqual(["Matemáticas", "Física"]);
+    // Un solo radiogroup con todos los radios, para que las flechas recorran todas las materias.
+    expect(html.match(/role="radiogroup"/g)).toHaveLength(1);
+    const grupo = html.slice(html.indexOf('role="radiogroup"'));
+    expect(grupo.match(/type="radio"/g)).toHaveLength(2);
+    expect(html).toMatch(/<p id="grupo-de-materias"[^>]*>Materia<\/p>/);
+  });
+
+  it("HU-136: «Empezar» solo queda fijo con una materia elegida; al cargar va en su sitio", () => {
+    expect(html).not.toContain("barraFija");
+    expect(html).not.toContain("data-barra-fija");
   });
 
   it("debajo de «Empezar», el botón «Ver monitores sin hacer la prueba» a la lista, en lugar de la línea de D-53 a (D-74 c)", () => {
