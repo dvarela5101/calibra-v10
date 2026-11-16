@@ -3,30 +3,33 @@ import Link from "next/link";
 import { BotonSalir } from "@/components/BotonSalir";
 import formulario from "@/components/formulario.module.css";
 import { Pantalla } from "@/components/Pantalla";
-import { separarAgenda, textoDeEstado, type MonitoriaDeAgenda } from "@/lib/agenda/reglas";
+import { separarAgenda, type MonitoriaDeAgenda } from "@/lib/agenda/reglas";
 import { cargarAgenda } from "@/lib/agenda/servidor";
 import { exigirRol } from "@/lib/auth/sesion";
+import { leerDia, leerVista } from "@/lib/calendario/reglas";
 import { TEXTOS } from "@/lib/diagnostico/vista-del-monitor";
-import { diaDelNegocio, formatearDia, formatearDiaConSemana } from "@/lib/fechas";
-import { horaCorta, horaDeFin } from "@/lib/franjas/reglas";
+import { diaDelNegocio, formatearDia } from "@/lib/fechas";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { Calendario } from "./calendario/Calendario";
 import estilos from "./monitor.module.css";
 
 export const metadata: Metadata = { title: "Panel del monitor · Calibra" };
 
-/** Lo que el panel toma de la agenda: cuántas por finalizar, cuántas próximas y cuál es la primera. */
-type ResumenDeAgenda = { porFinalizar: number; proximas: number; proxima: MonitoriaDeAgenda | null };
+/** Lo que el panel toma de la agenda: cuántas por finalizar, cuántas próximas y la agenda entera, para el calendario. */
+type ResumenDeAgenda = { porFinalizar: number; proximas: number; monitorias: MonitoriaDeAgenda[] };
 
 /** Plural simple: «1 próxima», «2 próximas». */
 const conteo = (n: number, singular: string, plural: string) => `${n} ${n === 1 ? singular : plural}`;
 
 /**
- * HU-123 (D-89, D-93): el panel del monitor. De arriba abajo: el recordatorio de finalizar (HU-023), su próxima monitoría, cuatro
- * tarjetas con un dato de estado cada una, sus materias certificadas y «Salir». La llave de pago vive en el perfil. Nunca cifras de
- * comisión ni montos: la tarjeta de desembolsos no lee nada, porque la guarda de la comisión reserva esa lectura a su pantalla.
+ * HU-123 (D-89, D-93) y HU-140 (D-94): el panel del monitor. De arriba abajo: el recordatorio de finalizar (HU-023), su calendario de
+ * franjas (reemplaza la tarjeta de la próxima monitoría), cuatro tarjetas con un dato de estado cada una, sus materias certificadas y
+ * «Salir». La vista y el día del calendario vienen de la dirección (`?vista=`, `?dia=`). La llave de pago vive en el perfil. Nunca
+ * cifras de comisión: la tarjeta de desembolsos no lee nada, porque la guarda de la comisión reserva esa lectura a su pantalla.
  */
-export default async function PanelMonitor() {
+export default async function PanelMonitor({ searchParams }: PageProps<"/monitor">) {
   const sesion = await exigirRol("monitor", "/monitor");
+  const parametros = await searchParams;
   const supabase = await crearClienteServidor();
   const [{ data: monitor }, { data: certificados, error: errorCertificados }, { data: franjas, error: errorFranjas }] = await Promise.all([
     supabase!.from("monitor").select("nombre").eq("id", sesion.idUsuario).maybeSingle(),
@@ -37,17 +40,21 @@ export default async function PanelMonitor() {
       .eq("id_monitor", sesion.idUsuario)
       .order("fecha_emision", { ascending: true })
       .order("id", { ascending: true }),
-    // Las franjas abiertas se cuentan como en «Mis franjas»: sin cierre, o con un cierre que aún no llega.
-    supabase!.from("franja").select("id, cerrada_desde").eq("id_monitor", sesion.idUsuario),
+    // Las franjas abiertas se cuentan como en «Mis franjas»: sin cierre, o con un cierre que aún no llega. El calendario las pinta.
+    supabase!
+      .from("franja")
+      .select("id, dia, hora, duracion_min, presencial, precio, abierta_desde, cerrada_desde")
+      .eq("id_monitor", sesion.idUsuario),
   ]);
   if (errorCertificados) console.error("[monitor] no se pudieron leer los certificados:", errorCertificados.message);
   if (errorFranjas) console.error("[monitor] no se pudieron leer las franjas:", errorFranjas.message);
 
-  // HU-023 (D-15) y HU-123: la agenda da el recordatorio y la próxima monitoría. Si no carga, esa tarjeta lo dice y el resto sigue.
+  // HU-023 (D-15), HU-123 y HU-140: la agenda da el recordatorio, la cuenta de próximas y el estado de cada franja del calendario.
+  // Si no carga, el calendario lo dice y el resto sigue.
   const agenda: ResumenDeAgenda | null = await cargarAgenda(supabase!)
     .then((monitorias) => {
       const { porFinalizar, proximas } = separarAgenda(monitorias, new Date());
-      return { porFinalizar: porFinalizar.length, proximas: proximas.length, proxima: proximas[0] ?? null };
+      return { porFinalizar: porFinalizar.length, proximas: proximas.length, monitorias };
     })
     .catch((error: unknown) => {
       console.error("[monitor] no se pudo leer la agenda:", error instanceof Error ? error.message : error);
@@ -78,7 +85,8 @@ export default async function PanelMonitor() {
   // HU-049: entra aunque todavía no tenga certificados.
   tarjetas.push({ href: "/monitor/perfil", nombre: "Mi perfil", dato: "Carrera, semestre, presentación y tu llave" });
 
-  const proxima = agenda?.proxima ?? null;
+  // HU-140: el calendario necesita las dos lecturas. Sin las franjas o sin la agenda no se pinta a medias.
+  const datosDelCalendario = agenda && !errorFranjas ? { franjas: franjas ?? [], monitorias: agenda.monitorias } : null;
 
   return (
     <Pantalla
@@ -110,38 +118,7 @@ export default async function PanelMonitor() {
       )}
 
       {conCertificados && (
-        <section aria-labelledby="proxima-monitoria" className={estilos.proxima}>
-          <h2 id="proxima-monitoria" className={estilos.titulo}>
-            Tu próxima monitoría
-          </h2>
-          {!agenda ? (
-            <p role="alert" className={formulario.error}>
-              No pudimos cargar tu agenda.
-            </p>
-          ) : proxima ? (
-            <>
-              <p id="cuando-es-la-proxima" className={estilos.cuando}>
-                <time dateTime={proxima.fecha}>{formatearDiaConSemana(proxima.fecha)}</time>, {horaCorta(proxima.hora)} a{" "}
-                {horaDeFin(proxima.hora, proxima.duracionMin)}
-              </p>
-              <p className={estilos.detalle}>
-                {proxima.nombreMateria} · {proxima.presencial ? "Presencial" : "Virtual"}
-              </p>
-              <p className={estilos.detalle}>Agendó: {proxima.nombreEstudiante}</p>
-              <p className={estilos.meta}>{textoDeEstado(proxima)}</p>
-              <Link href="/monitor/agenda" aria-describedby="proxima-monitoria cuando-es-la-proxima" className={`${formulario.botonSecundario} ${estilos.boton}`}>
-                Ver los detalles
-              </Link>
-            </>
-          ) : (
-            <>
-              <p className={formulario.ayuda}>No tienes monitorías próximas.</p>
-              <Link href="/monitor/franjas" className={`${formulario.botonSecundario} ${estilos.boton}`}>
-                Abrir una franja
-              </Link>
-            </>
-          )}
-        </section>
+        <Calendario vista={leerVista(parametros.vista)} dia={leerDia(parametros.dia, hoy)} hoy={hoy} datos={datosDelCalendario} />
       )}
 
       {sinCertificados && (

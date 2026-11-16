@@ -119,6 +119,84 @@ export function leerCierre(formulario: FormData, hoy: string): Lectura<{ cerrada
   return { ok: true, datos: { cerradaDesde: fecha } };
 }
 
+/** Cuántas semanas puede durar una franja que se repite «durante N semanas» (D-94). */
+export const SEMANAS_MIN = 2;
+export const SEMANAS_MAX = 16;
+
+/**
+ * Cuándo empieza y cuándo termina una franja abierta desde el calendario (D-94). `cerradaDesde` es exclusivo, como
+ * `franja.cerrada_desde`: la franja no recibe reservas desde esa fecha; `null` es «todas las semanas, sin fecha final».
+ */
+export type Repeticion = { abiertaDesde: string; cerradaDesde: string | null; dia: number };
+
+const MS_POR_DIA = 24 * 60 * 60 * 1000;
+
+/** La fecha civil `AAAA-MM-DD` como un instante UTC a medianoche, o `null` si no es una fecha real. */
+function fechaCivil(fecha: string): number | null {
+  const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fecha);
+  if (!partes) return null;
+  const [anio, mes, dia] = [Number(partes[1]), Number(partes[2]), Number(partes[3])];
+  const instante = new Date(Date.UTC(anio, mes - 1, dia));
+  // Date rueda los días que no existen al mes siguiente: la ida y vuelta los rechaza.
+  if (instante.getUTCFullYear() !== anio || instante.getUTCMonth() !== mes - 1 || instante.getUTCDate() !== dia) return null;
+  return instante.getTime();
+}
+
+/** Suma días a una fecha civil sin zona horaria. */
+function sumarDias(fecha: string, dias: number): string {
+  const base = fechaCivil(fecha);
+  if (base === null) throw new RangeError(`La fecha debe ser AAAA-MM-DD (llegó "${fecha}").`);
+  return new Date(base + dias * MS_POR_DIA).toISOString().slice(0, 10);
+}
+
+/** Día ISO (1 = lunes ... 7 = domingo) de una fecha civil. */
+function diaIsoDe(fecha: string): number {
+  const base = fechaCivil(fecha);
+  if (base === null) throw new RangeError(`La fecha debe ser AAAA-MM-DD (llegó "${fecha}").`);
+  return new Date(base).getUTCDay() || 7;
+}
+
+/**
+ * Lee la repetición del formulario del calendario: `fecha` (`AAAA-MM-DD`), `repite` (`una`, `semanas` o `siempre`, por
+ * defecto `siempre`) y `semanas` (de SEMANAS_MIN a SEMANAS_MAX, solo con `repite=semanas`). Sin `fecha` devuelve
+ * `repeticion: null`: la franja se abre como siempre (desde hoy, todas las semanas) y el día lo manda el formulario.
+ */
+export function leerRepeticion(
+  datos: FormData,
+  hoy: string,
+): { ok: true; repeticion: Repeticion | null } | { ok: false; error: string } {
+  const fecha = texto(datos.get("fecha"));
+  if (fecha === "") return { ok: true, repeticion: null };
+  if (fechaCivil(fecha) === null) return { ok: false, error: "Elige una fecha válida para la franja." };
+  if (fecha < hoy) return { ok: false, error: "No puedes abrir una franja en una fecha que ya pasó." };
+
+  const repite = texto(datos.get("repite")) || "siempre";
+  const dia = diaIsoDe(fecha);
+
+  if (repite === "una") return { ok: true, repeticion: { abiertaDesde: fecha, cerradaDesde: sumarDias(fecha, 1), dia } };
+  if (repite === "siempre") return { ok: true, repeticion: { abiertaDesde: fecha, cerradaDesde: null, dia } };
+  if (repite === "semanas") {
+    const crudo = texto(datos.get("semanas"));
+    const semanas = /^\d{1,3}$/.test(crudo) ? Number(crudo) : NaN;
+    if (!Number.isInteger(semanas) || semanas < SEMANAS_MIN || semanas > SEMANAS_MAX) {
+      return { ok: false, error: `Elige entre ${SEMANAS_MIN} y ${SEMANAS_MAX} semanas.` };
+    }
+    return { ok: true, repeticion: { abiertaDesde: fecha, cerradaDesde: sumarDias(fecha, 7 * (semanas - 1) + 1), dia } };
+  }
+  return { ok: false, error: "Elige cuánto se repite la franja." };
+}
+
+/**
+ * Las fechas concretas en que queda abierta una franja con cierre (una por semana, a lo sumo SEMANAS_MAX); `[]` si no
+ * tiene fecha final.
+ */
+export function fechasDeLaRepeticion(r: Repeticion): string[] {
+  if (r.cerradaDesde === null) return [];
+  const fechas: string[] = [];
+  for (let f = r.abiertaDesde; f < r.cerradaDesde && fechas.length < SEMANAS_MAX; f = sumarDias(f, 7)) fechas.push(f);
+  return fechas;
+}
+
 /** Mensaje para la persona a partir de un error de la base al escribir una franja. */
 export function mensajeDeErrorDeFranja(error: { code?: string; message?: string } | null): string {
   // P0001: los mensajes de las reglas de la franja (trigger `privado.validar_franja_del_monitor`), ya escritos para la persona.
