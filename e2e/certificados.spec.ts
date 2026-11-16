@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Page } from "@playwright/test";
 import { diaDelNegocio, formatearDia } from "../src/lib/fechas";
-import { enviarCredenciales, expect, test as base, type Cuenta } from "./utilidades";
+import { enviarCredenciales, irASeccionDelPanel, expect, test as base, type Cuenta } from "./utilidades";
 
 // HU-014: el admin certifica a un monitor por materia y el monitor ve sus materias certificadas. Corre contra
 // el Supabase local (Auth y base) con cuentas y datos que crea y borra cada prueba. Las fechas salen de la zona
@@ -137,7 +137,7 @@ test.describe("Criterios 1 a 3 · el admin certifica a un monitor y el monitor v
 
     // Desde su bandeja llega a Certificar monitores.
     await entrar(page, "/admin", admin);
-    await page.getByRole("link", { name: "Certificar monitores" }).click();
+    await irASeccionDelPanel(page, "Certificados");
     await expect(page).toHaveURL("/admin/certificados", ESPERA);
     await expect(page).toHaveTitle("Certificar monitores · Calibra");
     await expect(page.getByRole("heading", { level: 1, name: "Certificar monitores" })).toBeVisible();

@@ -1,6 +1,6 @@
 import { randomInt, randomUUID } from "node:crypto";
 import type { Locator, Page } from "@playwright/test";
-import { enviarCredenciales, expect, test as base, type Cuenta } from "./utilidades";
+import { enviarCredenciales, irASeccionDelPanel, expect, test as base, type Cuenta } from "./utilidades";
 
 // HU-062: quien quiere ser monitor deja sus datos desde "Quiero ser monitor", y el admin ve la solicitud y la
 // marca. Corre contra el Supabase local con materias, solicitudes y cuentas que crea y borra cada prueba. La
@@ -234,7 +234,7 @@ test.describe("Criterio 4 · el admin ve las solicitudes y las marca", () => {
   test("se llega desde la bandeja del admin", async ({ page, cuentas }) => {
     const admin = await cuentas.crearAdmin();
     await entrar(page, "/admin", admin);
-    await page.getByRole("link", { name: "Solicitudes para ser monitor" }).click();
+    await irASeccionDelPanel(page, "Solicitudes");
     await expect(page).toHaveURL(LISTA, ESPERA);
     await expect(page.getByRole("heading", { level: 1, name: "Solicitudes para ser monitor" })).toBeVisible();
   });

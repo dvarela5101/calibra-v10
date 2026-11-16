@@ -1,7 +1,7 @@
 import { randomInt, randomUUID } from "node:crypto";
 import type { Locator, Page, Route } from "@playwright/test";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { enviarCredenciales, esperarSesion, expect, test as base, type Cuenta } from "./utilidades";
+import { enviarCredenciales, irASeccionDelPanel, esperarSesion, expect, test as base, type Cuenta } from "./utilidades";
 
 // HU-055 (D-62): el admin crea, corrige y borra materias y evaluaciones desde /admin/materias. Corre contra el Supabase local
 // (Auth y base) con cuentas y datos que crea y borra cada prueba, en móvil (390) y en escritorio (1280).
@@ -238,7 +238,7 @@ test.describe("Criterios 1 a 3 · la lista y crear una materia", () => {
     const codigo = await escenario.codigo();
 
     await entrar(page, "/admin", admin);
-    await page.getByRole("link", { name: "Materias y evaluaciones" }).click();
+    await irASeccionDelPanel(page, "Materias");
     await expect(page).toHaveURL(RUTA, ESPERA);
     await expect(page).toHaveTitle("Materias y evaluaciones · Calibra");
     await expect(titulo1(page, "Materias y evaluaciones")).toBeVisible();

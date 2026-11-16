@@ -1,7 +1,7 @@
 import { randomInt, randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import type { Page } from "@playwright/test";
-import { enviarCredenciales, expect, test as base, type Cuenta } from "./utilidades";
+import { enviarCredenciales, irASeccionDelPanel, expect, test as base, type Cuenta } from "./utilidades";
 
 // HU-053: el admin ve los Leads, los filtra, les cambia el estado y descarga los que puede contactar. Corre contra el
 // Supabase local. La lista es de todos los admins: cada prueba pone a sus Leads un origen único y filtra por él.
@@ -87,7 +87,7 @@ test.describe("Criterios 1, 3, 4 y 7 a 9 · la lista y el cambio de estado", () 
     await page.goto("/admin");
     await enviarCredenciales(page, admin.correo, admin.contrasena);
     await expect(page).toHaveURL("/admin", ESPERA);
-    await page.getByRole("link", { name: "Leads", exact: true }).click();
+    await irASeccionDelPanel(page, "Leads");
     await expect(page).toHaveURL("/admin/leads", ESPERA);
     await expect(page).toHaveTitle("Leads · Calibra");
     // Por defecto, solo quienes aceptaron contacto, y la página lo dice.

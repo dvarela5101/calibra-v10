@@ -118,6 +118,15 @@ export async function esperarSesion(context: BrowserContext, timeout = 20_000): 
 // Formulario de ingreso
 // ---------------------------------------------------------------------------
 
+/** HU-137: el enlace de una sección en el menú del panel del admin (`/admin/**`), por el nombre que lleva en el menú. */
+export async function irASeccionDelPanel(page: Page, seccion: string): Promise<void> {
+  const menu = page.getByRole("navigation", { name: "Secciones del panel" });
+  // En el celular las secciones están plegadas tras un botón; desde 768 px el botón no existe.
+  const boton = menu.getByRole("button", { name: /^Secciones/ });
+  if ((await boton.isVisible()) && (await boton.getAttribute("aria-expanded")) !== "true") await boton.click();
+  await menu.getByRole("link", { name: seccion, exact: true }).click();
+}
+
 /** Escribe las credenciales en /ingresar (donde esté la página) y pulsa Entrar. */
 export async function enviarCredenciales(page: Page, correo: string, contrasena: string): Promise<void> {
   await page.getByLabel("Correo").fill(correo);

@@ -254,7 +254,8 @@ test.describe("Criterios 1 y 2 · el admin ve lo que tiene asignado y cuánto ll
       const conTexto = [...document.body.querySelectorAll<HTMLElement>("*")].filter((el) =>
         [...el.childNodes].some((nodo) => nodo.nodeType === Node.TEXT_NODE && nodo.textContent?.trim()),
       );
-      const enlaces = [...document.querySelectorAll<HTMLElement>("a, button")].map((el) => {
+      // Solo los que se ven: el menú del panel (HU-137) esconde su botón o sus enlaces según el ancho, y lo que no se pinta no se toca.
+      const enlaces = [...document.querySelectorAll<HTMLElement>("a, button")].filter((el) => el.getClientRects().length > 0).map((el) => {
         const caja = el.getBoundingClientRect();
         return { texto: el.textContent?.trim() ?? "", alto: caja.height };
       });

@@ -2,7 +2,7 @@ import { randomInt, randomUUID } from "node:crypto";
 import type { Browser, BrowserContext, Locator, Page } from "@playwright/test";
 import { diaDelNegocio, formatearDia, formatearFechaHora } from "../src/lib/fechas";
 import { formatearPesos } from "../src/lib/moneda";
-import { enviarCredenciales, expect, test as base, usarTurnstileDePrueba, type Cuenta } from "./utilidades";
+import { enviarCredenciales, irASeccionDelPanel, expect, test as base, usarTurnstileDePrueba, type Cuenta } from "./utilidades";
 
 // HU-052 (RN-60, D-60): un admin activo abre «Citas sin plazo para cancelar» desde su bandeja, escoge una cita confirmada a la
 // que ya se le pasó el plazo de 12 h y todavía no empieza, la autoriza cancelar con un motivo de la lista y una nota, y la cita
@@ -400,7 +400,7 @@ test.describe("Autorizar · del enlace de la bandeja a la cita cancelada", () =>
     await entrarComoAdmin(page, admin);
 
     await test.step("el enlace de la bandeja lleva a la lista", async () => {
-      await page.getByRole("link", { name: "Citas sin plazo para cancelar" }).click();
+      await irASeccionDelPanel(page, "Citas");
       await expect(page).toHaveURL("/admin/citas", ESPERA);
       await expect(page).toHaveTitle("Citas sin plazo para cancelar · Calibra");
       await expect(titulo(page, "Citas sin plazo para cancelar")).toBeVisible();
