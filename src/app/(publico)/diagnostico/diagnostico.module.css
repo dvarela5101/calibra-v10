@@ -193,3 +193,38 @@
   cursor: not-allowed;
   filter: none;
 }
+
+/* HU-136: las materias agrupadas por área, con un encabezado por grupo. */
+.areas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+.area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.encabezadoDeArea {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/*
+ * HU-136: la barra de «Empezar». Con una materia elegida queda pegada al borde inferior de la pantalla: `sticky` (no `fixed`) la
+ * deja en el flujo, así que al llegar al final de la página ocupa su sitio y no tapa el enlace a los monitores, el pie ni la última
+ * tarjeta. Cubre el ancho de la columna (el relleno negativo anula el de la página) y respeta la zona segura de abajo.
+ * Requiere que `body` no sea contenedor de scroll: ver `[data-barra-fija]` en globals.css.
+ */
+.barraFija {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 5;
+  margin-inline: calc(-1 * var(--pad-x));
+  padding: var(--e3) var(--pad-x) max(var(--e3), env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-block-start: 1px solid var(--border);
+}

@@ -9,6 +9,7 @@ import { errorDeSeleccion, resolverSeleccion, type EvaluacionParaElegir, type Ma
 import { TEXTOS, avisoDeCambioDeMateria, textoDeTemas } from "@/lib/diagnostico/presentacion";
 import type { EnCurso } from "@/lib/diagnostico/reglas";
 import { rutaDeMonitores } from "@/lib/disponibilidad/reglas";
+import { agruparMateriasPorArea } from "@/lib/materias/areas";
 import estilos from "./diagnostico.module.css";
 
 /** «¿No ves tu materia? Mira los monitores» (D-53 a): desde D-74 c sale solo cuando no hay materias. */
@@ -155,7 +156,7 @@ export function SelectorDeMateria({ materias, enCurso, mensaje, pendiente, ocupa
   }
 
   return (
-    <form onSubmit={enviar} className={formulario.formulario} noValidate>
+    <form onSubmit={enviar} className={formulario.formulario} noValidate data-barra-fija={materia ? "" : undefined}>
       {avisoDeEnCurso && (
         <p role="status" className={estilos.aviso}>
           {avisoDeEnCurso}
@@ -166,19 +167,30 @@ export function SelectorDeMateria({ materias, enCurso, mensaje, pendiente, ocupa
         <p id="grupo-de-materias" className={formulario.etiqueta}>
           {TEXTOS.grupoDeMaterias}
         </p>
-        <div role="radiogroup" aria-labelledby="grupo-de-materias" className={estilos.cuadricula}>
-          {materias.map((m) => (
-            <label key={m.codigo} className={`${estilos.tarjetaSinRadio} ${materia?.codigo === m.codigo ? estilos.elegida : ""}`}>
-              <input
-                type="radio"
-                name="materia"
-                value={m.codigo}
-                checked={materia?.codigo === m.codigo}
-                onChange={() => elegirMateria(m.codigo)}
-                className={estilos.radioEncima}
-              />
-              <span className={estilos.nombreDeTarjeta}>{m.nombre}</span>
-            </label>
+        {/* Un solo radiogroup para todas las materias: los radios comparten `name`, así que las flechas recorren todas aunque estén en
+            grupos distintos, y el nombre accesible sigue siendo «Materia» (sale del `aria-labelledby`, no de los encabezados). */}
+        <div role="radiogroup" aria-labelledby="grupo-de-materias" className={estilos.areas}>
+          {agruparMateriasPorArea(materias).map((grupo) => (
+            <div key={grupo.area} className={estilos.area}>
+              <h2 className={estilos.encabezadoDeArea}>
+                {grupo.area}
+              </h2>
+              <div className={estilos.cuadricula}>
+                {grupo.materias.map((m) => (
+                  <label key={m.codigo} className={`${estilos.tarjetaSinRadio} ${materia?.codigo === m.codigo ? estilos.elegida : ""}`}>
+                    <input
+                      type="radio"
+                      name="materia"
+                      value={m.codigo}
+                      checked={materia?.codigo === m.codigo}
+                      onChange={() => elegirMateria(m.codigo)}
+                      className={estilos.radioEncima}
+                    />
+                    <span className={estilos.nombreDeTarjeta}>{m.nombre}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -192,10 +204,14 @@ export function SelectorDeMateria({ materias, enCurso, mensaje, pendiente, ocupa
       )}
       {sesion.aviso}
 
-      {/* Sin `disabled`: ese atributo le quita el foco al botón y quien usa el teclado no podría reintentar tras un fallo (ver `.envio`). */}
-      <button type="submit" className={`${formulario.boton} ${estilos.envio}`} aria-disabled={ocupado || sesion.verificando || undefined}>
-        {sesion.verificando ? TEXTO_VERIFICANDO : pendiente ? TEXTOS.empezando : TEXTOS.empezar}
-      </button>
+      {/* HU-136: con una materia elegida, «Empezar» queda fijo al borde inferior (la barra es `sticky`, en el flujo: al final de la
+          página queda en su sitio y no tapa el enlace de abajo ni el pie). */}
+      <div className={materia ? estilos.barraFija : undefined}>
+        {/* Sin `disabled`: ese atributo le quita el foco al botón y quien usa el teclado no podría reintentar tras un fallo (ver `.envio`). */}
+        <button type="submit" className={`${formulario.boton} ${estilos.envio}`} aria-disabled={ocupado || sesion.verificando || undefined}>
+          {sesion.verificando ? TEXTO_VERIFICANDO : pendiente ? TEXTOS.empezando : TEXTOS.empezar}
+        </button>
+      </div>
       {/* D-74 c: directo a los monitores, de la materia elegida si ya hay una. */}
       <Link href={rutaDeMonitores(materia?.codigo)} className={`${formulario.botonSecundario} ${estilos.botonAMonitores}`}>
         {TEXTOS.verMonitoresSinPrueba}
