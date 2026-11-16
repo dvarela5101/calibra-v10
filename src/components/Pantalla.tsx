@@ -12,13 +12,15 @@ type Props = {
   paso?: PasoDelEstudiante;
   /** Solo en las pantallas del visitante: `<AccesoDeCabecera />`, a la derecha de la marca (D-75 a). */
   acceso?: ReactNode;
+  /** Solo donde el contenido lo necesita (el calendario del monitor): desde 1024 px, una columna más ancha que la de siempre. */
+  ancha?: boolean;
   children?: ReactNode;
 };
 
 /** Columna de contenido con la marca arriba. El logo lleva al inicio. */
-export function Pantalla({ eyebrow, titulo, subtitulo, paso, acceso, children }: Props) {
+export function Pantalla({ eyebrow, titulo, subtitulo, paso, acceso, ancha, children }: Props) {
   return (
-    <div className={`${estilos.pantalla} ${paso ? estilos.conRiel : ""}`}>
+    <div className={`${estilos.pantalla} ${paso ? estilos.conRiel : ""} ${ancha ? estilos.ancha : ""}`}>
       <header className={estilos.marca}>
         <Link href="/" className={estilos.enlaceMarca} aria-label="Calibra, ir al inicio">
           <Image src="/logo.svg" alt="" width={36} height={36} priority />

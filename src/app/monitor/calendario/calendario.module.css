@@ -1,0 +1,559 @@
+/*
+ * HU-140 (D-94): el calendario del panel del monitor. Hasta 1023 px la semana es una tira de siete días con su panel debajo; desde
+ * 1024 px es una rejilla por horas con el panel al lado. El mes es una rejilla de siete columnas en todos los anchos.
+ * Sin degradados: las líneas de la rejilla son bordes. Colores solo de tokens.css; --success y --warn son relleno, no texto.
+ */
+
+.calendario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  min-inline-size: 0;
+  /* En el teléfono, poco relleno: los siete días de la tira necesitan el ancho. */
+  padding: var(--e3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sombra-carta);
+}
+
+@media (min-width: 640px) {
+  .calendario {
+    padding: var(--e4);
+  }
+}
+
+/* El ancho extra que necesita la rejilla por horas lo da la pantalla (`Pantalla ancha`), no el calendario: nada se sale de su caja. */
+
+.tituloDelCalendario {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.error {
+  font-size: 15px;
+  color: var(--alert-text);
+}
+
+/* Cabecera: periodo con sus flechas, «Hoy» y el conmutador Semana | Mes. */
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2) var(--e3);
+}
+
+.periodo {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  min-inline-size: 0;
+}
+
+.rango {
+  min-inline-size: 0;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.flecha {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  inline-size: 44px;
+  block-size: 44px;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--primary);
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-chico);
+}
+
+.accionesBarra {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+}
+
+.enlaceDeBarra {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--toque-min);
+  min-inline-size: 56px;
+  padding-inline: var(--e3);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--primary);
+  border-radius: var(--r-chico);
+}
+
+.conmutador {
+  display: flex;
+}
+
+.conmutador > .enlaceDeBarra:first-child {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.conmutador > .enlaceDeBarra:last-child {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  border-inline-start-width: 0;
+}
+
+/* El activo va relleno y en negrita: no depende solo del color. */
+.enlaceDeBarra[aria-current="true"] {
+  font-weight: 700;
+  color: #fff;
+  background: var(--primary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .flecha:hover,
+  .enlaceDeBarra:not([aria-current="true"]):hover {
+    border-color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  }
+}
+
+/* Cuerpo: la vista y el panel del día, apilados; desde 1024 px, lado a lado. */
+.cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  min-inline-size: 0;
+}
+
+.vista {
+  min-inline-size: 0;
+}
+
+/* El panel del día va al lado solo cuando la rejilla conserva columnas donde cabe «Reservada»; antes, debajo. */
+@media (min-width: 1280px) {
+  .cuerpo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    align-items: start;
+  }
+}
+
+/* Marcas de un día: hueca = libre, rellena = reservada o por pagar. Son solo un resumen: el estado va escrito en el panel. */
+.marcas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-block-size: 14px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.marca {
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+}
+
+.marcaLibre {
+  border: 2px solid var(--primary);
+}
+
+.marcaOcupada {
+  background: var(--success-text);
+}
+
+.mas {
+  font-weight: 700;
+}
+
+/* Un día de la tira de la semana o del mes. */
+.dia {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-block-size: 72px;
+  min-inline-size: 0;
+  padding: var(--e1) 2px;
+  color: var(--text);
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.nombreCorto {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.numero {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.hoy .numero {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.fueraDelMes {
+  color: var(--muted);
+}
+
+.elegido {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.elegido .nombreCorto {
+  color: #fff;
+}
+
+.elegido .marcaLibre {
+  border-color: #fff;
+}
+
+.elegido .marcaOcupada {
+  background: #fff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dia:not(.elegido):hover {
+    border-color: var(--primary);
+  }
+}
+
+.tira {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.tira .dia {
+  border-radius: var(--r-chico);
+}
+
+/* La rejilla por horas solo existe desde 1024 px. */
+.horas {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .tira {
+    display: none;
+  }
+
+  .horas {
+    --hora-px: 64px;
+    display: grid;
+    grid-template-columns: 56px repeat(7, minmax(0, 1fr));
+    border-block-start: 1px solid var(--border);
+    border-inline-start: 1px solid var(--border);
+  }
+}
+
+.cabeceraDeHoras {
+  min-block-size: 56px;
+  border-block-end: 1px solid var(--border);
+}
+
+.cabeceraDia {
+  min-block-size: 56px;
+  border-width: 0 1px 1px 0;
+}
+
+.columnaDeHoras {
+  display: flex;
+  flex-direction: column;
+}
+
+.horaEtiqueta {
+  display: block;
+  block-size: var(--hora-px);
+  padding-inline-end: var(--e1);
+  font-size: 14px;
+  line-height: 1.2;
+  text-align: end;
+  color: var(--muted);
+  border-block-start: 1px solid var(--border);
+}
+
+.columnaDia {
+  position: relative;
+  min-inline-size: 0;
+  border-inline-end: 1px solid var(--border);
+}
+
+.columnaElegida {
+  background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+}
+
+.celdaHora {
+  block-size: var(--hora-px);
+  border-block-start: 1px solid var(--border);
+}
+
+.bloque {
+  position: absolute;
+  inset-inline: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-block-size: var(--toque-min);
+  padding: 2px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.25;
+  text-decoration: none;
+  border-radius: var(--r-chico);
+  /* Último recurso: si una palabra no cabe, parte antes que salirse de su caja. */
+  overflow-wrap: anywhere;
+}
+
+.bloqueHora {
+  font-weight: 700;
+}
+
+/* Los tres estados: borde, relleno o borde punteado. Además, siempre se escriben. */
+.estadoLibre {
+  color: var(--primary);
+  background: var(--surface);
+  border: 2px solid var(--primary);
+}
+
+.estadoReservada {
+  color: #fff;
+  background: var(--success-text);
+  border: 2px solid var(--success-text);
+}
+
+.estadoPorPagar {
+  color: var(--text);
+  background: color-mix(in srgb, var(--warn) 22%, var(--surface));
+  border: 2px dashed var(--warn);
+}
+
+/* El mes. */
+.mes {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-inline-start: 1px solid var(--border);
+}
+
+.mesNombre {
+  padding-block: var(--e1);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--muted);
+  border-block-end: 1px solid var(--border);
+}
+
+/* Las líneas de la rejilla son bordes: a la derecha y abajo de cada día; la de la izquierda es la de la rejilla. */
+.mesDia {
+  min-block-size: 60px;
+  border-width: 0 1px 1px 0;
+}
+
+@media (min-width: 1024px) {
+  .mesDia {
+    min-block-size: 84px;
+  }
+}
+
+/* Panel del día. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  min-inline-size: 0;
+}
+
+.tituloDelDia {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.resumen {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.franjas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.franja {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  padding: var(--e3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .franja:hover {
+    border-color: var(--primary);
+  }
+}
+
+.franja:has(:focus-visible) {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.filaDeFranja {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+}
+
+/* El enlace dice la hora y su ::after cubre toda la fila, como las tarjetas del panel. */
+.enlaceDeFranja {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--toque-min);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.enlaceDeFranja:focus-visible {
+  outline: none;
+}
+
+.enlaceDeFranja::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.etiquetaDeEstado {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 28px;
+  padding-inline: var(--e3);
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 999px;
+}
+
+.detalle {
+  font-size: 15px;
+}
+
+.detalleSecundario {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* Agregar una franja: el resumen del details es el botón principal. */
+.agregar {
+  display: flex;
+  flex-direction: column;
+}
+
+.resumenDeAgregar {
+  list-style: none;
+}
+
+.resumenDeAgregar::-webkit-details-marker {
+  display: none;
+}
+
+/* El formulario del calendario. */
+.formulario {
+  gap: var(--e3);
+}
+
+.par {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--e3);
+}
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  min-inline-size: 0;
+  border: 0;
+}
+
+/* Cada opción es una fila de 44 px o más; el radio real cubre toda la fila (invisible) y el círculo es solo dibujo. */
+.opcion {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  min-block-size: var(--toque-min);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.radio {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.punto {
+  flex: none;
+  position: relative;
+  inline-size: 22px;
+  block-size: 22px;
+  background: var(--surface);
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+}
+
+.radio:checked + .punto::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  background: var(--primary);
+  border-radius: 50%;
+}
+
+.radio:focus-visible + .punto {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.vistaPrevia {
+  font-size: 15px;
+  color: var(--text);
+  padding: var(--e2) var(--e3);
+  background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+  border-radius: var(--r-chico);
+}

@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  SEMANAS_MAX,
+  SEMANAS_MIN,
   esEnlaceDeVideollamada,
+  fechasDeLaRepeticion,
   horaCorta,
   horaDe,
   horaDeFin,
   leerCierre,
   leerEntero,
   leerFranja,
+  leerRepeticion,
   mensajeDeErrorDeFranja,
   minutosDe,
   nombreDelDia,
@@ -169,5 +173,99 @@ describe("mensajeDeErrorDeFranja", () => {
     expect(mensajeDeErrorDeFranja({ code: "42501", message: "permission denied" })).toBe("No puedes hacer ese cambio en esta franja.");
     expect(mensajeDeErrorDeFranja({ code: "08006", message: "connection failure" })).toBe("No pudimos guardar la franja. Intenta de nuevo.");
     expect(mensajeDeErrorDeFranja(null)).toBe("No pudimos guardar la franja. Intenta de nuevo.");
+  });
+});
+
+describe("repetición de la franja (D-94)", () => {
+  const HOY = "2026-11-16"; // lunes
+
+  it("sin fecha, el formulario de siempre: repetición nula", () => {
+    expect(leerRepeticion(formulario({}), HOY)).toEqual({ ok: true, repeticion: null });
+    expect(leerRepeticion(formulario({ fecha: "  ", repite: "una" }), HOY)).toEqual({ ok: true, repeticion: null });
+  });
+
+  it("solo ese día: cierra al día siguiente", () => {
+    expect(leerRepeticion(formulario({ fecha: "2026-11-19", repite: "una" }), HOY)).toEqual({
+      ok: true,
+      repeticion: { abiertaDesde: "2026-11-19", cerradaDesde: "2026-11-20", dia: 4 },
+    });
+  });
+
+  it("sin fecha final es lo que se asume si no llega `repite`", () => {
+    const esperado = { ok: true, repeticion: { abiertaDesde: "2026-11-19", cerradaDesde: null, dia: 4 } };
+    expect(leerRepeticion(formulario({ fecha: "2026-11-19" }), HOY)).toEqual(esperado);
+    expect(leerRepeticion(formulario({ fecha: "2026-11-19", repite: "siempre" }), HOY)).toEqual(esperado);
+  });
+
+  it("cuatro jueves desde el 19 cierran el 11 de diciembre", () => {
+    expect(leerRepeticion(formulario({ fecha: "2026-11-19", repite: "semanas", semanas: "4" }), HOY)).toEqual({
+      ok: true,
+      repeticion: { abiertaDesde: "2026-11-19", cerradaDesde: "2026-12-11", dia: 4 },
+    });
+  });
+
+  it("hoy sí vale; el día sale de la fecha (domingo es 7)", () => {
+    expect(leerRepeticion(formulario({ fecha: HOY, repite: "una" }), HOY)).toMatchObject({ repeticion: { dia: 1 } });
+    expect(leerRepeticion(formulario({ fecha: "2026-11-22", repite: "una" }), HOY)).toMatchObject({ repeticion: { dia: 7 } });
+  });
+
+  it("cruza el cambio de año", () => {
+    expect(leerRepeticion(formulario({ fecha: "2026-12-28", repite: "semanas", semanas: "2" }), HOY)).toEqual({
+      ok: true,
+      repeticion: { abiertaDesde: "2026-12-28", cerradaDesde: "2027-01-05", dia: 1 },
+    });
+  });
+
+  it("cruza el 29 de febrero de un año bisiesto", () => {
+    expect(leerRepeticion(formulario({ fecha: "2028-02-29", repite: "una" }), HOY)).toEqual({
+      ok: true,
+      repeticion: { abiertaDesde: "2028-02-29", cerradaDesde: "2028-03-01", dia: 2 },
+    });
+    expect(leerRepeticion(formulario({ fecha: "2028-02-22", repite: "semanas", semanas: "2" }), HOY)).toMatchObject({
+      repeticion: { cerradaDesde: "2028-03-01" },
+    });
+  });
+
+  it("rechaza fechas que no existen y fechas pasadas", () => {
+    for (const fecha of ["2027-02-29", "2026-13-01", "2026-11-31", "19/11/2026", "hoy"]) {
+      expect(leerRepeticion(formulario({ fecha }), HOY).ok).toBe(false);
+    }
+    expect(leerRepeticion(formulario({ fecha: "2026-11-15" }), HOY)).toEqual({
+      ok: false,
+      error: "No puedes abrir una franja en una fecha que ya pasó.",
+    });
+  });
+
+  it(`las semanas van de ${SEMANAS_MIN} a ${SEMANAS_MAX}`, () => {
+    expect(SEMANAS_MIN).toBe(2);
+    expect(SEMANAS_MAX).toBe(16);
+    for (const semanas of ["", "1", "0", "17", "-3", "2.5", "dos"]) {
+      expect(leerRepeticion(formulario({ fecha: "2026-11-19", repite: "semanas", semanas }), HOY).ok).toBe(false);
+    }
+    expect(leerRepeticion(formulario({ fecha: "2026-11-19", repite: "semanas", semanas: "16" }), HOY).ok).toBe(true);
+    expect(leerRepeticion(formulario({ fecha: "2026-11-19", repite: "semanas", semanas: "2" }), HOY).ok).toBe(true);
+  });
+
+  it("rechaza una repetición desconocida", () => {
+    expect(leerRepeticion(formulario({ fecha: "2026-11-19", repite: "diario" }), HOY).ok).toBe(false);
+  });
+
+  it("lista las fechas concretas cuando hay cierre y ninguna cuando no", () => {
+    expect(fechasDeLaRepeticion({ abiertaDesde: "2026-11-19", cerradaDesde: "2026-11-20", dia: 4 })).toEqual(["2026-11-19"]);
+    expect(fechasDeLaRepeticion({ abiertaDesde: "2026-11-19", cerradaDesde: "2026-12-11", dia: 4 })).toEqual([
+      "2026-11-19",
+      "2026-11-26",
+      "2026-12-03",
+      "2026-12-10",
+    ]);
+    expect(fechasDeLaRepeticion({ abiertaDesde: "2026-12-28", cerradaDesde: "2027-01-05", dia: 1 })).toEqual(["2026-12-28", "2027-01-04"]);
+    expect(fechasDeLaRepeticion({ abiertaDesde: "2028-02-22", cerradaDesde: "2028-03-01", dia: 2 })).toEqual(["2028-02-22", "2028-02-29"]);
+    expect(fechasDeLaRepeticion({ abiertaDesde: "2026-11-19", cerradaDesde: null, dia: 4 })).toEqual([]);
+  });
+
+  it("16 semanas dan 16 fechas", () => {
+    const r = leerRepeticion(formulario({ fecha: "2026-11-19", repite: "semanas", semanas: "16" }), HOY);
+    if (!r.ok || !r.repeticion) throw new Error("debía leerse");
+    expect(fechasDeLaRepeticion(r.repeticion)).toHaveLength(16);
   });
 });

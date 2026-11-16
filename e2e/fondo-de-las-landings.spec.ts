@@ -106,9 +106,12 @@ for (const [nombre, ruta] of LANDINGS) {
         });
       };
       await expect.poll(() => trazadoCon(0.9)).toBe(0);
-      const aLaMitad = await trazadoCon(0.55);
-      expect(aLaMitad).toBeGreaterThan(0.2);
-      expect(aLaMitad).toBeLessThan(0.8);
+      // Con espera, como las otras dos lecturas: tras mover el scroll, el trazo tarda un cuadro en reflejarlo y una lectura
+      // inmediata puede ver todavía el 0 de antes.
+      await expect.poll(async () => {
+        const aLaMitad = await trazadoCon(0.55);
+        return aLaMitad > 0.2 && aLaMitad < 0.8;
+      }).toBe(true);
       await expect.poll(() => trazadoCon(0.2)).toBe(1);
     });
 

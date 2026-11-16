@@ -2,18 +2,17 @@ import { describe, expect, it } from "vitest";
 import { SECCIONES_DEL_MENU, seccionActual, seccionesPara } from "./menu-reglas";
 
 describe("SECCIONES_DEL_MENU", () => {
-  it("lleva las cinco secciones, en orden y sin repetir rutas", () => {
-    expect(SECCIONES_DEL_MENU.map((s) => s.etiqueta)).toEqual(["Inicio", "Agenda", "Franjas", "Pagos", "Perfil"]);
-    expect(new Set(SECCIONES_DEL_MENU.map((s) => s.href)).size).toBe(5);
+  it("lleva las cuatro secciones, en orden y sin repetir rutas; «Franjas» ya no está (D-94 c)", () => {
+    expect(SECCIONES_DEL_MENU.map((s) => s.etiqueta)).toEqual(["Inicio", "Agenda", "Pagos", "Perfil"]);
+    expect(new Set(SECCIONES_DEL_MENU.map((s) => s.href)).size).toBe(4);
   });
 });
 
 describe("seccionesPara", () => {
-  it("con certificados deja las cinco", () => {
+  it("con certificados deja las cuatro", () => {
     expect(seccionesPara(true).map((s) => s.href)).toEqual([
       "/monitor",
       "/monitor/agenda",
-      "/monitor/franjas",
       "/monitor/desembolsos",
       "/monitor/perfil",
     ]);
@@ -31,8 +30,15 @@ describe("seccionActual", () => {
 
   it("cuenta una subruta como su sección", () => {
     expect(seccionActual("/monitor/agenda/123")).toBe("/monitor/agenda");
-    expect(seccionActual("/monitor/franjas/nueva")).toBe("/monitor/franjas");
     expect(seccionActual("/monitor/perfil/llave")).toBe("/monitor/perfil");
+  });
+
+  it("las franjas y sus subrutas dejan marcado Inicio", () => {
+    expect(seccionActual("/monitor/franjas")).toBe("/monitor");
+    expect(seccionActual("/monitor/franjas/")).toBe("/monitor");
+    expect(seccionActual("/monitor/franjas/nueva")).toBe("/monitor");
+    expect(seccionActual("/monitor/franjas/0b3c1f64-0000-4000-8000-000000000001")).toBe("/monitor");
+    expect(seccionActual("/monitor/franjasX")).toBeNull();
   });
 
   it("ignora la barra final", () => {

@@ -1,4 +1,5 @@
-/* Panel del monitor: recordatorio de finalizar (HU-023), su próxima monitoría, cuatro tarjetas y sus materias certificadas (HU-014, HU-123). */
+/* Panel del monitor: recordatorio de finalizar (HU-023), cuatro tarjetas y sus materias certificadas (HU-014, HU-123). El calendario
+   (HU-140) tiene sus estilos en calendario/calendario.module.css. */
 
 .seccion {
   display: flex;
@@ -41,32 +42,6 @@
 
 .accionDelRecordatorio {
   font-weight: 600;
-}
-
-/* HU-123: la próxima monitoría. */
-.proxima {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e2);
-  padding: var(--e4);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  box-shadow: var(--sombra-carta);
-}
-
-.cuando {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.detalle {
-  font-size: 16px;
-}
-
-.boton {
-  margin-block-start: var(--e2);
-  text-decoration: none;
 }
 
 /* Los tres pasos de quien aún no tiene certificados: el actual va con borde y peso, no solo con color. */

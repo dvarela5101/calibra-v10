@@ -7,13 +7,19 @@ export type SeccionDelMenu = {
   etiqueta: string;
   /** Solo la ve un monitor con al menos un certificado: sin él esas pantallas no tienen qué mostrar. */
   exigeCertificado?: boolean;
+  /** Otras rutas bajo `/monitor` que cuentan como esta sección, porque se abren desde ella. */
+  tambien?: readonly string[];
 };
 
-/** Las secciones, en el orden del menú. */
+const cubre = (base: string, ruta: string) => ruta === base || ruta.startsWith(`${base}/`);
+
+/**
+ * Las secciones, en el orden del menú. D-94 c (HU-140): las franjas se ven y se abren en el calendario de Inicio, así que
+ * «Franjas» ya no está en el menú y `/monitor/franjas` (la lista, el formulario y cada franja) deja marcado Inicio.
+ */
 export const SECCIONES_DEL_MENU: readonly SeccionDelMenu[] = [
-  { href: "/monitor", etiqueta: "Inicio" },
+  { href: "/monitor", etiqueta: "Inicio", tambien: ["/monitor/franjas"] },
   { href: "/monitor/agenda", etiqueta: "Agenda", exigeCertificado: true },
-  { href: "/monitor/franjas", etiqueta: "Franjas", exigeCertificado: true },
   { href: "/monitor/desembolsos", etiqueta: "Pagos", exigeCertificado: true },
   { href: "/monitor/perfil", etiqueta: "Perfil" },
 ];
@@ -34,6 +40,7 @@ export function seccionActual(pathname: string | null | undefined): string | nul
   for (const seccion of SECCIONES_DEL_MENU) {
     if (ruta === seccion.href) return seccion.href;
     if (seccion.href !== "/monitor" && ruta.startsWith(`${seccion.href}/`)) return seccion.href;
+    if (seccion.tambien?.some((otra) => cubre(otra, ruta))) return seccion.href;
   }
   return null;
 }
