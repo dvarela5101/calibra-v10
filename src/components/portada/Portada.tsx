@@ -2,6 +2,7 @@ import { NivelEscrito } from "@/components/diagnostico/ResultadoDelDiagnostico";
 import { EVENTOS, type UbicacionDelCta } from "@/lib/analitica/eventos";
 import { rutaDeDiagnostico } from "@/lib/diagnostico/rutas";
 import type { ParametrosNegocio } from "@/lib/plazos/parametros";
+import { conMiles, etiquetaDeMaterias, type CifrasDelBanco } from "@/lib/portada/cifras";
 import { respuestaDeCancelar, respuestaDeCuenta, textoDelBeneficioDeCancelar } from "@/lib/portada/textos";
 import { RUTA_SER_MONITOR } from "@/lib/solicitudes/reglas";
 import { EnlaceConEvento } from "./EnlaceConEvento";
@@ -20,7 +21,7 @@ import estilos from "./portada.module.css";
  * HU-109 (D-78): en pantallas anchas cada sección se parte en dos (el titular a la izquierda, el contenido a la derecha) dentro
  * del ancho del hero, y después del CTA final una franja lleva a la landing de monitores (D-78 b).
  */
-export function Portada({ parametros }: { parametros: ParametrosNegocio | null }) {
+export function Portada({ parametros, cifras = null }: { parametros: ParametrosNegocio | null; cifras?: CifrasDelBanco | null }) {
   return (
     <div className={estilos.portada} data-landing="">
       <FondoAnimado />
@@ -107,13 +108,19 @@ export function Portada({ parametros }: { parametros: ParametrosNegocio | null }
             <h2 id="prueba-social" className={estilos.tituloSeccion}>
               Hecho con los parciales de ciclo básico
             </h2>
-            {/* D-77 f: los testimonios aparecen solo con citas reales y con permiso; aún no hay. D-77 d: cifras revisadas a
-                mano contra lo activo en producción (el 28-oct-2026, en el banco: 263 preguntas y 445 errores revisados). */}
+            {/* D-77 f: los testimonios aparecen solo con citas reales y con permiso; aún no hay. HU-134: las cifras salen de la base
+                (`cifras_del_banco()`), redondeadas hacia abajo; si no se pudieron leer, la frase sale sin números. */}
             <p className={estilos.cifras}>
-              El diagnóstico cubre <strong className={estilos.cifra}>8 materias</strong> de ciclo básico, con{" "}
-              <strong className={estilos.cifra}>más de 250 preguntas</strong> y{" "}
-              <strong className={estilos.cifra}>más de 400 errores típicos</strong> catalogados a partir de parciales de semestres
-              anteriores.
+              {cifras ? (
+                <>
+                  El diagnóstico cubre <strong className={estilos.cifra}>{etiquetaDeMaterias(cifras.materias)}</strong> de ciclo
+                  básico, con <strong className={estilos.cifra}>más de {conMiles(cifras.preguntas)} preguntas</strong> y{" "}
+                  <strong className={estilos.cifra}>más de {conMiles(cifras.errores)} errores típicos</strong> catalogados a partir
+                  de parciales de semestres anteriores.
+                </>
+              ) : (
+                "El diagnóstico se arma con preguntas y errores típicos catalogados a partir de parciales de semestres anteriores de ciclo básico."
+              )}
             </p>
           </div>
         </section>

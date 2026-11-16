@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FILA_DE_EJEMPLO } from "../../../pruebas/diagnostico-sembrado";
 import { ResultadoDelDiagnostico } from "@/components/diagnostico/ResultadoDelDiagnostico";
+import type { CifrasDelBanco } from "@/lib/portada/cifras";
 import { proyectarResultado, type ResultadoParaMostrar } from "@/lib/diagnostico/mostrar";
 
 // HU-011: la portada, sin navegador ni base: `connection()` y la lectura del último diagnóstico son inventadas y registran el orden en
@@ -13,6 +14,7 @@ import { proyectarResultado, type ResultadoParaMostrar } from "@/lib/diagnostico
 const falsos = vi.hoisted(() => ({
   orden: [] as string[],
   ultimo: null as ResultadoParaMostrar | null,
+  cifras: null as CifrasDelBanco | null,
 }));
 
 vi.mock("next/server", () => ({
@@ -25,6 +27,11 @@ vi.mock("@/lib/diagnostico/ultimo", () => ({
     falsos.orden.push("lectura");
     return falsos.ultimo;
   },
+}));
+
+// HU-134: las cifras del banco vienen de la base; aquí son inventadas. Con `null` la portada dice la frase sin números.
+vi.mock("@/lib/portada/cifras-del-banco", () => ({
+  cifrasDelBancoParaLaPortada: async () => falsos.cifras,
 }));
 
 import * as modulo from "./page";
@@ -68,6 +75,7 @@ const enlace = (href: string, nombre: string) => new RegExp(`<a[^>]*href="${esca
 beforeEach(() => {
   falsos.orden.length = 0;
   falsos.ultimo = null;
+  falsos.cifras = null;
 });
 
 describe("/ sin resultado: la landing (HU-108)", () => {
@@ -99,6 +107,21 @@ describe("/ sin resultado: la landing (HU-108)", () => {
     expect(html.match(/data-evento="clic_ser_monitor"/g)).toHaveLength(1);
     const t = texto(html);
     expect(t.indexOf("¿Dominas una materia de ciclo básico?")).toBeGreaterThan(t.indexOf("Averigua qué te falla antes del próximo parcial."));
+  });
+
+  it("las cifras salen de la base: materias exactas, preguntas y errores «más de N» (HU-134)", async () => {
+    falsos.cifras = { materias: 10, preguntas: 650, errores: 1200 };
+    const t = texto(await pintar());
+    expect(t).toContain("El diagnóstico cubre 10 materias de ciclo básico, con más de 650 preguntas y más de 1.200 errores típicos catalogados");
+    expect(t).not.toMatch(/8 materias|más de 250|más de 400/);
+  });
+
+  it("sin cifras (falló la lectura o dio ceros) la frase sale sin números y la portada se pinta completa (HU-134)", async () => {
+    falsos.cifras = null;
+    const t = texto(await pintar());
+    expect(t).toContain("El diagnóstico se arma con preguntas y errores típicos catalogados a partir de parciales de semestres anteriores de ciclo básico.");
+    expect(t).not.toMatch(/\d+ materias|más de \d/);
+    for (const seccion of SECCIONES) expect(t).toContain(seccion);
   });
 
   it("marca la página como landing para que globals.css esconda el pie global (D-77 b)", async () => {
