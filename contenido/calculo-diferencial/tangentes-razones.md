@@ -114,3 +114,14 @@ Un tanque cónico con el vértice hacia abajo tiene 6 m de altura y 3 m de radio
 
 solución: por triángulos semejantes, r/h = 3/6, así que r = h/2. Entonces $V = \frac{1}{3}\pi\left(\frac{h}{2}\right)^2 h = \frac{\pi}{12}h^3$. Se deriva: dV/dt = (π/4)·h²·dh/dt. El tanque se vacía, así que dV/dt = −2, y con h = 4: −2 = (π/4)·16·dh/dt = 4π·dh/dt, de donde dh/dt = −1/(2π) m/min. Como r = h/2, dr/dt = (1/2)·dh/dt = −1/(4π) m/min.
 B se queda con dh/dt como si fuera dr/dt, pero r cambia la mitad de rápido que h. C ignora el signo de dV/dt. D usa r = 2h: V = (4π/3)h³, dV/dt = 4πh²·dh/dt, con h = 4 da dh/dt = −2/(64π) = −1/(32π), y dr/dt = 2·dh/dt = −1/(16π).
+
+### P125 · dificultad 2 · kc: razones-relacionadas · borrador · origen: ia (opus-5.5)
+Una escalera de 10 m resbala por una pared. Si el extremo inferior se aleja a 2 m/s, ¿a qué velocidad baja el extremo superior cuando está a 6 m del suelo?
+
+- A) $\frac{dy}{dt} = -\frac{8}{3}$ m/s · CORRECTA
+- B) $\frac{dy}{dt} = -2$ m/s · [misma-velocidad-extremos] supones que el extremo superior baja con la misma rapidez con que se aleja el inferior
+- C) $\frac{dy}{dt} = \frac{8}{3}$ m/s · [signo-tasa-ignorado] haces bien la cuenta pero olvidas que la altura disminuye, así que dy/dt es negativa
+- D) $\frac{dy}{dt} = -\frac{3}{2}$ m/s · [catetos-intercambiados] despejas con y/x = 6/8 en vez de x/y = 8/6
+
+solución: sean x la distancia del pie de la escalera a la pared y y la altura del extremo superior, con x² + y² = 100. Cuando y = 6, x = 8. Derivando respecto de t: 2x·dx/dt + 2y·dy/dt = 0, así que dy/dt = −(x/y)·dx/dt = −(8/6)·2 = −8/3 m/s.
+B iguala las dos rapideces, pero en x² + y² = 100 cada extremo cambia según la posición del otro. C da la magnitud con el signo cambiado. D intercambia los catetos: −(6/8)·2 = −3/2, el valor que marcaba como correcto la P12 retirada.
